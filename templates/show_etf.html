@@ -7,20 +7,29 @@
 {% block content %}
   <h1 class="container text-center my-5">{{ etf_data.name }}</h1>
   <div class="container mb-5">
-    <table class="table table-striped table-bordered table-hover">
+    <table class="table table-bordered table-hover">
       <thead>
         <tr>
           <th scope="col">Rank</th>
           <th scope="col">Name</th>
           <th scope="col">Ticker</th>
+          <th scope="col">Last Close</th>
+          <th scope="col">200-DMA</th>
+          <th scope="col">% Diff</th>
         </tr>
       </thead>
       <tbody>
-        {% for stock_data in etf_data.holdings %}
+        {% for holding in etf_data.holdings %}
         <tr>
-          <th scope="row">{{ stock_data.rank }}</th>
-          <td>{{ stock_data.name }}</td>
-          <td>{{ stock_data.ticker }}</td>
+          <th scope="row">{{ holding.rank }}</th>
+          <td>{{ holding.name }}</td>
+          <td>{{ holding.ticker }}</td>
+          <td>{{ stock_data[holding.ticker].last_close }}</td>
+          <td>{{ stock_data[holding.ticker].dma_200 }}</td>
+          <td style="background-color: {{ get_stock_color(stock_data[holding.ticker].perc_diff) }};
+                     font-weight: bold">
+            {{ stock_data[holding.ticker].perc_diff }}
+          </td>
         </tr>
       {% endfor %}
       </tbody>

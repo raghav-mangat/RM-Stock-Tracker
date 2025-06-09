@@ -74,10 +74,10 @@ def fetch_and_save_etf_data():
         time.sleep(5)
 
     # Save to JSON file in the project
-    base_dir = os.path.dirname(os.path.dirname(__file__))  # go one level up from scraper/
+    base_dir = os.path.dirname(os.path.dirname(__file__))  # go one level up from scraper
     file_path = os.path.join(base_dir, "data", "etf_holdings.json")
 
     with open(file_path, "w") as f:
         json.dump(all_etf_data, f, indent=2)
 
-    print("✅ ETF holdings saved to data/etf_holdings.json")
+    print("ETF holdings saved to data/etf_holdings.json")
