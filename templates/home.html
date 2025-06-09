@@ -4,6 +4,38 @@
     Stocks Web App
 {% endblock %}
 
+{% block style %}
+    <link href="{{ url_for('static', filename='styles/home.css') }}" rel="stylesheet">
+{% endblock %}
+
 {% block content %}
-    <h1 class="container">This is Stocks Web App</h1>
+    <div class="my-5">
+        <div class="p-5 text-center bg-body-tertiary">
+            <div class="container py-5">
+                <h1 class="text-body-emphasis">Stocks Web App</h1>
+                <p class="col-lg-8 mx-auto lead">
+                    Choose one of the ETFs below to see their holdings.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="container my-5 py-5">
+        <h2 class="mb-4">ETF Dashboard</h2>
+        {% set items = etf_data.items() | list %}
+        {% for i in range(0, items|length, 3) %}
+        <div class="row mb-4">
+            {% for key, value in items[i:i+3] %}
+            <div class="col-md-4 mb-3">
+                <a href="{{ url_for('show_etf', etf_id=key) }}" class="etf-link">
+                  <div class="etf-card">
+                    <span class="etf-title">{{ value }}</span>
+                  </div>
+                </a>
+              </div>
+            {% endfor %}
+        </div>
+        {% endfor %}
+    </div>
+
 {% endblock %}
