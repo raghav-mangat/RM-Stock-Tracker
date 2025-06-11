@@ -23,13 +23,19 @@
         <tr>
           <th scope="row">{{ holding.rank }}</th>
           <td>{{ holding.name }}</td>
-          <td>{{ holding.ticker }}</td>
-          <td>{{ stock_data[holding.ticker].last_close }}</td>
-          <td>{{ stock_data[holding.ticker].dma_200 }}</td>
-          <td style="background-color: {{ get_stock_color(stock_data[holding.ticker].perc_diff) }};
-                     font-weight: bold">
-            {{ stock_data[holding.ticker].perc_diff }}
-          </td>
+          {% if holding.ticker %}
+            <td>{{ holding.ticker }}</td>
+            <td>{{ stock_data[holding.ticker].last_close }}</td>
+            <td>{{ stock_data[holding.ticker].dma_200 }}</td>
+            <td style="background-color: {{ get_stock_color(stock_data[holding.ticker].perc_diff) }};
+                       font-weight: bold">
+              {{ stock_data[holding.ticker].perc_diff }}
+            </td>
+          {% else %}
+            {% for i in range(4) %}
+              <td>N/A</td>
+            {% endfor %}
+          {% endif %}
         </tr>
       {% endfor %}
       </tbody>
