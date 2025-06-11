@@ -77,6 +77,9 @@ def fetch_and_save_etf_data():
     base_dir = os.path.dirname(os.path.dirname(__file__))  # go one level up from scraper
     file_path = os.path.join(base_dir, "data", "etf_holdings.json")
 
+    # Create 'data/' folder if it doesn't exist
+    os.makedirs(os.path.dirname(file_path), exist_ok=True)
+
     with open(file_path, "w") as f:
         json.dump(all_etf_data, f, indent=2)
 

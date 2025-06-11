@@ -90,6 +90,10 @@ def fetch_and_save_stock_data():
     # Save to file
     base_dir = os.path.dirname(os.path.dirname(__file__))  # go one level up from scraper
     file_path = os.path.join(base_dir, "data", "stock_data.json")
+
+    # Create 'data/' folder if it doesn't exist
+    os.makedirs(os.path.dirname(file_path), exist_ok=True)
+
     with open(file_path, "w") as f:
         json.dump(stock_data, f, indent=2)
 
