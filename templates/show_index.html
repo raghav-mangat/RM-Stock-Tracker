@@ -13,6 +13,7 @@
           <th scope="col">Rank</th>
           <th scope="col">Name</th>
           <th scope="col">Ticker</th>
+          <th scope="col">Weight</th>
           <th scope="col">Last Close</th>
           <th scope="col">200-DMA</th>
           <th scope="col">% Diff</th>
@@ -25,6 +26,7 @@
           <td>{{ holding.name }}</td>
           {% if holding.ticker %}
             <td>{{ holding.ticker }}</td>
+            <td>{{ holding.weight }}</td>
             <td>{{ stock_data[holding.ticker].last_close }}</td>
             <td>{{ stock_data[holding.ticker].dma_200 }}</td>
             <td style="background-color: {{ get_stock_color(stock_data[holding.ticker].perc_diff) }};
@@ -32,7 +34,9 @@
               {{ stock_data[holding.ticker].perc_diff }}
             </td>
           {% else %}
-            {% for i in range(4) %}
+            <td>N/A</td>
+            <td>{{ holding.weight }}</td>
+            {% for i in range(3) %}
               <td>N/A</td>
             {% endfor %}
           {% endif %}
