@@ -5,26 +5,26 @@ app = Flask(__name__)
 
 @app.route("/")
 def home():
-    with open("data/etf_holdings.json") as f:
-        etf_data = json.load(f)
-    show_etf_data={}
-    for etf_name in etf_data["info"]["etf_list"]:
-        show_etf_data[etf_name] = etf_data["etf_data"][etf_name]["name"]
+    with open("data/index_holdings.json") as f:
+        index_data = json.load(f)
+    show_index_data={}
+    for index_name in index_data["info"]["index_list"]:
+        show_index_data[index_name] = index_data["index_data"][index_name]["name"]
 
-    return render_template("home.html", etf_data=show_etf_data)
+    return render_template("home.html", index_data=show_index_data)
 
-@app.route("/etf/<string:etf_id>")
-def show_etf(etf_id):
-    with open("data/etf_holdings.json") as f:
-        etf_data = json.load(f)
+@app.route("/index/<string:index_id>")
+def show_index(index_id):
+    with open("data/index_holdings.json") as f:
+        index_data = json.load(f)
     with open("data/stock_data.json") as f:
         stock_data = json.load(f)
 
-    if etf_id not in etf_data["info"]["etf_list"]:
-        return "ETF Not Found", 404
+    if index_id not in index_data["info"]["index_list"]:
+        return "Index Not Found", 404
     return render_template(
-        "show_etf.html",
-        etf_data=etf_data["etf_data"][etf_id],
+        "show_index.html",
+        index_data=index_data["index_data"][index_id],
         stock_data=stock_data["stock_data"],
         get_stock_color=get_stock_color
     )

@@ -1,4 +1,4 @@
-.etf-card {
+.index-card {
     aspect-ratio: 1 / 1;
     display: flex;
     align-items: center;
@@ -10,18 +10,18 @@
     cursor: pointer;
 }
 
-.etf-card:hover {
+.index-card:hover {
     transform: scale(1.03);
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     background-color: #e9ecef;
 }
 
-.etf-link {
+.index-link {
     text-decoration: none;
     color: inherit;
 }
 
-.etf-title {
+.index-title {
     font-size: 1.2rem;
     font-weight: 600;
 }

@@ -12,19 +12,19 @@ client = RESTClient(POLYGON_API_KEY)
 
 def get_all_tickers():
     """
-    returns a set of all stock tickers in the etfs stored in etf_holdings.json.
+    returns a set of all stock tickers in the indexes stored in index_holdings.json.
     :return: set of all tickers.
     """
     base_dir = os.path.dirname(os.path.dirname(__file__))  # go one level up from scraper
-    file_path = os.path.join(base_dir, "data", "etf_holdings.json")
+    file_path = os.path.join(base_dir, "data", "index_holdings.json")
 
-    # Load ETF tickers
+    # Load Index tickers
     with open(file_path) as f:
-        etf_data = json.load(f)
+        index_data = json.load(f)
 
     tickers = set()
-    for etf in etf_data["etf_data"].values():
-        for holding in etf["holdings"]:
+    for index in index_data["index_data"].values():
+        for holding in index["holdings"]:
             tickers.add(holding["ticker"])
     tickers.discard("")
 
@@ -65,7 +65,7 @@ def fetch_and_save_stock_data():
         "stock_data": {}
     }
 
-    # Set of all tickers present in the ETFs
+    # Set of all tickers present in the Indexes
     all_tickers = get_all_tickers()
     for ticker in all_tickers:
         try:
@@ -88,8 +88,10 @@ def fetch_and_save_stock_data():
             print(f"Error for {ticker}: {e}")
 
     # Save to file
+    folder_name = "data"
+    file_name = "stock_data.json"
     base_dir = os.path.dirname(os.path.dirname(__file__))  # go one level up from scraper
-    file_path = os.path.join(base_dir, "data", "stock_data.json")
+    file_path = os.path.join(base_dir, folder_name, file_name)
 
     # Create 'data/' folder if it doesn't exist
     os.makedirs(os.path.dirname(file_path), exist_ok=True)
@@ -97,4 +99,4 @@ def fetch_and_save_stock_data():
     with open(file_path, "w") as f:
         json.dump(stock_data, f, indent=2)
 
-    print("Stock data saved.")
+    print(f"Stock data saved to {folder_name}/{file_name}")

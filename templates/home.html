@@ -14,22 +14,22 @@
             <div class="container py-5">
                 <h1 class="text-body-emphasis">Stocks Web App</h1>
                 <p class="col-lg-8 mx-auto lead">
-                    Choose one of the ETFs below to see their holdings.
+                    Choose one of the Indexes below to see their holdings.
                 </p>
             </div>
         </div>
     </div>
 
     <div class="container my-5 py-5">
-        <h2 class="mb-4">ETF Dashboard</h2>
-        {% set items = etf_data.items() | list %}
+        <h2 class="mb-4">Index Dashboard</h2>
+        {% set items = index_data.items() | list %}
         {% for i in range(0, items|length, 3) %}
         <div class="row mb-4">
             {% for key, value in items[i:i+3] %}
             <div class="col-md-4 mb-3">
-                <a href="{{ url_for('show_etf', etf_id=key) }}" class="etf-link">
-                  <div class="etf-card">
-                    <span class="etf-title">{{ value }}</span>
+                <a href="{{ url_for('show_index', index_id=key) }}" class="index-link">
+                  <div class="index-card">
+                    <span class="index-title">{{ value }}</span>
                   </div>
                 </a>
               </div>

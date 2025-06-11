@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 
 {% block title %}
-  {{ etf_data.name }}
+  {{ index_data.name }}
 {% endblock %}
 
 {% block content %}
-  <h1 class="container text-center my-5">{{ etf_data.name }}</h1>
+  <h1 class="container text-center my-5">{{ index_data.name }}</h1>
   <div class="container mb-5">
     <table class="table table-bordered table-hover">
       <thead>
@@ -19,7 +19,7 @@
         </tr>
       </thead>
       <tbody>
-        {% for holding in etf_data.holdings %}
+        {% for holding in index_data.holdings %}
         <tr>
           <th scope="row">{{ holding.rank }}</th>
           <td>{{ holding.name }}</td>
