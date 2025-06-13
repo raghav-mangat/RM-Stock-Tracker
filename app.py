@@ -5,13 +5,21 @@ app = Flask(__name__)
 
 @app.route("/")
 def home():
+    return render_template("home.html")
+
+@app.route("/stock")
+def all_stocks():
+    return render_template("all_stocks.html")
+
+@app.route("/index")
+def all_indexes():
     with open("data/index_holdings.json") as f:
         index_data = json.load(f)
-    show_index_data={}
+    show_index_data = {}
     for index_name in index_data["info"]["index_list"]:
         show_index_data[index_name] = index_data["index_data"][index_name]["name"]
 
-    return render_template("home.html", index_data=show_index_data)
+    return render_template("all_indexes.html", index_data=show_index_data)
 
 @app.route("/index/<string:index_id>")
 def show_index(index_id):

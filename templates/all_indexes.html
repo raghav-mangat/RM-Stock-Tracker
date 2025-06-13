@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Index
+{% endblock %}
+
+{% block style %}
+    <link href="{{ url_for('static', filename='styles/all_indexes.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+    <h1 class="text-center pt-5">Index Dashboard</h1>
+    <div class="container my-5 py-5">
+        {% set items = index_data.items() | list %}
+        {% for i in range(0, items|length, 3) %}
+        <div class="row mb-4">
+            {% for key, value in items[i:i+3] %}
+            <div class="col-md-4 mb-3">
+                <a href="{{ url_for('show_index', index_id=key) }}" class="index-link">
+                  <div class="index-card">
+                    <span class="index-title">{{ value }}</span>
+                  </div>
+                </a>
+              </div>
+            {% endfor %}
+        </div>
+        {% endfor %}
+    </div>
+{% endblock %}
