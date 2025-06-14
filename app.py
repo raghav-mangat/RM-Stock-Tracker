@@ -1,7 +1,16 @@
 from flask import Flask, render_template
-import json
+from models.database import db, Stock, Index, IndexHolding
+from dotenv import load_dotenv
+import os
 
+load_dotenv()
 app = Flask(__name__)
+
+app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URI")
+db.init_app(app)
+
+with app.app_context():
+    db.create_all()
 
 @app.route("/")
 def home():
@@ -13,27 +22,34 @@ def all_stocks():
 
 @app.route("/index")
 def all_indexes():
-    with open("data/index_holdings.json") as f:
-        index_data = json.load(f)
-    show_index_data = {}
-    for index_name in index_data["info"]["index_list"]:
-        show_index_data[index_name] = index_data["index_data"][index_name]["name"]
+    indexes = db.session.execute(db.select(Index)).scalars().all()
 
-    return render_template("all_indexes.html", index_data=show_index_data)
+    return render_template("all_indexes.html", indexes=indexes)
 
 @app.route("/index/<string:index_id>")
 def show_index(index_id):
-    with open("data/index_holdings.json") as f:
-        index_data = json.load(f)
-    with open("data/stock_data.json") as f:
-        stock_data = json.load(f)
-
-    if index_id not in index_data["info"]["index_list"]:
-        return "Index Not Found", 404
+    index = Index.query.filter_by(slug=index_id).first_or_404()
+    index_data = (
+        db.session.query(
+            IndexHolding.rank,
+            IndexHolding.weight,
+            Stock.ticker,
+            Stock.name.label("stock_name"),
+            Stock.last_close,
+            Stock.dma_200,
+            Stock.perc_diff
+        )
+        .join(Stock, IndexHolding.stock_id == Stock.id)
+        .join(Index, IndexHolding.index_id == Index.id)
+        .filter(Index.id == index.id)
+        .order_by(IndexHolding.rank.asc())
+        .all()
+    )
     return render_template(
         "show_index.html",
-        index_data=index_data["index_data"][index_id],
-        stock_data=stock_data["stock_data"],
+        index_name=index.name,
+        index_slug=index.slug,
+        index_data=index_data,
         get_stock_color=get_stock_color
     )
 

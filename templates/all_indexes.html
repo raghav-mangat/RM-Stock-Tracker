@@ -11,14 +11,13 @@
 {% block content %}
     <h1 class="text-center pt-5">Index Dashboard</h1>
     <div class="container my-5 py-5">
-        {% set items = index_data.items() | list %}
-        {% for i in range(0, items|length, 3) %}
+        {% for i in range(0, indexes|length, 3) %}
         <div class="row mb-4">
-            {% for key, value in items[i:i+3] %}
+            {% for index in indexes[i:i+3] %}
             <div class="col-md-4 mb-3">
-                <a href="{{ url_for('show_index', index_id=key) }}" class="index-link">
+                <a href="{{ url_for('show_index', index_id=index.slug) }}" class="index-link">
                   <div class="index-card">
-                    <span class="index-title">{{ value }}</span>
+                    <span class="index-title">{{ index.name }}</span>
                   </div>
                 </a>
               </div>

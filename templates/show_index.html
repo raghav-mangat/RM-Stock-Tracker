@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 
 {% block title %}
-  {{ index_data.name }}
+  {{ index_slug }}
 {% endblock %}
 
 {% block content %}
-  <h1 class="container text-center my-5">{{ index_data.name }}</h1>
+  <h1 class="container text-center my-5">{{ index_name }}</h1>
   <div class="container mb-5">
     <table class="table table-bordered table-hover">
       <thead>
@@ -20,22 +20,22 @@
         </tr>
       </thead>
       <tbody>
-        {% for holding in index_data.holdings %}
+        {% for stock in index_data %}
         <tr>
-          <th scope="row">{{ holding.rank }}</th>
-          <td>{{ holding.name }}</td>
-          {% if holding.ticker %}
-            <td>{{ holding.ticker }}</td>
-            <td>{{ holding.weight }}</td>
-            <td>{{ stock_data[holding.ticker].last_close }}</td>
-            <td>{{ stock_data[holding.ticker].dma_200 }}</td>
-            <td style="background-color: {{ get_stock_color(stock_data[holding.ticker].perc_diff) }};
+          <th scope="row">{{ stock.rank }}</th>
+          <td>{{ stock.stock_name }}</td>
+          {% if stock.ticker %}
+            <td>{{ stock.ticker }}</td>
+            <td>{{ stock.weight }}%</td>
+            <td>{{ stock.last_close }}</td>
+            <td>{{ stock.dma_200 }}</td>
+            <td style="background-color: {{ get_stock_color(stock.perc_diff) }};
                        font-weight: bold">
-              {{ stock_data[holding.ticker].perc_diff }}
+              {{ stock.perc_diff }}
             </td>
           {% else %}
             <td>N/A</td>
-            <td>{{ holding.weight }}</td>
+            <td>{{ stock.weight }}%</td>
             {% for i in range(3) %}
               <td>N/A</td>
             {% endfor %}
