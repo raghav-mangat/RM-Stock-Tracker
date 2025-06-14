@@ -54,7 +54,6 @@ def add_to_index_holdings_table():
         index_holding = IndexHolding(
             index_id=index_id,
             stock_id=stock_id,
-            rank=holding.get("rank"),
             weight=holding.get("weight"),
         )
         db.session.add(index_holding)

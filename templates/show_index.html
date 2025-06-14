@@ -5,12 +5,46 @@
 {% endblock %}
 
 {% block content %}
+  <!----   Heading    --------------------------------------------->
   <h1 class="container text-center my-5">{{ index_name }}</h1>
+
+  <!----   Sort By Dropdown    --------------------------------------------->
+  <div class="container text-center my-4">
+    <div class="row justify-content-end">
+      <div class="col-3">
+        <div class="container justify-content-right">
+          <div class="dropdown">
+            <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+              Sort By
+            </button>
+            <ul class="dropdown-menu">
+              {% for option in dropdown_options %}
+                <li>
+                  <a class="dropdown-item
+                            {% if sort_by == option.sort_by and order == option.order %}active{% endif %}"
+                     href="{% if option.sort_by and option.order %}
+                              {{ url_for('show_index', index_id=index_slug, sort_by=option.sort_by, order=option.order) }}
+                            {% else %}
+                              {{ url_for('show_index', index_id=index_slug) }}
+                            {% endif %}"
+                     {% if sort_by == option.sort_by and order == option.order %}aria-current="true"{% endif %}>
+                    {{ option.label }}
+                  </a>
+                </li>
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!----   Table    --------------------------------------------->
   <div class="container mb-5">
     <table class="table table-bordered table-hover">
       <thead>
         <tr>
-          <th scope="col">Rank</th>
+          <th scope="col">#</th>
           <th scope="col">Name</th>
           <th scope="col">Ticker</th>
           <th scope="col">Weight</th>
@@ -22,28 +56,19 @@
       <tbody>
         {% for stock in index_data %}
         <tr>
-          <th scope="row">{{ stock.rank }}</th>
+          <th scope="row">{{ loop.index }}</th>
           <td>{{ stock.stock_name }}</td>
-          {% if stock.ticker %}
-            <td>{{ stock.ticker }}</td>
-            <td>{{ stock.weight }}%</td>
-            <td>{{ stock.last_close }}</td>
-            <td>{{ stock.dma_200 }}</td>
-            <td style="background-color: {{ get_stock_color(stock.perc_diff) }};
-                       font-weight: bold">
-              {{ stock.perc_diff }}
-            </td>
-          {% else %}
-            <td>N/A</td>
-            <td>{{ stock.weight }}%</td>
-            {% for i in range(3) %}
-              <td>N/A</td>
-            {% endfor %}
-          {% endif %}
+          <td>{{ stock.ticker }}</td>
+          <td>{{ stock.weight }}%</td>
+          <td>{{ stock.last_close }}</td>
+          <td>{{ stock.dma_200 }}</td>
+          <td style="background-color: {{ get_stock_color(stock.perc_diff) }};
+                     font-weight: bold">
+            {{ stock.perc_diff }}
+          </td>
         </tr>
       {% endfor %}
       </tbody>
     </table>
   </div>
-
 {% endblock %}

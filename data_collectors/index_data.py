@@ -58,7 +58,6 @@ def fetch_index_data(url):
             if ticker == "":
                 ticker = "N/A"
             index_holdings.append({
-                "rank": cols[0].text.strip(),
                 "ticker": ticker,
                 "weight": cols[3].text.strip().replace("%", "")
             })

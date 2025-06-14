@@ -40,7 +40,6 @@ class IndexHolding(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
     index_id: Mapped[int] = mapped_column(ForeignKey("indexes.id"), nullable=False)
     stock_id: Mapped[int] = mapped_column(ForeignKey("stocks.id"), nullable=False)
-    rank: Mapped[int] = mapped_column(nullable=True)
     weight: Mapped[float] = mapped_column(nullable=True)
 
     index: Mapped[Index] = relationship(back_populates="holdings")
