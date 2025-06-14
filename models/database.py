@@ -44,3 +44,13 @@ class IndexHolding(db.Model):
 
     index: Mapped[Index] = relationship(back_populates="holdings")
     stock: Mapped[Stock] = relationship(back_populates="index_holdings")
+
+class StockMaster(db.Model):
+    __tablename__ = "stocks_master"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    ticker: Mapped[str] = mapped_column(String(10), nullable=False)
+    name: Mapped[str] = mapped_column(String(100), nullable=False)
+    type: Mapped[str] = mapped_column(String(100), nullable=True)
+    # Operating mic, ISO Code for the exchange
+    primary_exchange: Mapped[str] = mapped_column(String(10), nullable=False)

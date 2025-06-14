@@ -1,5 +1,5 @@
-from flask import Flask, render_template, request
-from models.database import db, Stock, Index, IndexHolding
+from flask import Flask, render_template, request, jsonify
+from models.database import db, Stock, Index, IndexHolding, StockMaster
 from dotenv import load_dotenv
 import os
 
@@ -16,11 +16,7 @@ with app.app_context():
 def home():
     return render_template("home.html")
 
-@app.route("/stock")
-def all_stocks():
-    return render_template("all_stocks.html")
-
-@app.route("/index")
+@app.route("/all_indexes")
 def all_indexes():
     indexes = db.session.execute(db.select(Index)).scalars().all()
 
@@ -84,6 +80,25 @@ def show_index(index_id):
         order=order,
         get_stock_color=get_stock_color
     )
+
+@app.route("/search_stocks")
+def search_stocks():
+    return render_template("search_stocks.html")
+
+@app.route("/query_stocks")
+def query_stocks():
+    query = request.args.get("q", "").upper()
+    results = (
+        db.session.query(StockMaster)
+        .filter(StockMaster.ticker.like(f"%{query}%") | StockMaster.name.ilike(f"%{query}%"))
+        .limit(10)
+        .all()
+    )
+    return jsonify([{"ticker": s.ticker, "name": s.name} for s in results])
+
+@app.route("/stock/<string:ticker>")
+def show_stock(ticker):
+    return ticker
 
 def get_stock_color(perc_diff):
     """

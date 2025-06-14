@@ -70,3 +70,20 @@ def fetch_stock_data(ticker):
         print(f"Error for {ticker}: {e}")
 
     return stock_data
+
+def get_all_stocks():
+    """
+    Returns a list of all the stocks available in polygon API.
+    """
+    print("Retrieving list of all stocks in polygon API...")
+    stocks = []
+    for t in client.list_tickers(
+            market="stocks",
+            active="true",
+            order="asc",
+            limit="1000",
+            sort="ticker",
+    ):
+        stocks.append(t)
+    print("Retrieved all stocks from polygon API!")
+    return stocks

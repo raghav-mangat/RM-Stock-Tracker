@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}Stock Search{% endblock %}
+
+{% block style %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles/search_stocks.css') }}">
+{% endblock %}
+
+{% block content %}
+  <div class="my-5">
+    <div class="p-5 text-center bg-body-tertiary">
+      <div class="container py-5">
+        <h1 class="text-body-emphasis">Search Stocks Instantly</h1>
+        <p class="col-lg-8 mx-auto lead">
+          Type a stock ticker or company name to explore detailed stock data.
+        </p>
+      </div>
+    </div>
+  </div>
+  <div class="container my-5">
+    <div class="search-container position-relative mx-auto" style="max-width: 500px;">
+      <input
+        type="text"
+        id="search-bar"
+        class="form-control form-control-lg"
+        placeholder="Search for a stock (e.g., AAPL, Microsoft)..."
+        autocomplete="off"
+      />
+      <div id="suggestions"></div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block scripts %}
+  <script src="{{ url_for('static', filename='js/search_stocks.js') }}"></script>
+{% endblock %}
