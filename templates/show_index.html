@@ -4,6 +4,10 @@
   {{ index_slug }}
 {% endblock %}
 
+{% block style %}
+  <link href="{{ url_for('static', filename='styles/show_index.css') }}" rel="stylesheet">
+{% endblock %}
+
 {% block content %}
   <!----   Heading    --------------------------------------------->
   <h1 class="container text-center my-5">{{ index_name }}</h1>
@@ -55,18 +59,20 @@
       </thead>
       <tbody>
         {% for stock in index_data %}
-        <tr>
-          <th scope="row">{{ loop.index }}</th>
-          <td>{{ stock.stock_name }}</td>
-          <td>{{ stock.ticker }}</td>
-          <td>{{ stock.weight }}%</td>
-          <td>{{ stock.last_close }}</td>
-          <td>{{ stock.dma_200 }}</td>
-          <td style="background-color: {{ get_stock_color(stock.perc_diff) }};
-                     font-weight: bold">
-            {{ stock.perc_diff }}
-          </td>
-        </tr>
+          <tr>
+            <th scope="row">{{ loop.index }}</th>
+            <td><a href="{{ url_for('show_stock', ticker=stock.ticker) }}" class="stock-link">
+              {{ stock.stock_name }}
+            </a></td>
+            <td>{{ stock.ticker }}</td>
+            <td>{{ stock.weight }}%</td>
+            <td>{{ stock.last_close }}</td>
+            <td>{{ stock.dma_200 }}</td>
+            <td style="background-color: {{ get_stock_color(stock.perc_diff) }};
+                       font-weight: bold">
+              {{ stock.perc_diff }}
+            </td>
+          </tr>
       {% endfor %}
       </tbody>
     </table>
