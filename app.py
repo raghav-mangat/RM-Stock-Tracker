@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, jsonify
 from models.database import db, Stock, Index, IndexHolding, StockMaster
 from dotenv import load_dotenv
 from data_collectors.stock_data import fetch_stock_data
+import models
 import os
 
 load_dotenv()
@@ -52,8 +53,8 @@ def show_index(index_id):
         ("last_close", "asc"): Stock.last_close.asc(),
         ("dma_200", "desc"): Stock.dma_200.desc(),
         ("dma_200", "asc"): Stock.dma_200.asc(),
-        ("perc_diff", "desc"): Stock.perc_diff.desc(),
-        ("perc_diff", "asc"): Stock.perc_diff.asc(),
+        ("perc_diff", "desc"): Stock.dma_200_perc_diff.desc(),
+        ("perc_diff", "asc"): Stock.dma_200_perc_diff.asc(),
     }
 
     index = Index.query.filter_by(slug=index_id).first_or_404()
@@ -64,7 +65,7 @@ def show_index(index_id):
             Stock.name.label("stock_name"),
             Stock.last_close,
             Stock.dma_200,
-            Stock.perc_diff
+            Stock.dma_200_perc_diff
         )
         .join(Stock, IndexHolding.stock_id == Stock.id)
         .filter(IndexHolding.index_id == index.id)
@@ -107,7 +108,15 @@ def show_stock(ticker):
     stock = Stock.query.filter_by(ticker=ticker).first()
     if not stock:
         stock = fetch_stock_data(ticker)
-    return render_template("show_stock.html", stock=stock)
+
+    # Get list of related companies for the given ticker
+    rel_companies = []
+    if type(stock) == models.database.Stock and stock.related_companies:
+        rel_companies = stock.related_companies.split(',')
+    elif type(stock) == dict and stock.get("related_companies"):
+        rel_companies = stock["related_companies"].split(",")
+
+    return render_template("show_stock.html", stock=stock, rel_companies=rel_companies)
 
 def get_stock_color(perc_diff):
     """

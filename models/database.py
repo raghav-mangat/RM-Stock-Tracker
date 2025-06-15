@@ -1,6 +1,7 @@
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-from sqlalchemy import String, ForeignKey
+from sqlalchemy import String, ForeignKey, Date
+from datetime import date
 
 # Create a base class for SQLAlchemy
 class Base(DeclarativeBase):
@@ -16,10 +17,41 @@ class Stock(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
     ticker: Mapped[str] = mapped_column(String(10), unique=True, nullable=False)
     name: Mapped[str] = mapped_column(String(100), nullable=False)
-    last_close: Mapped[float] = mapped_column(nullable=True)
-    dma_200: Mapped[float] = mapped_column(nullable=True)
-    perc_diff: Mapped[float] = mapped_column(nullable=True)
 
+    # Company Info
+    description: Mapped[str] = mapped_column(nullable=True)
+    homepage_url: Mapped[str] = mapped_column(nullable=True)
+    list_date: Mapped[date] = mapped_column(db.Date, nullable=True)
+    industry: Mapped[str] = mapped_column(nullable=True)
+    type: Mapped[str] = mapped_column(nullable=True)
+    total_employees: Mapped[int] = mapped_column(nullable=True)
+    market_cap: Mapped[float] = mapped_column(nullable=True)
+
+    # Branding
+    icon_url: Mapped[str] = mapped_column(nullable=True)
+
+    # Snapshot Data
+    last_close: Mapped[float] = mapped_column(nullable=True)
+    last_open: Mapped[float] = mapped_column(nullable=True)
+    day_high: Mapped[float] = mapped_column(nullable=True)
+    day_low: Mapped[float] = mapped_column(nullable=True)
+    volume: Mapped[float] = mapped_column(nullable=True)
+    todays_change: Mapped[float] = mapped_column(nullable=True)
+    todays_change_perc: Mapped[float] = mapped_column(nullable=True)
+
+    # Moving Averages
+    dma_50: Mapped[float] = mapped_column(nullable=True)
+    dma_200: Mapped[float] = mapped_column(nullable=True)
+    dma_200_perc_diff: Mapped[float] = mapped_column(nullable=True)
+
+    # 52 Week High/Low
+    high_52w: Mapped[float] = mapped_column(nullable=True)
+    low_52w: Mapped[float] = mapped_column(nullable=True)
+
+    # Related Companies (comma-separated string)
+    related_companies: Mapped[str] = mapped_column(nullable=True)
+
+    # Relationships
     index_holdings: Mapped[list["IndexHolding"]] = relationship(back_populates="stock")
 
 

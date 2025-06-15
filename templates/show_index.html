@@ -68,9 +68,9 @@
             <td>{{ stock.weight }}%</td>
             <td>{{ stock.last_close }}</td>
             <td>{{ stock.dma_200 }}</td>
-            <td style="background-color: {{ get_stock_color(stock.perc_diff) }};
+            <td style="background-color: {{ get_stock_color(stock.dma_200_perc_diff) }};
                        font-weight: bold">
-              {{ stock.perc_diff }}
+              {{ stock.dma_200_perc_diff }}
             </td>
           </tr>
       {% endfor %}

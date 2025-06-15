@@ -13,11 +13,9 @@ db.init_app(app)
 
 def update_stocks_master_table():
     print("Updating stocks_master table...")
-    # Delete all existing rows
     db.session.query(StockMaster).delete()
     db.session.commit()
 
-    # Add new rows
     stocks = get_all_stocks()
     for stock in stocks:
         db.session.add(
@@ -31,7 +29,7 @@ def update_stocks_master_table():
     db.session.commit()
     print("stocks_master table updated!")
 
-def add_to_indexes_table():
+def add_to_indexes_table(index_data):
     index = Index.query.filter_by(slug=index_data.get("slug")).first()
     if not index:
         index = Index(
@@ -46,27 +44,67 @@ def add_to_indexes_table():
         index.url = index_data.get("url")
     return index.id
 
-def add_to_stocks_table():
+def add_to_stocks_table(ticker):
     stock_data = fetch_stock_data(ticker)
-    stock = Stock.query.filter_by(ticker=stock_data.get("ticker", "N/A")).first()
+    if not stock_data:
+        return None
+
+    stock = Stock.query.filter_by(ticker=stock_data.get("ticker")).first()
     if not stock:
         stock = Stock(
-            ticker=stock_data.get("ticker", "N/A"),
-            name=stock_data.get("name", "N/A"),
-            last_close=stock_data.get("last_close", 0),
-            dma_200=stock_data.get("dma_200", 0),
-            perc_diff=stock_data.get("perc_diff", 0)
+            ticker=stock_data.get("ticker"),
+            name=stock_data.get("name"),
+            description=stock_data.get("description"),
+            homepage_url=stock_data.get("homepage_url"),
+            list_date=stock_data.get("list_date"),
+            industry=stock_data.get("industry"),
+            type=stock_data.get("type"),
+            total_employees=stock_data.get("total_employees"),
+            market_cap=stock_data.get("market_cap"),
+            icon_url=stock_data.get("icon_url"),
+            last_close=stock_data.get("last_close"),
+            last_open=stock_data.get("last_open"),
+            day_high=stock_data.get("day_high"),
+            day_low=stock_data.get("day_low"),
+            volume=stock_data.get("volume"),
+            todays_change=stock_data.get("todays_change"),
+            todays_change_perc=stock_data.get("todays_change_perc"),
+            dma_50=stock_data.get("dma_50"),
+            dma_200=stock_data.get("dma_200"),
+            dma_200_perc_diff=stock_data.get("dma_200_perc_diff"),
+            high_52w=stock_data.get("high_52w"),
+            low_52w=stock_data.get("low_52w"),
+            related_companies=stock_data.get("related_companies")
         )
         db.session.add(stock)
         db.session.flush()
     else:
-        stock.name = stock_data.get("name", "N/A")
-        stock.last_close = stock_data.get("last_close", 0)
-        stock.dma_200 = stock_data.get("dma_200", 0)
-        stock.perc_diff = stock_data.get("perc_diff", 0)
+        # Update existing fields
+        stock.name = stock_data.get("name")
+        stock.description = stock_data.get("description")
+        stock.homepage_url = stock_data.get("homepage_url")
+        stock.list_date = stock_data.get("list_date")
+        stock.industry = stock_data.get("industry")
+        stock.type = stock_data.get("type")
+        stock.total_employees = stock_data.get("total_employees")
+        stock.market_cap = stock_data.get("market_cap")
+        stock.icon_url = stock_data.get("icon_url")
+        stock.last_close = stock_data.get("last_close")
+        stock.last_open = stock_data.get("last_open")
+        stock.day_high = stock_data.get("day_high")
+        stock.day_low = stock_data.get("day_low")
+        stock.volume = stock_data.get("volume")
+        stock.todays_change = stock_data.get("todays_change")
+        stock.todays_change_perc = stock_data.get("todays_change_perc")
+        stock.dma_50 = stock_data.get("dma_50")
+        stock.dma_200 = stock_data.get("dma_200")
+        stock.dma_200_perc_diff = stock_data.get("dma_200_perc_diff")
+        stock.high_52w = stock_data.get("high_52w")
+        stock.low_52w = stock_data.get("low_52w")
+        stock.related_companies = stock_data.get("related_companies")
     return stock.id
 
-def add_to_index_holdings_table():
+def add_to_index_holdings_table(index_id, stock_id, holding):
     index_holding = IndexHolding.query.filter_by(index_id=index_id, stock_id=stock_id).first()
     if not index_holding:
         index_holding = IndexHolding(
@@ -77,20 +115,24 @@ def add_to_index_holdings_table():
         db.session.add(index_holding)
         db.session.flush()
     else:
-        index_holding.rank = holding.get("rank")
         index_holding.weight = holding.get("weight")
+        index_holding.rank = holding.get("rank")
 
 with app.app_context():
     print("Starting Database Population...\n")
     db.create_all()
     update_stocks_master_table()
+
     for index_data in indexes.values():
-        index_id = add_to_indexes_table()
+        index_id = add_to_indexes_table(index_data)
         holdings = fetch_index_data(index_data.get("url"))
         for holding in holdings:
-            ticker = holding.get("ticker", "N/A")
-            stock_id = add_to_stocks_table()
-            add_to_index_holdings_table()
+            ticker = holding.get("ticker")
+            if not ticker:
+                continue
+            stock_id = add_to_stocks_table(ticker)
+            if stock_id:
+                add_to_index_holdings_table(index_id, stock_id, holding)
 
     db.session.commit()
     print("\nDatabase Population Completed!")
