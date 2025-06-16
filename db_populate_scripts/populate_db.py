@@ -7,6 +7,13 @@ from data_collectors.stock_data import fetch_stock_data, get_all_stocks
 
 load_dotenv()
 
+# Ensure the instance folder exists for the database
+db_uri = os.getenv("DATABASE_URI")
+if db_uri and db_uri.startswith("sqlite:///"):
+    db_path = db_uri.replace("sqlite:///", "")
+    db_dir = os.path.dirname(db_path)
+    os.makedirs(db_dir, exist_ok=True)
+
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URI")
 db.init_app(app)
