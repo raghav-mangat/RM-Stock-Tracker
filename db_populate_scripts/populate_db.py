@@ -1,18 +1,27 @@
-from flask import Flask
-from models.database import db, Stock, Index, IndexHolding, StockMaster
-from dotenv import load_dotenv
 import os
-from data_collectors.index_data import indexes, fetch_index_data
-from data_collectors.stock_data import fetch_stock_data, get_all_stocks
+import sys
+from dotenv import load_dotenv
+from flask import Flask
 
+# Load environment variables from .env file
 load_dotenv()
 
-# Ensure the instance folder exists for the database
-db_uri = os.getenv("DATABASE_URI")
-if db_uri and db_uri.startswith("sqlite:///"):
-    db_path = db_uri.replace("sqlite:///", "")
-    db_dir = os.path.dirname(db_path)
-    os.makedirs(db_dir, exist_ok=True)
+IS_RELEASE = os.getenv("IS_RELEASE")
+
+if IS_RELEASE == "1":
+    # Ensure the project root is in Python's path: in PythonAnywhere
+    sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+elif IS_RELEASE == "0":
+    # Ensure the instance folder exists for the database: in local PC
+    db_uri = os.getenv("DATABASE_URI")
+    if db_uri and db_uri.startswith("sqlite:///"):
+        db_path = db_uri.replace("sqlite:///", "")
+        db_dir = os.path.dirname(db_path)
+        os.makedirs(db_dir, exist_ok=True)
+
+from models.database import db, Stock, Index, IndexHolding, StockMaster
+from data_collectors.index_data import indexes, fetch_index_data
+from data_collectors.stock_data import fetch_stock_data, get_all_stocks
 
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URI")
