@@ -137,4 +137,4 @@ def get_stock_color(perc_diff):
         return "#ffff66" # Yellow
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run()
