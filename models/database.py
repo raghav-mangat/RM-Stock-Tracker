@@ -1,7 +1,6 @@
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-from sqlalchemy import String, ForeignKey, Date
-from datetime import date
+from sqlalchemy import String, Text, ForeignKey, Date
 
 # Create a base class for SQLAlchemy
 class Base(DeclarativeBase):
@@ -19,16 +18,16 @@ class Stock(db.Model):
     name: Mapped[str] = mapped_column(String(100), nullable=False)
 
     # Company Info
-    description: Mapped[str] = mapped_column(nullable=True)
-    homepage_url: Mapped[str] = mapped_column(nullable=True)
-    list_date: Mapped[date] = mapped_column(db.Date, nullable=True)
-    industry: Mapped[str] = mapped_column(nullable=True)
-    type: Mapped[str] = mapped_column(nullable=True)
+    description: Mapped[str] = mapped_column(Text, nullable=True)
+    homepage_url: Mapped[str] = mapped_column(Text, nullable=True)
+    list_date: Mapped[Date] = mapped_column(db.Date, nullable=True)
+    industry: Mapped[str] = mapped_column(String(100), nullable=True)
+    type: Mapped[str] = mapped_column(String(50), nullable=True)
     total_employees: Mapped[int] = mapped_column(nullable=True)
     market_cap: Mapped[float] = mapped_column(nullable=True)
 
     # Branding
-    icon_url: Mapped[str] = mapped_column(nullable=True)
+    icon_url: Mapped[str] = mapped_column(Text, nullable=True)
 
     # Snapshot Data
     last_close: Mapped[float] = mapped_column(nullable=True)
@@ -49,7 +48,7 @@ class Stock(db.Model):
     low_52w: Mapped[float] = mapped_column(nullable=True)
 
     # Related Companies (comma-separated string)
-    related_companies: Mapped[str] = mapped_column(nullable=True)
+    related_companies: Mapped[str] = mapped_column(Text, nullable=True)
 
     # Relationships
     index_holdings: Mapped[list["IndexHolding"]] = relationship(back_populates="stock")
@@ -61,7 +60,7 @@ class Index(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
     slug: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
-    url: Mapped[str] = mapped_column(String(100), nullable=False)
+    url: Mapped[str] = mapped_column(String(255), nullable=False)
 
     holdings: Mapped[list["IndexHolding"]] = relationship(back_populates="index")
 
@@ -77,6 +76,7 @@ class IndexHolding(db.Model):
     index: Mapped[Index] = relationship(back_populates="holdings")
     stock: Mapped[Stock] = relationship(back_populates="index_holdings")
 
+
 class StockMaster(db.Model):
     __tablename__ = "stocks_master"
 
@@ -84,5 +84,4 @@ class StockMaster(db.Model):
     ticker: Mapped[str] = mapped_column(String(10), nullable=False)
     name: Mapped[str] = mapped_column(String(100), nullable=False)
     type: Mapped[str] = mapped_column(String(100), nullable=True)
-    # Operating mic, ISO Code for the exchange
     primary_exchange: Mapped[str] = mapped_column(String(10), nullable=False)
