@@ -74,4 +74,5 @@ To run this project locally:
 
 ## License
 
-MIT License — free to use and modify.
+This project is licensed under the Creative Commons Attribution 4.0 International License.  
+See the [LICENSE](./LICENSE.md) file for details.
