@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from polygon import RESTClient
 from dotenv import load_dotenv
 import os
+from models.database import Stock
 
 load_dotenv()
 
@@ -155,4 +156,8 @@ def fetch_stock_data(ticker):
     stock_data = get_ticker_dmas(ticker, stock_data)
     stock_data = get_ticker_52w_hl(ticker, stock_data)
 
-    return stock_data
+    if not stock_data.get("ticker"):
+        return None
+
+    stock = Stock(**stock_data)
+    return stock

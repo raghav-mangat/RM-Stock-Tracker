@@ -65,60 +65,25 @@ def add_to_stocks_table(ticker):
     if not stock_data:
         return None
 
-    stock = Stock.query.filter_by(ticker=stock_data.get("ticker")).first()
-    if not stock:
-        stock = Stock(
-            ticker=stock_data.get("ticker"),
-            name=stock_data.get("name"),
-            description=stock_data.get("description"),
-            homepage_url=stock_data.get("homepage_url"),
-            list_date=stock_data.get("list_date"),
-            industry=stock_data.get("industry"),
-            type=stock_data.get("type"),
-            total_employees=stock_data.get("total_employees"),
-            market_cap=stock_data.get("market_cap"),
-            icon_url=stock_data.get("icon_url"),
-            last_close=stock_data.get("last_close"),
-            last_open=stock_data.get("last_open"),
-            day_high=stock_data.get("day_high"),
-            day_low=stock_data.get("day_low"),
-            volume=stock_data.get("volume"),
-            todays_change=stock_data.get("todays_change"),
-            todays_change_perc=stock_data.get("todays_change_perc"),
-            dma_50=stock_data.get("dma_50"),
-            dma_200=stock_data.get("dma_200"),
-            dma_200_perc_diff=stock_data.get("dma_200_perc_diff"),
-            high_52w=stock_data.get("high_52w"),
-            low_52w=stock_data.get("low_52w"),
-            related_companies=stock_data.get("related_companies")
-        )
-        db.session.add(stock)
+    # Check if a stock with the same ticker already exists
+    existing_stock = Stock.query.filter_by(ticker=stock_data.ticker).first()
+
+    if not existing_stock:
+        db.session.add(stock_data)
         db.session.flush()
+        return stock_data.id
     else:
-        # Update existing fields
-        stock.name = stock_data.get("name")
-        stock.description = stock_data.get("description")
-        stock.homepage_url = stock_data.get("homepage_url")
-        stock.list_date = stock_data.get("list_date")
-        stock.industry = stock_data.get("industry")
-        stock.type = stock_data.get("type")
-        stock.total_employees = stock_data.get("total_employees")
-        stock.market_cap = stock_data.get("market_cap")
-        stock.icon_url = stock_data.get("icon_url")
-        stock.last_close = stock_data.get("last_close")
-        stock.last_open = stock_data.get("last_open")
-        stock.day_high = stock_data.get("day_high")
-        stock.day_low = stock_data.get("day_low")
-        stock.volume = stock_data.get("volume")
-        stock.todays_change = stock_data.get("todays_change")
-        stock.todays_change_perc = stock_data.get("todays_change_perc")
-        stock.dma_50 = stock_data.get("dma_50")
-        stock.dma_200 = stock_data.get("dma_200")
-        stock.dma_200_perc_diff = stock_data.get("dma_200_perc_diff")
-        stock.high_52w = stock_data.get("high_52w")
-        stock.low_52w = stock_data.get("low_52w")
-        stock.related_companies = stock_data.get("related_companies")
-    return stock.id
+        # Update the existing stock with values from new_stock
+        for attr in [
+            "name", "description", "homepage_url", "list_date", "industry", "type",
+            "total_employees", "market_cap", "icon_url", "last_close", "last_open",
+            "day_high", "day_low", "volume", "todays_change", "todays_change_perc",
+            "dma_50", "dma_200", "dma_200_perc_diff", "high_52w", "low_52w",
+            "related_companies"
+        ]:
+            setattr(existing_stock, attr, getattr(stock_data, attr))
+        db.session.flush()
+        return existing_stock.id
 
 def add_to_index_holdings_table(index_id, stock_id, holding):
     index_holding = IndexHolding.query.filter_by(index_id=index_id, stock_id=stock_id).first()

@@ -111,10 +111,8 @@ def show_stock(ticker):
 
     # Get list of related companies for the given ticker
     rel_companies = []
-    if type(stock) == models.database.Stock and stock.related_companies:
+    if stock and stock.related_companies:
         rel_companies = stock.related_companies.split(',')
-    elif type(stock) == dict and stock.get("related_companies"):
-        rel_companies = stock["related_companies"].split(",")
 
     return render_template("show_stock.html", stock=stock, rel_companies=rel_companies)
 
