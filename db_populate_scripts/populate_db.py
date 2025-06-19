@@ -21,7 +21,7 @@ elif IS_RELEASE == "0":
 
 from models.database import db, Stock, Index, IndexHolding, StockMaster
 from data_collectors.index_data import indexes, fetch_index_data
-from data_collectors.stock_data import fetch_stock_data, get_all_stocks
+from data_collectors.stock_data import fetch_stock_data, get_all_stocks, stock_attributes
 
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URI")
@@ -74,13 +74,7 @@ def add_to_stocks_table(ticker):
         return stock_data.id
     else:
         # Update the existing stock with values from new_stock
-        for attr in [
-            "name", "description", "homepage_url", "list_date", "industry", "type",
-            "total_employees", "market_cap", "icon_url", "last_close", "last_open",
-            "day_high", "day_low", "volume", "todays_change", "todays_change_perc",
-            "dma_50", "dma_200", "dma_200_perc_diff", "high_52w", "low_52w",
-            "related_companies"
-        ]:
+        for attr in stock_attributes:
             setattr(existing_stock, attr, getattr(stock_data, attr))
         db.session.flush()
         return existing_stock.id
@@ -99,21 +93,24 @@ def add_to_index_holdings_table(index_id, stock_id, holding):
         index_holding.weight = holding.get("weight")
         index_holding.rank = holding.get("rank")
 
-with app.app_context():
-    print("Starting Database Population...\n")
-    db.create_all()
-    update_stocks_master_table()
+def populate_db():
+    with app.app_context():
+        print("Starting Database Population...\n")
+        db.create_all()
+        update_stocks_master_table()
 
-    for index_data in indexes.values():
-        index_id = add_to_indexes_table(index_data)
-        holdings = fetch_index_data(index_data.get("url"))
-        for holding in holdings:
-            ticker = holding.get("ticker")
-            if not ticker:
-                continue
-            stock_id = add_to_stocks_table(ticker)
-            if stock_id:
-                add_to_index_holdings_table(index_id, stock_id, holding)
+        for index_data in indexes.values():
+            index_id = add_to_indexes_table(index_data)
+            holdings = fetch_index_data(index_data.get("url"))
+            for holding in holdings:
+                ticker = holding.get("ticker")
+                if not ticker:
+                    continue
+                stock_id = add_to_stocks_table(ticker)
+                if stock_id:
+                    add_to_index_holdings_table(index_id, stock_id, holding)
 
-    db.session.commit()
-    print("\nDatabase Population Completed!")
+        db.session.commit()
+        print("\nDatabase Population Completed!")
+
+populate_db()

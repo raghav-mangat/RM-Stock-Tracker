@@ -9,6 +9,15 @@ load_dotenv()
 POLYGON_API_KEY = os.getenv("POLYGON_API_KEY")
 client = RESTClient(POLYGON_API_KEY)
 
+# List of all attributes that we store in the database for a given stock
+stock_attributes = [
+            "name", "description", "homepage_url", "list_date", "industry", "type",
+            "total_employees", "market_cap", "icon_url", "last_close", "last_open",
+            "day_high", "day_low", "volume", "todays_change", "todays_change_perc",
+            "dma_50", "dma_200", "dma_200_perc_diff", "high_52w", "low_52w",
+            "related_companies"
+        ]
+
 def get_all_stocks():
     print("Retrieving list of all stocks in polygon API...")
     stocks = []

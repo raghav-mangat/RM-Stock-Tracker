@@ -2,7 +2,6 @@ from flask import Flask, render_template, request, jsonify
 from models.database import db, Stock, Index, IndexHolding, StockMaster
 from dotenv import load_dotenv
 from data_collectors.stock_data import fetch_stock_data
-import models
 import os
 
 load_dotenv()
@@ -10,9 +9,6 @@ app = Flask(__name__)
 
 app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URI")
 db.init_app(app)
-
-with app.app_context():
-    db.create_all()
 
 @app.route("/")
 def home():
