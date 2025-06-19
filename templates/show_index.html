@@ -65,12 +65,12 @@
               {{ stock.stock_name }}
             </a></td>
             <td>{{ stock.ticker }}</td>
-            <td>{{ stock.weight }}%</td>
-            <td>{{ stock.last_close }}</td>
-            <td>{{ stock.dma_200 }}</td>
+            <td>{{ "{:,.2f}".format(stock.weight) }}%</td>
+            <td>{{ "{:,.2f}".format(stock.last_close) }}</td>
+            <td>{{ "{:,.2f}".format(stock.dma_200) }}</td>
             <td style="background-color: {{ get_stock_color(stock.dma_200_perc_diff) }};
                        font-weight: bold">
-              {{ stock.dma_200_perc_diff }}
+              {{ "{:,.2f}".format(stock.dma_200_perc_diff) }}
             </td>
           </tr>
       {% endfor %}

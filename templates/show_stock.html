@@ -1,54 +1,58 @@
 {% extends "base.html" %}
 
 {% block title %}
-  {{ stock.ticker }}
+  {{ stock.ticker or "N/A"}}
 {% endblock %}
 
 {% block content %}
-<div class="container my-5">
-  <h1 class="text-center mb-4">{{ stock.ticker }} Details</h1>
+{% if stock.ticker %}
+  <div class="container my-5">
+    <h1 class="text-center mb-4">{{ stock.ticker }} Details</h1>
 
-  <div class="row mt-5">
-    <div class="col-md-4 text-center mb-5">
-      <h4>{{ stock.name }}</h4>
-      <p class="text-muted">{{ stock.description }}</p>
-    </div>
+    <div class="row mt-5">
+      <div class="col-md-4 text-center mb-5">
+        <h4>{{ stock.name }}</h4>
+        <p class="text-muted">{{ stock.description }}</p>
+      </div>
 
-    <div class="col-md-8">
-      <table class="table table-bordered table-striped">
-        <tbody>
-          <tr><th>Homepage</th><td><a href="{{ stock.homepage_url }}" target="_blank">{{ stock.homepage_url }}</a></td></tr>
-          <tr><th>Industry</th><td>{{ stock.industry }}</td></tr>
-          <tr><th>List Date</th><td>{{ stock.list_date }}</td></tr>
-          <tr><th>Type</th><td>{{ stock.type }}</td></tr>
-          <tr><th>Total Employees</th><td>{{ stock.total_employees }}</td></tr>
-          <tr><th>Market Cap</th><td>${{ "{:,.2f}".format(stock.market_cap) }}</td></tr>
-          <tr><th>Last Close</th><td>${{ stock.last_close }}</td></tr>
-          <tr><th>Open</th><td>${{ stock.last_open }}</td></tr>
-          <tr><th>High</th><td>${{ stock.day_high }}</td></tr>
-          <tr><th>Low</th><td>${{ stock.day_low }}</td></tr>
-          <tr><th>Volume</th><td>{{ stock.volume }}</td></tr>
-          <tr><th>Today's Change</th><td>{{ stock.todays_change }} ({{ stock.todays_change_perc }}%)</td></tr>
-          <tr><th>200 DMA</th><td>${{ stock.dma_200 }}</td></tr>
-          <tr><th>200 DMA % Diff</th><td>{{ stock.dma_200_perc_diff }}%</td></tr>
-          <tr><th>50 DMA</th><td>${{ stock.dma_50 }}</td></tr>
-          <tr><th>52W High</th><td>${{ stock.high_52w }}</td></tr>
-          <tr><th>52W Low</th><td>${{ stock.low_52w }}</td></tr>
-          <tr><th>Related Companies</th>
-            <td>
-              {% for ticker in rel_companies %}
-                <span>
-                  <a href="{{ url_for('show_stock', ticker=ticker) }}">{{ ticker }}</a>
-                  {% if loop.index < rel_companies|length %}
-                  ,
-                  {% endif %}
-                </span>
-              {% endfor %}
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <div class="col-md-8">
+        <table class="table table-bordered table-striped">
+          <tbody>
+            <tr><th>Homepage</th><td><a href="{{ stock.homepage_url }}" target="_blank">{{ stock.homepage_url }}</a></td></tr>
+            <tr><th>Industry</th><td>{{ stock.industry }}</td></tr>
+            <tr><th>List Date</th><td>{{ stock.list_date }}</td></tr>
+            <tr><th>Type</th><td>{{ stock.type }}</td></tr>
+            <tr><th>Total Employees</th><td>{{ "{:,}".format(stock.total_employees) }}</td></tr>
+            <tr><th>Market Cap</th><td>${{ "{:,.2f}".format(stock.market_cap) }}</td></tr>
+            <tr><th>Last Close</th><td>${{ "{:,.2f}".format(stock.last_close) }}</td></tr>
+            <tr><th>Open</th><td>${{ "{:,.2f}".format(stock.last_open) }}</td></tr>
+            <tr><th>High</th><td>${{ "{:,.2f}".format(stock.day_high) }}</td></tr>
+            <tr><th>Low</th><td>${{ "{:,.2f}".format(stock.day_low) }}</td></tr>
+            <tr><th>Volume</th><td>{{ "{:,.2f}".format(stock.volume) }}</td></tr>
+            <tr><th>Today's Change</th><td>{{ "{:,.2f}".format(stock.todays_change) }} ({{ "{:,.2f}".format(stock.todays_change_perc) }}%)</td></tr>
+            <tr><th>200 DMA</th><td>${{ "{:,.2f}".format(stock.dma_200) }}</td></tr>
+            <tr><th>200 DMA % Diff</th><td>{{ "{:,.2f}".format(stock.dma_200_perc_diff) }}%</td></tr>
+            <tr><th>50 DMA</th><td>${{ "{:,.2f}".format(stock.dma_50) }}</td></tr>
+            <tr><th>52W High</th><td>${{ "{:,.2f}".format(stock.high_52w) }}</td></tr>
+            <tr><th>52W Low</th><td>${{ "{:,.2f}".format(stock.low_52w) }}</td></tr>
+            <tr><th>Related Companies</th>
+              <td>
+                {% for ticker in rel_companies %}
+                  <span>
+                    <a href="{{ url_for('show_stock', ticker=ticker) }}">{{ ticker }}</a>
+                    {% if loop.index < rel_companies|length %}
+                    ,
+                    {% endif %}
+                  </span>
+                {% endfor %}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
-</div>
+{% else %}
+  <h1 class="container text-center my-5">Stock Does Not Exist!</h1>
+{% endif %}
 {% endblock %}
