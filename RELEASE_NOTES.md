@@ -65,4 +65,4 @@ The % difference between the last close and 200-day moving average is color-code
 
 Version `v2.0.0` transforms the RM Stock Tracker into a scalable, real-time web app with search, detailed views, and index analysis. It's a strong foundation for adding features like charts, watchlists, and login functionality in the future.
 
-**Full Changelog**: https://github.com/RaghavMangat2000/Stocks-Web-App/compare/v1.2.0...v2.0.0
+**Full Changelog**: https://github.com/RaghavMangat2000/RM-Stock-Tracker/compare/v1.2.0...v2.0.0
