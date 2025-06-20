@@ -1,27 +1,34 @@
 .index-card {
-    aspect-ratio: 1 / 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    background-color: #f8f9fa;
-    border-radius: 12px;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-    cursor: pointer;
+  aspect-ratio: 1 / 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  border-radius: 12px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  cursor: pointer;
+  padding: 1rem;
 }
 
 .index-card:hover {
-    transform: scale(1.03);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    background-color: #e9ecef;
+  transform: scale(1.03);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  background-color: #e9ecef; /* same tone as Bootstrap's bg-light hover */
 }
 
 .index-link {
-    text-decoration: none;
-    color: inherit;
+  text-decoration: none;
+  color: inherit;
 }
 
 .index-title {
-    font-size: 1.2rem;
-    font-weight: 600;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+@media (max-width: 576px) {
+  .index-card {
+    aspect-ratio: unset;
+    height: 150px;
+  }
 }

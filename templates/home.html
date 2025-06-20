@@ -5,20 +5,43 @@
 {% endblock %}
 
 {% block content %}
-<div class="pt-5">
-    <div class="my-5 bg-light">
-      <div class="p-5 text-center bg-body-tertiary">
-          <div class="container py-5">
-              <h1 class="text-body-emphasis">RM Stock Tracker</h1>
-              <p class="col-lg-8 mx-auto lead">
-                  Choose Stock or Index.
+<div class="pt-5 mt-5">
+
+  <!-- Hero Section -->
+  <section class="py-5 mb-5">
+    <div class="container text-center">
+      <h1 class="display-4 text-body-emphasis">Welcome to RM Stock Tracker!</h1>
+      <p class="lead mt-3 col-lg-8 mx-auto">
+        RM Stock Tracker is your simple and reliable platform for tracking detailed financial data on stocks and major indexes. Explore comprehensive metrics, historical performance, and real-time insights all in one place.
+      </p>
+    </div>
+  </section>
+
+  <!-- Stocks Section -->
+  <section class="py-3">
+      <div class="bg-light py-5 mb-5">
+          <div class="container text-center">
+              <h2 class="mb-4">Stock Insights</h2>
+              <p class="lead col-lg-8 mx-auto">
+                Search for any publicly listed stock and explore key financial indicators such as market capitalization, trading volume, opening and closing prices, 200-day moving average, and more. Analyze trends and performance to make informed decisions.
               </p>
+              <a class="btn btn-primary btn-lg mt-4" href="{{ url_for('search_stocks') }}" role="button">Explore Stocks</a>
           </div>
       </div>
-  </div>
-  <div class="container text-center">
-      <a class="btn btn-primary btn-lg m-3" href="{{ url_for('search_stocks') }}" role="button">Stock</a>
-      <a class="btn btn-primary btn-lg m-3" href="{{ url_for('all_indexes') }}" role="button">Index</a>
-  </div>
+  </section>
+
+  <!-- Indexes Section -->
+  <section class="py-3">
+      <div class="bg-light py-5 mb-5">
+          <div class="container text-center">
+              <h2 class="mb-4">Index Overview</h2>
+              <p class="lead col-lg-8 mx-auto">
+                Browse major market indexes and view a breakdown of their constituent stocks. Click on any stock in an index to dive deeper into its individual profile and performance metrics.
+              </p>
+              <a class="btn btn-primary btn-lg mt-4" href="{{ url_for('all_indexes') }}" role="button">View Indexes</a>
+          </div>
+      </div>
+  </section>
+
 </div>
 {% endblock %}

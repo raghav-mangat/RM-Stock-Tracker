@@ -9,11 +9,11 @@
   z-index: 1000;
 }
 
-#suggestions div {
-  padding: 10px;
+.suggestion-item {
   cursor: pointer;
 }
 
-#suggestions div:hover {
+.suggestion-item.active,
+.suggestion-item:hover {
   background-color: #f1f1f1;
 }

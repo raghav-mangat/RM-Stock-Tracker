@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block title %}
-    Index
+    Indexes
 {% endblock %}
 
 {% block style %}
@@ -9,22 +9,35 @@
 {% endblock %}
 
 {% block content %}
-    <div class="pt-5">
-        <h1 class="text-center pt-5">Index Dashboard</h1>
+<div class="pt-5 mt-5">
+
+  <!-- Hero Section -->
+  <section class="bg-light py-5 mb-5">
+    <div class="container text-center">
+      <h1 class="text-body-emphasis">Index Dashboard</h1>
+      <p class="lead col-lg-8 mx-auto mt-3">
+        Explore key market indexes and their top holdings. Click any index to view detailed stock information and performance data for its constituent companies.
+      </p>
     </div>
-    <div class="container my-5 py-5">
-        {% for i in range(0, indexes|length, 3) %}
-        <div class="row mb-4">
-            {% for index in indexes[i:i+3] %}
-            <div class="col-md-4 mb-3">
-                <a href="{{ url_for('show_index', index_id=index.slug) }}" class="index-link">
-                  <div class="index-card">
-                    <span class="index-title">{{ index.name }}</span>
-                  </div>
-                </a>
-              </div>
-            {% endfor %}
-        </div>
-        {% endfor %}
+  </section>
+
+  <!-- Index Cards Grid -->
+  <div class="container pb-5">
+    {% for i in range(0, indexes|length, 3) %}
+    <div class="row justify-content-center mb-4">
+      {% for index in indexes[i:i+3] %}
+      <div class="col-10 col-sm-6 col-md-4 col-lg-3 mb-4 d-flex justify-content-center">
+        <a href="{{ url_for('show_index', index_id=index.slug) }}" class="index-link w-100">
+          <div class="index-card bg-light">
+            <span class="index-title">{{ index.name }}</span>
+          </div>
+        </a>
+      </div>
+      {% endfor %}
     </div>
+    {% endfor %}
+  </div>
+
+</div>
 {% endblock %}
+

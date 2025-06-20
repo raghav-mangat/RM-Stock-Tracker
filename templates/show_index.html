@@ -9,74 +9,81 @@
 {% endblock %}
 
 {% block content %}
-  <!----   Heading    --------------------------------------------->
-  <div class="pt-5">
-    <h1 class="container text-center my-5">{{ index_name }}</h1>
-  </div>
+<div class="pt-5 mt-5">
 
-  <!----   Sort By Dropdown    --------------------------------------------->
-  <div class="container text-center my-4">
-    <div class="row justify-content-end">
-      <div class="col-3">
-        <div class="container justify-content-right">
-          <div class="dropdown">
-            <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-              Sort By
-            </button>
-            <ul class="dropdown-menu">
-              {% for option in dropdown_options %}
-                <li>
-                  <a class="dropdown-item
-                            {% if sort_by == option.sort_by and order == option.order %}active{% endif %}"
-                     href="{% if option.sort_by and option.order %}
-                              {{ url_for('show_index', index_id=index_slug, sort_by=option.sort_by, order=option.order) }}
-                            {% else %}
-                              {{ url_for('show_index', index_id=index_slug) }}
-                            {% endif %}"
-                     {% if sort_by == option.sort_by and order == option.order %}aria-current="true"{% endif %}>
-                    {{ option.label }}
-                  </a>
-                </li>
-              {% endfor %}
-            </ul>
-          </div>
-        </div>
-      </div>
+  <!-- Hero Section -->
+  <section class="bg-light py-5 mb-5">
+    <div class="container text-center">
+      <h1 class="text-body-emphasis">{{ index_name }}</h1>
+      <p class="lead col-lg-8 mx-auto mt-3">
+        View the top stocks in this index along with their weight, performance, and 200-day moving average (DMA).
+        Use the dropdown menu to sort the table by various parameters. Click on a stock name to see detailed information about that stock.
+      </p>
+    </div>
+  </section>
+
+  <!-- Sort By Dropdown -->
+  <div class="container text-end mb-4">
+    <div class="dropdown">
+      <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+        Sort By
+      </button>
+      <ul class="dropdown-menu">
+        {% for option in dropdown_options %}
+          <li>
+            <a class="dropdown-item {% if sort_by == option.sort_by and order == option.order %}active{% endif %}"
+               href="{% if option.sort_by and option.order %}
+                        {{ url_for('show_index', index_id=index_slug, sort_by=option.sort_by, order=option.order) }}
+                      {% else %}
+                        {{ url_for('show_index', index_id=index_slug) }}
+                      {% endif %}"
+               {% if sort_by == option.sort_by and order == option.order %}aria-current="true"{% endif %}>
+              {{ option.label }}
+            </a>
+          </li>
+        {% endfor %}
+      </ul>
     </div>
   </div>
 
-  <!----   Table    --------------------------------------------->
+  <!-- Data Table -->
   <div class="container mb-5">
-    <table class="table table-bordered table-hover">
-      <thead>
-        <tr>
-          <th scope="col">#</th>
-          <th scope="col">Name</th>
-          <th scope="col">Ticker</th>
-          <th scope="col">Weight</th>
-          <th scope="col">Last Close</th>
-          <th scope="col">200-DMA</th>
-          <th scope="col">% Diff</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for stock in index_data %}
+    <div class="table-responsive">
+      <table class="table table-bordered table-hover align-middle">
+        <thead class="table-light">
+          <tr>
+            <th scope="col">#</th>
+            <th scope="col">Name</th>
+            <th scope="col">Ticker</th>
+            <th scope="col">Weight</th>
+            <th scope="col">Last Close</th>
+            <th scope="col">200-DMA</th>
+            <th scope="col">% Diff</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for stock in index_data %}
           <tr>
             <th scope="row">{{ loop.index }}</th>
-            <td><a href="{{ url_for('show_stock', ticker=stock.ticker) }}" class="stock-link">
-              {{ stock.stock_name }}
-            </a></td>
+            <td>
+              <a href="{{ url_for('show_stock', ticker=stock.ticker) }}" class="fw-semibold text-primary">
+                {{ stock.stock_name }}
+              </a>
+            </td>
             <td>{{ stock.ticker }}</td>
             <td>{{ "{:,.2f}".format(stock.weight) }}%</td>
             <td>{{ "{:,.2f}".format(stock.last_close) }}</td>
             <td>{{ "{:,.2f}".format(stock.dma_200) }}</td>
-            <td style="background-color: {{ stock.dma_200_perc_diff | stock_color }};
-                       font-weight: bold">
+            <td style="background-color: {{ stock.dma_200_perc_diff | stock_color }}; font-weight: bold">
               {{ "{:,.2f}".format(stock.dma_200_perc_diff) }}
             </td>
           </tr>
-      {% endfor %}
-      </tbody>
-    </table>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
   </div>
+
+</div>
 {% endblock %}
+

@@ -1,22 +1,27 @@
 {% extends "base.html" %}
 
-{% block title %}Stock Search{% endblock %}
+{% block title %}
+  Stocks
+{% endblock %}
 
 {% block style %}
   <link rel="stylesheet" href="{{ url_for('static', filename='styles/search_stocks.css') }}">
 {% endblock %}
 
 {% block content %}
-  <div class="my-5 pt-5">
-    <div class="p-5 text-center bg-body-tertiary">
-      <div class="container py-5">
-        <h1 class="text-body-emphasis">Search Stocks Instantly</h1>
-        <p class="col-lg-8 mx-auto lead">
-          Type a stock ticker or company name to explore detailed stock data.
-        </p>
-      </div>
+<div class="pt-5 mt-5">
+
+  <!-- Hero Section -->
+  <section class="bg-light py-5 mb-5">
+    <div class="container text-center">
+      <h1 class="text-body-emphasis">Search Stocks Instantly</h1>
+      <p class="lead col-lg-8 mx-auto mt-3">
+        Enter a stock ticker or company name to access comprehensive financial data, including market performance, valuation metrics, and historical insights. Start your analysis with just a few keystrokes.
+      </p>
     </div>
-  </div>
+  </section>
+
+  <!-- Search Bar -->
   <div class="container my-5">
     <div class="search-container position-relative mx-auto" style="max-width: 500px;">
       <input
@@ -25,10 +30,13 @@
         class="form-control form-control-lg"
         placeholder="Search for a stock (e.g., AAPL, Microsoft)..."
         autocomplete="off"
+        aria-label="Search Stocks"
       />
-      <div id="suggestions"></div>
+      <div id="suggestions" class="d-none"></div>
     </div>
   </div>
+
+</div>
 {% endblock %}
 
 {% block script %}
