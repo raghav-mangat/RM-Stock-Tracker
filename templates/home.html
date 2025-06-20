@@ -5,7 +5,8 @@
 {% endblock %}
 
 {% block content %}
-  <div class="my-5">
+<div class="pt-5">
+    <div class="my-5 bg-light">
       <div class="p-5 text-center bg-body-tertiary">
           <div class="container py-5">
               <h1 class="text-body-emphasis">RM Stock Tracker</h1>
@@ -19,4 +20,5 @@
       <a class="btn btn-primary btn-lg m-3" href="{{ url_for('search_stocks') }}" role="button">Stock</a>
       <a class="btn btn-primary btn-lg m-3" href="{{ url_for('all_indexes') }}" role="button">Index</a>
   </div>
+</div>
 {% endblock %}

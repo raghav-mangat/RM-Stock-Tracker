@@ -10,7 +10,9 @@
 
 {% block content %}
   <!----   Heading    --------------------------------------------->
-  <h1 class="container text-center my-5">{{ index_name }}</h1>
+  <div class="pt-5">
+    <h1 class="container text-center my-5">{{ index_name }}</h1>
+  </div>
 
   <!----   Sort By Dropdown    --------------------------------------------->
   <div class="container text-center my-4">
@@ -68,7 +70,7 @@
             <td>{{ "{:,.2f}".format(stock.weight) }}%</td>
             <td>{{ "{:,.2f}".format(stock.last_close) }}</td>
             <td>{{ "{:,.2f}".format(stock.dma_200) }}</td>
-            <td style="background-color: {{ get_stock_color(stock.dma_200_perc_diff) }};
+            <td style="background-color: {{ stock.dma_200_perc_diff | stock_color }};
                        font-weight: bold">
               {{ "{:,.2f}".format(stock.dma_200_perc_diff) }}
             </td>

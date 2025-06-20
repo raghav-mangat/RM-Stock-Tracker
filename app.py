@@ -76,7 +76,6 @@ def show_index(index_id):
         dropdown_options=dropdown_options,
         sort_by=sort_by,
         order=order,
-        get_stock_color=get_stock_color
     )
 
 @app.route("/search_stocks")
@@ -112,6 +111,7 @@ def show_stock(ticker):
 
     return render_template("show_stock.html", stock=stock, rel_companies=rel_companies)
 
+@app.template_filter('stock_color')
 def get_stock_color(perc_diff):
     """
     Function to determine stock color based on the percentage

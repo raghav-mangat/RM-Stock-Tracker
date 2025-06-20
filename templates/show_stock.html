@@ -6,7 +6,7 @@
 
 {% block content %}
 {% if stock.ticker %}
-  <div class="container my-5">
+  <div class="container my-5 pt-5">
     <h1 class="text-center mb-4">{{ stock.ticker }} Details</h1>
 
     <div class="row mt-5">
@@ -31,7 +31,12 @@
             <tr><th>Volume</th><td>{{ "{:,.2f}".format(stock.volume) }}</td></tr>
             <tr><th>Today's Change</th><td>{{ "{:,.2f}".format(stock.todays_change) }} ({{ "{:,.2f}".format(stock.todays_change_perc) }}%)</td></tr>
             <tr><th>200 DMA</th><td>${{ "{:,.2f}".format(stock.dma_200) }}</td></tr>
-            <tr><th>200 DMA % Diff</th><td>{{ "{:,.2f}".format(stock.dma_200_perc_diff) }}%</td></tr>
+            <tr>
+              <th>200 DMA % Diff</th>
+              <td style="background-color: {{ stock.dma_200_perc_diff | stock_color }};
+                       font-weight: bold">
+                {{ "{:,.2f}".format(stock.dma_200_perc_diff) }}%</td>
+            </tr>
             <tr><th>50 DMA</th><td>${{ "{:,.2f}".format(stock.dma_50) }}</td></tr>
             <tr><th>52W High</th><td>${{ "{:,.2f}".format(stock.high_52w) }}</td></tr>
             <tr><th>52W Low</th><td>${{ "{:,.2f}".format(stock.low_52w) }}</td></tr>
