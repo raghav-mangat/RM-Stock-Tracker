@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, abort
 from models.database import db, Stock, Index, IndexHolding, StockMaster
 from dotenv import load_dotenv
 from data_collectors.stock_data import fetch_stock_data
@@ -98,7 +98,7 @@ def show_stock(ticker):
     # To verify if the given ticker is valid
     stock = StockMaster.query.filter_by(ticker=ticker).first()
     if not stock:
-        return f"{ticker} does not exist", 404
+        abort(404)
     # Check if the stock is present in the database
     stock = Stock.query.filter_by(ticker=ticker).first()
     if not stock:
@@ -129,6 +129,15 @@ def get_stock_color(perc_diff):
         return "#FF9999" # Red
     else: # Within ±2%
         return "#ffff66" # Yellow
+
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template('404.html'), 404
+
+@app.errorhandler(500)
+def internal_server_error(e):
+    return render_template('500.html'), 500
+
 
 if __name__ == "__main__":
     app.run()

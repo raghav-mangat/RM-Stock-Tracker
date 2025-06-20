@@ -30,7 +30,11 @@
         class="form-control form-control-lg"
         placeholder="Search for a stock (e.g., AAPL, Microsoft)..."
         autocomplete="off"
-        aria-label="Search Stocks"
+        role="combobox"
+        aria-label="Stock search"
+        aria-autocomplete="list"
+        aria-expanded="false"
+        aria-controls="suggestions"
       />
       <div id="suggestions" class="d-none"></div>
     </div>
