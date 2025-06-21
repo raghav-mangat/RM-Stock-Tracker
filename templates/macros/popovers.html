@@ -8,15 +8,15 @@
     data-bs-html="true"
     data-bs-trigger="focus"
     title="% Diff Explanation"
-    data-bs-content='
+    data-bs-content="
       <strong>What is it?</strong><br>
-      The percentage difference between the stock&#39;s Day Close and its 200-Day Moving Average (DMA).<br><br>
+      The percentage difference between the stock's Day Close and its 200-Day Moving Average (DMA).<br><br>
       <strong>Color Coding:</strong><br>
-      <span style="background-color: {{ 10 | stock_color }}; padding: 2px 5px; border-radius: 4px;">Dark Green</span>: ≥ +10%<br>
-      <span style="background-color: {{ 5 | stock_color }}; padding: 2px 5px; border-radius: 4px;">Green</span>: +2% to +10%<br>
-      <span style="background-color: {{ 0 | stock_color }}; padding: 2px 5px; border-radius: 4px;">Yellow</span>: -2% to +2%<br>
-      <span style="background-color: {{ -5 | stock_color }}; padding: 2px 5px; border-radius: 4px;">Red</span>: -2% to -10%<br>
-      <span style="background-color: {{ -10 | stock_color }}; padding: 2px 5px; border-radius: 4px;">Dark Red</span>: ≤ -10%'>
+      <span>Dark Green</span>: ≥ +10%<br>
+      <span>Green</span>: +2% to +10%<br>
+      <span>Yellow</span>: -2% to +2%<br>
+      <span>Red</span>: -2% to -10%<br>
+      <span>Dark Red</span>: ≤ -10%">
     <i class="bi bi-question-circle-fill"></i>
   </span>
 {% endmacro %}

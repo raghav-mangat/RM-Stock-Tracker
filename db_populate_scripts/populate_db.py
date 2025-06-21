@@ -1,9 +1,11 @@
 import os
 import sys
 import pytz
+import json
 from datetime import datetime
 from dotenv import load_dotenv
 from flask import Flask
+from pathlib import Path
 
 # Load environment variables from .env file
 load_dotenv()
@@ -121,4 +123,17 @@ def populate_db():
         db.session.commit()
         print("\nDatabase Population Completed!")
 
-populate_db()
+# Load market status
+data_path = Path(__file__).resolve().parent.parent / "data" / "market_status.json"
+
+if data_path.exists():
+    with open(data_path) as f:
+        market_info = json.load(f)
+        market_status = market_info.get("market_status")
+    if market_status == "closed":
+        print(f"Market status was {market_status} — skipping DB population!")
+    else:
+        print(f"Market status was {market_status} — proceeding with DB population...")
+        populate_db()
+else:
+    print("Market status file missing — cannot determine whether to proceed with DB population!")

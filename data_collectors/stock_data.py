@@ -10,7 +10,8 @@ load_dotenv()
 POLYGON_API_KEY = os.getenv("POLYGON_API_KEY")
 client = RESTClient(POLYGON_API_KEY)
 
-# List of all attributes that we store in the database for a given stock
+# List of all attributes that we store in the database for a given stock.
+# Must be the same as all the fields in the Stock table in the database.
 stock_attributes = [
             "name", "description", "homepage_url", "list_date", "industry", "type",
             "total_employees", "market_cap", "icon_url", "last_close", "last_open",
