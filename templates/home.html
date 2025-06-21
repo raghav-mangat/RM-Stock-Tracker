@@ -17,30 +17,37 @@
     </div>
   </section>
 
-  <!-- Stocks Section -->
-  <section class="py-3">
-      <div class="bg-light py-5 mb-5">
-          <div class="container text-center">
-              <h2 class="mb-4">Stock Insights</h2>
-              <p class="lead col-lg-8 mx-auto">
-                Search for any publicly listed stock and explore key financial indicators such as market capitalization, trading volume, opening and closing prices, 200-day moving average, and more. Analyze trends and performance to make informed decisions.
+  <!-- Cards Row for Stocks and Indexes -->
+  <section class="mb-5">
+    <div class="container">
+      <div class="row g-4">
+        <!-- Stock Insights Card -->
+        <div class="col-md-6">
+          <div class="card h-100 shadow-sm border-light bg-light py-5">
+            <div class="card-body text-center">
+              <h2 class="card-title mb-4">Stock Insights</h2>
+              <p class="card-text lead col-lg-10 mx-auto">
+                Search publicly listed companies and explore financial indicators like market cap, volume, price changes, and 200-day averages to assess stock performance with confidence.
               </p>
               <a class="btn btn-primary btn-lg mt-4" href="{{ url_for('search_stocks') }}" role="button">Explore Stocks</a>
+            </div>
           </div>
-      </div>
-  </section>
+        </div>
 
-  <!-- Indexes Section -->
-  <section class="py-3">
-      <div class="bg-light py-5 mb-5">
-          <div class="container text-center">
-              <h2 class="mb-4">Index Overview</h2>
-              <p class="lead col-lg-8 mx-auto">
-                Browse major market indexes and view a breakdown of their constituent stocks. Click on any stock in an index to dive deeper into its individual profile and performance metrics.
+        <!-- Index Overview Card -->
+        <div class="col-md-6">
+          <div class="card h-100 shadow-sm border-light bg-light py-5">
+            <div class="card-body text-center">
+              <h2 class="card-title mb-4">Index Overview</h2>
+              <p class="card-text lead col-lg-10 mx-auto">
+                Browse major market indexes and examine a breakdown of their components. Click on individual stocks to explore detailed performance metrics and historical trends.
               </p>
               <a class="btn btn-primary btn-lg mt-4" href="{{ url_for('all_indexes') }}" role="button">View Indexes</a>
+            </div>
           </div>
+        </div>
       </div>
+    </div>
   </section>
 
 </div>

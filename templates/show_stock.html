@@ -46,10 +46,10 @@
                 <tr><th>Type</th><td>{{ stock.type }}</td></tr>
                 <tr><th>Total Employees</th><td>{{ "{:,}".format(stock.total_employees) }}</td></tr>
                 <tr><th>Market Cap</th><td>${{ "{:,.2f}".format(stock.market_cap) }}</td></tr>
-                <tr><th>Last Close</th><td>${{ "{:,.2f}".format(stock.last_close) }}</td></tr>
-                <tr><th>Open</th><td>${{ "{:,.2f}".format(stock.last_open) }}</td></tr>
-                <tr><th>High</th><td>${{ "{:,.2f}".format(stock.day_high) }}</td></tr>
-                <tr><th>Low</th><td>${{ "{:,.2f}".format(stock.day_low) }}</td></tr>
+                <tr><th>Day Open</th><td>${{ "{:,.2f}".format(stock.last_open) }}</td></tr>
+                <tr><th>Day High</th><td>${{ "{:,.2f}".format(stock.day_high) }}</td></tr>
+                <tr><th>Day Low</th><td>${{ "{:,.2f}".format(stock.day_low) }}</td></tr>
+                <tr><th>Day Close</th><td>${{ "{:,.2f}".format(stock.last_close) }}</td></tr>
                 <tr><th>Volume</th><td>{{ "{:,.2f}".format(stock.volume) }}</td></tr>
                 <tr>
                   <th>Today's Change</th>
