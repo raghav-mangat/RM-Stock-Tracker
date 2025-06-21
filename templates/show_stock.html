@@ -1,3 +1,5 @@
+{% from "macros/popovers.html" import dma_200_diff_popover %}
+
 {% extends "base.html" %}
 
 {% block title %}
@@ -60,7 +62,7 @@
                 </tr>
                 <tr><th>200 DMA</th><td>${{ "{:,.2f}".format(stock.dma_200) }}</td></tr>
                 <tr>
-                  <th>200 DMA % Diff</th>
+                  <th>200 DMA % Diff {{ dma_200_diff_popover() }}</th>
                   <td style="background-color: {{ stock.dma_200_perc_diff | stock_color }}; font-weight: bold">
                     {{ "{:,.2f}".format(stock.dma_200_perc_diff) }}%
                   </td>

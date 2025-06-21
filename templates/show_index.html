@@ -1,3 +1,5 @@
+{% from "macros/popovers.html" import dma_200_diff_popover %}
+
 {% extends "base.html" %}
 
 {% block title %}
@@ -57,28 +59,8 @@
             <th scope="col">Weight</th>
             <th scope="col">Day Close</th>
             <th scope="col">200-DMA</th>
-            <th scope="col">
-              % Diff
-              <span
-                tabindex="0"
-                class="ms-1 text-muted"
-                role="button"
-                data-bs-toggle="popover"
-                data-bs-placement="top"
-                data-bs-html="true"
-                data-bs-trigger="focus"
-                title="% Diff Explanation"
-                data-bs-content="
-                  <strong>What is it?</strong><br>
-                  The percentage difference between the stock's Day Close and its 200-Day Moving Average (DMA).<br><br>
-                  <strong>Color Coding:</strong><br>
-                  <span>Dark Green</span>: ≥ +10%<br>
-                  <span>Green</span>: +2% to +10%<br>
-                  <span>Yellow</span>: -2% to +2%<br>
-                  <span>Red</span>: -2% to -10%<br>
-                  <span>Dark Red</span>: ≤ -10%">
-                <i class="bi bi-question-circle-fill"></i>
-              </span>
+            <th scope="col">% Diff
+              {{ dma_200_diff_popover() }}
             </th>
           </tr>
         </thead>
@@ -106,16 +88,4 @@
   </div>
 
 </div>
-{% endblock %}
-
-{% block script %}
-<!-- Initialize Bootstrap popovers -->
-<script>
-  document.addEventListener('DOMContentLoaded', function () {
-    const popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))
-    popoverTriggerList.forEach(function (popoverTriggerEl) {
-      new bootstrap.Popover(popoverTriggerEl)
-    });
-  });
-</script>
 {% endblock %}

@@ -1,14 +1,27 @@
-from flask import Flask, render_template, request, jsonify, abort
-from models.database import db, Stock, Index, IndexHolding, StockMaster
-from dotenv import load_dotenv
-from data_collectors.stock_data import fetch_stock_data
 import os
+from flask import Flask, render_template, request, jsonify, abort
+from dotenv import load_dotenv
+from models.database import db, Stock, Index, IndexHolding, StockMaster
+from data_collectors.stock_data import fetch_stock_data
+from utils.filters import stock_color, format_et_datetime
+from utils.error_handlers import register_error_handlers
 
+# Load environment variables
 load_dotenv()
+
+# Initialize the Flask App
 app = Flask(__name__)
 
+# Initialize the database
 app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URI")
 db.init_app(app)
+
+# Register custom filters
+app.jinja_env.filters['stock_color'] = stock_color
+app.jinja_env.filters['format_et_datetime'] = format_et_datetime
+
+# Register error handlers
+register_error_handlers(app)
 
 @app.route("/")
 def home():
@@ -113,37 +126,6 @@ def show_stock(ticker):
         stock=stock,
         rel_companies=rel_companies,
     )
-
-@app.template_filter('stock_color')
-def get_stock_color(perc_diff):
-    """
-    Function to determine stock color based on the percentage
-    difference between last closing price and 200 DMA.
-    :param perc_diff:
-    :return: colour.
-    """
-    if perc_diff >= 10: # More than 10% above
-        return "#66ff66" # Dark Green
-    elif perc_diff <= -10: # More than 10% below
-        return "#FF6666" # Dark Red
-    elif perc_diff >= 2: # Between 2% and 10% above
-        return "#99ff99" # Green
-    elif perc_diff <= -2:  # Between 2% and 10% below
-        return "#FF9999" # Red
-    else: # Within ±2%
-        return "#ffff66" # Yellow
-
-@app.template_filter('format_et_datetime')
-def format_et_datetime(et_datetime):
-    return et_datetime.strftime('%A, %b %d, %Y, at %I:%M%p, ET.')
-
-@app.errorhandler(404)
-def page_not_found(e):
-    return render_template('404.html'), 404
-
-@app.errorhandler(500)
-def internal_server_error(e):
-    return render_template('500.html'), 500
 
 
 if __name__ == "__main__":
