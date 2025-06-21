@@ -15,6 +15,9 @@
           Explore detailed financial information and performance metrics for {{ stock.name }}.
           Review valuation indicators, historical trends, and related companies in the same sector.
         </p>
+        <p class="text-muted mt-4">
+          Last Updated: {{ stock.last_updated|format_et_datetime if stock.last_updated else 'N/A' }}
+        </p>
       </div>
     </section>
 

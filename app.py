@@ -70,8 +70,7 @@ def show_index(index_id):
     )
     return render_template(
         "show_index.html",
-        index_name=index.name,
-        index_slug=index.slug,
+        index=index,
         index_data=index_data,
         dropdown_options=dropdown_options,
         sort_by=sort_by,
@@ -104,12 +103,16 @@ def show_stock(ticker):
     if not stock:
         stock = fetch_stock_data(ticker)
 
-    # Get list of related companies for the given ticker
+    # Get the list of related companies
     rel_companies = []
     if stock and stock.related_companies:
         rel_companies = stock.related_companies.split(',')
 
-    return render_template("show_stock.html", stock=stock, rel_companies=rel_companies)
+    return render_template(
+        "show_stock.html",
+        stock=stock,
+        rel_companies=rel_companies,
+    )
 
 @app.template_filter('stock_color')
 def get_stock_color(perc_diff):
@@ -129,6 +132,10 @@ def get_stock_color(perc_diff):
         return "#FF9999" # Red
     else: # Within ±2%
         return "#ffff66" # Yellow
+
+@app.template_filter('format_et_datetime')
+def format_et_datetime(et_datetime):
+    return et_datetime.strftime('%A, %b %d, %Y, at %I:%M%p, ET.')
 
 @app.errorhandler(404)
 def page_not_found(e):

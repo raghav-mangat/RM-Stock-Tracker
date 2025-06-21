@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+import pytz
 from polygon import RESTClient
 from dotenv import load_dotenv
 import os
@@ -15,7 +16,7 @@ stock_attributes = [
             "total_employees", "market_cap", "icon_url", "last_close", "last_open",
             "day_high", "day_low", "volume", "todays_change", "todays_change_perc",
             "dma_50", "dma_200", "dma_200_perc_diff", "high_52w", "low_52w",
-            "related_companies"
+            "related_companies", "last_updated"
         ]
 
 def get_all_stocks():
@@ -27,6 +28,19 @@ def get_all_stocks():
         stocks.append(t)
     print("Retrieved all stocks from polygon API!")
     return stocks
+
+def convert_polygon_timestamp(nanosecond_timestamp):
+    # Convert nanoseconds to seconds
+    unix_seconds = nanosecond_timestamp / 1_000_000_000
+
+    # Convert to UTC datetime
+    utc_dt = datetime.fromtimestamp(unix_seconds, tz=pytz.utc)
+
+    # Convert to US/Eastern timezone
+    eastern_tz = pytz.timezone('US/Eastern')
+    eastern_dt = utc_dt.astimezone(eastern_tz)
+
+    return eastern_dt
 
 def get_200_day_close_data(ticker):
     now = datetime.now()
@@ -98,6 +112,8 @@ def get_ticker_snapshot(ticker, stock_data):
         snapshot = client.get_snapshot_ticker("stocks", ticker)
         day = snapshot.day
 
+        updated_timestamp = safe_getattr(snapshot, "updated", None)
+        stock_data["last_updated"] = convert_polygon_timestamp(updated_timestamp)
         stock_data["day_high"] = safe_getattr(day, "high", None)
         stock_data["day_low"] = safe_getattr(day, "low", None)
         stock_data["last_close"] = safe_getattr(day, "close", None)

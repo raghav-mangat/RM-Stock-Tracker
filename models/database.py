@@ -30,6 +30,7 @@ class Stock(db.Model):
     icon_url: Mapped[str] = mapped_column(Text, nullable=True)
 
     # Snapshot Data
+    last_updated = db.Column(db.DateTime(timezone=True), nullable=True)
     last_close: Mapped[float] = mapped_column(nullable=True)
     last_open: Mapped[float] = mapped_column(nullable=True)
     day_high: Mapped[float] = mapped_column(nullable=True)
@@ -61,6 +62,7 @@ class Index(db.Model):
     name: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
     slug: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
     url: Mapped[str] = mapped_column(String(255), nullable=False)
+    last_updated = db.Column(db.DateTime(timezone=True), nullable=True)
 
     holdings: Mapped[list["IndexHolding"]] = relationship(back_populates="index")
 

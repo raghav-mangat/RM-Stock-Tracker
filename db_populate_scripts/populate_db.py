@@ -1,5 +1,7 @@
 import os
 import sys
+import pytz
+from datetime import datetime
 from dotenv import load_dotenv
 from flask import Flask
 
@@ -45,19 +47,21 @@ def update_stocks_master_table():
     db.session.commit()
     print("stocks_master table updated!")
 
-def add_to_indexes_table(index_data):
+def add_to_indexes_table(index_data, now):
     index = Index.query.filter_by(slug=index_data.get("slug")).first()
     if not index:
         index = Index(
             name=index_data.get("name"),
             slug=index_data.get("slug"),
             url=index_data.get("url"),
+            last_updated = now
         )
         db.session.add(index)
         db.session.flush()
     else:
         index.name = index_data.get("name")
         index.url = index_data.get("url")
+        index.last_updated = now
     return index.id
 
 def add_to_stocks_table(ticker):
@@ -99,8 +103,12 @@ def populate_db():
         db.create_all()
         update_stocks_master_table()
 
+        # Set current timestamp in US/Eastern
+        eastern = pytz.timezone("US/Eastern")
+        now = datetime.now(eastern)
+
         for index_data in indexes.values():
-            index_id = add_to_indexes_table(index_data)
+            index_id = add_to_indexes_table(index_data, now)
             holdings = fetch_index_data(index_data.get("url"))
             for holding in holdings:
                 ticker = holding.get("ticker")

@@ -1,11 +1,7 @@
 {% extends "base.html" %}
 
 {% block title %}
-  {{ index_slug }}
-{% endblock %}
-
-{% block style %}
-  <link href="{{ url_for('static', filename='styles/show_index.css') }}" rel="stylesheet">
+  {{ index.slug }}
 {% endblock %}
 
 {% block content %}
@@ -14,10 +10,13 @@
   <!-- Hero Section -->
   <section class="bg-light py-5 mb-5">
     <div class="container text-center">
-      <h1 class="text-body-emphasis">{{ index_name }}</h1>
+      <h1 class="text-body-emphasis">{{ index.name }}</h1>
       <p class="lead col-lg-8 mx-auto mt-3">
         View the top stocks in this index along with their weight, performance, and 200-day moving average (DMA).
         Use the dropdown menu to sort the table by various parameters. Click on a stock name to see detailed information about that stock.
+      </p>
+      <p class="text-muted mt-4">
+        Last Updated: {{ index.last_updated|format_et_datetime if index.last_updated else 'N/A' }}
       </p>
     </div>
   </section>
@@ -33,9 +32,9 @@
           <li>
             <a class="dropdown-item {% if sort_by == option.sort_by and order == option.order %}active{% endif %}"
                href="{% if option.sort_by and option.order %}
-                        {{ url_for('show_index', index_id=index_slug, sort_by=option.sort_by, order=option.order) }}
+                        {{ url_for('show_index', index_id=index.slug, sort_by=option.sort_by, order=option.order) }}
                       {% else %}
-                        {{ url_for('show_index', index_id=index_slug) }}
+                        {{ url_for('show_index', index_id=index.slug) }}
                       {% endif %}"
                {% if sort_by == option.sort_by and order == option.order %}aria-current="true"{% endif %}>
               {{ option.label }}
