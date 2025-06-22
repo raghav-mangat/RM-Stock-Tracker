@@ -5,6 +5,7 @@ from models.database import db, Stock, Index, IndexHolding, StockMaster
 from data_collectors.stock_data import fetch_stock_data
 from utils.filters import stock_color, format_et_datetime
 from utils.error_handlers import register_error_handlers
+from utils.breadcrumbs import generate_breadcrumbs
 
 # Load environment variables
 load_dotenv()
@@ -22,6 +23,11 @@ app.jinja_env.filters['format_et_datetime'] = format_et_datetime
 
 # Register error handlers
 register_error_handlers(app)
+
+# Make breadcrumbs available to all templates
+@app.context_processor
+def inject_breadcrumbs():
+    return {'breadcrumbs': generate_breadcrumbs()}
 
 @app.route("/")
 def home():

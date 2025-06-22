@@ -9,7 +9,7 @@
 {% endblock %}
 
 {% block content %}
-<div class="pt-5 mt-5">
+<div class="">
 
   <!-- Hero Section -->
   <section class="bg-light py-5 mb-5">
@@ -22,7 +22,7 @@
   </section>
 
   <!-- Index Cards Grid -->
-  <div class="container pb-5">
+  <section class="container pb-5">
     {% for i in range(0, indexes|length, 3) %}
     <div class="row justify-content-center mb-4">
       {% for index in indexes[i:i+3] %}
@@ -36,7 +36,7 @@
       {% endfor %}
     </div>
     {% endfor %}
-  </div>
+  </section>
 
 </div>
 {% endblock %}

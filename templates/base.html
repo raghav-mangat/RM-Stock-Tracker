@@ -44,13 +44,39 @@
       </div>
     </nav>
 
-    <!-- Main content -->
+    <!-- Breadcrumbs and Back Button -->
+    {% if request.endpoint != 'home' %}
+    <section class="container pt-4 mt-5 mb-3">
+      <div class="row align-items-center">
+        <nav class="col-8" aria-label="breadcrumb" style="--bs-breadcrumb-divider: '/';">
+          <ol class="breadcrumb mb-0">
+            {% for item in breadcrumbs %}
+              {% if not loop.last %}
+                <li class="breadcrumb-item">
+                    <a href="{{ item.url }}" class="fw-semibold text-primary">{{ item.label }}</a>
+                </li>
+              {% else %}
+                <li class="breadcrumb-item active" aria-current="page">{{ item.label }}</li>
+              {% endif %}
+            {% endfor %}
+          </ol>
+        </nav>
+        <div class="col-4 text-end">
+          <button type="button" class="btn btn-primary" onclick="history.back();">
+            <i class="bi bi-arrow-left"></i> Back
+          </button>
+        </div>
+      </div>
+    </section>
+    {% endif %}
+
+    <!-- Main Content -->
     <main role="main" class="flex-grow-1">
       {% block content %} {% endblock %}
     </main>
 
     <!-- Footer -->
-    <div class="container">
+    <section class="container">
         <footer class="d-flex flex-wrap justify-content-between align-items-center py-3 my-4 border-top" role="contentinfo">
             <div class="col-md-4 d-flex align-items-center">
                 <span class="mb-md-0 text-body-secondary">
@@ -75,16 +101,16 @@
               </li>
             </ul>
         </footer>
-    </div>
+    </section>
 
-    <!-- Footer year script -->
+    <!-- Footer Year Script -->
     <script>
       document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('currentYear').textContent = new Date().getFullYear();
       });
     </script>
 
-    <!-- Initialize Bootstrap popovers -->
+    <!-- Initialize Bootstrap Popovers -->
     <script>
       document.addEventListener('DOMContentLoaded', function () {
         const popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))
