@@ -22,22 +22,19 @@
   </section>
 
   <!-- Index Cards Grid -->
-  <section class="container pb-5">
-    {% for i in range(0, indexes|length, 3) %}
-    <div class="row justify-content-center mb-4">
-      {% for index in indexes[i:i+3] %}
-      <div class="col-10 col-sm-6 col-md-4 col-lg-3 mb-4 d-flex justify-content-center">
-        <a href="{{ url_for('show_index', index_id=index.slug) }}" class="index-link w-100">
-          <div class="index-card bg-light">
-            <span class="index-title">{{ index.name }}</span>
-          </div>
-        </a>
-      </div>
+  <section class="container mb-3 p-4">
+    <div class="row justify-content-center">
+      {% for index in indexes %}
+        <div class="col-12 col-sm-6 col-md-4 col-lg-3 d-flex justify-content-center mb-4">
+          <a href="{{ url_for('show_index', index_id=index.slug) }}" class="index-link w-100">
+            <div class="index-card bg-light">
+              <span class="index-title">{{ index.name }}</span>
+            </div>
+          </a>
+        </div>
       {% endfor %}
     </div>
-    {% endfor %}
   </section>
 
 </div>
 {% endblock %}
-

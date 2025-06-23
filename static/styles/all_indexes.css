@@ -8,12 +8,14 @@
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   cursor: pointer;
   padding: 1rem;
+  background-color: #f8f9fa; /* Bootstrap's bg-light */
+  width: 100%;
 }
 
 .index-card:hover {
   transform: scale(1.03);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  background-color: #e9ecef; /* same tone as Bootstrap's bg-light hover */
+  background-color: #e9ecef;
 }
 
 .index-link {
@@ -26,6 +28,7 @@
   font-weight: 600;
 }
 
+/* Tweak for very small screens */
 @media (max-width: 576px) {
   .index-card {
     aspect-ratio: unset;
