@@ -1,6 +1,7 @@
 import os
 from flask import Flask, render_template, request, jsonify, abort
 from dotenv import load_dotenv
+from sqlalchemy import and_, or_
 from models.database import db, Stock, Index, IndexHolding, StockMaster
 from data_collectors.stock_data import fetch_stock_data
 from utils.filters import stock_color, format_et_datetime
@@ -43,15 +44,20 @@ def all_indexes():
 def show_index(index_id):
     sort_by = request.args.get('sort_by')
     order = request.args.get('order')
+    filter_by = request.args.getlist('filter')
 
     valid_sort_by = {"weight", "name", "last_close", "dma_200", "perc_diff"}
     valid_order = {"asc", "desc"}
+    valid_filter = {"dark_green", "green", "yellow", "red", "dark_red"}
 
-    if (sort_by not in valid_sort_by) or (order not in valid_order):
+    if sort_by not in valid_sort_by:
         sort_by = None
+    if order not in valid_order:
         order = None
+    if not filter_by or not set(filter_by).issubset(valid_filter):
+        filter_by = list(valid_filter)
 
-    dropdown_options = [
+    sort_dropdown_options = [
         {"label": "Weight (High to Low)", "sort_by": None, "order": None},
         {"label": "Weight (Low to High)", "sort_by": "weight", "order": "asc"},
         {"label": "Name (High to Low)", "sort_by": "name", "order": "desc"},
@@ -76,7 +82,21 @@ def show_index(index_id):
         ("perc_diff", "asc"): Stock.dma_200_perc_diff.asc(),
     }
 
+    filter_conditions = []
+    for color in filter_by:
+        if color == "dark_green":
+            filter_conditions.append(Stock.dma_200_perc_diff >= 10)
+        elif color == "green":
+            filter_conditions.append(and_(Stock.dma_200_perc_diff >= 2, Stock.dma_200_perc_diff < 10))
+        elif color == "yellow":
+            filter_conditions.append(and_(Stock.dma_200_perc_diff >= -2, Stock.dma_200_perc_diff < 2))
+        elif color == "red":
+            filter_conditions.append(and_(Stock.dma_200_perc_diff >= -10, Stock.dma_200_perc_diff < -2))
+        elif color == "dark_red":
+            filter_conditions.append(Stock.dma_200_perc_diff < -10)
+
     index = Index.query.filter_by(slug=index_id).first_or_404()
+
     index_data = (
         db.session.query(
             IndexHolding.weight,
@@ -88,14 +108,16 @@ def show_index(index_id):
         )
         .join(Stock, IndexHolding.stock_id == Stock.id)
         .filter(IndexHolding.index_id == index.id)
+        .filter(or_(*filter_conditions))
         .order_by(sort_options.get((sort_by, order), IndexHolding.weight.desc()))
         .all()
     )
+
     return render_template(
         "show_index.html",
         index=index,
         index_data=index_data,
-        dropdown_options=dropdown_options,
+        sort_dropdown_options=sort_dropdown_options,
         sort_by=sort_by,
         order=order,
     )
