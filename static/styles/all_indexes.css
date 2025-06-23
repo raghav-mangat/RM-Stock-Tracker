@@ -1,26 +1,18 @@
 .index-card {
   aspect-ratio: 1 / 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
   border-radius: 12px;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   cursor: pointer;
   padding: 1rem;
-  background-color: #f8f9fa; /* Bootstrap's bg-light */
-  width: 100%;
 }
 
 .index-card:hover {
   transform: scale(1.03);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  background-color: #e9ecef;
 }
 
 .index-link {
   text-decoration: none;
-  color: inherit;
 }
 
 .index-title {
@@ -28,7 +20,7 @@
   font-weight: 600;
 }
 
-/* Tweak for very small screens */
+/* Tweak for smaller screens like mobile phones */
 @media (max-width: 576px) {
   .index-card {
     aspect-ratio: unset;
