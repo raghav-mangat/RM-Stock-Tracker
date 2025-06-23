@@ -32,4 +32,4 @@ status_data = {
 with open(DATA_FILE, "w") as f:
     json.dump(status_data, f, indent=2)
 
-print(f"Market status saved!\nMarket Status was {market_status} at {server_time}")
+print(f"Market Status Saved!\nMarket Status was <{market_status}> at <{server_time}>")

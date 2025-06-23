@@ -44,7 +44,7 @@ def show_index(index_id):
     sort_by = request.args.get('sort_by')
     order = request.args.get('order')
 
-    valid_sort_by = {"weight", "last_close", "dma_200", "perc_diff"}
+    valid_sort_by = {"weight", "name", "last_close", "dma_200", "perc_diff"}
     valid_order = {"asc", "desc"}
 
     if (sort_by not in valid_sort_by) or (order not in valid_order):
@@ -54,6 +54,8 @@ def show_index(index_id):
     dropdown_options = [
         {"label": "Weight (High to Low)", "sort_by": None, "order": None},
         {"label": "Weight (Low to High)", "sort_by": "weight", "order": "asc"},
+        {"label": "Name (High to Low)", "sort_by": "name", "order": "desc"},
+        {"label": "Name (Low to High)", "sort_by": "name", "order": "asc"},
         {"label": "Last Close (High to Low)", "sort_by": "last_close", "order": "desc"},
         {"label": "Last Close (Low to High)", "sort_by": "last_close", "order": "asc"},
         {"label": "200-DMA (High to Low)", "sort_by": "dma_200", "order": "desc"},
@@ -64,6 +66,8 @@ def show_index(index_id):
 
     sort_options = {
         ("weight", "asc"): IndexHolding.weight.asc(),
+        ("name", "desc"): Stock.name.desc(),
+        ("name", "asc"): Stock.name.asc(),
         ("last_close", "desc"): Stock.last_close.desc(),
         ("last_close", "asc"): Stock.last_close.asc(),
         ("dma_200", "desc"): Stock.dma_200.desc(),
