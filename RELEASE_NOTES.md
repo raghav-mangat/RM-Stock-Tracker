@@ -101,7 +101,7 @@ This release introduces a full **database-powered** version of RM Stock Tracker.
 - Search for any stock using its ticker symbol or company name.
 - See a detailed view with:
   - Ticker and company name
-  - Last closing price
+  - Day closing price
   - 200-day moving average (200-DMA)
   - % difference from the 200-DMA
   - Other market data (open, high, low, volume, etc.)
@@ -112,14 +112,14 @@ This release introduces a full **database-powered** version of RM Stock Tracker.
   - S&P 500, Nasdaq 100, Dow Jones, Magnificent Seven, ARKK, Berkshire Hathaway
 - Clicking an index shows all its holdings:
   - Company Name, Ticker, Weight in index
-  - Last Close, 200-DMA, % Difference
+  - Day Close, 200-DMA, % Difference
 - Sort the list in ascending or descending order of:
-  - Weight, Last Close, 200-DMA , or % Difference
+  - Weight, Day Close, 200-DMA , or % Difference
 - Click a stock in the list to see more details about that stock.
 
 ### 200-DMA % Difference Coloring
 
-The % difference between the last close and 200-day moving average is color-coded for quick insight:
+The % difference between the day close and 200-day moving average is color-coded for quick insight:
 
 - **Dark Green**: >= +10%
 - **Green**: Between +2% and +10%

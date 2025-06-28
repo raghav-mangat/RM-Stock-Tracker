@@ -119,7 +119,7 @@
             </td>
             <td>{{ stock.ticker | display }}</td>
             <td>{{ stock.weight | percent }}</td>
-            <td>{{ stock.last_close | currency }}</td>
+            <td>{{ stock.day_close | currency }}</td>
             <td>{{ stock.dma_200 | currency }}</td>
             {% if stock.dma_200_perc_diff is not none %}
               <td class="fw-bold" style="background-color: {{ stock.dma_200_perc_diff | stock_color }};">

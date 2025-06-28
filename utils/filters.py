@@ -3,7 +3,7 @@ from flask import Flask
 def stock_color(perc_diff):
     """
     Function to determine stock color based on the percentage
-    difference between last closing price and 200 DMA.
+    difference between day closing price and 200 DMA.
     :param perc_diff:
     :return: colour.
     """

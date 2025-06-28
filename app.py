@@ -45,7 +45,7 @@ def show_index(index_id):
     order = request.args.get('order')
     filter_by = request.args.getlist('filter')
 
-    valid_sort_by = {"weight", "name", "last_close", "dma_200", "perc_diff"}
+    valid_sort_by = {"weight", "name", "day_close", "dma_200", "perc_diff"}
     valid_order = {"asc", "desc"}
     valid_filter = {"dark_green", "green", "yellow", "red", "dark_red"}
 
@@ -62,8 +62,8 @@ def show_index(index_id):
         {"label": "Weight (Low to High)", "sort_by": "weight", "order": "asc"},
         {"label": "Name (High to Low)", "sort_by": "name", "order": "desc"},
         {"label": "Name (Low to High)", "sort_by": "name", "order": "asc"},
-        {"label": "Last Close (High to Low)", "sort_by": "last_close", "order": "desc"},
-        {"label": "Last Close (Low to High)", "sort_by": "last_close", "order": "asc"},
+        {"label": "Day Close (High to Low)", "sort_by": "day_close", "order": "desc"},
+        {"label": "Day Close (Low to High)", "sort_by": "day_close", "order": "asc"},
         {"label": "200-DMA (High to Low)", "sort_by": "dma_200", "order": "desc"},
         {"label": "200-DMA (Low to High)", "sort_by": "dma_200", "order": "asc"},
         {"label": "% Diff (High to Low)", "sort_by": "perc_diff", "order": "desc"},
@@ -74,8 +74,8 @@ def show_index(index_id):
         ("weight", "asc"): IndexHolding.weight.asc(),
         ("name", "desc"): Stock.name.desc(),
         ("name", "asc"): Stock.name.asc(),
-        ("last_close", "desc"): Stock.last_close.desc(),
-        ("last_close", "asc"): Stock.last_close.asc(),
+        ("day_close", "desc"): Stock.day_close.desc(),
+        ("day_close", "asc"): Stock.day_close.asc(),
         ("dma_200", "desc"): Stock.dma_200.desc(),
         ("dma_200", "asc"): Stock.dma_200.asc(),
         ("perc_diff", "desc"): Stock.dma_200_perc_diff.desc(),
@@ -104,7 +104,7 @@ def show_index(index_id):
             IndexHolding.weight,
             Stock.ticker,
             Stock.name.label("stock_name"),
-            Stock.last_close,
+            Stock.day_close,
             Stock.dma_200,
             Stock.dma_200_perc_diff
         )

@@ -31,8 +31,8 @@ class Stock(db.Model):
 
     # Snapshot Data
     last_updated = db.Column(db.DateTime(timezone=True), nullable=True)
-    last_close: Mapped[float] = mapped_column(nullable=True)
-    last_open: Mapped[float] = mapped_column(nullable=True)
+    day_close: Mapped[float] = mapped_column(nullable=True)
+    day_open: Mapped[float] = mapped_column(nullable=True)
     day_high: Mapped[float] = mapped_column(nullable=True)
     day_low: Mapped[float] = mapped_column(nullable=True)
     volume: Mapped[float] = mapped_column(nullable=True)

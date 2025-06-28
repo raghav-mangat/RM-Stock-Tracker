@@ -14,7 +14,7 @@ client = RESTClient(POLYGON_API_KEY)
 # Must be the same as all the fields in the Stock table in the database.
 stock_attributes = [
             "name", "description", "homepage_url", "list_date", "industry", "type",
-            "total_employees", "market_cap", "icon_url", "last_close", "last_open",
+            "total_employees", "market_cap", "icon_url", "day_close", "day_open",
             "day_high", "day_low", "volume", "todays_change", "todays_change_perc",
             "dma_50", "dma_200", "dma_200_perc_diff", "high_52w", "low_52w",
             "related_companies", "last_updated"
@@ -104,8 +104,8 @@ def get_ticker_snapshot(ticker, stock_data):
         stock_data["last_updated"] = convert_polygon_timestamp(last_updated_timestamp)
         stock_data["day_high"] = safe_getattr(day, "high", None)
         stock_data["day_low"] = safe_getattr(day, "low", None)
-        stock_data["last_close"] = safe_getattr(day, "close", None)
-        stock_data["last_open"] = safe_getattr(day, "open", None)
+        stock_data["day_close"] = safe_getattr(day, "close", None)
+        stock_data["day_open"] = safe_getattr(day, "open", None)
         stock_data["volume"] = safe_getattr(day, "volume", None)
         stock_data["todays_change"] = round(safe_getattr(snapshot, "todays_change", 0), 2)
         stock_data["todays_change_perc"] = round(safe_getattr(snapshot, "todays_change_percent", 0), 2)
@@ -142,8 +142,8 @@ def get_ticker_dmas(ticker, stock_data):
         stock_data["dma_200"] = round(dma_200, 2)
 
         # Calculate 200 DMA percentage difference
-        last_close = stock_data.get("last_close")
-        dma_200_perc_diff = (last_close - dma_200) / dma_200 * 100
+        day_close = stock_data.get("day_close")
+        dma_200_perc_diff = (day_close - dma_200) / dma_200 * 100
         stock_data["dma_200_perc_diff"] = round(dma_200_perc_diff, 2)
     except Exception as e:
         print(f"[DMA Error] {ticker}: {e}")

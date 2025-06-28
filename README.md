@@ -12,16 +12,16 @@ A lightweight and professional web app to search U.S. stocks and explore major m
 -  View detailed stock information:
    - Open, high, low, close, volume
    - 200-day moving average (DMA)
-   - % Difference between last close and 200-DMA
+   - % Difference between day close and 200-DMA
    - 50-DMA, 52w High/Low
    - Company description, related companies, and more
 -  **Explore Indexes**:
    - S&P 500, Nasdaq 100, Dow Jones, Magnificent Seven, ARKK Innovation, Berkshire Hathaway
 -  For each index, see:
-   - Ticker, company name, weight, last close, 200-DMA, % difference between last close and 200-DMA
-   - Sort by weight, last close, 200-DMA, or % difference
+   - Ticker, company name, weight, day close, 200-DMA, % difference between day close and 200-DMA
+   - Sort by weight, day close, 200-DMA, or % difference
 -  Click on any stock to view full details
--  Color-coded % difference between last close and 200-DMA for fast visual insights:
+-  Color-coded % difference between day close and 200-DMA for fast visual insights:
    - **Dark Green**: ≥ +10%
    - **Green**: +2% to +10%
    - **Yellow**: -2% to +2%

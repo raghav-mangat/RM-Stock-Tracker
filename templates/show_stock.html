@@ -56,10 +56,10 @@
                 <tr><th>Type</th><td>{{ stock.type | display }}</td></tr>
                 <tr><th>Total Employees</th><td>{{ stock.total_employees | int }}</td></tr>
                 <tr><th>Market Cap</th><td>{{ stock.market_cap | currency }}</td></tr>
-                <tr><th>Day Open</th><td>{{ stock.last_open | currency }}</td></tr>
+                <tr><th>Day Open</th><td>{{ stock.day_open | currency }}</td></tr>
                 <tr><th>Day High</th><td>{{ stock.day_high | currency }}</td></tr>
                 <tr><th>Day Low</th><td>{{ stock.day_low | currency }}</td></tr>
-                <tr><th>Day Close</th><td>{{ stock.last_close | currency }}</td></tr>
+                <tr><th>Day Close</th><td>{{ stock.day_close | currency }}</td></tr>
                 <tr><th>Volume</th><td>{{ stock.volume | int }}</td></tr>
                 <tr>
                   <th>Today's Change</th>
