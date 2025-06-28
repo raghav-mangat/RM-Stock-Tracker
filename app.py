@@ -49,6 +49,7 @@ def show_index(index_id):
     valid_order = {"asc", "desc"}
     valid_filter = {"dark_green", "green", "yellow", "red", "dark_red"}
 
+    # Normalize input
     if sort_by not in valid_sort_by:
         sort_by = None
     if order not in valid_order:
@@ -81,6 +82,7 @@ def show_index(index_id):
         ("perc_diff", "asc"): Stock.dma_200_perc_diff.asc(),
     }
 
+    # Build filtering conditions
     filter_conditions = []
     for color in filter_by:
         if color == "dark_green":
@@ -94,9 +96,10 @@ def show_index(index_id):
         elif color == "dark_red":
             filter_conditions.append(Stock.dma_200_perc_diff < -10)
 
+    # Fetch index
     index = Index.query.filter_by(slug=index_id).first_or_404()
 
-    index_data = (
+    query = (
         db.session.query(
             IndexHolding.weight,
             Stock.ticker,
@@ -107,10 +110,17 @@ def show_index(index_id):
         )
         .join(Stock, IndexHolding.stock_id == Stock.id)
         .filter(IndexHolding.index_id == index.id)
-        .filter(or_(*filter_conditions, Stock.dma_200_perc_diff.is_(None)))
-        .order_by(nulls_last(sort_options.get((sort_by, order), IndexHolding.weight.desc())))
-        .all()
     )
+
+    # Only include NULLs if all filters are selected
+    if set(filter_by) == valid_filter:
+        query = query.filter(or_(*filter_conditions, Stock.dma_200_perc_diff.is_(None)))
+    else:
+        query = query.filter(or_(*filter_conditions))
+
+    index_data = query.order_by(
+        nulls_last(sort_options.get((sort_by, order), IndexHolding.weight.desc()))
+    ).all()
 
     return render_template(
         "show_index.html",
