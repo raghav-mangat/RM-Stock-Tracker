@@ -3,7 +3,7 @@
 {% extends "base.html" %}
 
 {% block title %}
-  {{ stock.ticker or "N/A" }}
+  {{ stock.ticker | display }}
 {% endblock %}
 
 {% block content %}
@@ -12,13 +12,13 @@
     <!-- Hero Section -->
     <section class="bg-light py-5 mb-5">
       <div class="container text-center">
-        <h1 class="text-body-emphasis">{{ stock.ticker }} — {{ stock.name }}</h1>
+        <h1 class="text-body-emphasis">{{ stock.ticker }} — {{ stock.name | display }}</h1>
         <p class="lead col-lg-8 mx-auto mt-3">
-          Explore detailed financial information and performance metrics for {{ stock.name }}.
+          Explore detailed financial information and performance metrics for {{ stock.name | display }}.
           Review valuation indicators, historical trends, and related companies in the same sector.
         </p>
         <p class="text-info mt-4">
-          Last Updated: {{ stock.last_updated|format_et_datetime if stock.last_updated else 'N/A' }}
+          Last Updated: {{ stock.last_updated | format_et_datetime | display }}
         </p>
       </div>
     </section>
@@ -28,8 +28,8 @@
       <div class="row">
         <!-- Company Description -->
         <div class="col-lg-4 mb-4 text-center">
-          <h4>{{ stock.name }}</h4>
-          <p class="text-muted">{{ stock.description }}</p>
+          <h4>{{ stock.name | display }}</h4>
+          <p class="text-muted">{{ stock.description | display }}</p>
         </div>
 
         <!-- Data Table -->
@@ -37,8 +37,8 @@
           <div class="table-responsive">
             <table class="table table-bordered table-hover align-middle">
               <tbody>
-                <tr><th>Company Name</th><td>{{ stock.name }}</td></tr>
-                <tr><th>Ticker Symbol</th><td>{{ stock.ticker }}</td></tr>
+                <tr><th>Company Name</th><td>{{ stock.name | display }}</td></tr>
+                <tr><th>Ticker Symbol</th><td>{{ stock.ticker | display }}</td></tr>
                 <tr>
                   <th>Homepage</th>
                   <td>
@@ -51,47 +51,40 @@
                     {% endif %}
                   </td>
                 </tr>
-                <tr><th>Industry</th><td>{{ stock.industry or "N/A" }}</td></tr>
-                <tr><th>List Date</th><td>{{ stock.list_date or "N/A" }}</td></tr>
-                <tr><th>Type</th><td>{{ stock.type or "N/A" }}</td></tr>
-                <tr>
-                  <th>Total Employees</th>
-                  <td>{{ "{:,}".format(stock.total_employees) if stock.total_employees is not none else "N/A" }}</td>
-                </tr>
-                <tr>
-                  <th>Market Cap</th>
-                  <td>{{ "${:,.2f}".format(stock.market_cap) if stock.market_cap is not none else "N/A" }}</td>
-                </tr>
-                <tr><th>Day Open</th><td>{{ "${:,.2f}".format(stock.last_open) if stock.last_open is not none else "N/A" }}</td></tr>
-                <tr><th>Day High</th><td>{{ "${:,.2f}".format(stock.day_high) if stock.day_high is not none else "N/A" }}</td></tr>
-                <tr><th>Day Low</th><td>{{ "${:,.2f}".format(stock.day_low) if stock.day_low is not none else "N/A" }}</td></tr>
-                <tr><th>Day Close</th><td>{{ "${:,.2f}".format(stock.last_close) if stock.last_close is not none else "N/A" }}</td></tr>
-                <tr><th>Volume</th><td>{{ "{:,.2f}".format(stock.volume) if stock.volume is not none else "N/A" }}</td></tr>
+                <tr><th>Industry</th><td>{{ stock.industry | display }}</td></tr>
+                <tr><th>List Date</th><td>{{ stock.list_date | display }}</td></tr>
+                <tr><th>Type</th><td>{{ stock.type | display }}</td></tr>
+                <tr><th>Total Employees</th><td>{{ stock.total_employees | int }}</td></tr>
+                <tr><th>Market Cap</th><td>{{ stock.market_cap | currency }}</td></tr>
+                <tr><th>Day Open</th><td>{{ stock.last_open | currency }}</td></tr>
+                <tr><th>Day High</th><td>{{ stock.day_high | currency }}</td></tr>
+                <tr><th>Day Low</th><td>{{ stock.day_low | currency }}</td></tr>
+                <tr><th>Day Close</th><td>{{ stock.last_close | currency }}</td></tr>
+                <tr><th>Volume</th><td>{{ stock.volume | int }}</td></tr>
                 <tr>
                   <th>Today's Change</th>
                   <td>
                     {% if stock.todays_change is not none and stock.todays_change_perc is not none %}
-                      {{ "{:,.2f}".format(stock.todays_change) }}
-                      ({{ "{:,.2f}".format(stock.todays_change_perc) }}%)
+                      {{ stock.todays_change | float }} ({{ stock.todays_change_perc | percent }})
                     {% else %}
                       N/A
                     {% endif %}
                   </td>
                 </tr>
-                <tr><th>200 DMA</th><td>{{ "${:,.2f}".format(stock.dma_200) if stock.dma_200 is not none else "N/A" }}</td></tr>
+                <tr><th>200 DMA</th><td>{{ stock.dma_200 | currency }}</td></tr>
                 <tr>
                   <th>200 DMA % Diff {{ dma_200_diff_popover() }}</th>
-                  <td
-                    style="
-                      background-color: {{ stock.dma_200_perc_diff | stock_color if stock.dma_200_perc_diff is not none }};
-                      font-weight: bold"
-                  >
-                    {{ "{:,.2f}%".format(stock.dma_200_perc_diff) if stock.dma_200_perc_diff is not none else "N/A" }}
-                  </td>
+                  {% if stock.dma_200_perc_diff is not none %}
+                    <td class="fw-bold" style="background-color: {{ stock.dma_200_perc_diff | stock_color }};">
+                      {{ stock.dma_200_perc_diff | percent }}
+                    </td>
+                  {% else %}
+                    <td class="bg-light fw-bold">N/A</td>
+                  {% endif %}
                 </tr>
-                <tr><th>50 DMA</th><td>{{ "${:,.2f}".format(stock.dma_50) if stock.dma_50 is not none else "N/A" }}</td></tr>
-                <tr><th>52W High</th><td>{{ "${:,.2f}".format(stock.high_52w) if stock.high_52w is not none else "N/A" }}</td></tr>
-                <tr><th>52W Low</th><td>{{ "${:,.2f}".format(stock.low_52w) if stock.low_52w is not none else "N/A" }}</td></tr>
+                <tr><th>50 DMA</th><td>{{ stock.dma_50 | currency }}</td></tr>
+                <tr><th>52W High</th><td>{{ stock.high_52w | currency }}</td></tr>
+                <tr><th>52W Low</th><td>{{ stock.low_52w | currency }}</td></tr>
                 <tr>
                   <th>Related Companies</th>
                   <td>

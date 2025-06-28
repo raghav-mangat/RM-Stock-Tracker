@@ -1,10 +1,10 @@
 import os
 from flask import Flask, render_template, request, jsonify, abort
 from dotenv import load_dotenv
-from sqlalchemy import and_, or_
+from sqlalchemy import and_, or_, nulls_last
 from models.database import db, Stock, Index, IndexHolding, StockMaster
 from data_collectors.stock_data import fetch_stock_data
-from utils.filters import stock_color, format_et_datetime
+from utils.filters import register_custom_filters
 from utils.error_handlers import register_error_handlers
 from utils.breadcrumbs import generate_breadcrumbs
 
@@ -19,8 +19,7 @@ app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URI")
 db.init_app(app)
 
 # Register custom filters
-app.jinja_env.filters['stock_color'] = stock_color
-app.jinja_env.filters['format_et_datetime'] = format_et_datetime
+register_custom_filters(app)
 
 # Register error handlers
 register_error_handlers(app)
@@ -108,8 +107,8 @@ def show_index(index_id):
         )
         .join(Stock, IndexHolding.stock_id == Stock.id)
         .filter(IndexHolding.index_id == index.id)
-        .filter(or_(*filter_conditions))
-        .order_by(sort_options.get((sort_by, order), IndexHolding.weight.desc()))
+        .filter(or_(*filter_conditions, Stock.dma_200_perc_diff.is_(None)))
+        .order_by(nulls_last(sort_options.get((sort_by, order), IndexHolding.weight.desc())))
         .all()
     )
 

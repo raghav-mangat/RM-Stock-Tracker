@@ -3,7 +3,7 @@
 {% extends "base.html" %}
 
 {% block title %}
-  {{ index.slug }}
+  {{ index.slug | display }}
 {% endblock %}
 
 {% block content %}
@@ -12,13 +12,13 @@
   <!-- Hero Section -->
   <section class="bg-light py-5 mb-5">
     <div class="container text-center">
-      <h1 class="text-body-emphasis">{{ index.name }}</h1>
+      <h1 class="text-body-emphasis">{{ index.name | display }}</h1>
       <p class="lead col-lg-8 mx-auto mt-3">
         View the top stocks in this index along with their weight, performance, and 200-day moving average (DMA).
         Use the dropdown menu to sort the table by various parameters. Click on a stock name to see detailed information about that stock.
       </p>
       <p class="text-info mt-4">
-        Last Updated: {{ index.last_updated|format_et_datetime if index.last_updated else 'N/A' }}
+        Last Updated: {{ index.last_updated | format_et_datetime | display }}
       </p>
     </div>
   </section>
@@ -105,9 +105,7 @@
             <th scope="col">Weight</th>
             <th scope="col">Day Close</th>
             <th scope="col">200-DMA</th>
-            <th scope="col">% Diff
-              {{ dma_200_diff_popover() }}
-            </th>
+            <th scope="col">% Diff {{ dma_200_diff_popover() }}</th>
           </tr>
         </thead>
         <tbody>
@@ -116,16 +114,20 @@
             <th scope="row">{{ loop.index }}</th>
             <td>
               <a href="{{ url_for('show_stock', ticker=stock.ticker) }}" class="fw-semibold text-primary">
-                {{ stock.stock_name }}
+                {{ stock.stock_name | display }}
               </a>
             </td>
-            <td>{{ stock.ticker }}</td>
-            <td>{{ "{:,.2f}".format(stock.weight) }}%</td>
-            <td>{{ "{:,.2f}".format(stock.last_close) }}</td>
-            <td>{{ "{:,.2f}".format(stock.dma_200) }}</td>
-            <td style="background-color: {{ stock.dma_200_perc_diff | stock_color }}; font-weight: bold">
-              {{ "{:,.2f}".format(stock.dma_200_perc_diff) }}
-            </td>
+            <td>{{ stock.ticker | display }}</td>
+            <td>{{ stock.weight | percent }}</td>
+            <td>{{ stock.last_close | currency }}</td>
+            <td>{{ stock.dma_200 | currency }}</td>
+            {% if stock.dma_200_perc_diff is not none %}
+              <td class="fw-bold" style="background-color: {{ stock.dma_200_perc_diff | stock_color }};">
+                {{ stock.dma_200_perc_diff | percent }}
+              </td>
+            {% else %}
+              <td class="bg-light fw-bold">N/A</td>
+            {% endif %}
           </tr>
           {% endfor %}
         </tbody>
@@ -136,7 +138,7 @@
 </div>
 {% endblock %}
 
-{% block script%}
+{% block script %}
 <script>
   // Script to execute the Filter Dropdown
   document.addEventListener('DOMContentLoaded', function () {
