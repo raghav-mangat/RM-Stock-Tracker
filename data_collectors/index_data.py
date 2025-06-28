@@ -39,6 +39,9 @@ indexes = {
 
 def fetch_index_data(url):
     print(f"Scraping: <{url}>...")
+    # List of stock data dictionary for each stock in the index at the
+    # given url
+    index_holdings = []
     headers = {
         "User-Agent": (
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
@@ -46,31 +49,33 @@ def fetch_index_data(url):
         )
     }
 
+    # Getting response from the webpage at given url
     try:
         response = requests.get(url, headers=headers, timeout=10)
         response.raise_for_status()
         time.sleep(5)
     except requests.RequestException as e:
         print(f"[Request Error] Failed to fetch {url}: {e}")
-        return []
+        return index_holdings
 
     try:
+        # Create soup from the webpage response
         soup = BeautifulSoup(response.text, 'html.parser')
         table = soup.find("table", class_="table")
 
+        # Check if index data table exists in the soup
         if not table or not table.tbody:
             print(f"[Parse Error] Could not find table in {url}")
-            return []
+            return index_holdings
 
-        index_holdings = []
-
+        # Retrieve stock data from the index data table
         for row in table.tbody.find_all("tr"):
             cols = row.find_all("td")
             if len(cols) >= 4:
                 ticker = cols[2].text.strip()
                 weight = cols[3].text.strip().replace("%", "")
                 index_holdings.append({
-                    "ticker": ticker if ticker else "N/A",
+                    "ticker": ticker if ticker else None,
                     "weight": weight if weight else None,
                 })
 

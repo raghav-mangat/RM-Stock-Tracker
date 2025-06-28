@@ -60,18 +60,12 @@
                 </tr>
                 <tr>
                   <th>Market Cap</th>
-                  <td>
-                    {% if stock.market_cap is not none %}
-                      ${{ "{:,.2f}".format(stock.market_cap) }}
-                    {% else %}
-                      N/A
-                    {% endif %}
-                  </td>
+                  <td>{{ "${:,.2f}".format(stock.market_cap) if stock.market_cap is not none else "N/A" }}</td>
                 </tr>
-                <tr><th>Day Open</th><td>${{ "{:,.2f}".format(stock.last_open) if stock.last_open is not none else "N/A" }}</td></tr>
-                <tr><th>Day High</th><td>${{ "{:,.2f}".format(stock.day_high) if stock.day_high is not none else "N/A" }}</td></tr>
-                <tr><th>Day Low</th><td>${{ "{:,.2f}".format(stock.day_low) if stock.day_low is not none else "N/A" }}</td></tr>
-                <tr><th>Day Close</th><td>${{ "{:,.2f}".format(stock.last_close) if stock.last_close is not none else "N/A" }}</td></tr>
+                <tr><th>Day Open</th><td>{{ "${:,.2f}".format(stock.last_open) if stock.last_open is not none else "N/A" }}</td></tr>
+                <tr><th>Day High</th><td>{{ "${:,.2f}".format(stock.day_high) if stock.day_high is not none else "N/A" }}</td></tr>
+                <tr><th>Day Low</th><td>{{ "${:,.2f}".format(stock.day_low) if stock.day_low is not none else "N/A" }}</td></tr>
+                <tr><th>Day Close</th><td>{{ "${:,.2f}".format(stock.last_close) if stock.last_close is not none else "N/A" }}</td></tr>
                 <tr><th>Volume</th><td>{{ "{:,.2f}".format(stock.volume) if stock.volume is not none else "N/A" }}</td></tr>
                 <tr>
                   <th>Today's Change</th>
@@ -84,20 +78,20 @@
                     {% endif %}
                   </td>
                 </tr>
-                <tr><th>200 DMA</th><td>${{ "{:,.2f}".format(stock.dma_200) if stock.dma_200 is not none else "N/A" }}</td></tr>
+                <tr><th>200 DMA</th><td>{{ "${:,.2f}".format(stock.dma_200) if stock.dma_200 is not none else "N/A" }}</td></tr>
                 <tr>
                   <th>200 DMA % Diff {{ dma_200_diff_popover() }}</th>
                   <td
                     style="
-                      background-color: {{ stock.dma_200_perc_diff | stock_color if stock.dma_200_perc_diff is not none else '#f8f9fa' }};
+                      background-color: {{ stock.dma_200_perc_diff | stock_color if stock.dma_200_perc_diff is not none }};
                       font-weight: bold"
                   >
-                    {{ "{:,.2f}".format(stock.dma_200_perc_diff) if stock.dma_200_perc_diff is not none else "N/A" }}%
+                    {{ "{:,.2f}%".format(stock.dma_200_perc_diff) if stock.dma_200_perc_diff is not none else "N/A" }}
                   </td>
                 </tr>
-                <tr><th>50 DMA</th><td>${{ "{:,.2f}".format(stock.dma_50) if stock.dma_50 is not none else "N/A" }}</td></tr>
-                <tr><th>52W High</th><td>${{ "{:,.2f}".format(stock.high_52w) if stock.high_52w is not none else "N/A" }}</td></tr>
-                <tr><th>52W Low</th><td>${{ "{:,.2f}".format(stock.low_52w) if stock.low_52w is not none else "N/A" }}</td></tr>
+                <tr><th>50 DMA</th><td>{{ "${:,.2f}".format(stock.dma_50) if stock.dma_50 is not none else "N/A" }}</td></tr>
+                <tr><th>52W High</th><td>{{ "${:,.2f}".format(stock.high_52w) if stock.high_52w is not none else "N/A" }}</td></tr>
+                <tr><th>52W Low</th><td>{{ "${:,.2f}".format(stock.low_52w) if stock.low_52w is not none else "N/A" }}</td></tr>
                 <tr>
                   <th>Related Companies</th>
                   <td>

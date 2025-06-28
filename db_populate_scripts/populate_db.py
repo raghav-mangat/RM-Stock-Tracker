@@ -71,19 +71,18 @@ def add_to_stocks_table(ticker):
     if not stock_data:
         return None
 
+    tickers_updated.add(stock_data.ticker)
     # Check if a stock with the same ticker already exists
     existing_stock = Stock.query.filter_by(ticker=stock_data.ticker).first()
-
     if not existing_stock:
         db.session.add(stock_data)
         db.session.flush()
-        return stock_data.id
     else:
-        # Update the existing stock with values from new_stock
+        # Update the existing stock with values from stock_data
         for attr in stock_attributes:
             setattr(existing_stock, attr, getattr(stock_data, attr))
         db.session.flush()
-        return existing_stock.id
+    return stock_data.id
 
 def add_to_index_holdings_table(index_id, stock_id, holding):
     index_holding = IndexHolding.query.filter_by(index_id=index_id, stock_id=stock_id).first()
@@ -97,8 +96,9 @@ def add_to_index_holdings_table(index_id, stock_id, holding):
         db.session.flush()
     else:
         index_holding.weight = holding.get("weight")
-        index_holding.rank = holding.get("rank")
 
+# To keep track of tickers already updated in the database
+tickers_updated = set()
 def populate_db():
     with app.app_context():
         print("Starting Database Population...\n")
@@ -114,12 +114,14 @@ def populate_db():
             holdings = fetch_index_data(index_data.get("url"))
             for holding in holdings:
                 ticker = holding.get("ticker")
-                if not ticker:
-                    continue
-                stock_id = add_to_stocks_table(ticker)
-                if stock_id:
-                    add_to_index_holdings_table(index_id, stock_id, holding)
-
+                if ticker:
+                    if ticker not in tickers_updated:
+                        stock_id = add_to_stocks_table(ticker)
+                    else:
+                        stock_id = Stock.query.filter_by(ticker=ticker).first().id
+                    if index_id and stock_id:
+                        add_to_index_holdings_table(index_id, stock_id, holding)
+            print(f"Updated data for {index_data.get('name')}!")
         db.session.commit()
         print("\nDatabase Population Completed!")
 

@@ -145,6 +145,7 @@ def show_stock(ticker):
         abort(404)
     # Check if the stock is present in the database
     stock = Stock.query.filter_by(ticker=ticker).first()
+    # if not in db then use stock data collector script to get stock data
     if not stock:
         stock = fetch_stock_data(ticker)
 

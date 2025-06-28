@@ -31,6 +31,12 @@ def get_all_stocks():
     return stocks
 
 def convert_polygon_timestamp(nanosecond_timestamp):
+    """
+    Convert the given polygon timestamp in nanoseconds to datetime
+    object in Eastern Time (ET).
+    :param nanosecond_timestamp:
+    :return: Eastern Datetime Object
+    """
     # Convert nanoseconds to seconds
     unix_seconds = nanosecond_timestamp / 1_000_000_000
 
@@ -42,25 +48,6 @@ def convert_polygon_timestamp(nanosecond_timestamp):
     eastern_dt = utc_dt.astimezone(eastern_tz)
 
     return eastern_dt
-
-def get_200_day_close_data(ticker):
-    now = datetime.now()
-    now_300_days = now - timedelta(days=300)
-    data_200_days = []
-
-    for day_data in client.list_aggs(
-        ticker=ticker,
-        multiplier=1,
-        timespan="day",
-        from_=now_300_days,
-        to=now,
-        adjusted=True,
-        sort="desc",
-        limit=200,
-    ):
-        data_200_days.append(day_data.close)
-
-    return data_200_days[:200]
 
 def get_ticker_type(ticker_type):
     try:
@@ -89,6 +76,7 @@ def get_ticker_details(ticker, stock_data):
     try:
         details = client.get_ticker_details(ticker)
 
+        stock_data["ticker"] = safe_getattr(details, "ticker", None)
         stock_data["icon_url"] = safe_getattr(details.branding, "icon_url", None)
         stock_data["description"] = safe_getattr(details, "description", None)
         stock_data["homepage_url"] = safe_getattr(details, "homepage_url", None)
@@ -98,7 +86,6 @@ def get_ticker_details(ticker, stock_data):
         )
         stock_data["name"] = safe_getattr(details, "name", None)
         stock_data["industry"] = safe_getattr(details, "sic_description", None)
-        stock_data["ticker"] = safe_getattr(details, "ticker", None)
         stock_data["total_employees"] = safe_getattr(details, "total_employees", None)
         stock_data["type"] = get_ticker_type(details.type)
         stock_data["related_companies"] = get_related_companies(ticker)
@@ -113,8 +100,8 @@ def get_ticker_snapshot(ticker, stock_data):
         snapshot = client.get_snapshot_ticker("stocks", ticker)
         day = snapshot.day
 
-        updated_timestamp = safe_getattr(snapshot, "updated", None)
-        stock_data["last_updated"] = convert_polygon_timestamp(updated_timestamp)
+        last_updated_timestamp = safe_getattr(snapshot, "updated", None)
+        stock_data["last_updated"] = convert_polygon_timestamp(last_updated_timestamp)
         stock_data["day_high"] = safe_getattr(day, "high", None)
         stock_data["day_low"] = safe_getattr(day, "low", None)
         stock_data["last_close"] = safe_getattr(day, "close", None)
@@ -129,19 +116,34 @@ def get_ticker_snapshot(ticker, stock_data):
 
 def get_ticker_dmas(ticker, stock_data):
     try:
-        closing_200_days = get_200_day_close_data(ticker)
-        if not closing_200_days:
-            return stock_data
+        # Get 50 SMA from polygon API
+        dma_50 = client.get_sma(
+            ticker=ticker,
+            timespan="day",
+            adjusted="true",
+            window="50",
+            series_type="close",
+            order="desc",
+            limit="1",
+        )
+        stock_data["dma_50"] = round(dma_50.values[0].value, 2)
 
-        last_close = closing_200_days[0]
-        dma_200 = sum(closing_200_days) / len(closing_200_days)
-        dma_200_perc_diff = (last_close - dma_200) / dma_200 * 100
-
-        closing_50_days = closing_200_days[:50]
-        dma_50 = sum(closing_50_days) / len(closing_50_days)
-
+        # Get 200 SMA from polygon API
+        dma_200 = client.get_sma(
+            ticker=ticker,
+            timespan="day",
+            adjusted="true",
+            window="200",
+            series_type="close",
+            order="desc",
+            limit="1",
+        )
+        dma_200 = dma_200.values[0].value
         stock_data["dma_200"] = round(dma_200, 2)
-        stock_data["dma_50"] = round(dma_50, 2)
+
+        # Calculate 200 DMA percentage difference
+        last_close = stock_data.get("last_close")
+        dma_200_perc_diff = (last_close - dma_200) / dma_200 * 100
         stock_data["dma_200_perc_diff"] = round(dma_200_perc_diff, 2)
     except Exception as e:
         print(f"[DMA Error] {ticker}: {e}")
@@ -184,6 +186,10 @@ def fetch_stock_data(ticker):
 
     if not stock_data.get("ticker"):
         return None
+
+    for attribute in stock_attributes:
+        if not stock_data.get(attribute):
+            stock_data[attribute] = None
 
     stock = Stock(**stock_data)
     return stock
