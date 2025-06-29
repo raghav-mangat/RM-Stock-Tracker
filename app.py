@@ -14,8 +14,15 @@ load_dotenv()
 # Initialize the Flask App
 app = Flask(__name__)
 
-# Initialize the database
+# Configure the database
 app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URI")
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+    'pool_pre_ping': True,
+    'pool_size': 5,
+    'max_overflow': 0
+}
+
+# Initialize the database
 db.init_app(app)
 
 # Register custom filters
@@ -33,13 +40,13 @@ def inject_breadcrumbs():
 def home():
     return render_template("home.html")
 
-@app.route("/all_indexes")
+@app.route("/indexes")
 def all_indexes():
     indexes = db.session.execute(db.select(Index)).scalars().all()
 
     return render_template("all_indexes.html", indexes=indexes)
 
-@app.route("/index/<string:index_id>")
+@app.route("/indexes/<string:index_id>")
 def show_index(index_id):
     sort_by = request.args.get('sort_by')
     order = request.args.get('order')
@@ -131,7 +138,7 @@ def show_index(index_id):
         order=order,
     )
 
-@app.route("/search_stocks")
+@app.route("/stocks")
 def search_stocks():
     return render_template("search_stocks.html")
 
@@ -146,7 +153,7 @@ def query_stocks():
     )
     return jsonify([{"ticker": s.ticker, "name": s.name} for s in results])
 
-@app.route("/stock/<string:ticker>")
+@app.route("/stocks/<string:ticker>")
 def show_stock(ticker):
     # To verify if the given ticker is valid
     stock = StockMaster.query.filter_by(ticker=ticker).first()

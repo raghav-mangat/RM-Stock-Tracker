@@ -40,7 +40,7 @@ document.addEventListener("DOMContentLoaded", function () {
           div.setAttribute("role", "option");
           div.setAttribute("tabindex", "-1");
           div.addEventListener("click", () => {
-            window.location.href = `/stock/${item.ticker}`;
+            window.location.href = `/stocks/${item.ticker}`;
           });
           suggestionsBox.appendChild(div);
         });
