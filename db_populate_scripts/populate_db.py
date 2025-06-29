@@ -24,8 +24,8 @@ elif IS_RELEASE == "0":
         os.makedirs(db_dir, exist_ok=True)
 
 from models.database import db, Stock, Index, IndexHolding, StockMaster
-from data_collectors.index_data import indexes, fetch_index_data
-from data_collectors.stock_data import fetch_stock_data, get_all_stocks, stock_attributes
+from data_collectors.index_data import all_indexes, get_index_info, fetch_index_data
+from data_collectors.stock_data import stock_attributes, get_all_stocks, fetch_stock_data
 
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URI")
@@ -49,20 +49,21 @@ def update_stocks_master_table():
     db.session.commit()
     print("stocks_master table updated!")
 
-def add_to_indexes_table(index_data, now):
-    index = Index.query.filter_by(slug=index_data.get("slug")).first()
+def add_to_indexes_table(index, now):
+    index_info = get_index_info(index)
+    index = Index.query.filter_by(slug=index_info.get("slug")).first()
     if not index:
         index = Index(
-            name=index_data.get("name"),
-            slug=index_data.get("slug"),
-            url=index_data.get("url"),
+            name=index_info.get("name"),
+            slug=index_info.get("slug"),
+            url=index_info.get("url"),
             last_updated = now
         )
         db.session.add(index)
         db.session.flush()
     else:
-        index.name = index_data.get("name")
-        index.url = index_data.get("url")
+        index.name = index_info.get("name")
+        index.url = index_info.get("url")
         index.last_updated = now
     return index.id
 
@@ -100,6 +101,11 @@ def add_to_index_holdings_table(index_id, stock_id, holding):
 # To keep track of tickers already updated in the database
 tickers_updated = set()
 def populate_db():
+    """
+    Populates the Database using the data and functions defined
+    in index and stock data_collectors scripts.
+    :return: None
+    """
     with app.app_context():
         print("Starting Database Population...\n")
         db.create_all()
@@ -109,9 +115,9 @@ def populate_db():
         eastern = pytz.timezone("US/Eastern")
         now = datetime.now(eastern)
 
-        for index_data in indexes.values():
-            index_id = add_to_indexes_table(index_data, now)
-            holdings = fetch_index_data(index_data.get("url"))
+        for index in all_indexes:
+            index_id = add_to_indexes_table(index, now)
+            holdings = fetch_index_data(index)
             for holding in holdings:
                 ticker = holding.get("ticker")
                 if ticker:
@@ -121,7 +127,7 @@ def populate_db():
                         stock_id = Stock.query.filter_by(ticker=ticker).first().id
                     if index_id and stock_id:
                         add_to_index_holdings_table(index_id, stock_id, holding)
-            print(f"Updated data for {index_data.get('name')}!")
+            print(f"Updated data for: {index}!")
         db.session.commit()
         print("\nDatabase Population Completed!")
 

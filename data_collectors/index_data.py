@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 
 # Define the indexes and their URLs
 slick_charts_url = "https://www.slickcharts.com"
-indexes = {
+indexes_info = {
     "sp500": {
         "name": "S&P 500 Index",
         "slug": "sp500",
@@ -37,7 +37,35 @@ indexes = {
     },
 }
 
-def fetch_index_data(url):
+# List of all indexes available in this script
+all_indexes = list(indexes_info.keys())
+
+def get_index_info(index):
+    """
+    Returns the information for the index given to the function using the
+    indexes_info dict defined at the top of the script.
+    :param index: key for a value in indexes_info dict
+    :return: dict of information for the given index
+    """
+    return indexes_info.get(index)
+
+def fetch_index_data(index):
+    """
+    Takes an index name for an index in slickcharts website, scrapes the website
+    using beautiful soup, and returns a list of holdings for that index.
+    Each element in the holdings list is a dict containing 'weight' and
+    'ticker' symbol of each stock in the index.
+    :param index: index name for an index is slickcharts website
+    :return: index_holdings: List of dicts containing weight and ticker
+    symbol for each stock in the index
+    """
+
+    url = None
+    try:
+        url = get_index_info(index).get("url")
+    except AttributeError as e:
+        print(f"[Index Error] Index <{index}> is invalid: {e}")
+
     print(f"Scraping: <{url}>...")
     # List of stock data dictionary for each stock in the index at the
     # given url

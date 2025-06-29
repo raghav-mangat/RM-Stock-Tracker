@@ -21,6 +21,10 @@ stock_attributes = [
         ]
 
 def get_all_stocks():
+    """
+    Returns a list of all the stocks available in the polygon API.
+    :return: List of stock ticker symbols
+    """
     print("Retrieving list of all stocks in polygon API...")
     stocks = []
     for t in client.list_tickers(
@@ -114,36 +118,40 @@ def get_ticker_snapshot(ticker, stock_data):
         print(f"[Snapshot Error] {ticker}: {e}")
     return stock_data
 
+def get_200_day_close_data(ticker):
+    now = datetime.now()
+    now_300_days = now - timedelta(days=300)
+    data_200_days = []
+
+    for day_data in client.list_aggs(
+        ticker=ticker,
+        multiplier=1,
+        timespan="day",
+        from_=now_300_days,
+        to=now,
+        adjusted=True,
+        sort="desc",
+        limit=200,
+    ):
+        data_200_days.append(day_data.close)
+
+    return data_200_days[:200]
+
 def get_ticker_dmas(ticker, stock_data):
     try:
-        # Get 50 SMA from polygon API
-        dma_50 = client.get_sma(
-            ticker=ticker,
-            timespan="day",
-            adjusted="true",
-            window="50",
-            series_type="close",
-            order="desc",
-            limit="1",
-        )
-        stock_data["dma_50"] = round(dma_50.values[0].value, 2)
+        closing_200_days = get_200_day_close_data(ticker)
+        if not closing_200_days:
+            return stock_data
 
-        # Get 200 SMA from polygon API
-        dma_200 = client.get_sma(
-            ticker=ticker,
-            timespan="day",
-            adjusted="true",
-            window="200",
-            series_type="close",
-            order="desc",
-            limit="1",
-        )
-        dma_200 = dma_200.values[0].value
+        last_close = closing_200_days[0]
+        dma_200 = sum(closing_200_days) / len(closing_200_days)
+        dma_200_perc_diff = (last_close - dma_200) / dma_200 * 100
+
+        closing_50_days = closing_200_days[:50]
+        dma_50 = sum(closing_50_days) / len(closing_50_days)
+
         stock_data["dma_200"] = round(dma_200, 2)
-
-        # Calculate 200 DMA percentage difference
-        day_close = stock_data.get("day_close")
-        dma_200_perc_diff = (day_close - dma_200) / dma_200 * 100
+        stock_data["dma_50"] = round(dma_50, 2)
         stock_data["dma_200_perc_diff"] = round(dma_200_perc_diff, 2)
     except Exception as e:
         print(f"[DMA Error] {ticker}: {e}")
@@ -176,6 +184,14 @@ def get_ticker_52w_hl(ticker, stock_data):
     return stock_data
 
 def fetch_stock_data(ticker):
+    """
+    For the given ticker symbol of a stock, this function collects
+    the data for all the attributes in 'stock_attributes' defined
+    at the top of the script, using the polygon API. It then saves
+    all this data as a Stock DB model object, and returns it.
+    :param ticker: ticker symbol of a stock
+    :return: Stock DB model object containing data for all attributes
+    """
     stock_data = {}
     print(f"Fetching data for: {ticker}")
 
