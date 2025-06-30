@@ -72,7 +72,7 @@ Version 2.2.0 builds on v2.1.0 with numerous user-facing improvements, better fi
 
 Version `v2.2.0` adds major polish and practical upgrades. It greatly improves index interactivity with filters, improves backend robustness, and completes the move to a professional custom domain. The codebase is now well-positioned for user authentication, dashboards, and future analytics.
 
-**Full Changelog:** https://github.com/RaghavMangat2000/RM-Stock-Tracker/compare/v2.1.0...v2.2.0
+**Full Changelog:** https://github.com/raghav-mangat/RM-Stock-Tracker/compare/v2.1.0...v2.2.0
 
 
 ------------------------------------------------------------------------------------------------------------
@@ -151,7 +151,7 @@ Version `v2.1.0` brings a highly polished experience for users and developers. I
 
 **Next Steps:** The foundation is now ready for future features like historical charts, user login, and custom watchlists.
 
-**Full Changelog:** https://github.com/RaghavMangat2000/RM-Stock-Tracker/compare/v2.0.0...v2.1.0
+**Full Changelog:** https://github.com/raghav-mangat/RM-Stock-Tracker/compare/v2.0.0...v2.1.0
 
 
 ------------------------------------------------------------------------------------------------------------
@@ -224,4 +224,4 @@ The % difference between the day close and 200-day moving average is color-coded
 
 Version `v2.0.0` transforms the RM Stock Tracker into a scalable, real-time web app with search, detailed views, and index analysis. It's a strong foundation for adding features like charts, watchlists, and login functionality in the future.
 
-**Full Changelog**: https://github.com/RaghavMangat2000/RM-Stock-Tracker/compare/v1.2.0...v2.0.0
+**Full Changelog**: https://github.com/raghav-mangat/RM-Stock-Tracker/compare/v1.2.0...v2.0.0
