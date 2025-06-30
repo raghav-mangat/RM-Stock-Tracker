@@ -1,3 +1,83 @@
+# Release Notes — v2.2.0
+**Release Date:** June 29, 2025
+
+> **Live Site:** [rmstocktracker.com](https://rmstocktracker.com)
+
+## Overview
+
+Version 2.2.0 builds on v2.1.0 with numerous user-facing improvements, better filter and sort logic, UI enhancements, backend refactoring, and a move to a custom domain. It emphasizes usability, performance, and maintainability, while polishing the design and interactivity.
+
+---
+
+## What’s New
+
+### UI & Navigation Enhancements
+
+- **Breadcrumbs and Back Button**:
+  - Breadcrumb navigation and back buttons added across the site (except the home page) for better page context and smoother navigation.
+
+- **Stock Details Enhancements**:
+  - Ticker symbol and company name now included in the stock details table.
+  - DMA % Difference popover now works on hover in addition to click.
+
+- **Indexes Table Improvements**:
+  - The table on the index page can now be sorted by **company name**.
+  - Clean visual layout and spacing added to the **All Indexes** page for improved responsiveness and clarity.
+
+### Filtering and Display Logic
+
+- **200-DMA % Diff Filter**:
+  - Index tables can now be filtered by color-coded **200-DMA % Difference** buckets (dark green, green, yellow, red, dark red).
+  - Table still supports sorting by multiple columns while filters are active.
+
+- **Last Updated Time in Eastern Time (ET)**:
+  - Displaying the last updated time of the data in Eastern Time (ET) across the website.
+
+- **Null Value Display Logic**:
+  - If **all filters are selected**, rows with null % difference values are also shown.
+  - If **any subset** of filters is selected, null rows are excluded.
+
+- **Cleaner Templates with Jinja Filters**:
+  - New modular Jinja filters for formatting float and integer values improve readability and adhere to DRY principles.
+
+- **Handling Missing Data**:
+  - Improved checks throughout stock details page to show **"N/A"** where data is unavailable.
+  - Special styling added for missing 200-DMA % difference data.
+
+### Backend and Reliability
+
+- **MySQL Reliability**:
+  - SQLAlchemy connection pool settings tuned to reduce 500 errors and ensure reliable MySQL connections.
+
+- **Refactored Scripts**:
+  - Data collection and DB population scripts refactored and documented for clarity.
+  - Unnecessary API calls eliminated by tracking already updated tickers.
+  - Reverted to a previous reliable method of fetching DMA values from Polygon.
+
+- **Organized JavaScript**:
+  - Created a new `base.js` to centralize common scripts used across templates.
+
+- **URL & Route Clean-up**:
+  - Simplified and improved route naming for clarity and consistency.
+  - Active links now persist in the navbar when viewing specific stock/index pages.
+
+### Hosting & Domain
+
+- **Custom Domain Launched**:
+  - Project now hosted at [rmstocktracker.com](https://rmstocktracker.com), no longer under the PythonAnywhere subdomain.
+
+---
+
+## Summary
+
+Version `v2.2.0` adds major polish and practical upgrades. It greatly improves index interactivity with filters, improves backend robustness, and completes the move to a professional custom domain. The codebase is now well-positioned for user authentication, dashboards, and future analytics.
+
+**Full Changelog:** https://github.com/RaghavMangat2000/RM-Stock-Tracker/compare/v2.1.0...v2.2.0
+
+
+------------------------------------------------------------------------------------------------------------
+
+
 # Release Notes — v2.1.0
 **Release Date:** June 22, 2025
 
