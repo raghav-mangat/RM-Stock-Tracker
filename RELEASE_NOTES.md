@@ -1,7 +1,7 @@
 # Release Notes — v2.2.0
 **Release Date:** June 29, 2025
 
-> **Live Site:** [rmstocktracker.com](https://rmstocktracker.com)
+> **Live Site:** [www.rmstocktracker.com](https://www.rmstocktracker.com)
 
 ## Overview
 
@@ -64,7 +64,7 @@ Version 2.2.0 builds on v2.1.0 with numerous user-facing improvements, better fi
 ### Hosting & Domain
 
 - **Custom Domain Launched**:
-  - Project now hosted at [rmstocktracker.com](https://rmstocktracker.com), no longer under the PythonAnywhere subdomain.
+  - Project now hosted at [www.rmstocktracker.com](https://www.rmstocktracker.com), no longer under the PythonAnywhere subdomain.
 
 ---
 

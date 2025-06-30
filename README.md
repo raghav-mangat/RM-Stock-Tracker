@@ -2,7 +2,7 @@
 
 A lightweight and professional web app to search U.S. stocks and explore major market indexes using live financial data — built with Python, Flask, SQLAlchemy, and Bootstrap.
 
-> **Live Site**: [rmstocktracker.com](https://rmstocktracker.com)
+> **Live Site**: [www.rmstocktracker.com](https://www.rmstocktracker.com)
 
 ---
 
