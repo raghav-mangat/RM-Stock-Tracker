@@ -1,7 +1,7 @@
 import os
 from flask import Flask, render_template, request, jsonify, abort
 from dotenv import load_dotenv
-from sqlalchemy import and_, or_, nulls_last
+from sqlalchemy import and_, or_
 from models.database import db, Stock, Index, IndexHolding, StockMaster
 from data_collectors.stock_data import fetch_stock_data
 from utils.filters import register_custom_filters
@@ -126,7 +126,7 @@ def show_index(index_id):
         query = query.filter(or_(*filter_conditions))
 
     index_data = query.order_by(
-        nulls_last(sort_options.get((sort_by, order), IndexHolding.weight.desc()))
+        sort_options.get((sort_by, order), IndexHolding.weight.desc())
     ).all()
 
     return render_template(
