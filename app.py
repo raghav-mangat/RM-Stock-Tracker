@@ -10,6 +10,7 @@ Created By: Raghav Mangat
 """
 
 import os
+import random
 from flask import Flask, render_template, request, jsonify, abort
 from dotenv import load_dotenv
 from sqlalchemy import and_, or_
@@ -151,7 +152,15 @@ def show_index(index_id):
 
 @app.route("/stocks")
 def search_stocks():
-    return render_template("search_stocks.html")
+    # First get the top 20 stocks by volume
+    ticker_tape_stocks = Stock.query.order_by(
+        Stock.volume.desc()
+    ).limit(20).all()
+    # Add 20 random stocks to the list
+    ticker_tape_stocks.extend(Stock.query.all()[:20])
+    # Shuffle the total 40 stocks being displayed on the ticker tape
+    random.shuffle(ticker_tape_stocks)
+    return render_template("search_stocks.html", ticker_tape_stocks=ticker_tape_stocks)
 
 @app.route("/query_stocks")
 def query_stocks():

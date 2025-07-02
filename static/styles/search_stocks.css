@@ -1,3 +1,5 @@
+/**** Styling for Search Bar ****/
+
 #suggestions {
   border: 1px solid #ccc;
   border-top: none;
@@ -17,3 +19,46 @@
 .suggestion-item:hover {
   background-color: #f1f1f1;
 }
+
+/**** Styling for Ticker Tape ****/
+
+/* Ticker Container */
+.ticker-tape {
+  overflow: hidden;
+  position: relative;
+}
+
+.ticker-track {
+  display: inline-flex;
+  white-space: nowrap;
+  /* Make the animation seconds equal to 2 times the number
+   of stocks being displayed on the ticker tape */
+  animation: ticker-scroll 80s linear infinite;
+  min-width: max-content;
+}
+
+.ticker-track:hover {
+  animation-play-state: paused;
+}
+
+/* Individual Cards */
+.ticker-item {
+  border-radius: 8px;
+  box-shadow: 0 0 4px rgba(0,0,0,0.1);
+  min-width: 200px;
+  font-size: 15px;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+/* Animate the Scroll */
+@keyframes ticker-scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+/**** ****/

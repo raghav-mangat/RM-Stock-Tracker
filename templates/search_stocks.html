@@ -40,6 +40,47 @@
     </div>
   </section>
 
+  <!--
+    Ticker Tape Section
+
+    Displays a continuously scrolling ticker of 40 stocks:
+    - 20 with the highest volume
+    - 20 chosen randomly
+    Shows ticker, volume, day close, and today's change.
+    Color-coded based on change (green/red).
+    Duplicates the content to achieve seamless CSS scrolling.
+  -->
+  <section class="my-5 pt-5">
+    <div class="ticker-tape bg-light py-4 border-top border-bottom">
+      <div class="ticker-track d-flex align-items-center">
+        {% for i in range(2) %} <!-- Duplicate once for seamless loop -->
+          {% for stock in ticker_tape_stocks %}
+            {% if stock.volume and stock.day_close and stock.todays_change %}
+              <div class="ticker-item card text-center mx-2 px-3 py-2">
+                <a href="{{ url_for('show_stock', ticker=stock.ticker) }}" style="text-decoration: none;">
+                  <div class="d-flex flex-column text-truncate" style="max-width: 200px;">
+                    <strong class="text-dark text-truncate">{{ stock.ticker }}</strong>
+                    <span class="ticker-info fw-bold text-truncate"
+                          style="color: {{ stock.todays_change | ticker_tape_color }};">
+                      {{ stock.volume | humanize_number }}
+                      @ {{ stock.day_close | float }}
+                      {% if stock.todays_change >= 0 %}
+                        <i class="bi bi-caret-up-fill"></i>
+                      {% else %}
+                        <i class="bi bi-caret-down-fill"></i>
+                      {% endif %}
+                      {{ stock.todays_change | abs | float }}
+                    </span>
+                  </div>
+                </a>
+              </div>
+            {% endif %}
+          {% endfor %}
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
 </div>
 {% endblock %}
 
