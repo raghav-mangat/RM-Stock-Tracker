@@ -32,23 +32,25 @@ def ticker_tape_color(todays_change):
         color = "#FF6666" # Dark Red
     return color
 
-def humanize_number(num):
+def humanize_number(num, fallback="N/A", decimals=1):
     """
     Removes the extra zeroes from the given number and returns
     the number with one decimal point precision followed by
     T/B/M/K for Trillion, Billion, Million, or Thousand.
-    :param num
     :return: result - string with compact readable form of the num
     """
-    result = str(num)
-    if num >= 1_000_000_000_000:
-        result = f"{num/1_000_000_000_000:.1f}T"
-    elif num >= 1_000_000_000:
-        result = f"{num/1_000_000_000:.1f}B"
-    elif num >= 1_000_000:
-        result = f"{num/1_000_000:.1f}M"
-    elif num >= 1_000:
-        result = f"{num/1_000:.1f}K"
+    if num and (isinstance(num, int) or isinstance(num, float)):
+        result = str(num)
+        if num >= 1_000_000_000_000:
+            result = f"{num/1_000_000_000_000:.{decimals}f}T"
+        elif num >= 1_000_000_000:
+            result = f"{num/1_000_000_000:.{decimals}f}B"
+        elif num >= 1_000_000:
+            result = f"{num/1_000_000:.{decimals}f}M"
+        elif num >= 1_000:
+            result = f"{num/1_000:.{decimals}f}K"
+    else:
+        result = fallback
     return result
 
 def format_et_datetime(et_datetime):
