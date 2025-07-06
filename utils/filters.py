@@ -20,14 +20,15 @@ def stock_color(perc_diff):
         color = "#ffff66" # Yellow
     return color
 
-def ticker_tape_color(todays_change):
+def stock_change_color(change):
     """
-    Function to determine ticker tape item color based on
-    the todays change in the stock price for the ticker.
-    :param todays_change
+    Function to determine color of the stock based on the change
+    in some stock attribute. If the change is greater than or
+    equal to 0 then color it green, otherwise color it red.
+    :param change
     :return: colour - In hex value
     """
-    if todays_change >= 0:
+    if change >= 0:
         color = "#66ff66" # Dark Green
     else:
         color = "#FF6666" # Dark Red
@@ -95,7 +96,7 @@ def format_percent(value, fallback="N/A", decimals=2):
 # Register the filters in the Flask app
 def register_custom_filters(app: Flask):
     app.jinja_env.filters['stock_color'] = stock_color
-    app.jinja_env.filters['ticker_tape_color'] = ticker_tape_color
+    app.jinja_env.filters['stock_change_color'] = stock_change_color
     app.jinja_env.filters['humanize_number'] = humanize_number
     app.jinja_env.filters['format_et_datetime'] = format_et_datetime
     app.jinja_env.filters['display'] = display

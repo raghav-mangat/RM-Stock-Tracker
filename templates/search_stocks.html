@@ -1,3 +1,5 @@
+{% from "macros/arrow_direction.html" import arrow_direction %}
+
 {% extends "base.html" %}
 
 {% block title %}
@@ -18,7 +20,7 @@
       <p class="lead col-lg-8 mx-auto mt-3">
         Enter a stock ticker or company name to access comprehensive financial data, including market performance, valuation metrics, and historical insights. Start your analysis with just a few keystrokes.
       </p>
-      <p class="text-info mt-4">
+      <p class="text-info fw-semibold mt-4">
         Last Updated: {{ last_updated | display }}
       </p>
     </div>
@@ -64,14 +66,10 @@
                   <div class="d-flex flex-column text-truncate" style="max-width: 200px;">
                     <strong class="text-dark fw-bold text-truncate">{{ stock.ticker }}</strong>
                     <span class="ticker-info fw-semibold text-truncate"
-                          style="color: {{ stock.todays_change | ticker_tape_color }};">
+                          style="color: {{ stock.todays_change | stock_change_color }};">
                       {{ stock.volume | humanize_number }}
                       @ {{ stock.day_close | float }}
-                      {% if stock.todays_change >= 0 %}
-                        <i class="bi bi-caret-up-fill"></i>
-                      {% else %}
-                        <i class="bi bi-caret-down-fill"></i>
-                      {% endif %}
+                      {{ arrow_direction(stock.todays_change) }}
                       {{ stock.todays_change | abs | float }}
                     </span>
                   </div>

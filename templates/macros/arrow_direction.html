@@ -1,0 +1,9 @@
+<!-- Get the Up or Down arrow depending on the value of change w.r.t. 0 -->
+
+{% macro arrow_direction(change) %}
+    {% if change >= 0 %}
+      <i class="bi bi-caret-up-fill"></i>
+    {% else %}
+      <i class="bi bi-caret-down-fill"></i>
+    {% endif %}
+{% endmacro %}

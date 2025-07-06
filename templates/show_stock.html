@@ -1,4 +1,5 @@
 {% from "macros/popovers.html" import dma_200_diff_popover %}
+{% from "macros/arrow_direction.html" import arrow_direction %}
 
 {% extends "base.html" %}
 
@@ -17,7 +18,7 @@
           Explore detailed financial information and performance metrics for {{ stock.name | display }}.
           Review valuation indicators, historical trends, and related companies in the same sector.
         </p>
-        <p class="text-info mt-4">
+        <p class="text-info fw-semibold mt-4">
           Last Updated: {{ stock.last_updated | format_et_datetime | display }}
         </p>
       </div>
@@ -79,9 +80,12 @@
                 </tr>
                 <tr>
                   <th>Today's Change</th>
-                  <td>
-                    {% if stock.todays_change is not none and stock.todays_change_perc is not none %}
-                      {{ stock.todays_change | float }} ({{ stock.todays_change_perc | percent }})
+                  <td class="fw-semibold">
+                    {% if (stock.todays_change is not none) and (stock.todays_change_perc is not none) %}
+                      <span style="color: {{ stock.todays_change | stock_change_color }};">
+                        {{ arrow_direction(stock.todays_change) }}
+                        {{ stock.todays_change | abs | float }} ({{ stock.todays_change_perc | abs | percent }})
+                      </span>
                     {% else %}
                       N/A
                     {% endif %}

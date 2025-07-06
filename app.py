@@ -10,9 +10,11 @@ Created By: Raghav Mangat
 """
 
 import os
+import json
 import random
 from flask import Flask, render_template, request, jsonify, abort
 from dotenv import load_dotenv
+from pathlib import Path
 from sqlalchemy import and_, or_
 from models.database import db, Stock, Index, IndexHolding, StockMaster
 from data_collectors.stock_data import fetch_stock_data
@@ -152,6 +154,13 @@ def show_index(index_id):
 
 @app.route("/stocks")
 def search_stocks():
+    # Load last updated timestamp of populate db
+    last_updated = None
+    data_path = Path(__file__).resolve().parent / "data" / "populate_db_info.json"
+    if data_path.exists():
+        with open(data_path) as f:
+            last_updated = json.load(f).get("last_updated")
+
     # Get the top 20 stocks by volume
     ticker_tape_stocks = StockMaster.query.order_by(
         StockMaster.volume.desc()
@@ -161,9 +170,30 @@ def search_stocks():
     # Shuffle the total 40 stocks being displayed on the ticker tape
     random.shuffle(ticker_tape_stocks)
 
+    num_top_stocks = 20
+
+    # Top Gainers
+    gainers = StockMaster.query.order_by(
+        StockMaster.todays_change_perc.desc()
+    ).limit(num_top_stocks).all()
+
+    # Top Losers
+    losers = StockMaster.query.order_by(
+        StockMaster.todays_change_perc.asc()
+    ).limit(num_top_stocks).all()
+
+    # Top Stocks traded by Volume
+    top_volume = StockMaster.query.order_by(
+        StockMaster.volume.desc()
+    ).limit(num_top_stocks).all()
+
     return render_template(
         "search_stocks.html",
+        last_updated=last_updated,
         ticker_tape_stocks=ticker_tape_stocks,
+        gainers=gainers,
+        losers=losers,
+        top_volume=top_volume
     )
 
 @app.route("/query_stocks")
