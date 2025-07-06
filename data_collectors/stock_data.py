@@ -3,12 +3,19 @@ import pytz
 from polygon import RESTClient
 from dotenv import load_dotenv
 import os
-from models.database import Stock
+from models.database import Stock, StockMaster
 
 load_dotenv()
 
 POLYGON_API_KEY = os.getenv("POLYGON_API_KEY")
 client = RESTClient(POLYGON_API_KEY)
+
+# List of all attributes that we store in the database for all stocks available in Polygon API.
+# Must be the same as all the fields in the Stock Master table in the database.
+stock_master_attributes = [
+            "ticker", "name", "type", "primary_exchange", "last_updated", "day_close",
+            "day_open", "day_high", "day_low", "volume", "todays_change", "todays_change_perc"
+        ]
 
 # List of all attributes that we store in the database for a given stock.
 # Must be the same as all the fields in the Stock table in the database.
@@ -20,19 +27,71 @@ stock_attributes = [
             "related_companies", "last_updated"
         ]
 
-def get_all_stocks():
+def fetch_all_stocks_data():
     """
-    Returns a list of all the stocks available in the polygon API.
-    :return: List of stock ticker symbols
+    For all the stocks available in polugon API, this function collects
+    the data for all the attributes in 'stock_master_attributes' defined
+    at the top of the script, using the polygon API. It then saves
+    all this data as a list of Stock Master DB model objects, and returns it.
+    :return: List of Stock Master DB model object, containing the required
+    data for all the stocks available in polygon API
     """
-    print("Retrieving list of all stocks in polygon API...")
-    stocks = []
+    print("Retrieving data for all the stocks in polygon API...")
+    stock_master_data = []
+
+    # Get the ticker types
+    ticker_types = {}
+    types = client.get_ticker_types(
+        asset_class="stocks",
+        locale="us"
+    )
+    for t in types:
+        ticker_types[t.code] = t.description
+
+    # Use the "All Tickers" endpoint in polygon API to get some data for each stock
+    all_tickers_data = {}
     for t in client.list_tickers(
         market="stocks", active="true", order="asc", limit="1000", sort="ticker"
     ):
-        stocks.append(t)
-    print("Retrieved all stocks from polygon API!")
-    return stocks
+        all_tickers_data[t.ticker] = {
+            "name": t.name,
+            "type": ticker_types.get(t.type),
+            "primary_exchange": t.primary_exchange
+        }
+
+    # Getting "full market snapshot" endpoint data from polygon API
+    snapshot = client.get_snapshot_all(
+        "stocks",
+    )
+
+    # For each stock in the snapshot, save all the required data for the stock
+    # in a Stock Master DB model object, and add it to the list to be returned
+    for stock in snapshot:
+        stock_data = {}
+        stock_data["ticker"] = stock.ticker
+        stock_data.update(all_tickers_data.get(stock.ticker, {
+            "name": "N/A",
+            "type": "N/A",
+            "primary_exchange": "N/A"
+        }))
+        stock_data["day_close"] = stock.day.close
+        stock_data["day_open"] = stock.day.open
+        stock_data["day_high"] = stock.day.high
+        stock_data["day_low"] = stock.day.low
+        stock_data["volume"] = stock.day.volume
+        stock_data["todays_change"] = stock.todays_change
+        stock_data["todays_change_perc"] = stock.todays_change_percent
+        stock_data["last_updated"] = convert_polygon_timestamp(stock.updated)
+
+        for attribute in stock_master_attributes:
+            if attribute not in stock_data:
+                stock_data[attribute] = None
+
+        stock = StockMaster(**stock_data)
+        stock_master_data.append(stock)
+
+    print("Retrieved all stocks data from polygon API!")
+    return stock_master_data
 
 def convert_polygon_timestamp(nanosecond_timestamp):
     """
@@ -204,7 +263,7 @@ def fetch_stock_data(ticker):
         return None
 
     for attribute in stock_attributes:
-        if not stock_data.get(attribute):
+        if attribute not in stock_data:
             stock_data[attribute] = None
 
     stock = Stock(**stock_data)

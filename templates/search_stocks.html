@@ -18,6 +18,9 @@
       <p class="lead col-lg-8 mx-auto mt-3">
         Enter a stock ticker or company name to access comprehensive financial data, including market performance, valuation metrics, and historical insights. Start your analysis with just a few keystrokes.
       </p>
+      <p class="text-info mt-4">
+        Last Updated: {{ last_updated | display }}
+      </p>
     </div>
   </section>
 
@@ -55,12 +58,12 @@
       <div class="ticker-track d-flex align-items-center">
         {% for i in range(2) %} <!-- Duplicate once for seamless loop -->
           {% for stock in ticker_tape_stocks %}
-            {% if stock.volume and stock.day_close and stock.todays_change %}
-              <div class="ticker-item card text-center mx-2 px-3 py-2">
-                <a href="{{ url_for('show_stock', ticker=stock.ticker) }}" style="text-decoration: none;">
+            {% if (stock.volume is not none) and (stock.day_close is not none) and (stock.todays_change is not none) %}
+              <div class="ticker-item card shadow-sm text-center mx-2 px-3 py-2">
+                <a href="{{ url_for('show_stock', ticker=stock.ticker) }}" class="text-decoration-none">
                   <div class="d-flex flex-column text-truncate" style="max-width: 200px;">
-                    <strong class="text-dark text-truncate">{{ stock.ticker }}</strong>
-                    <span class="ticker-info fw-bold text-truncate"
+                    <strong class="text-dark fw-bold text-truncate">{{ stock.ticker }}</strong>
+                    <span class="ticker-info fw-semibold text-truncate"
                           style="color: {{ stock.todays_change | ticker_tape_color }};">
                       {{ stock.volume | humanize_number }}
                       @ {{ stock.day_close | float }}

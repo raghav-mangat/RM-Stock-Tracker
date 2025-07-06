@@ -152,15 +152,19 @@ def show_index(index_id):
 
 @app.route("/stocks")
 def search_stocks():
-    # First get the top 20 stocks by volume
-    ticker_tape_stocks = Stock.query.order_by(
-        Stock.volume.desc()
+    # Get the top 20 stocks by volume
+    ticker_tape_stocks = StockMaster.query.order_by(
+        StockMaster.volume.desc()
     ).limit(20).all()
     # Add 20 random stocks to the list
-    ticker_tape_stocks.extend(Stock.query.all()[:20])
+    ticker_tape_stocks.extend(StockMaster.query.all()[:20])
     # Shuffle the total 40 stocks being displayed on the ticker tape
     random.shuffle(ticker_tape_stocks)
-    return render_template("search_stocks.html", ticker_tape_stocks=ticker_tape_stocks)
+
+    return render_template(
+        "search_stocks.html",
+        ticker_tape_stocks=ticker_tape_stocks,
+    )
 
 @app.route("/query_stocks")
 def query_stocks():

@@ -6,6 +6,7 @@ from datetime import datetime
 from dotenv import load_dotenv
 from flask import Flask
 from pathlib import Path
+from utils.datetime_utils import format_et_datetime
 
 # Load environment variables from .env file
 load_dotenv()
@@ -25,7 +26,7 @@ elif IS_RELEASE == "0":
 
 from models.database import db, Stock, Index, IndexHolding, StockMaster
 from data_collectors.index_data import all_indexes, get_index_info, fetch_index_data
-from data_collectors.stock_data import stock_attributes, get_all_stocks, fetch_stock_data
+from data_collectors.stock_data import stock_attributes, fetch_all_stocks_data, fetch_stock_data
 
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URI")
@@ -36,16 +37,10 @@ def update_stocks_master_table():
     db.session.query(StockMaster).delete()
     db.session.commit()
 
-    stocks = get_all_stocks()
+    stocks = fetch_all_stocks_data()
     for stock in stocks:
-        db.session.add(
-            StockMaster(
-                ticker=stock.ticker,
-                name=stock.name,
-                type=stock.type,
-                primary_exchange=stock.primary_exchange
-            )
-        )
+        db.session.add(stock)
+        db.session.flush()
     db.session.commit()
     print("stocks_master table updated!")
 
@@ -115,6 +110,7 @@ def populate_db():
         eastern = pytz.timezone("US/Eastern")
         now = datetime.now(eastern)
 
+        # Save the data for all indexes and the constituent stocks
         for index in all_indexes:
             index_id = add_to_indexes_table(index, now)
             holdings = fetch_index_data(index)
@@ -129,7 +125,31 @@ def populate_db():
                         add_to_index_holdings_table(index_id, stock_id, holding)
             print(f"Updated data for: {index}!")
         db.session.commit()
+        save_populate_db_info()
         print("\nDatabase Population Completed!")
+
+def save_populate_db_info():
+    # Define file path
+    base_dir = Path(__file__).resolve().parent.parent
+    data_dir = base_dir / "data"
+    data_file = data_dir / "populate_db_info.json"
+
+    # Ensure folder exists
+    data_dir.mkdir(parents=True, exist_ok=True)
+
+    # Set current timestamp in US/Eastern
+    eastern = pytz.timezone("US/Eastern")
+    now = datetime.now(eastern)
+    timestamp = format_et_datetime(now)
+
+    # Prepare data
+    populate_db_info = {
+        "last_updated": timestamp,
+    }
+
+    # Save to JSON
+    with open(data_file, "w") as f:
+        json.dump(populate_db_info, f, indent=2)
 
 # Load market status
 data_path = Path(__file__).resolve().parent.parent / "data" / "market_status.json"

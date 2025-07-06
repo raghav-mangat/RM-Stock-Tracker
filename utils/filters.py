@@ -1,4 +1,5 @@
 from flask import Flask
+from .datetime_utils import format_et_datetime as format_et_datetime_util
 
 def stock_color(perc_diff):
     """
@@ -39,7 +40,7 @@ def humanize_number(num, fallback="N/A", decimals=1):
     T/B/M/K for Trillion, Billion, Million, or Thousand.
     :return: result - string with compact readable form of the num
     """
-    if num and (isinstance(num, int) or isinstance(num, float)):
+    if num is not None and (isinstance(num, int) or isinstance(num, float)):
         result = str(num)
         if num >= 1_000_000_000_000:
             result = f"{num/1_000_000_000_000:.{decimals}f}T"
@@ -57,7 +58,7 @@ def format_et_datetime(et_datetime):
     """
     Formats datetime in ET into string: 'Friday, Jun 21, 2025, at 08:00PM, ET.'
     """
-    return et_datetime.strftime('%A, %b %d, %Y, at %I:%M%p, ET.')
+    return format_et_datetime_util(et_datetime)
 
 def display(value, fallback="N/A"):
     """Simple fallback for None values"""

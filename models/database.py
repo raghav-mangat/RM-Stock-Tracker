@@ -1,6 +1,6 @@
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-from sqlalchemy import String, Text, ForeignKey, Date
+from sqlalchemy import String, Text, ForeignKey, Date, DateTime
 
 # Create a base class for SQLAlchemy
 class Base(DeclarativeBase):
@@ -30,7 +30,7 @@ class Stock(db.Model):
     icon_url: Mapped[str] = mapped_column(Text, nullable=True)
 
     # Snapshot Data
-    last_updated = db.Column(db.DateTime(timezone=True), nullable=True)
+    last_updated: Mapped[DateTime] = db.Column(db.DateTime(timezone=True), nullable=True)
     day_close: Mapped[float] = mapped_column(nullable=True)
     day_open: Mapped[float] = mapped_column(nullable=True)
     day_high: Mapped[float] = mapped_column(nullable=True)
@@ -62,7 +62,7 @@ class Index(db.Model):
     name: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
     slug: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
     url: Mapped[str] = mapped_column(String(255), nullable=False)
-    last_updated = db.Column(db.DateTime(timezone=True), nullable=True)
+    last_updated: Mapped[DateTime] = db.Column(db.DateTime(timezone=True), nullable=True)
 
     holdings: Mapped[list["IndexHolding"]] = relationship(back_populates="index")
 
@@ -83,7 +83,19 @@ class StockMaster(db.Model):
     __tablename__ = "stocks_master"
 
     id: Mapped[int] = mapped_column(primary_key=True)
+
+    # All tickers data
     ticker: Mapped[str] = mapped_column(String(10), nullable=False)
     name: Mapped[str] = mapped_column(String(100), nullable=False)
     type: Mapped[str] = mapped_column(String(100), nullable=True)
     primary_exchange: Mapped[str] = mapped_column(String(10), nullable=False)
+
+    # Full Market Snapshot Data
+    last_updated: Mapped[DateTime] = db.Column(db.DateTime(timezone=True), nullable=True)
+    day_close: Mapped[float] = mapped_column(nullable=True)
+    day_open: Mapped[float] = mapped_column(nullable=True)
+    day_high: Mapped[float] = mapped_column(nullable=True)
+    day_low: Mapped[float] = mapped_column(nullable=True)
+    volume: Mapped[float] = mapped_column(nullable=True)
+    todays_change: Mapped[float] = mapped_column(nullable=True)
+    todays_change_perc: Mapped[float] = mapped_column(nullable=True)
