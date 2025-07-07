@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 from flask import Flask
 from pathlib import Path
 from utils.datetime_utils import format_et_datetime
+from utils.top_stocks import get_top_stocks
 
 # Load environment variables from .env file
 load_dotenv()
@@ -42,7 +43,7 @@ def update_stocks_master_table():
         db.session.add(stock)
         db.session.flush()
     db.session.commit()
-    print("stocks_master table updated!")
+    print("Updated stocks_master table!")
 
 def add_to_indexes_table(index, now):
     index_info = get_index_info(index)
@@ -125,6 +126,19 @@ def populate_db():
                         add_to_index_holdings_table(index_id, stock_id, holding)
             print(f"Updated data for: {index}!")
         db.session.commit()
+
+        print(f"Storing data for top stocks...")
+        # Get the top stocks from StockMaster table for each category
+        top_stocks = get_top_stocks()
+        # Save the stocks data in the Stocks table
+        for stocks in top_stocks.values():
+            for stock in stocks:
+                ticker = stock.ticker
+                if ticker not in tickers_updated:
+                    add_to_stocks_table(ticker)
+        db.session.commit()
+        print(f"Stored data for top stocks!")
+
         save_populate_db_info()
         print("\nDatabase Population Completed!")
 

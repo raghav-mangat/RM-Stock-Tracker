@@ -40,57 +40,68 @@ def fetch_all_stocks_data():
     stock_master_data = []
 
     # Get the ticker types
-    ticker_types = {}
-    types = client.get_ticker_types(
-        asset_class="stocks",
-        locale="us"
-    )
-    for t in types:
-        ticker_types[t.code] = t.description
+    try:
+        ticker_types = {
+            t.code: t.description for t in client.get_ticker_types(asset_class="stocks", locale="us")
+        }
+    except Exception as e:
+        print(f"Error fetching ticker types: {e}")
+        ticker_types = {}
 
     # Use the "All Tickers" endpoint in polygon API to get some data for each stock
-    all_tickers_data = {}
-    for t in client.list_tickers(
-        market="stocks", active="true", order="asc", limit="1000", sort="ticker"
-    ):
-        all_tickers_data[t.ticker] = {
-            "name": t.name,
-            "type": ticker_types.get(t.type),
-            "primary_exchange": t.primary_exchange
+    try:
+        all_tickers_data = {
+            t.ticker: {
+                "name": t.name,
+                "type": ticker_types.get(t.type, "N/A"),
+                "primary_exchange": t.primary_exchange
+            } for t in client.list_tickers(
+                market="stocks", active="true", order="asc", limit="1000", sort="ticker"
+            )
         }
+    except Exception as e:
+        print(f"Error fetching all tickers data: {e}")
+        all_tickers_data = {}
 
     # Getting "full market snapshot" endpoint data from polygon API
-    snapshot = client.get_snapshot_all(
-        "stocks",
-    )
+    try:
+        snapshot = client.get_snapshot_all("stocks")
+    except Exception as e:
+        print(f"Error fetching snapshot data: {e}")
+        snapshot = []
 
     # For each stock in the snapshot, save all the required data for the stock
     # in a Stock Master DB model object, and add it to the list to be returned
     for stock in snapshot:
-        stock_data = {}
-        stock_data["ticker"] = stock.ticker
-        stock_data.update(all_tickers_data.get(stock.ticker, {
-            "name": "N/A",
-            "type": "N/A",
-            "primary_exchange": "N/A"
-        }))
-        stock_data["day_close"] = stock.day.close
-        stock_data["day_open"] = stock.day.open
-        stock_data["day_high"] = stock.day.high
-        stock_data["day_low"] = stock.day.low
-        stock_data["volume"] = stock.day.volume
-        stock_data["todays_change"] = stock.todays_change
-        stock_data["todays_change_perc"] = stock.todays_change_percent
-        stock_data["last_updated"] = convert_polygon_timestamp(stock.updated)
+        try:
+            stock_data = {
+                "ticker": stock.ticker,
+                "day_close": safe_getattr(stock.day, "close"),
+                "day_open": safe_getattr(stock.day, "open"),
+                "day_high": safe_getattr(stock.day, "high"),
+                "day_low": safe_getattr(stock.day, "low"),
+                "volume": safe_getattr(stock.day, "volume"),
+                "todays_change": safe_getattr(stock, "todays_change"),
+                "todays_change_perc": safe_getattr(stock, "todays_change_percent"),
+                "last_updated": convert_polygon_timestamp(stock.updated)
+            }
 
-        for attribute in stock_master_attributes:
-            if attribute not in stock_data:
-                stock_data[attribute] = None
+            # Add metadata from ticker data
+            stock_data.update(all_tickers_data.get(stock.ticker, {
+                "name": "N/A",
+                "type": "N/A",
+                "primary_exchange": "N/A"
+            }))
 
-        stock = StockMaster(**stock_data)
-        stock_master_data.append(stock)
+            for attribute in stock_master_attributes:
+                stock_data.setdefault(attribute, None)
 
-    print("Retrieved all stocks data from polygon API!")
+            stock_master_data.append(StockMaster(**stock_data))
+
+        except Exception as e:
+            print(f"Error processing stock {getattr(stock, 'ticker', 'UNKNOWN')}: {e}")
+
+    print(f"Retrieved {len(stock_master_data)} stocks from Polygon API!")
     return stock_master_data
 
 def convert_polygon_timestamp(nanosecond_timestamp):

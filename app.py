@@ -21,6 +21,7 @@ from data_collectors.stock_data import fetch_stock_data
 from utils.filters import register_custom_filters
 from utils.error_handlers import register_error_handlers
 from utils.breadcrumbs import generate_breadcrumbs
+from utils.top_stocks import get_top_stocks
 
 # Load environment variables
 load_dotenv()
@@ -170,31 +171,16 @@ def search_stocks():
     # Shuffle the total 40 stocks being displayed on the ticker tape
     random.shuffle(ticker_tape_stocks)
 
-    # Number of top stocks to be shown for each category
-    num_top_stocks = 50
-
-    # Top Gainers
-    gainers = StockMaster.query.order_by(
-        StockMaster.todays_change_perc.desc()
-    ).limit(num_top_stocks).all()
-
-    # Top Losers
-    losers = StockMaster.query.order_by(
-        StockMaster.todays_change_perc.asc()
-    ).limit(num_top_stocks).all()
-
-    # Top Stocks traded by Volume
-    top_traded = StockMaster.query.order_by(
-        StockMaster.volume.desc()
-    ).limit(num_top_stocks).all()
+    # Get the top stocks from StockMaster table for each category
+    top_stocks = get_top_stocks()
 
     return render_template(
         "search_stocks.html",
         last_updated=last_updated,
         ticker_tape_stocks=ticker_tape_stocks,
-        gainers=gainers,
-        losers=losers,
-        top_traded=top_traded
+        gainers=top_stocks.get("gainers"),
+        losers=top_stocks.get("losers"),
+        top_traded=top_stocks.get("losers")
     )
 
 @app.route("/query_stocks")
