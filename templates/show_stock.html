@@ -1,5 +1,6 @@
 {% from "macros/popovers.html" import dma_200_diff_popover %}
 {% from "macros/arrow_direction.html" import arrow_direction %}
+{% from "macros/jumbotron.html" import jumbotron %}
 
 {% extends "base.html" %}
 
@@ -8,124 +9,116 @@
 {% endblock %}
 
 {% block content %}
+
 {% if stock.ticker %}
-  <div class="">
-    <!-- Hero Section -->
-    <section class="bg-light py-5 mb-5">
-      <div class="container text-center">
-        <h1 class="text-body-emphasis">{{ stock.ticker }} — {{ stock.name | display }}</h1>
-        <p class="lead col-lg-8 mx-auto mt-3">
-          Explore detailed financial information and performance metrics for {{ stock.name | display }}.
-          Review valuation indicators, historical trends, and related companies in the same sector.
-        </p>
-        <p class="text-info fw-semibold mt-4">
-          Last Updated: {{ stock.last_updated | format_et_datetime | display }}
-        </p>
+  <!-- Hero Section -->
+  {% set heading = stock.ticker ~ " – " ~ (stock.name | display) %}
+  {% set description = "Explore detailed financial information and performance metrics for " ~ (stock.name | display) ~ ". Review valuation indicators, historical trends, and related companies in the same sector." %}
+  {% set last_updated = stock.last_updated | format_et_datetime | display %}
+  {{ jumbotron(heading, description, last_updated) }}
+
+  <!-- Stock Overview -->
+  <section class="container mb-5">
+    <div class="row">
+      <!-- Company Description -->
+      <div class="col-lg-4 mb-4 text-center">
+        <h4>{{ stock.name | display }}</h4>
+        <p class="text-muted">{{ stock.description | display }}</p>
       </div>
-    </section>
 
-    <!-- Stock Overview -->
-    <section class="container mb-5">
-      <div class="row">
-        <!-- Company Description -->
-        <div class="col-lg-4 mb-4 text-center">
-          <h4>{{ stock.name | display }}</h4>
-          <p class="text-muted">{{ stock.description | display }}</p>
-        </div>
-
-        <!-- Data Table -->
-        <div class="col-lg-8">
-          <div class="table-responsive">
-            <table class="table table-bordered table-hover align-middle">
-              <tbody>
-                <tr><th>Company Name</th><td>{{ stock.name | display }}</td></tr>
-                <tr><th>Ticker Symbol</th><td>{{ stock.ticker | display }}</td></tr>
-                <tr>
-                  <th>Homepage</th>
-                  <td>
-                    {% if stock.homepage_url %}
-                      <a href="{{ stock.homepage_url }}" target="_blank" class="fw-semibold text-primary">
-                        {{ stock.homepage_url }}
-                      </a>
-                    {% else %}
-                      <span>N/A</span>
-                    {% endif %}
-                  </td>
-                </tr>
-                <tr><th>Industry</th><td>{{ stock.industry | display }}</td></tr>
-                <tr><th>List Date</th><td>{{ stock.list_date | display }}</td></tr>
-                <tr><th>Type</th><td>{{ stock.type | display }}</td></tr>
-                <tr><th>Total Employees</th><td>{{ stock.total_employees | int }}</td></tr>
-                <tr>
-                  <th>Market Cap</th>
-                  <td>
-                    {{ stock.market_cap | currency }}
-                    {% if stock.market_cap is not none and stock.market_cap >= 1000 %}
-                      ({{ stock.market_cap | humanize_number(decimals=2) }})
-                    {% endif %}
-                  </td>
-                </tr>
-                <tr><th>Day Open</th><td>{{ stock.day_open | currency }}</td></tr>
-                <tr><th>Day High</th><td>{{ stock.day_high | currency }}</td></tr>
-                <tr><th>Day Low</th><td>{{ stock.day_low | currency }}</td></tr>
-                <tr><th>Day Close</th><td>{{ stock.day_close | currency }}</td></tr>
-                <tr>
-                  <th>Volume</th>
-                  <td>
-                    {{ stock.volume | int }}
-                    {% if stock.volume is not none and stock.volume >= 1000 %}
-                        ({{ stock.volume | humanize_number(decimals=2) }})
-                    {% endif %}
-                  </td>
-                </tr>
-                <tr>
-                  <th>Today's Change</th>
-                  <td class="fw-semibold">
-                    {% if (stock.todays_change is not none) and (stock.todays_change_perc is not none) %}
-                      <span style="color: {{ stock.todays_change | stock_change_color }};">
-                        {{ arrow_direction(stock.todays_change) }}
-                        {{ stock.todays_change | abs | float }} ({{ stock.todays_change_perc | abs | percent }})
-                      </span>
-                    {% else %}
-                      N/A
-                    {% endif %}
-                  </td>
-                </tr>
-                <tr><th>200 DMA</th><td>{{ stock.dma_200 | currency }}</td></tr>
-                <tr>
-                  <th>200 DMA % Diff {{ dma_200_diff_popover() }}</th>
-                  {% if stock.dma_200_perc_diff is not none %}
-                    <td class="fw-bold" style="background-color: {{ stock.dma_200_perc_diff | dma_200_color }};">
-                      {{ stock.dma_200_perc_diff | percent }}
-                    </td>
+      <!-- Data Table -->
+      <div class="col-lg-8">
+        <div class="table-responsive">
+          <table class="table table-bordered table-hover align-middle">
+            <tbody>
+              <tr><th>Company Name</th><td>{{ stock.name | display }}</td></tr>
+              <tr><th>Ticker Symbol</th><td>{{ stock.ticker | display }}</td></tr>
+              <tr>
+                <th>Homepage</th>
+                <td>
+                  {% if stock.homepage_url %}
+                    <a href="{{ stock.homepage_url }}" target="_blank" class="fw-semibold text-primary">
+                      {{ stock.homepage_url }}
+                    </a>
                   {% else %}
-                    <td class="bg-light fw-bold">N/A</td>
+                    <span>N/A</span>
                   {% endif %}
-                </tr>
-                <tr><th>50 DMA</th><td>{{ stock.dma_50 | currency }}</td></tr>
-                <tr><th>52W High</th><td>{{ stock.high_52w | currency }}</td></tr>
-                <tr><th>52W Low</th><td>{{ stock.low_52w | currency }}</td></tr>
-                <tr>
-                  <th>Related Companies</th>
-                  <td>
-                    {% if rel_companies %}
-                      {% for ticker in rel_companies %}
-                        <a href="{{ url_for('show_stock', ticker=ticker) }}" class="fw-semibold text-primary">
-                          {{ ticker }}
-                        </a>{% if not loop.last %}, {% endif %}
-                      {% endfor %}
-                    {% else %}
-                      <span>N/A</span>
-                    {% endif %}
+                </td>
+              </tr>
+              <tr><th>Industry</th><td>{{ stock.industry | display }}</td></tr>
+              <tr><th>List Date</th><td>{{ stock.list_date | display }}</td></tr>
+              <tr><th>Type</th><td>{{ stock.type | display }}</td></tr>
+              <tr><th>Total Employees</th><td>{{ stock.total_employees | int }}</td></tr>
+              <tr>
+                <th>Market Cap</th>
+                <td>
+                  {{ stock.market_cap | currency }}
+                  {% if stock.market_cap is not none and stock.market_cap >= 1000 %}
+                    ({{ stock.market_cap | humanize_number(decimals=2) }})
+                  {% endif %}
+                </td>
+              </tr>
+              <tr><th>Day Open</th><td>{{ stock.day_open | currency }}</td></tr>
+              <tr><th>Day High</th><td>{{ stock.day_high | currency }}</td></tr>
+              <tr><th>Day Low</th><td>{{ stock.day_low | currency }}</td></tr>
+              <tr><th>Day Close</th><td>{{ stock.day_close | currency }}</td></tr>
+              <tr>
+                <th>Volume</th>
+                <td>
+                  {{ stock.volume | int }}
+                  {% if stock.volume is not none and stock.volume >= 1000 %}
+                      ({{ stock.volume | humanize_number(decimals=2) }})
+                  {% endif %}
+                </td>
+              </tr>
+              <tr>
+                <th>Today's Change</th>
+                <td class="fw-semibold">
+                  {% if (stock.todays_change is not none) and (stock.todays_change_perc is not none) %}
+                    <span style="color: {{ stock.todays_change | stock_change_color }};">
+                      {{ arrow_direction(stock.todays_change) }}
+                      {{ stock.todays_change | abs | float }} ({{ stock.todays_change_perc | abs | percent }})
+                    </span>
+                  {% else %}
+                    N/A
+                  {% endif %}
+                </td>
+              </tr>
+              <tr><th>200 DMA</th><td>{{ stock.dma_200 | currency }}</td></tr>
+              <tr>
+                <th>200 DMA % Diff {{ dma_200_diff_popover() }}</th>
+                {% if stock.dma_200_perc_diff is not none %}
+                  <td class="fw-bold" style="background-color: {{ stock.dma_200_perc_diff | dma_200_color }};">
+                    {{ stock.dma_200_perc_diff | percent }}
                   </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+                {% else %}
+                  <td class="bg-light fw-bold">N/A</td>
+                {% endif %}
+              </tr>
+              <tr><th>50 DMA</th><td>{{ stock.dma_50 | currency }}</td></tr>
+              <tr><th>52W High</th><td>{{ stock.high_52w | currency }}</td></tr>
+              <tr><th>52W Low</th><td>{{ stock.low_52w | currency }}</td></tr>
+              <tr>
+                <th>Related Companies</th>
+                <td>
+                  {% if rel_companies %}
+                    {% for ticker in rel_companies %}
+                      <a href="{{ url_for('show_stock', ticker=ticker) }}" class="fw-semibold text-primary">
+                        {{ ticker }}
+                      </a>{% if not loop.last %}, {% endif %}
+                    {% endfor %}
+                  {% else %}
+                    <span>N/A</span>
+                  {% endif %}
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
-    </section>
-  </div>
+    </div>
+  </section>
+
 {% else %}
   <!-- Error Section -->
   <div class="pt-5 mt-5 text-center">
@@ -133,5 +126,7 @@
     <p class="lead">The requested stock does not exist in our database.</p>
     <a href="{{ url_for('home') }}" class="btn btn-primary mt-3">Go Back Home</a>
   </div>
+
 {% endif %}
+
 {% endblock %}

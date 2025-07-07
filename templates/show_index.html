@@ -1,4 +1,5 @@
 {% from "macros/popovers.html" import dma_200_diff_popover %}
+{% from "macros/jumbotron.html" import jumbotron %}
 
 {% extends "base.html" %}
 
@@ -7,21 +8,13 @@
 {% endblock %}
 
 {% block content %}
-<div class="">
 
   <!-- Hero Section -->
-  <section class="bg-light py-5 mb-5">
-    <div class="container text-center">
-      <h1 class="text-body-emphasis">{{ index.name | display }}</h1>
-      <p class="lead col-lg-8 mx-auto mt-3">
-        View the top stocks in this index along with their weight, performance, and 200-day moving average (DMA).
-        Use the dropdown menu to sort the table by various parameters. Click on a stock name to see detailed information about that stock.
-      </p>
-      <p class="text-info fw-semibold mt-4">
-        Last Updated: {{ index.last_updated | format_et_datetime | display }}
-      </p>
-    </div>
-  </section>
+  {% set heading = index.name | display %}
+  {% set description = "View the top stocks in this index along with their weight, performance, and 200-day moving average (DMA).
+        Use the dropdown menu to sort the table by various parameters. Click on a stock name to see detailed information about that stock." %}
+  {% set last_updated = index.last_updated | format_et_datetime | display %}
+  {{ jumbotron(heading, description, last_updated) }}
 
   <!-- Sort By and Filter Dropdowns -->
   <section class="container text-end mb-4">
@@ -135,7 +128,6 @@
     </div>
   </section>
 
-</div>
 {% endblock %}
 
 {% block script %}

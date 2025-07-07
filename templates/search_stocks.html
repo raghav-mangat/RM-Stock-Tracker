@@ -1,4 +1,5 @@
 {% from "macros/arrow_direction.html" import arrow_direction %}
+{% from "macros/jumbotron.html" import jumbotron %}
 
 {% extends "base.html" %}
 
@@ -11,20 +12,12 @@
 {% endblock %}
 
 {% block content %}
-<div class="">
 
   <!-- Hero Section -->
-  <section class="bg-light py-5 mb-5">
-    <div class="container text-center">
-      <h1 class="text-body-emphasis">Search Stocks Instantly</h1>
-      <p class="lead col-lg-8 mx-auto mt-3">
-        Enter a stock ticker or company name to access comprehensive financial data, including market performance, valuation metrics, and historical insights. Start your analysis with just a few keystrokes.
-      </p>
-      <p class="text-info fw-semibold mt-4">
-        Last Updated: {{ last_updated | display }}
-      </p>
-    </div>
-  </section>
+  {% set heading = "Search Stocks Instantly" %}
+  {% set description = "Enter a stock ticker or company name to access comprehensive financial data, including market performance, valuation metrics, and historical insights. Start your analysis with just a few keystrokes." %}
+  {% set last_updated = last_updated | display %}
+  {{ jumbotron(heading, description, last_updated) }}
 
   <!-- Search Bar -->
   <section class="container my-5">
@@ -230,7 +223,6 @@
     </div>
   </section>
 
-</div>
 {% endblock %}
 
 {% block script %}

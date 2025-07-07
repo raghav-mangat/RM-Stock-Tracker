@@ -10,11 +10,9 @@ Created By: Raghav Mangat
 """
 
 import os
-import json
 import random
 from flask import Flask, render_template, request, jsonify, abort
 from dotenv import load_dotenv
-from pathlib import Path
 from sqlalchemy import and_, or_
 from models.database import db, Stock, Index, IndexHolding, StockMaster
 from data_collectors.stock_data import fetch_stock_data
@@ -22,6 +20,7 @@ from utils.filters import register_custom_filters
 from utils.error_handlers import register_error_handlers
 from utils.breadcrumbs import generate_breadcrumbs
 from utils.top_stocks import get_top_stocks
+from utils.populate_db_info import db_last_updated
 
 # Load environment variables
 load_dotenv()
@@ -57,9 +56,16 @@ def home():
 
 @app.route("/indexes")
 def all_indexes():
+    # Load last updated timestamp of populate db
+    last_updated = db_last_updated()
+
     indexes = db.session.execute(db.select(Index)).scalars().all()
 
-    return render_template("all_indexes.html", indexes=indexes)
+    return render_template(
+        "all_indexes.html",
+        indexes=indexes,
+        last_updated=last_updated
+    )
 
 @app.route("/indexes/<string:index_id>")
 def show_index(index_id):
@@ -156,11 +162,7 @@ def show_index(index_id):
 @app.route("/stocks")
 def search_stocks():
     # Load last updated timestamp of populate db
-    last_updated = None
-    data_path = Path(__file__).resolve().parent / "data" / "populate_db_info.json"
-    if data_path.exists():
-        with open(data_path) as f:
-            last_updated = json.load(f).get("last_updated")
+    last_updated = db_last_updated()
 
     # Get the top 20 stocks by volume
     ticker_tape_stocks = StockMaster.query.order_by(

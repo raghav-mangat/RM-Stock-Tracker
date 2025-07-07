@@ -1,3 +1,5 @@
+{% from "macros/jumbotron.html" import jumbotron %}
+
 {% extends "base.html" %}
 
 {% block title %}
@@ -9,17 +11,12 @@
 {% endblock %}
 
 {% block content %}
-<div class="">
 
   <!-- Hero Section -->
-  <section class="bg-light py-5 mb-5">
-    <div class="container text-center">
-      <h1 class="text-body-emphasis">Index Dashboard</h1>
-      <p class="lead col-lg-8 mx-auto mt-3">
-        Explore key market indexes and their top holdings. Click any index to view detailed stock information and performance data for its constituent companies.
-      </p>
-    </div>
-  </section>
+  {% set heading = "Index Dashboard" %}
+  {% set description = "Explore key market indexes and their top holdings. Click any index to view detailed stock information and performance data for its constituent companies." %}
+  {% set last_updated = last_updated | display %}
+  {{ jumbotron(heading, description, last_updated) }}
 
   <!-- Index Cards Grid -->
   <section class="container mb-5 px-5 pt-2">
@@ -36,5 +33,4 @@
     </div>
   </section>
 
-</div>
 {% endblock %}
