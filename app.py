@@ -170,7 +170,8 @@ def search_stocks():
     # Shuffle the total 40 stocks being displayed on the ticker tape
     random.shuffle(ticker_tape_stocks)
 
-    num_top_stocks = 20
+    # Number of top stocks to be shown for each category
+    num_top_stocks = 50
 
     # Top Gainers
     gainers = StockMaster.query.order_by(
@@ -183,7 +184,7 @@ def search_stocks():
     ).limit(num_top_stocks).all()
 
     # Top Stocks traded by Volume
-    top_volume = StockMaster.query.order_by(
+    top_traded = StockMaster.query.order_by(
         StockMaster.volume.desc()
     ).limit(num_top_stocks).all()
 
@@ -193,7 +194,7 @@ def search_stocks():
         ticker_tape_stocks=ticker_tape_stocks,
         gainers=gainers,
         losers=losers,
-        top_volume=top_volume
+        top_traded=top_traded
     )
 
 @app.route("/query_stocks")

@@ -55,7 +55,7 @@
     Color-coded based on change (green/red).
     Duplicates the content to achieve seamless CSS scrolling.
   -->
-  <section class="my-5 pt-5">
+  <section class="my-5 pt-3">
     <div class="ticker-tape bg-light py-4 border-top border-bottom">
       <div class="ticker-track d-flex align-items-center">
         {% for i in range(2) %} <!-- Duplicate once for seamless loop -->
@@ -78,6 +78,145 @@
             {% endif %}
           {% endfor %}
         {% endfor %}
+      </div>
+    </div>
+  </section>
+
+  <!-- Top Market Movers Section -->
+  <section class="container my-5">
+    <h2 class="fw-bold text-center text-decoration-underline mb-5">Top Market Movers</h2>
+
+    <div class="row">
+      <!-- Sidebar Tabs -->
+      <div class="col-md-3 mb-3 mb-md-0">
+        <div class="list-group" id="topStocksTabs" role="tablist">
+          <a class="list-group-item list-group-item-action active"
+             id="gainers-tab" data-bs-toggle="list" href="#gainers"
+             role="tab" aria-controls="gainers" aria-current="true">
+            Top Gainers
+          </a>
+          <a class="list-group-item list-group-item-action"
+             id="losers-tab" data-bs-toggle="list" href="#losers"
+             role="tab" aria-controls="losers">
+            Top Losers
+          </a>
+          <a class="list-group-item list-group-item-action"
+             id="volume-tab" data-bs-toggle="list" href="#volume"
+             role="tab" aria-controls="volume">
+            Top Traded
+          </a>
+        </div>
+      </div>
+
+      <!-- Content Area -->
+      <div class="col-md-9">
+        <div class="tab-content" id="topStocksContent">
+
+          <!-- Top Gainers -->
+          <div class="tab-pane fade show active" id="gainers"
+               role="tabpanel" aria-labelledby="gainers-tab">
+            <h5 class="fw-bold mb-3">Top Gaining Stocks Today</h5>
+            <div class="table-responsive">
+              <table class="table table-bordered table-hover align-middle">
+                <thead class="table-light">
+                  <tr>
+                    <th scope="col">#</th>
+                    <th scope="col">Ticker</th>
+                    <th scope="col" style="max-width: 250px;">Company</th>
+                    <th scope="col">Today's Change</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for stock in gainers %}
+                    <tr>
+                      <th scope="row">{{ loop.index }}</th>
+                      <td>{{ stock.ticker }}</td>
+                      <td style="max-width: 250px;">
+                        <a href="{{ url_for('show_stock', ticker=stock.ticker) }}" class="fw-semibold text-primary">
+                          {{ stock.name | display }}
+                        </a>
+                      </td>
+                      <td class="fw-semibold" style="color: {{ stock.todays_change_perc | stock_change_color }};">
+                        {{ arrow_direction(stock.todays_change_perc) }}
+                        {{ stock.todays_change_perc | abs | percent }}
+                        ({{ stock.todays_change | abs | float }})
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Top Losers -->
+          <div class="tab-pane fade" id="losers"
+               role="tabpanel" aria-labelledby="losers-tab">
+            <h5 class="fw-bold mb-3">Top Losing Stocks Today</h5>
+            <div class="table-responsive">
+              <table class="table table-bordered table-hover align-middle">
+                <thead class="table-light">
+                  <tr>
+                    <th scope="col">#</th>
+                    <th scope="col">Ticker</th>
+                    <th scope="col" style="max-width: 250px;">Company</th>
+                    <th scope="col">Today's Change</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for stock in losers %}
+                    <tr>
+                      <th scope="row">{{ loop.index }}</th>
+                      <td>{{ stock.ticker }}</td>
+                      <td style="max-width: 250px;">
+                        <a href="{{ url_for('show_stock', ticker=stock.ticker) }}" class="fw-semibold text-primary">
+                          {{ stock.name | display }}
+                        </a>
+                      </td>
+                      <td class="fw-semibold" style="color: {{ stock.todays_change_perc | stock_change_color }};">
+                        {{ arrow_direction(stock.todays_change_perc) }}
+                        {{ stock.todays_change_perc | abs | percent }}
+                        ({{ stock.todays_change | abs | float }})
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Top Traded -->
+          <div class="tab-pane fade" id="volume"
+               role="tabpanel" aria-labelledby="volume-tab">
+            <h5 class="fw-bold mb-3">Most Actively Traded Stocks</h5>
+            <div class="table-responsive">
+              <table class="table table-bordered table-hover align-middle">
+                <thead class="table-light">
+                  <tr>
+                    <th scope="col">#</th>
+                    <th scope="col">Ticker</th>
+                    <th scope="col" style="max-width: 250px;">Company</th>
+                    <th scope="col">Volume</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for stock in top_traded %}
+                    <tr>
+                      <th scope="row">{{ loop.index }}</th>
+                      <td>{{ stock.ticker }}</td>
+                      <td style="max-width: 250px;">
+                        <a href="{{ url_for('show_stock', ticker=stock.ticker) }}" class="fw-semibold text-primary">
+                          {{ stock.name | display }}
+                        </a>
+                      </td>
+                      <td class="fw-semibold">{{ stock.volume | humanize_number }}</td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
       </div>
     </div>
   </section>
