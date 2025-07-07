@@ -1,23 +1,11 @@
 .index-card {
   aspect-ratio: 1 / 1;
   border-radius: 12px;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  cursor: pointer;
   padding: 1rem;
 }
 
-.index-card:hover {
-  transform: scale(1.03);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.index-link {
-  text-decoration: none;
-}
-
 .index-title {
-  font-size: 1.1rem;
-  font-weight: 600;
+  font-size: 1.2rem;
 }
 
 /* Tweak for smaller screens like mobile phones */

@@ -1,7 +1,7 @@
 from flask import Flask
 from .datetime_utils import format_et_datetime as format_et_datetime_util
 
-def stock_color(perc_diff):
+def dma_200_color(perc_diff):
     """
     Function to determine stock color based on the percentage
     difference between day closing price and 200 DMA.
@@ -95,7 +95,7 @@ def format_percent(value, fallback="N/A", decimals=2):
 
 # Register the filters in the Flask app
 def register_custom_filters(app: Flask):
-    app.jinja_env.filters['stock_color'] = stock_color
+    app.jinja_env.filters['dma_200_color'] = dma_200_color
     app.jinja_env.filters['stock_change_color'] = stock_change_color
     app.jinja_env.filters['humanize_number'] = humanize_number
     app.jinja_env.filters['format_et_datetime'] = format_et_datetime

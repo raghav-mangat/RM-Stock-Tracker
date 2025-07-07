@@ -22,13 +22,13 @@
   </section>
 
   <!-- Index Cards Grid -->
-  <section class="container mb-3 p-4">
+  <section class="container mb-5 px-5 pt-2">
     <div class="row justify-content-center">
       {% for index in indexes %}
         <div class="col-12 col-sm-6 col-md-4 col-lg-3 d-flex justify-content-center mb-4">
-          <a href="{{ url_for('show_index', index_id=index.slug) }}" class="index-link w-100">
-            <div class="index-card bg-light d-flex align-items-center text-center justify-content-center">
-              <span class="index-title text-dark">{{ index.name }}</span>
+          <a href="{{ url_for('show_index', index_id=index.slug) }}" class="text-decoration-none w-100">
+            <div class="index-card card-hover bg-light shadow-sm d-flex align-items-center text-center justify-content-center">
+              <span class="index-title text-dark fw-semibold">{{ index.name }}</span>
             </div>
           </a>
         </div>

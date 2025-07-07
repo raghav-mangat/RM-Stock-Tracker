@@ -5,3 +5,13 @@ a.text-primary {
 a.text-primary:hover {
   text-decoration: underline;
 }
+
+.card-hover {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  cursor: pointer;
+}
+
+.card-hover:hover {
+  transform: scale(1.08);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}

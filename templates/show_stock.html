@@ -95,7 +95,7 @@
                 <tr>
                   <th>200 DMA % Diff {{ dma_200_diff_popover() }}</th>
                   {% if stock.dma_200_perc_diff is not none %}
-                    <td class="fw-bold" style="background-color: {{ stock.dma_200_perc_diff | stock_color }};">
+                    <td class="fw-bold" style="background-color: {{ stock.dma_200_perc_diff | dma_200_color }};">
                       {{ stock.dma_200_perc_diff | percent }}
                     </td>
                   {% else %}
