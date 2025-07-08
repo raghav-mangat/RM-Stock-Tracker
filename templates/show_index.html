@@ -38,20 +38,13 @@
               <button type="button" class="btn btn-sm btn-outline-secondary" id="clear-all">Clear All</button>
             </li>
 
-            {% set filter_colors = {
-                "dark_green": 15,
-                "green": 5,
-                "yellow": 0,
-                "red": -5,
-                "dark_red": -15
-              } %}
             {% for color, dummy_value in filter_colors.items() %}
               {% set color_hex = dummy_value | dma_200_perc_diff_color %}
               <li class="d-flex align-items-center mb-2 ms-2">
                 <input class="form-check-input me-2 mt-0" type="checkbox" name="filter" value="{{ color }}" id="filter-{{ color }}"
                   {% if not request.args.getlist('filter') or color in request.args.getlist('filter') %}checked{% endif %}>
 
-                <div class="me-2" style="width: 14px; height: 14px; background-color: {{ color_hex }}; border: 1px solid #999;"></div>
+                <div class="border border-dark me-2" style="width: 14px; height: 14px; background-color: {{ color_hex }};"></div>
 
                 <label class="form-check-label mb-0" for="filter-{{ color }}">
                   {{ color.replace('_', ' ').title() }}
@@ -98,6 +91,7 @@
             <th scope="col">Ticker</th>
             <th scope="col">Weight</th>
             <th scope="col">Day Close</th>
+            <th scope="col">Today's Change</th>
             <th scope="col">200-DMA</th>
             <th scope="col">% Diff {{ dma_200_diff_popover() }}</th>
           </tr>
@@ -114,6 +108,9 @@
             <td>{{ stock.ticker | display }}</td>
             <td>{{ stock.weight | percent }}</td>
             <td>{{ stock.day_close | currency }}</td>
+            <td>
+              {{ stock_todays_change(stock) }}
+            </td>
             <td>{{ stock.dma_200 | currency }}</td>
             {{ stock_dma_200_perc_diff(stock) }}
           </tr>
