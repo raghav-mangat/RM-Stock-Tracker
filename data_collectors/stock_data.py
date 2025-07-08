@@ -12,14 +12,14 @@ client = RESTClient(POLYGON_API_KEY)
 
 # List of all attributes that we store in the database for all stocks available in Polygon API.
 # Must be the same as all the fields in the Stock Master table in the database.
-stock_master_attributes = [
+STOCK_MASTER_ATTRIBUTES = [
             "ticker", "name", "type", "primary_exchange", "last_updated", "day_close",
             "day_open", "day_high", "day_low", "volume", "todays_change", "todays_change_perc"
         ]
 
 # List of all attributes that we store in the database for a given stock.
 # Must be the same as all the fields in the Stock table in the database.
-stock_attributes = [
+STOCK_ATTRIBUTES = [
             "name", "description", "homepage_url", "list_date", "industry", "type",
             "total_employees", "market_cap", "icon_url", "day_close", "day_open",
             "day_high", "day_low", "volume", "todays_change", "todays_change_perc",
@@ -30,7 +30,7 @@ stock_attributes = [
 def fetch_all_stocks_data():
     """
     For all the stocks available in polugon API, this function collects
-    the data for all the attributes in 'stock_master_attributes' defined
+    the data for all the attributes in 'STOCK_MASTER_ATTRIBUTES' defined
     at the top of the script, using the polygon API. It then saves
     all this data as a list of Stock Master DB model objects, and returns it.
     :return: List of Stock Master DB model object, containing the required
@@ -53,7 +53,7 @@ def fetch_all_stocks_data():
         all_tickers_data = {
             t.ticker: {
                 "name": t.name,
-                "type": ticker_types.get(t.type, "N/A"),
+                "type": ticker_types.get(t.type),
                 "primary_exchange": t.primary_exchange
             } for t in client.list_tickers(
                 market="stocks", active="true", order="asc", limit="1000", sort="ticker"
@@ -74,8 +74,16 @@ def fetch_all_stocks_data():
     # in a Stock Master DB model object, and add it to the list to be returned
     for stock in snapshot:
         try:
+            ticker = stock.ticker
+            ticker_meta = all_tickers_data.get(ticker)
+            if not ticker_meta:
+                raise ValueError("Missing metadata from all_tickers_data")
+
             stock_data = {
-                "ticker": stock.ticker,
+                "ticker": ticker,
+                "name": ticker_meta["name"],
+                "type": ticker_meta["type"],
+                "primary_exchange": ticker_meta["primary_exchange"],
                 "day_close": safe_getattr(stock.day, "close"),
                 "day_open": safe_getattr(stock.day, "open"),
                 "day_high": safe_getattr(stock.day, "high"),
@@ -86,17 +94,11 @@ def fetch_all_stocks_data():
                 "last_updated": convert_polygon_timestamp(stock.updated)
             }
 
-            # Add metadata from ticker data
-            stock_data.update(all_tickers_data.get(stock.ticker, {
-                "name": "N/A",
-                "type": "N/A",
-                "primary_exchange": "N/A"
-            }))
-
-            for attribute in stock_master_attributes:
-                stock_data.setdefault(attribute, None)
-
-            stock_master_data.append(StockMaster(**stock_data))
+            # Check that all fields are not None
+            if all(stock_data.get(attr) is not None for attr in STOCK_MASTER_ATTRIBUTES):
+                stock_master_data.append(StockMaster(**stock_data))
+            else:
+                print(f"Skipping {ticker}: Incomplete data.")
 
         except Exception as e:
             print(f"Error processing stock {getattr(stock, 'ticker', 'UNKNOWN')}: {e}")
@@ -256,12 +258,13 @@ def get_ticker_52w_hl(ticker, stock_data):
 def fetch_stock_data(ticker):
     """
     For the given ticker symbol of a stock, this function collects
-    the data for all the attributes in 'stock_attributes' defined
+    the data for all the attributes in 'STOCK_ATTRIBUTES' defined
     at the top of the script, using the polygon API. It then saves
     all this data as a Stock DB model object, and returns it.
     :param ticker: ticker symbol of a stock
     :return: Stock DB model object containing data for all attributes
     """
+    stock = None
     stock_data = {}
     print(f"Fetching data for: {ticker}")
 
@@ -270,12 +273,12 @@ def fetch_stock_data(ticker):
     stock_data = get_ticker_dmas(ticker, stock_data)
     stock_data = get_ticker_52w_hl(ticker, stock_data)
 
-    if not stock_data.get("ticker"):
-        return None
+    if stock_data.get("ticker"):
+        for attribute in STOCK_ATTRIBUTES:
+            if attribute not in stock_data:
+                stock_data[attribute] = None
+        stock = Stock(**stock_data)
+    else:
+        print(f"Skipping {ticker}: Ticker Symbol Missing.")
 
-    for attribute in stock_attributes:
-        if attribute not in stock_data:
-            stock_data[attribute] = None
-
-    stock = Stock(**stock_data)
     return stock

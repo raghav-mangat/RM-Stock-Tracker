@@ -182,7 +182,7 @@ def search_stocks():
         ticker_tape_stocks=ticker_tape_stocks,
         gainers=top_stocks.get("gainers"),
         losers=top_stocks.get("losers"),
-        top_traded=top_stocks.get("losers")
+        top_traded=top_stocks.get("top_traded")
     )
 
 @app.route("/query_stocks")

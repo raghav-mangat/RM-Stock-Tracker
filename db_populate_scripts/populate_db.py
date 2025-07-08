@@ -27,7 +27,7 @@ elif IS_RELEASE == "0":
 
 from models.database import db, Stock, Index, IndexHolding, StockMaster
 from data_collectors.index_data import all_indexes, get_index_info, fetch_index_data
-from data_collectors.stock_data import stock_attributes, fetch_all_stocks_data, fetch_stock_data
+from data_collectors.stock_data import STOCK_ATTRIBUTES, fetch_all_stocks_data, fetch_stock_data
 
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URI")
@@ -76,7 +76,7 @@ def add_to_stocks_table(ticker):
         db.session.flush()
     else:
         # Update the existing stock with values from stock_data
-        for attr in stock_attributes:
+        for attr in STOCK_ATTRIBUTES:
             setattr(existing_stock, attr, getattr(stock_data, attr))
         db.session.flush()
     return stock_data.id
@@ -165,17 +165,21 @@ def save_populate_db_info():
     with open(data_file, "w") as f:
         json.dump(populate_db_info, f, indent=2)
 
-# Load market status
-data_path = Path(__file__).resolve().parent.parent / "data" / "market_status.json"
+def main():
+    # Load market status
+    data_path = Path(__file__).resolve().parent.parent / "data" / "market_status.json"
 
-if data_path.exists():
-    with open(data_path) as f:
-        market_info = json.load(f)
-        market_status = market_info.get("market_status")
-    if market_status == "closed":
-        print(f"Market status was {market_status} — skipping DB population!")
+    if data_path.exists():
+        with open(data_path) as f:
+            market_info = json.load(f)
+            market_status = market_info.get("market_status")
+        if market_status == "closed":
+            print(f"Market status was {market_status} — skipping DB population!")
+        else:
+            print(f"Market status was {market_status} — proceeding with DB population...")
+            populate_db()
     else:
-        print(f"Market status was {market_status} — proceeding with DB population...")
-        populate_db()
-else:
-    print("Market status file missing — cannot determine whether to proceed with DB population!")
+        print("Market status file missing — cannot determine whether to proceed with DB population!")
+
+if __name__ == "__main__":
+    main()

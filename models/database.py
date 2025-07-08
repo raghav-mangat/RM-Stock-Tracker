@@ -15,7 +15,7 @@ class Stock(db.Model):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     ticker: Mapped[str] = mapped_column(String(10), unique=True, nullable=False)
-    name: Mapped[str] = mapped_column(String(100), nullable=False)
+    name: Mapped[str] = mapped_column(String(100), nullable=True)
 
     # Company Info
     description: Mapped[str] = mapped_column(Text, nullable=True)
@@ -61,7 +61,7 @@ class Index(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
     slug: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
-    url: Mapped[str] = mapped_column(String(255), nullable=False)
+    url: Mapped[str] = mapped_column(String(255), nullable=True)
     last_updated: Mapped[DateTime] = db.Column(db.DateTime(timezone=True), nullable=True)
 
     holdings: Mapped[list["IndexHolding"]] = relationship(back_populates="index")
@@ -85,10 +85,10 @@ class StockMaster(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
 
     # All tickers data
-    ticker: Mapped[str] = mapped_column(String(10), nullable=False)
-    name: Mapped[str] = mapped_column(String(100), nullable=False)
+    ticker: Mapped[str] = mapped_column(String(10), unique=True, nullable=False)
+    name: Mapped[str] = mapped_column(String(100), nullable=True)
     type: Mapped[str] = mapped_column(String(100), nullable=True)
-    primary_exchange: Mapped[str] = mapped_column(String(10), nullable=False)
+    primary_exchange: Mapped[str] = mapped_column(String(10), nullable=True)
 
     # Full Market Snapshot Data
     last_updated: Mapped[DateTime] = db.Column(db.DateTime(timezone=True), nullable=True)
