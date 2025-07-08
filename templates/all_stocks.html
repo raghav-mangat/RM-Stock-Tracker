@@ -1,5 +1,6 @@
 {% from "macros/arrow_direction.html" import arrow_direction %}
 {% from "macros/jumbotron.html" import jumbotron %}
+{% from "macros/stock_attributes.html" import stock_todays_change %}
 
 {% extends "base.html" %}
 
@@ -138,10 +139,8 @@
                           {{ stock.name | display }}
                         </a>
                       </td>
-                      <td class="fw-semibold" style="color: {{ stock.todays_change_perc | stock_change_color }};">
-                        {{ arrow_direction(stock.todays_change_perc) }}
-                        {{ stock.todays_change_perc | abs | percent }}
-                        ({{ stock.todays_change | abs | float }})
+                      <td>
+                        {{ stock_todays_change(stock) }}
                       </td>
                     </tr>
                   {% endfor %}
@@ -174,10 +173,8 @@
                           {{ stock.name | display }}
                         </a>
                       </td>
-                      <td class="fw-semibold" style="color: {{ stock.todays_change_perc | stock_change_color }};">
-                        {{ arrow_direction(stock.todays_change_perc) }}
-                        {{ stock.todays_change_perc | abs | percent }}
-                        ({{ stock.todays_change | abs | float }})
+                      <td>
+                        {{ stock_todays_change(stock) }}
                       </td>
                     </tr>
                   {% endfor %}

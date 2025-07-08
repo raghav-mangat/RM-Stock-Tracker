@@ -1,0 +1,22 @@
+{% from "macros/arrow_direction.html" import arrow_direction %}
+
+{% macro stock_todays_change(stock) %}
+    {% if (stock.todays_change is not none) and (stock.todays_change_perc is not none) %}
+        <span class="fw-semibold" style="color: {{ stock.todays_change | stock_change_color }};">
+            {{ arrow_direction(stock.todays_change) }}
+            {{ stock.todays_change_perc | abs | percent }} ({{ stock.todays_change | abs | float }})
+        </span>
+    {% else %}
+        <span class="fw-semibold">N/A</span>
+    {% endif %}
+{% endmacro %}
+
+{% macro stock_dma_200_perc_diff(stock) %}
+    {% if stock.dma_200_perc_diff is not none %}
+        <td class="fw-bold" style="background-color: {{ stock.dma_200_perc_diff | dma_200_perc_diff_color }};">
+            {{ stock.dma_200_perc_diff | percent }}
+        </td>
+    {% else %}
+        <td class="bg-light fw-bold">N/A</td>
+    {% endif %}
+{% endmacro %}
