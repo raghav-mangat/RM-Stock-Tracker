@@ -160,7 +160,7 @@ def show_index(index_id):
     )
 
 @app.route("/stocks")
-def search_stocks():
+def all_stocks():
     # Load last updated timestamp of populate db
     last_updated = db_last_updated()
 
@@ -177,7 +177,7 @@ def search_stocks():
     top_stocks = get_top_stocks()
 
     return render_template(
-        "search_stocks.html",
+        "all_stocks.html",
         last_updated=last_updated,
         ticker_tape_stocks=ticker_tape_stocks,
         gainers=top_stocks.get("gainers"),

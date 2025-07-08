@@ -8,13 +8,13 @@
 {% endblock %}
 
 {% block style %}
-  <link rel="stylesheet" href="{{ url_for('static', filename='styles/search_stocks.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles/all_stocks.css') }}">
 {% endblock %}
 
 {% block content %}
 
   <!-- Hero Section -->
-  {% set heading = "Search Stocks Instantly" %}
+  {% set heading = "Stocks Dashboard" %}
   {% set description = "Enter a stock ticker or company name to access comprehensive financial data, including market performance, valuation metrics, and historical insights. Start your analysis with just a few keystrokes." %}
   {% set last_updated = last_updated | display %}
   {{ jumbotron(heading, description, last_updated) }}
@@ -226,5 +226,5 @@
 {% endblock %}
 
 {% block script %}
-  <script src="{{ url_for('static', filename='js/search_stocks.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/all_stocks.js') }}"></script>
 {% endblock %}

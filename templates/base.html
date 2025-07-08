@@ -33,12 +33,12 @@
               <a class="nav-link {% if request.endpoint == 'home' %}active{% endif %}"
                  href="{{ url_for('home') }}"
                  {% if request.endpoint == 'home' %}aria-current="page"{% endif %}>Home</a>
-              <a class="nav-link {% if request.endpoint == 'search_stocks' or request.endpoint == 'show_stock' %}active{% endif %}"
-                 href="{{ url_for('search_stocks') }}"
-                 {% if request.endpoint == 'search_stocks' %}aria-current="page"{% endif %}>Stocks</a>
+              <a class="nav-link {% if request.endpoint == 'all_stocks' or request.endpoint == 'show_stock' %}active{% endif %}"
+                 href="{{ url_for('all_stocks') }}"
+                 {% if request.endpoint == 'all_stocks' or request.endpoint == 'show_stock' %}aria-current="page"{% endif %}>Stocks</a>
               <a class="nav-link {% if request.endpoint == 'all_indexes' or request.endpoint == 'show_index' %}active{% endif %}"
                  href="{{ url_for('all_indexes') }}"
-                 {% if request.endpoint == 'all_indexes' %}aria-current="page"{% endif %}>Indexes</a>
+                 {% if request.endpoint == 'all_indexes' or request.endpoint == 'show_index' %}aria-current="page"{% endif %}>Indexes</a>
           </div>
         </div>
       </div>

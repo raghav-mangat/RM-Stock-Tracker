@@ -6,11 +6,11 @@ def generate_breadcrumbs():
     endpoint = request.endpoint
     view_args = request.view_args or {}
 
-    if endpoint == 'search_stocks':
-        breadcrumbs.append({'label': 'Stocks', 'url': url_for('search_stocks')})
+    if endpoint == 'all_stocks':
+        breadcrumbs.append({'label': 'Stocks', 'url': url_for('all_stocks')})
 
     elif endpoint == 'show_stock' and 'ticker' in view_args:
-        breadcrumbs.append({'label': 'Stocks', 'url': url_for('search_stocks')})
+        breadcrumbs.append({'label': 'Stocks', 'url': url_for('all_stocks')})
         breadcrumbs.append({'label': view_args['ticker'], 'url': request.path})
 
     elif endpoint == 'all_indexes':
