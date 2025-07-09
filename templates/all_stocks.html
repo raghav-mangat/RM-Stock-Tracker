@@ -1,6 +1,7 @@
 {% from "macros/arrow_direction.html" import arrow_direction %}
 {% from "macros/jumbotron.html" import jumbotron %}
-{% from "macros/stock_attributes.html" import stock_todays_change %}
+{% from "macros/top_stocks_tables.html" import top_stocks_table %}
+{% from "macros/stock_attributes.html" import stock_todays_change, stock_volume %}
 
 {% extends "base.html" %}
 
@@ -116,104 +117,13 @@
         <div class="tab-content" id="topStocksContent">
 
           <!-- Top Gainers -->
-          <div class="tab-pane fade show active" id="gainers"
-               role="tabpanel" aria-labelledby="gainers-tab">
-            <h5 class="fw-bold mb-3">Top Gaining Stocks Today</h5>
-            <div class="table-responsive">
-              <table class="table table-bordered table-hover align-middle">
-                <thead class="table-light">
-                  <tr>
-                    <th scope="col">#</th>
-                    <th scope="col">Ticker</th>
-                    <th scope="col" style="max-width: 250px;">Company</th>
-                    <th scope="col">Today's Change</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for stock in gainers %}
-                    <tr>
-                      <th scope="row">{{ loop.index }}</th>
-                      <td>{{ stock.ticker }}</td>
-                      <td style="max-width: 250px;">
-                        <a href="{{ url_for('show_stock', ticker=stock.ticker) }}" class="fw-semibold text-primary">
-                          {{ stock.name | display }}
-                        </a>
-                      </td>
-                      <td>
-                        {{ stock_todays_change(stock) }}
-                      </td>
-                    </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-            </div>
-          </div>
+          {{ top_stocks_table("gainers", "Top Gaining Stocks Today", True, gainers, "Today's Change", stock_todays_change) }}
 
           <!-- Top Losers -->
-          <div class="tab-pane fade" id="losers"
-               role="tabpanel" aria-labelledby="losers-tab">
-            <h5 class="fw-bold mb-3">Top Losing Stocks Today</h5>
-            <div class="table-responsive">
-              <table class="table table-bordered table-hover align-middle">
-                <thead class="table-light">
-                  <tr>
-                    <th scope="col">#</th>
-                    <th scope="col">Ticker</th>
-                    <th scope="col" style="max-width: 250px;">Company</th>
-                    <th scope="col">Today's Change</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for stock in losers %}
-                    <tr>
-                      <th scope="row">{{ loop.index }}</th>
-                      <td>{{ stock.ticker }}</td>
-                      <td style="max-width: 250px;">
-                        <a href="{{ url_for('show_stock', ticker=stock.ticker) }}" class="fw-semibold text-primary">
-                          {{ stock.name | display }}
-                        </a>
-                      </td>
-                      <td>
-                        {{ stock_todays_change(stock) }}
-                      </td>
-                    </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-            </div>
-          </div>
+          {{ top_stocks_table("losers", "Top Losing Stocks Today", False, losers, "Today's Change", stock_todays_change) }}
 
           <!-- Top Traded -->
-          <div class="tab-pane fade" id="volume"
-               role="tabpanel" aria-labelledby="volume-tab">
-            <h5 class="fw-bold mb-3">Most Actively Traded Stocks</h5>
-            <div class="table-responsive">
-              <table class="table table-bordered table-hover align-middle">
-                <thead class="table-light">
-                  <tr>
-                    <th scope="col">#</th>
-                    <th scope="col">Ticker</th>
-                    <th scope="col" style="max-width: 250px;">Company</th>
-                    <th scope="col">Volume</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for stock in top_traded %}
-                    <tr>
-                      <th scope="row">{{ loop.index }}</th>
-                      <td>{{ stock.ticker }}</td>
-                      <td style="max-width: 250px;">
-                        <a href="{{ url_for('show_stock', ticker=stock.ticker) }}" class="fw-semibold text-primary">
-                          {{ stock.name | display }}
-                        </a>
-                      </td>
-                      <td class="fw-semibold">{{ stock.volume | humanize_number }}</td>
-                    </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-            </div>
-          </div>
+          {{ top_stocks_table("volume", "Most Actively Traded Stocks", False, top_traded, "Volume", stock_volume) }}
 
         </div>
       </div>

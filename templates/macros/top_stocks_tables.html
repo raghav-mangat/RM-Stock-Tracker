@@ -1,0 +1,39 @@
+{% macro top_stocks_table(id, heading, is_active, stocks, last_col_title, last_col_renderer) %}
+  {% if is_active %}
+  <div class="tab-pane fade show active" id="{{ id }}"
+   role="tabpanel" aria-labelledby="{{ id }}-tab">
+  {% else %}
+  <div class="tab-pane fade" id="{{ id }}"
+   role="tabpanel" aria-labelledby="{{ id }}-tab">
+  {% endif %}
+    <h5 class="fw-bold mb-3">{{ heading }}</h5>
+    <div class="table-responsive">
+      <table class="table table-bordered table-hover align-middle">
+        <thead class="table-light">
+          <tr>
+            <th scope="col">#</th>
+            <th scope="col">Ticker</th>
+            <th scope="col" style="max-width: 250px;">Company</th>
+            <th scope="col">{{ last_col_title }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for stock in stocks %}
+            <tr>
+              <th scope="row">{{ loop.index }}</th>
+              <td>{{ stock.ticker }}</td>
+              <td style="max-width: 250px;">
+                <a href="{{ url_for('show_stock', ticker=stock.ticker) }}" class="fw-semibold text-primary">
+                  {{ stock.name | display }}
+                </a>
+              </td>
+              <td>
+                {{ last_col_renderer(stock) }}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endmacro %}
