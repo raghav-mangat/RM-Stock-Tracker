@@ -188,16 +188,14 @@ def all_stocks():
     # Shuffle the total 40 stocks being displayed on the ticker tape
     random.shuffle(ticker_tape_stocks)
 
-    # Get the top stocks from StockMaster table for each category
+    # Get the top stocks
     top_stocks = get_top_stocks()
 
     return render_template(
         "all_stocks.html",
         last_updated=last_updated,
         ticker_tape_stocks=ticker_tape_stocks,
-        gainers=top_stocks.get("gainers"),
-        losers=top_stocks.get("losers"),
-        top_traded=top_stocks.get("top_traded")
+        top_stocks=top_stocks
     )
 
 @app.route("/query_stocks")

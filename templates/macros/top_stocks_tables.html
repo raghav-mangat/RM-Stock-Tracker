@@ -1,39 +1,75 @@
-{% macro top_stocks_table(id, heading, is_active, stocks, last_col_title, last_col_renderer) %}
-  {% if is_active %}
-  <div class="tab-pane fade show active" id="{{ id }}"
-   role="tabpanel" aria-labelledby="{{ id }}-tab">
-  {% else %}
-  <div class="tab-pane fade" id="{{ id }}"
-   role="tabpanel" aria-labelledby="{{ id }}-tab">
-  {% endif %}
-    <h5 class="fw-bold mb-3">{{ heading }}</h5>
-    <div class="table-responsive">
-      <table class="table table-bordered table-hover align-middle">
-        <thead class="table-light">
+{% from "macros/stock_attributes.html" import stock_todays_change, stock_volume %}
+
+{#
+  A generic macro for rendering a table of top stocks.
+  Parameters:
+    - stocks: List of stock records to display
+    - heading: Table title
+    - name: Name of the current tab (e.g., "Overall Market", "S&P 500 index")
+    - col_title: Header for the last column (e.g., "Volume" or "Today's Change")
+    - render_cell: Jinja macro to render the value for the last column
+#}
+{% macro top_stocks_table(stocks, heading, name, col_title, render_cell) %}
+  <h5 class="fw-bold mb-3">{{ heading }} in {{ name }}</h5>
+  <div class="table-responsive">
+    <table class="table table-bordered table-hover align-middle">
+      <thead class="table-light">
+        <tr>
+          <th scope="col">#</th>
+          <th scope="col">Ticker</th>
+          <th scope="col" style="max-width: 250px;">Company</th>
+          <th scope="col">{{ col_title }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for stock in stocks %}
           <tr>
-            <th scope="col">#</th>
-            <th scope="col">Ticker</th>
-            <th scope="col" style="max-width: 250px;">Company</th>
-            <th scope="col">{{ last_col_title }}</th>
+            <th scope="row">{{ loop.index }}</th>
+            <td>{{ stock.ticker }}</td>
+            <td style="max-width: 250px;">
+              <a href="{{ url_for('show_stock', ticker=stock.ticker) }}" class="fw-semibold text-primary">
+                {{ stock.name | display }}
+              </a>
+            </td>
+            <td>{{ render_cell(stock) }}</td>
           </tr>
-        </thead>
-        <tbody>
-          {% for stock in stocks %}
-            <tr>
-              <th scope="row">{{ loop.index }}</th>
-              <td>{{ stock.ticker }}</td>
-              <td style="max-width: 250px;">
-                <a href="{{ url_for('show_stock', ticker=stock.ticker) }}" class="fw-semibold text-primary">
-                  {{ stock.name | display }}
-                </a>
-              </td>
-              <td>
-                {{ last_col_renderer(stock) }}
-              </td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endmacro %}
+
+{#
+  Macro to render the horizontal tab content for Gainers, Losers, and Top Traded
+  within a vertical tab (e.g., Overall Market, S&P 500 Index).
+  Parameters:
+    - tab_id: Unique ID for the tab
+    - tab_name: Display name for the tab (e.g., "S&P 500")
+    - gainers, losers, top_traded: Lists of stock records for each category
+#}
+{% macro top_stocks_tab_content(tab_id, tab_name, gainers, losers, top_traded) %}
+  <div class="tab-pane fade {% if tab_id == 'overall' %}show active{% endif %}" id="{{ tab_id }}" role="tabpanel" aria-labelledby="{{ tab_id }}-tab">
+    <ul class="nav nav-tabs mb-4" id="{{ tab_id }}-subtabs" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active fw-semibold" id="{{ tab_id }}-gainers-tab" data-bs-toggle="tab" data-bs-target="#{{ tab_id }}-gainers" type="button" role="tab" aria-controls="{{ tab_id }}-gainers" aria-selected="true">Gainers</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link fw-semibold" id="{{ tab_id }}-losers-tab" data-bs-toggle="tab" data-bs-target="#{{ tab_id }}-losers" type="button" role="tab" aria-controls="{{ tab_id }}-losers" aria-selected="false">Losers</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link fw-semibold" id="{{ tab_id }}-volume-tab" data-bs-toggle="tab" data-bs-target="#{{ tab_id }}-volume" type="button" role="tab" aria-controls="{{ tab_id }}-volume" aria-selected="false">Top Traded</button>
+      </li>
+    </ul>
+    <div class="tab-content">
+      <div class="tab-pane fade show active" id="{{ tab_id }}-gainers" role="tabpanel" aria-labelledby="{{ tab_id }}-gainers-tab">
+        {{ top_stocks_table(gainers, "Top Gaining Stocks Today", tab_name, "Today's Change", stock_todays_change) }}
+      </div>
+      <div class="tab-pane fade" id="{{ tab_id }}-losers" role="tabpanel" aria-labelledby="{{ tab_id }}-losers-tab">
+        {{ top_stocks_table(losers, "Top Losing Stocks Today", tab_name, "Today's Change", stock_todays_change) }}
+      </div>
+      <div class="tab-pane fade" id="{{ tab_id }}-volume" role="tabpanel" aria-labelledby="{{ tab_id }}-volume-tab">
+        {{ top_stocks_table(top_traded, "Most Actively Traded Stocks", tab_name, "Volume", stock_volume) }}
+      </div>
     </div>
   </div>
 {% endmacro %}

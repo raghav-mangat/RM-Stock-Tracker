@@ -1,7 +1,6 @@
 {% from "macros/arrow_direction.html" import arrow_direction %}
 {% from "macros/jumbotron.html" import jumbotron %}
-{% from "macros/top_stocks_tables.html" import top_stocks_table %}
-{% from "macros/stock_attributes.html" import stock_todays_change, stock_volume %}
+{% from "macros/top_stocks_tables.html" import top_stocks_tab_content %}
 
 {% extends "base.html" %}
 
@@ -78,53 +77,39 @@
   </section>
 
   <!--
-    Top Market Movers Section
-
-    - This sections contains 3 tabs on the left to chose top gainers, top losers, or top traded.
-    - For each tab there is a table on the right that shows the rank, ticker symbol,
-      company name (linking to stock details page), and the associated value for the current table.
-    - The user can choose which table to see from the tab on the left. By default, the top gainers
-      table is shown.
+    This section renders a vertical tab interface for selecting an index
+    (Overall, S&P 500, Nasdaq 100, Dow Jones). Inside each index tab,
+    a horizontal tab shows top gainers, losers, and top traded stocks.
   -->
-
   <section class="container my-5">
     <h2 class="fw-bold text-center text-decoration-underline mb-5">Top Market Movers</h2>
 
     <div class="row">
-      <!-- Sidebar Tabs -->
+      <!-- Vertical Tabs -->
       <div class="col-md-3 mb-3 mb-md-0">
         <div class="list-group" id="topStocksTabs" role="tablist">
-          <a class="list-group-item list-group-item-action active"
-             id="gainers-tab" data-bs-toggle="list" href="#gainers"
-             role="tab" aria-controls="gainers" aria-current="true">
-            Top Gainers
+          <a class="list-group-item list-group-item-action active" id="overall-tab" data-bs-toggle="list" href="#overall" role="tab" aria-controls="overall" aria-current="true">
+            {{ top_stocks.overall.name }}
           </a>
-          <a class="list-group-item list-group-item-action"
-             id="losers-tab" data-bs-toggle="list" href="#losers"
-             role="tab" aria-controls="losers">
-            Top Losers
+          <a class="list-group-item list-group-item-action" id="sp500-tab" data-bs-toggle="list" href="#sp500" role="tab" aria-controls="sp500">
+            {{ top_stocks.sp500.name }}
           </a>
-          <a class="list-group-item list-group-item-action"
-             id="volume-tab" data-bs-toggle="list" href="#volume"
-             role="tab" aria-controls="volume">
-            Top Traded
+          <a class="list-group-item list-group-item-action" id="nasdaq100-tab" data-bs-toggle="list" href="#nasdaq100" role="tab" aria-controls="nasdaq100">
+            {{ top_stocks.nasdaq100.name }}
+          </a>
+          <a class="list-group-item list-group-item-action" id="dowjones-tab" data-bs-toggle="list" href="#dowjones" role="tab" aria-controls="dowjones">
+            {{ top_stocks.dowjones.name }}
           </a>
         </div>
       </div>
 
-      <!-- Content Area -->
+      <!-- Horizontal Tab Content Area -->
       <div class="col-md-9">
         <div class="tab-content" id="topStocksContent">
-
-          <!-- Top Gainers -->
-          {{ top_stocks_table("gainers", "Top Gaining Stocks Today", True, gainers, "Today's Change", stock_todays_change) }}
-
-          <!-- Top Losers -->
-          {{ top_stocks_table("losers", "Top Losing Stocks Today", False, losers, "Today's Change", stock_todays_change) }}
-
-          <!-- Top Traded -->
-          {{ top_stocks_table("volume", "Most Actively Traded Stocks", False, top_traded, "Volume", stock_volume) }}
-
+          {{ top_stocks_tab_content('overall', top_stocks.overall.name, top_stocks.overall.attributes.gainers, top_stocks.overall.attributes.losers, top_stocks.overall.attributes.top_traded) }}
+          {{ top_stocks_tab_content('sp500', top_stocks.sp500.name, top_stocks.sp500.attributes.gainers, top_stocks.sp500.attributes.losers, top_stocks.sp500.attributes.top_traded) }}
+          {{ top_stocks_tab_content('nasdaq100', top_stocks.nasdaq100.name, top_stocks.nasdaq100.attributes.gainers, top_stocks.nasdaq100.attributes.losers, top_stocks.nasdaq100.attributes.top_traded) }}
+          {{ top_stocks_tab_content('dowjones', top_stocks.dowjones.name, top_stocks.dowjones.attributes.gainers, top_stocks.dowjones.attributes.losers, top_stocks.dowjones.attributes.top_traded) }}
         </div>
       </div>
     </div>
