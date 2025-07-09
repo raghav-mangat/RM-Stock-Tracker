@@ -33,7 +33,7 @@
   white-space: nowrap;
   /* Make the animation seconds equal to 2 times the number
    of stocks being displayed on the ticker tape */
-  animation: ticker-scroll 80s linear infinite;
+  animation: ticker-scroll 100s linear infinite;
   min-width: max-content;
 }
 

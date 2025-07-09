@@ -16,12 +16,12 @@ indexes_info = {
         "url": f"{slick_charts_url}/nasdaq100",
     },
     "dowjones": {
-        "name": "Dow Jones",
+        "name": "Dow Jones Index",
         "slug": "dowjones",
         "url": f"{slick_charts_url}/dowjones",
     },
     "magnificent7": {
-        "name": "Magnificent Seven",
+        "name": "Magnificent Seven Index",
         "slug": "magnificent7",
         "url": f"{slick_charts_url}/magnificent7",
     },

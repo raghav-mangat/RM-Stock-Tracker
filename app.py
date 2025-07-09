@@ -179,13 +179,26 @@ def all_stocks():
     # Load last updated timestamp of populate db
     last_updated = db_last_updated()
 
-    # Get the top 20 stocks by volume
-    ticker_tape_stocks = StockMaster.query.order_by(
-        StockMaster.volume.desc()
-    ).limit(20).all()
-    # Add 20 random stocks to the list
-    ticker_tape_stocks.extend(StockMaster.query.all()[:20])
-    # Shuffle the total 40 stocks being displayed on the ticker tape
+    # Get all stocks in S&P 500 Index in descending order of weight
+    sp500_stocks = db.session.query(
+        Stock.ticker,
+        Stock.volume,
+        Stock.day_close,
+        Stock.todays_change,
+    ).select_from(IndexHolding).join(
+        Stock, IndexHolding.stock_id == Stock.id
+    ).order_by(IndexHolding.weight.desc()).all()
+
+    # Get all stocks from StockMaster Table
+    all_stocks_data = StockMaster.query.all()
+
+    # Get top 10 stocks in sp500
+    ticker_tape_stocks = sp500_stocks[:10]
+    # Add 20 random stocks from remaining stocks in sp500
+    ticker_tape_stocks.extend(random.sample(sp500_stocks[10:], 20))
+    # Add 20 random stocks from all stocks in StockMaster Table
+    ticker_tape_stocks.extend(random.sample(all_stocks_data, 20))
+    # Shuffle the selected 50 ticker tape stocks
     random.shuffle(ticker_tape_stocks)
 
     # Get the top stocks
