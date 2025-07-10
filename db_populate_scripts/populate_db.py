@@ -1,13 +1,6 @@
 import os
 import sys
-import pytz
-import json
-from datetime import datetime
 from dotenv import load_dotenv
-from flask import Flask
-from pathlib import Path
-from utils.datetime_utils import format_et_datetime
-from utils.top_stocks import get_top_stocks
 
 # Load environment variables from .env file
 load_dotenv()
@@ -25,9 +18,16 @@ elif IS_RELEASE == "0":
         db_dir = os.path.dirname(db_path)
         os.makedirs(db_dir, exist_ok=True)
 
+import pytz
+import json
+from datetime import datetime
+from flask import Flask
+from pathlib import Path
 from models.database import db, Stock, Index, IndexHolding, StockMaster
 from data_collectors.index_data import all_indexes, get_index_info, fetch_index_data
 from data_collectors.stock_data import STOCK_ATTRIBUTES, fetch_all_stocks_data, fetch_stock_data
+from utils.datetime_utils import format_et_datetime
+from utils.top_stocks import get_top_stocks
 
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URI")

@@ -1,12 +1,14 @@
 """
 RM-Stock-Tracker
 
-A lightweight and professional web app to search U.S. stocks and explore major market
-indexes using live financial data — built with Python, Flask, SQLAlchemy, and Bootstrap.
+An informative and user-friendly web app to explore U.S. stocks and major
+market indexes using real-time financial data.
+Built with Python, Flask, SQLAlchemy, Bootstrap, and Polygon.io API.
 
 Live Website: https://www.rmstocktracker.com/
 
 Created By: Raghav Mangat
+Started On: June 07, 2025
 """
 
 import os
