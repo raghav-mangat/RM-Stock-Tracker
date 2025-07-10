@@ -73,7 +73,7 @@ def show_index(index_id):
     order = request.args.get('order')
     filter_by = request.args.getlist('filter')
 
-    valid_sort_by = {"weight", "name", "day_close", "todays_change", "dma_200", "perc_diff"}
+    valid_sort_by = {"weight", "name", "todays_change", "perc_diff"}
     valid_order = {"asc", "desc"}
     valid_filter = {"dark_green", "green", "yellow", "red", "dark_red"}
 
@@ -90,26 +90,18 @@ def show_index(index_id):
         {"label": "Weight (Low to High)", "sort_by": "weight", "order": "asc"},
         {"label": "Name (High to Low)", "sort_by": "name", "order": "desc"},
         {"label": "Name (Low to High)", "sort_by": "name", "order": "asc"},
-        {"label": "Day Close (High to Low)", "sort_by": "day_close", "order": "desc"},
-        {"label": "Day Close (Low to High)", "sort_by": "day_close", "order": "asc"},
         {"label": "Today's Change (High to Low)", "sort_by": "todays_change", "order": "desc"},
         {"label": "Today's Change (Low to High)", "sort_by": "todays_change", "order": "asc"},
-        {"label": "200-DMA (High to Low)", "sort_by": "dma_200", "order": "desc"},
-        {"label": "200-DMA (Low to High)", "sort_by": "dma_200", "order": "asc"},
-        {"label": "% Diff (High to Low)", "sort_by": "perc_diff", "order": "desc"},
-        {"label": "% Diff (Low to High)", "sort_by": "perc_diff", "order": "asc"},
+        {"label": "200-DMA % Diff (High to Low)", "sort_by": "perc_diff", "order": "desc"},
+        {"label": "200-DMA % Diff (Low to High)", "sort_by": "perc_diff", "order": "asc"},
     ]
 
     sort_options = {
         ("weight", "asc"): IndexHolding.weight.asc(),
         ("name", "desc"): Stock.name.desc(),
         ("name", "asc"): Stock.name.asc(),
-        ("day_close", "desc"): Stock.day_close.desc(),
-        ("day_close", "asc"): Stock.day_close.asc(),
         ("todays_change", "desc"): Stock.todays_change_perc.desc(),
         ("todays_change", "asc"): Stock.todays_change_perc.asc(),
-        ("dma_200", "desc"): Stock.dma_200.desc(),
-        ("dma_200", "asc"): Stock.dma_200.asc(),
         ("perc_diff", "desc"): Stock.dma_200_perc_diff.desc(),
         ("perc_diff", "asc"): Stock.dma_200_perc_diff.asc(),
     }
@@ -145,6 +137,8 @@ def show_index(index_id):
             Stock.ticker,
             Stock.name.label("stock_name"),
             Stock.day_close,
+            Stock.low_52w,
+            Stock.high_52w,
             Stock.todays_change_perc,
             Stock.todays_change,
             Stock.dma_200,

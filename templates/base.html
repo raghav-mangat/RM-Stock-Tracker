@@ -7,6 +7,13 @@
       <meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
       <meta name="description" content="RM Stock Tracker lets you explore detailed stock and index data with clean insights and easy navigation.">
 
+      <!-- Favicon & App Icons -->
+      <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='assets/apple-touch-icon.png') }}">
+      <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='assets/favicon-32x32.png') }}">
+      <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='assets/favicon-16x16.png') }}">
+      <link rel="manifest" href="{{ url_for('static', filename='assets/site.webmanifest') }}">
+      <link rel="shortcut icon" href="{{ url_for('static', filename='assets/favicon.ico') }}">
+
       <!-- Block Title -->
       <title>{% block title %} {% endblock %}</title>
 

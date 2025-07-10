@@ -30,7 +30,7 @@
           </button>
 
           <ul class="dropdown-menu p-3" style="min-width: 250px;" id="filter-dropdown">
-            <li class="fw-bold mb-3">Filter by % Diff</li>
+            <li class="fw-bold mb-3">Filter by 200-DMA % Diff</li>
 
             <li class="mb-3">
               <button type="button" class="btn btn-sm btn-outline-secondary me-2" id="select-all">Select All</button>
@@ -89,7 +89,9 @@
             <th scope="col">Name</th>
             <th scope="col">Ticker</th>
             <th scope="col">Weight</th>
+            <th scope="col">52w Low</th>
             <th scope="col">Day Close</th>
+            <th scope="col">52w High</th>
             <th scope="col">Today's Change</th>
             <th scope="col">200-DMA</th>
             <th scope="col">% Diff {{ dma_200_diff_popover() }}</th>
@@ -106,7 +108,9 @@
             </td>
             <td>{{ stock.ticker | display }}</td>
             <td>{{ stock.weight | percent }}</td>
-            <td>{{ stock.day_close | currency }}</td>
+            <td>{{ stock.low_52w | currency }}</td>
+            <td class="fw-semibold">{{ stock.day_close | currency }}</td>
+            <td>{{ stock.high_52w | currency }}</td>
             <td>
               {{ stock_todays_change(stock) }}
             </td>

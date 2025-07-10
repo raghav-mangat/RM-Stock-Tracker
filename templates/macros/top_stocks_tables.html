@@ -18,6 +18,7 @@
           <th scope="col">#</th>
           <th scope="col">Ticker</th>
           <th scope="col" style="max-width: 250px;">Company</th>
+          <th scope="col">Day Close</th>
           <th scope="col">{{ col_title }}</th>
         </tr>
       </thead>
@@ -31,6 +32,7 @@
                 {{ stock.name | display }}
               </a>
             </td>
+            <td>{{ stock.day_close | currency }}</td>
             <td>{{ render_cell(stock) }}</td>
           </tr>
         {% endfor %}

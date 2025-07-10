@@ -47,6 +47,7 @@ def get_top_stocks():
         all_stocks_data = db.session.query(StockMaster).with_entities(
             StockMaster.ticker,
             StockMaster.name,
+            StockMaster.day_close,
             StockMaster.todays_change_perc,
             StockMaster.todays_change,
             StockMaster.volume
@@ -80,6 +81,7 @@ def get_top_stocks():
             index_holdings = db.session.query(
                 Stock.ticker,
                 Stock.name,
+                Stock.day_close,
                 Stock.todays_change_perc,
                 Stock.todays_change,
                 Stock.volume
