@@ -12,8 +12,7 @@
 
   <!-- Hero Section -->
   {% set heading = index.name | display %}
-  {% set description = "View the top stocks in this index along with their weight, performance, and 200-day moving average (DMA).
-        Use the dropdown menu to sort the table by various parameters. Click on a stock name to see detailed information about that stock." %}
+  {% set description = "Take a look at all the stocks in the selected index. You can sort or filter the data by different attributes. Click on a company to see full details and performance data." %}
   {% set last_updated = index.last_updated | format_et_datetime | display %}
   {{ jumbotron(heading, description, last_updated) }}
 

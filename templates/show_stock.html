@@ -13,7 +13,7 @@
 {% if stock.ticker %}
   <!-- Hero Section -->
   {% set heading = stock.ticker ~ " - " ~ (stock.name | display) %}
-  {% set description = "Explore detailed financial information and performance metrics for " ~ (stock.name | display) ~ ". Review valuation indicators, historical trends, and related companies in the same sector." %}
+  {% set description = "See full details about " ~ (stock.name | display) ~ ", including daily and historical performance, volume, market cap, moving averages,  today's price change, and much more. You can also check related companies in the same sector." %}
   {% set last_updated = stock.last_updated | format_et_datetime | display %}
   {{ jumbotron(heading, description, last_updated) }}
 
