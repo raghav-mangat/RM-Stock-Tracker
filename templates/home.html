@@ -23,17 +23,17 @@
   <section class="mb-5">
     <div class="container">
       <div class="row g-4">
-        <!-- Stock Insights Card -->
-        {% set heading = "Stock Insights" %}
-        {% set description = "Search for any stock and see important numbers like market cap, volume, daily price change, 200-day average, and more. Use this to understand how a stock is doing at a glance." %}
+        <!-- Stocks Dashboard Card -->
+        {% set heading = "Stocks Dashboard" %}
+        {% set description = "Search for any stock or follow top movers. See important numbers like market cap, volume, daily price change, 200-day average, and more. Use this to understand how a stock is doing at a glance." %}
         {% set button_text = "Explore Stocks" %}
         {% set url = url_for("all_stocks") %}
         {{ home_card(heading, description, button_text, url) }}
 
-        <!-- Index Overview Card -->
-        {% set heading = "Index Overview" %}
+        <!-- Indexes Dashboard Card -->
+        {% set heading = "Indexes Dashboard" %}
         {% set description = "Explore popular indexes like S&P 500 or Nasdaq 100 and see the list of companies inside them. Check performance data, sort or filter the data and click on any stock to learn more." %}
-        {% set button_text = "View Indexes" %}
+        {% set button_text = "Explore Indexes" %}
         {% set url = url_for("all_indexes") %}
         {{ home_card(heading, description, button_text, url) }}
       </div>

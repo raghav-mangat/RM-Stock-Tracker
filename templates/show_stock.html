@@ -13,7 +13,7 @@
 {% if stock.ticker %}
   <!-- Hero Section -->
   {% set heading = stock.ticker ~ " - " ~ (stock.name | display) %}
-  {% set description = "See full details about " ~ (stock.name | display) ~ ", including daily and historical performance, volume, market cap, moving averages,  today's price change, and much more. You can also check related companies in the same sector." %}
+  {% set description = "See full details about the selected stock, including daily and historical performance, volume, market cap, moving averages,  today's price change, and much more. You can also check related companies in the same sector." %}
   {% set last_updated = stock.last_updated | format_et_datetime | display %}
   {{ jumbotron(heading, description, last_updated) }}
 
@@ -31,8 +31,8 @@
         <div class="table-responsive">
           <table class="table table-bordered table-hover align-middle">
             <tbody>
-              <tr><th>Company Name</th><td>{{ stock.name | display }}</td></tr>
               <tr><th>Ticker Symbol</th><td>{{ stock.ticker | display }}</td></tr>
+              <tr><th>Company Name</th><td>{{ stock.name | display }}</td></tr>
               <tr>
                 <th>Homepage</th>
                 <td>
@@ -61,7 +61,7 @@
               <tr><th>Day Open</th><td>{{ stock.day_open | currency }}</td></tr>
               <tr><th>Day High</th><td>{{ stock.day_high | currency }}</td></tr>
               <tr><th>Day Low</th><td>{{ stock.day_low | currency }}</td></tr>
-              <tr><th>Day Close</th><td>{{ stock.day_close | currency }}</td></tr>
+              <tr><th>Day Close</th><td class="fw-semibold bg-info-subtle">{{ stock.day_close | currency }}</td></tr>
               <tr>
                 <th>Volume</th>
                 <td>

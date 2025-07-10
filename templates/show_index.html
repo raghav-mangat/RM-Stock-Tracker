@@ -109,7 +109,7 @@
             <td>{{ stock.ticker | display }}</td>
             <td>{{ stock.weight | percent }}</td>
             <td>{{ stock.low_52w | currency }}</td>
-            <td class="fw-semibold">{{ stock.day_close | currency }}</td>
+            <td class="fw-semibold bg-info-subtle">{{ stock.day_close | currency }}</td>
             <td>{{ stock.high_52w | currency }}</td>
             <td>
               {{ stock_todays_change(stock) }}
