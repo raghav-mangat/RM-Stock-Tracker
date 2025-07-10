@@ -3,6 +3,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const suggestionsBox = document.getElementById("suggestions");
   let activeIndex = -1;
 
+  // Reset suggestions UI
   function resetSuggestions() {
     suggestionsBox.innerHTML = "";
     suggestionsBox.classList.add("d-none");
@@ -10,13 +11,16 @@ document.addEventListener("DOMContentLoaded", function () {
     activeIndex = -1;
   }
 
+  // Update which suggestion is highlighted
   function updateActiveSuggestion(index) {
     const items = suggestionsBox.querySelectorAll(".suggestion-item");
     items.forEach((el, i) => {
       el.classList.toggle("active", i === index);
+      if (i === index) el.scrollIntoView({ block: "nearest" });
     });
   }
 
+  // Fetch suggestions as user types
   searchBar.addEventListener("input", function () {
     const query = this.value.trim();
     if (query.length < 2) {
@@ -33,10 +37,11 @@ document.addEventListener("DOMContentLoaded", function () {
         suggestionsBox.classList.remove("d-none");
         searchBar.setAttribute("aria-expanded", "true");
 
+        // Create each suggestion as a Bootstrap list-group item
         data.forEach((item, idx) => {
           const div = document.createElement("div");
-          div.textContent = `${item.ticker} — ${item.name}`;
-          div.classList.add("suggestion-item", "px-3", "py-2", "border-bottom");
+          div.textContent = `${item.ticker} - ${item.name}`;
+          div.classList.add("suggestion-item", "list-group-item", "list-group-item-action");
           div.setAttribute("role", "option");
           div.setAttribute("tabindex", "-1");
           div.addEventListener("click", () => {
@@ -47,6 +52,7 @@ document.addEventListener("DOMContentLoaded", function () {
       });
   });
 
+  // Handle up/down/enter keyboard navigation
   searchBar.addEventListener("keydown", function (e) {
     const items = suggestionsBox.querySelectorAll(".suggestion-item");
     if (items.length === 0) return;
@@ -66,6 +72,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
+  // Hide suggestions when clicking outside
   document.addEventListener("click", function (e) {
     if (!searchBar.contains(e.target) && !suggestionsBox.contains(e.target)) {
       resetSuggestions();

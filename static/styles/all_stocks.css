@@ -1,23 +1,13 @@
 /**** Styling for Search Bar ****/
 
 #suggestions {
-  border: 1px solid #ccc;
-  border-top: none;
   max-height: 200px;
   overflow-y: auto;
-  position: absolute;
-  width: 100%;
-  background-color: white;
   z-index: 1000;
 }
 
 .suggestion-item {
   cursor: pointer;
-}
-
-.suggestion-item.active,
-.suggestion-item:hover {
-  background-color: #f1f1f1;
 }
 
 /**** Styling for Ticker Tape ****/

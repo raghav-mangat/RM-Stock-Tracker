@@ -20,13 +20,13 @@
   {% set last_updated = last_updated | display %}
   {{ jumbotron(heading, description, last_updated) }}
 
-  <!-- Search Bar -->
+  <!-- Search Bar Section -->
   <section class="container my-5">
     <div class="search-container position-relative mx-auto" style="max-width: 500px;">
       <input
         type="text"
         id="search-bar"
-        class="form-control form-control-lg"
+        class="form-control form-control-lg border border-dark border-2"
         placeholder="Search for a stock (e.g., AAPL, Microsoft)..."
         autocomplete="off"
         role="combobox"
@@ -35,7 +35,9 @@
         aria-expanded="false"
         aria-controls="suggestions"
       />
-      <div id="suggestions" class="d-none"></div>
+
+      <!-- Suggestions list will appear below the search bar -->
+      <div id="suggestions" class="list-group position-absolute w-100 d-none"></div>
     </div>
   </section>
 

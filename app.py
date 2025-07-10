@@ -213,14 +213,31 @@ def all_stocks():
 
 @app.route("/query_stocks")
 def query_stocks():
-    query = request.args.get("q", "").upper()
-    results = (
-        db.session.query(StockMaster)
-        .filter(StockMaster.ticker.like(f"%{query}%") | StockMaster.name.ilike(f"%{query}%"))
-        .limit(10)
-        .all()
-    )
-    return jsonify([{"ticker": s.ticker, "name": s.name} for s in results])
+    query = request.args.get("q", "").strip()
+
+    if not query:
+        return jsonify([])
+
+    query_upper = query.upper()
+
+    # Get matching stocks: prioritize ticker startswith first, then name startswith, then anywhere match
+    ticker_startswith = db.session.query(StockMaster).filter(StockMaster.ticker.like(f"{query_upper}%")).limit(5)
+    name_startswith = db.session.query(StockMaster).filter(StockMaster.name.ilike(f"{query}%")).limit(5)
+    partial_matches = db.session.query(StockMaster).filter(
+        StockMaster.ticker.ilike(f"%{query}%") | StockMaster.name.ilike(f"%{query}%")
+    ).limit(10)
+
+    # Merge results while preserving order and avoiding duplicates
+    seen = set()
+    final_results = []
+
+    for q in [ticker_startswith, name_startswith, partial_matches]:
+        for stock in q:
+            if stock.ticker not in seen:
+                final_results.append(stock)
+                seen.add(stock.ticker)
+
+    return jsonify([{"ticker": s.ticker, "name": s.name} for s in final_results])
 
 @app.route("/stocks/<string:ticker>")
 def show_stock(ticker):
