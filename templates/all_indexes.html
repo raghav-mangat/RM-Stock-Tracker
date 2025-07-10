@@ -24,7 +24,7 @@
       {% for index in indexes %}
         <div class="col-12 col-sm-6 col-md-4 col-lg-3 d-flex justify-content-center mb-4">
           <a href="{{ url_for('show_index', index_id=index.slug) }}" class="text-decoration-none w-100">
-            <div class="index-card card-hover bg-light shadow-sm d-flex align-items-center text-center justify-content-center">
+            <div class="index-card card-hover bg-light shadow-sm border d-flex align-items-center text-center justify-content-center">
               <span class="index-title text-dark fw-semibold">{{ index.name }}</span>
             </div>
           </a>

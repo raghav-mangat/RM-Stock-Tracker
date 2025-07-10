@@ -12,7 +12,7 @@
 
   <!-- Hero Section -->
   {% set heading = index.name | display %}
-  {% set description = "Take a look at all the stocks in the selected index. You can sort or filter the data by different attributes. Click on a company to see full details and performance data." %}
+  {% set description = "Take a look at all the stocks in the selected index along with some performance data. You can sort or filter the data by different attributes. Click on a company to see full details and performance data." %}
   {% set last_updated = index.last_updated | format_et_datetime | display %}
   {{ jumbotron(heading, description, last_updated) }}
 

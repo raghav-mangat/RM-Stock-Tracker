@@ -1,3 +1,5 @@
+{% from "macros/cards.html" import home_card %}
+
 {% extends "base.html" %}
 
 {% block title %}
@@ -22,30 +24,18 @@
     <div class="container">
       <div class="row g-4">
         <!-- Stock Insights Card -->
-        <div class="col-md-6">
-          <div class="card h-100 shadow-sm border-light bg-light py-5">
-            <div class="card-body text-center">
-              <h2 class="card-title mb-4">Stock Insights</h2>
-              <p class="card-text lead col-lg-10 mx-auto">
-                Search for any stock and see important numbers like market cap, volume, daily price change, 200-day average, and more. Use this to understand how a stock is doing at a glance.
-              </p>
-              <a class="btn btn-primary btn-lg mt-4" href="{{ url_for('all_stocks') }}" role="button">Explore Stocks</a>
-            </div>
-          </div>
-        </div>
+        {% set heading = "Stock Insights" %}
+        {% set description = "Search for any stock and see important numbers like market cap, volume, daily price change, 200-day average, and more. Use this to understand how a stock is doing at a glance." %}
+        {% set button_text = "Explore Stocks" %}
+        {% set url = url_for("all_stocks") %}
+        {{ home_card(heading, description, button_text, url) }}
 
         <!-- Index Overview Card -->
-        <div class="col-md-6">
-          <div class="card h-100 shadow-sm border-light bg-light py-5">
-            <div class="card-body text-center">
-              <h2 class="card-title mb-4">Index Overview</h2>
-              <p class="card-text lead col-lg-10 mx-auto">
-                Explore popular indexes like S&P 500 or Nasdaq 100 and see the list of companies inside them. Check performance data, sort or filter the data and click on any stock to learn more.
-              </p>
-              <a class="btn btn-primary btn-lg mt-4" href="{{ url_for('all_indexes') }}" role="button">View Indexes</a>
-            </div>
-          </div>
-        </div>
+        {% set heading = "Index Overview" %}
+        {% set description = "Explore popular indexes like S&P 500 or Nasdaq 100 and see the list of companies inside them. Check performance data, sort or filter the data and click on any stock to learn more." %}
+        {% set button_text = "View Indexes" %}
+        {% set url = url_for("all_indexes") %}
+        {{ home_card(heading, description, button_text, url) }}
       </div>
     </div>
   </section>
