@@ -131,11 +131,12 @@ def populate_db():
         # Get the top stocks from StockMaster table for each category
         top_stocks = get_top_stocks()
         # Save the stocks data in the Stocks table
-        for stocks in top_stocks.values():
-            for stock in stocks:
-                ticker = stock.ticker
-                if ticker not in tickers_updated:
-                    add_to_stocks_table(ticker)
+        for category in top_stocks.values():
+            for attribute_stocks in category.get("attributes").values():
+                for stock in attribute_stocks:
+                    ticker = stock.ticker
+                    if ticker not in tickers_updated:
+                        add_to_stocks_table(ticker)
         db.session.commit()
         print(f"Stored data for top stocks!")
 
