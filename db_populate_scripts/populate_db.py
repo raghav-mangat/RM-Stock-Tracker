@@ -190,12 +190,12 @@ def main():
             market_info = json.load(f)
             market_status = market_info.get("market_status")
         if market_status == "closed":
-            print(f"Market status was {market_status} — skipping DB population!")
+            print(f"Market status was {market_status} - skipping DB population!")
         else:
-            print(f"Market status was {market_status} — proceeding with DB population...")
+            print(f"Market status was {market_status} - proceeding with DB population...")
             populate_db()
     else:
-        print("Market status file missing — cannot determine whether to proceed with DB population!")
+        print("Market status file missing - cannot determine whether to proceed with DB population!")
 
 if __name__ == "__main__":
     main()

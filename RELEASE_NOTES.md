@@ -1,4 +1,65 @@
-# Release Notes — v2.2.0
+# Release Notes - v2.3.0
+**Release Date:** July 10, 2025
+
+> **Live Site:** [www.rmstocktracker.com](https://www.rmstocktracker.com)
+
+## Overview
+
+Version 2.3.0 brings many new features and refinements. The website now offers better insights into stock performance, a cleaner UI, more top stock data, and improved backend structure. It’s faster, easier to use, and more helpful for exploring U.S. markets. This is the first version being released since I have transferred ownership of the project repo from my test account "RaghavMangat2000" to my main account "raghav-mangat".
+
+---
+
+## What’s New
+
+### Top Market Movers Section (New!)
+- Added a new section showing **Top Gainers**, **Top Losers**, and **Most Traded Stocks**
+- Organized using vertical tabs to switch between overall market, S&P 500, Nasdaq 100, and Dow Jones
+- Each tab shows horizontal subtabs for the 3 categories
+
+### Ticker Tape Animation
+- Added a dynamic ticker tape to the stocks page
+- Shows 50 stocks: Popular and some random tickers
+- Color-coded with smooth animation
+
+### Index Improvements
+- "Today's Change" column added to the index stock table
+- Table can now be sorted by this new column
+- Added **52-week High** and **52-week Low** columns for more context
+
+### Stock Details Improvements
+- Display "Today's Change" and arrow icon (up/down)
+- Market cap and volume values are now human-friendly (e.g., 2.4B)
+- Better coloring for values based on percentage
+
+### Code Improvements
+- Created multiple reusable **Jinja macros** for cards, tables, arrows, and filters
+- Added a shared macro for all page Hero sections
+- Refactored stock and index table coloring logic for consistency
+- Improved search bar with better suggestions and scrollable dropdown with keyboard navigation
+
+### Backend Changes
+- Refactored data collector and DB population logic into packages
+- Improved error handling, and missing or incorrect data detection
+- Better organization of top stocks and populate data utilities
+
+### UI & UX Polishing
+- Updated written content across the website to be simpler and easier to understand
+- Improved visual layout and border styles
+- Added a **favicon** and app icons for browser tabs and mobile
+
+---
+
+## Summary
+
+Version `v2.3.0` upgrades the user experience with new stock insights, better visuals, and cleaner backend structure. The app is now even more useful and easier to explore.
+
+**Full Changelog:** https://github.com/raghav-mangat/RM-Stock-Tracker/compare/v2.2.0...v2.3.0
+
+
+------------------------------------------------------------------------------------------------------------
+
+
+# Release Notes - v2.2.0
 **Release Date:** June 29, 2025
 
 > **Live Site:** [www.rmstocktracker.com](https://www.rmstocktracker.com)
@@ -78,7 +139,7 @@ Version `v2.2.0` adds major polish and practical upgrades. It greatly improves i
 ------------------------------------------------------------------------------------------------------------
 
 
-# Release Notes — v2.1.0
+# Release Notes - v2.1.0
 **Release Date:** June 22, 2025
 
 > **Live Site:** [raghavmangat.pythonanywhere.com](https://raghavmangat.pythonanywhere.com/)
@@ -157,7 +218,7 @@ Version `v2.1.0` brings a highly polished experience for users and developers. I
 ------------------------------------------------------------------------------------------------------------
 
 
-# Release Notes — v2.0.0
+# Release Notes - v2.0.0
 **Release Date:** June 19, 2025
 
 > **Live Site:** [raghavmangat.pythonanywhere.com](https://raghavmangat.pythonanywhere.com/)

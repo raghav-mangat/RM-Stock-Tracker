@@ -1,8 +1,8 @@
 # RM Stock Tracker
 
-A lightweight and professional web app to search U.S. stocks and explore major market indexes using live financial data — built with Python, Flask, SQLAlchemy, and Bootstrap.
+An informative and user-friendly web app to explore U.S. stocks and major market indexes using real-time financial data. Built with Python, Flask, SQLAlchemy, Bootstrap, and Polygon.io API.
 
-> **Live Site**: [www.rmstocktracker.com](https://www.rmstocktracker.com)
+> **Live Site:** [www.rmstocktracker.com](https://www.rmstocktracker.com)
 
 ---
 
@@ -10,29 +10,31 @@ A lightweight and professional web app to search U.S. stocks and explore major m
 
 - **Search Stocks** by ticker symbol or company name
 - View detailed stock information:
-  - Open, high, low, close, volume
-  - 200-day moving average (DMA)
-  - % Difference between day close and 200-DMA
-  - 50-DMA, 52w High/Low
-  - Company description, related companies, and more
+  - Day open, high, low, close, and volume
+  - Today's price change and % change with up/down arrow
+  - 50-day and 200-day moving averages (DMA)
+  - % Difference from 200-DMA (color-coded)
+  - 52-week high and low
+  - Market cap (with readable formatting)
+  - Company summary and related companies
+- **Top Market Movers**
+  - View top gainers, losers, and most traded stocks
+  - Switch between overall market, S&P 500, Nasdaq 100, and Dow Jones
 - **Explore Indexes**:
   - S&P 500, Nasdaq 100, Dow Jones, Magnificent Seven, ARKK Innovation, Berkshire Hathaway
-- For each index, see:
-  - Ticker, company name, weight, day close, 200-DMA, % difference between day close and 200-DMA
-  - Sort by weight, company name, day close, 200-DMA, or 200-DMA % difference
-  - Filter by color-coded 200-DMA % difference
-- Click on any stock to view full details
-- Color-coded 200-DMA % difference for visual insights:
+  - View top holdings with metrics like weight, day close, DMA values, % difference, and more
+  - Sort by weight, company name, DMA %, or today's price change
+- Color-coded 200-DMA % Difference:
   - **Dark Green**: ≥ +10%
   - **Green**: +2% to +10%
   - **Yellow**: -2% to +2%
   - **Red**: -2% to -10%
   - **Dark Red**: ≤ -10%
-- Check the last updated time of the data in Eastern Time across the website
-- Breadcrumbs and Back buttons across the website for easy navigation
-- Handles N/A gracefully where data is unavailable
-- Responsive and intuitive UI with Bootstrap 5 and custom styling
-- User-friendly 404 and 500 error pages
+- Animated ticker tape showing popular and some random stocks
+- Improved stock search bar with search suggestions and keyboard navigation
+- Data last updated time shown in Eastern Time
+- User-friendly error pages and consistent navigation
+- Responsive design with Bootstrap 5 and custom styles
 
 ---
 
@@ -48,23 +50,24 @@ A lightweight and professional web app to search U.S. stocks and explore major m
 ## Project Structure
 
 ```
-├── data_collectors/        # Scripts to collect market, stock and index data
-├── db_populate_scripts/    # Scripts to populate the database
-├── models/                 # SQLAlchemy database models
-├── static/                 # Static JS and CSS files
+├── app.py                  # Flask application entry point
+├── data_collectors/        # Scripts to fetch stock, index, and market data
+├── db_populate_scripts/    # Scripts to update and populate database
+├── models/                 # SQLAlchemy ORM models
+├── static/                 # Static files (CSS, JS, favicon, etc.)
+│   ├── assets/
+│   ├── js/
+│   └── styles/
 ├── templates/              # Jinja2 HTML templates
-│   └── macros/             # Reusable HTML macros (e.g., popovers)
-├── utils/                  # Utilities like Jinja filters, error handlers, etc.
-└── app.py                  # Flask application entry point
+│   └── macros/             # Reusable Jinja components (macros)
+└── utils/                  # Helpers for top stocks, filters, error handling, etc.
 ```
 
 ---
 
 ## Getting Started
 
-To run the app locally:
-
-1. **Clone the repo**
+1. **Clone the repository**
 2. **Set up a virtual environment**
 
    ```bash
@@ -78,7 +81,7 @@ To run the app locally:
    pip install -r requirements.txt
    ```
 
-4. **Create a `.env` file** in the root directory:
+4. **Create a `.env` file** in the root directory
 
    ```env
    IS_RELEASE="0"
