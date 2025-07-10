@@ -38,10 +38,25 @@ def update_stocks_master_table():
     db.session.query(StockMaster).delete()
     db.session.commit()
 
+    # Get a list of all stocks data from Polygon API
     stocks = fetch_all_stocks_data()
+    # To avoid adding duplicate data
+    tickers_added = set()
+    # To count the number of duplicates
+    duplicates = []
+
     for stock in stocks:
-        db.session.add(stock)
-        db.session.flush()
+        ticker_upper = stock.ticker.upper()
+        # Only add to DB if it's unique
+        if ticker_upper not in tickers_added:
+            tickers_added.add(ticker_upper)
+            db.session.add(stock)
+            db.session.flush()
+        else:
+            duplicates.append(stock.ticker)
+            print(f"Duplicate ticker skipped: {stock.ticker}")
+    print(f"Skipped {len(duplicates)} duplicate tickers.")
+
     db.session.commit()
     print("Updated stocks_master table!")
 

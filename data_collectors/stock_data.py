@@ -29,12 +29,12 @@ STOCK_ATTRIBUTES = [
 
 def fetch_all_stocks_data():
     """
-    For all the stocks available in polugon API, this function collects
+    For all the stocks available in polygon API, this function collects
     the data for all the attributes in 'STOCK_MASTER_ATTRIBUTES' defined
     at the top of the script, using the polygon API. It then saves
     all this data as a list of Stock Master DB model objects, and returns it.
     :return: List of Stock Master DB model object, containing the required
-    data for all the stocks available in polygon API
+        data for all the stocks available in polygon API
     """
     print("Retrieving data for all the stocks in polygon API...")
     stock_master_data = []
