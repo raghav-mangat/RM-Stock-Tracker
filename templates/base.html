@@ -5,9 +5,11 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1">
       <meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
-      <meta name="description"
-            content="An informative and user-friendly web app to explore U.S. stocks and major
-            market indexes using real-time financial data.">
+      <!-- Contains Block meta_description -->
+      <meta name="description" content="{% block meta_description %}An informative and user-friendly web app to track U.S. stock market and indexes with real-time financial data.{% endblock %}">
+
+      <!-- Block Title -->
+      <title>{% block title %}RM Stock Tracker - Real-Time U.S. Stock Market Tracking App{% endblock %}</title>
 
       <!-- Favicon & App Icons -->
       <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='assets/apple-touch-icon.png') }}">
@@ -15,9 +17,6 @@
       <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='assets/favicon-16x16.png') }}">
       <link rel="manifest" href="{{ url_for('static', filename='assets/site.webmanifest') }}">
       <link rel="shortcut icon" href="{{ url_for('static', filename='assets/favicon.ico') }}">
-
-      <!-- Block Title -->
-      <title>{% block title %} {% endblock %}</title>
 
       <!-- Bootstrap CSS and Icons CDN -->
       <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
