@@ -1,6 +1,7 @@
 document.addEventListener("DOMContentLoaded", function () {
   const searchBar = document.getElementById("search-bar");
   const suggestionsBox = document.getElementById("suggestions");
+  const minSuggestionLen = 1;
   let activeIndex = -1;
 
   // Reset suggestions UI
@@ -15,15 +16,19 @@ document.addEventListener("DOMContentLoaded", function () {
   function updateActiveSuggestion(index) {
     const items = suggestionsBox.querySelectorAll(".suggestion-item");
     items.forEach((el, i) => {
-      el.classList.toggle("active", i === index);
-      if (i === index) el.scrollIntoView({ block: "nearest" });
+      if (i === index) {
+        el.classList.add("text-bg-primary");
+        el.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      } else {
+        el.classList.remove("text-bg-primary");
+      }
     });
   }
 
   // Fetch suggestions as user types
   searchBar.addEventListener("input", function () {
     const query = this.value.trim();
-    if (query.length < 2) {
+    if (query.length < minSuggestionLen) {
       resetSuggestions();
       return;
     }
@@ -44,9 +49,13 @@ document.addEventListener("DOMContentLoaded", function () {
           div.classList.add("suggestion-item", "list-group-item", "list-group-item-action");
           div.setAttribute("role", "option");
           div.setAttribute("tabindex", "-1");
+
+          // Mouse Hover styling will use updateActiveSuggestion
+          div.addEventListener("mouseover", () => updateActiveSuggestion(idx));
           div.addEventListener("click", () => {
             window.location.href = `/stocks/${item.ticker}`;
           });
+
           suggestionsBox.appendChild(div);
         });
       });

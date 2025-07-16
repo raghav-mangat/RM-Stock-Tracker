@@ -29,9 +29,9 @@ def stock_change_color(change):
     :return: colour - In hex value
     """
     if change >= 0:
-        color = "#66ff66" # Dark Green
+        color = "#00b000" # Dark Green
     else:
-        color = "#FF6666" # Dark Red
+        color = "#f00000" # Dark Red
     return color
 
 def humanize_number(num, fallback="N/A", decimals=1):

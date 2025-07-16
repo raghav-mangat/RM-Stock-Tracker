@@ -57,7 +57,7 @@
             {% if (stock.volume is not none) and (stock.day_close is not none) and (stock.todays_change is not none) %}
               <div class="ticker-item card-hover card shadow-sm text-center mx-2">
                 <a href="{{ url_for('show_stock', ticker=stock.ticker) }}" class="text-decoration-none">
-                  <div class="d-flex flex-column text-truncate px-3 py-2" style="max-width: 200px;">
+                  <div class="d-flex flex-column text-truncate px-3 py-2" style="max-width: 300px;">
                     <strong class="text-dark fw-bold text-truncate">{{ stock.ticker }}</strong>
                     <span class="ticker-info fw-semibold text-truncate"
                           style="color: {{ stock.todays_change | stock_change_color }};">

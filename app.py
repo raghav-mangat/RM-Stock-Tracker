@@ -15,7 +15,7 @@ import os
 import random
 from flask import Flask, render_template, request, jsonify, abort
 from dotenv import load_dotenv
-from sqlalchemy import and_, or_
+from sqlalchemy import and_, or_, func
 from models.database import db, Stock, Index, IndexHolding, StockMaster
 from data_collectors.stock_data import fetch_stock_data
 from utils.filters import register_custom_filters
@@ -210,30 +210,27 @@ def all_stocks():
 @app.route("/query_stocks")
 def query_stocks():
     query = request.args.get("q", "").strip()
+    result = jsonify([])
+    num_suggestions = 10
 
-    if not query:
-        return jsonify([])
+    if query:
+        query_upper = query.upper()
+        # Estimate popularity using (day close price) * volume
+        popularity = func.coalesce(StockMaster.day_close, 0) * func.coalesce(StockMaster.volume, 0)
 
-    query_upper = query.upper()
-
-    # Get matching stocks: prioritize ticker startswith first, then name startswith, then anywhere match
-    ticker_startswith = db.session.query(StockMaster).filter(StockMaster.ticker.like(f"{query_upper}%")).limit(5)
-    name_startswith = db.session.query(StockMaster).filter(StockMaster.name.ilike(f"{query}%")).limit(5)
-    partial_matches = db.session.query(StockMaster).filter(
-        StockMaster.ticker.ilike(f"%{query}%") | StockMaster.name.ilike(f"%{query}%")
-    ).limit(10)
-
-    # Merge results while preserving order and avoiding duplicates
-    seen = set()
-    final_results = []
-
-    for q in [ticker_startswith, name_startswith, partial_matches]:
-        for stock in q:
-            if stock.ticker not in seen:
-                final_results.append(stock)
-                seen.add(stock.ticker)
-
-    return jsonify([{"ticker": s.ticker, "name": s.name} for s in final_results])
+        # One combined query for both ticker and name startswith, ordered by popularity
+        matches = (
+            db.session.query(StockMaster)
+            .filter(
+                StockMaster.ticker.ilike(f"{query_upper}%") |
+                StockMaster.name.ilike(f"{query}%")
+            )
+            .order_by(popularity.desc())
+            .limit(num_suggestions)
+            .all()
+        )
+        result = jsonify([{"ticker": s.ticker, "name": s.name} for s in matches])
+    return result
 
 @app.route("/stocks/<string:ticker>")
 def show_stock(ticker):
