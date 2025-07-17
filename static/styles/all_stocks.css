@@ -35,7 +35,6 @@
 .ticker-item {
   border-radius: 8px;
   min-width: 200px;
-  font-size: 15px;
   flex-shrink: 0;
   overflow: hidden;
 }
