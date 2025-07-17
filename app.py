@@ -2,7 +2,7 @@
 RM-Stock-Tracker
 
 An informative and user-friendly web app to explore U.S. stocks and major
-market indexes using real-time financial data.
+market indices using real-time financial data.
 Built with Python, Flask, SQLAlchemy, Bootstrap, and Polygon.io API.
 
 Live Website: https://www.rmstocktracker.com/
@@ -56,20 +56,20 @@ def inject_breadcrumbs():
 def home():
     return render_template("home.html")
 
-@app.route("/indexes")
-def all_indexes():
+@app.route("/indices")
+def all_indices():
     # Load last updated timestamp of populate db
     last_updated = db_last_updated()
 
-    indexes = db.session.execute(db.select(Index)).scalars().all()
+    indices = db.session.execute(db.select(Index)).scalars().all()
 
     return render_template(
-        "all_indexes.html",
-        indexes=indexes,
+        "all_indices.html",
+        indices=indices,
         last_updated=last_updated
     )
 
-@app.route("/indexes/<string:index_id>")
+@app.route("/indices/<string:index_id>")
 def show_index(index_id):
     sort_by = request.args.get('sort_by')
     order = request.args.get('order')

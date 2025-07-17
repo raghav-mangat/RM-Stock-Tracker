@@ -3,25 +3,25 @@
 {% extends "base.html" %}
 
 {% block title %}
-  Indexes - Explore Major U.S. Market Indexes | RM Stock Tracker
+  Indices - Explore Major U.S. Market Indices | RM Stock Tracker
 {% endblock %}
 
 {% block style %}
-    <link href="{{ url_for('static', filename='styles/all_indexes.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='styles/all_indices.css') }}" rel="stylesheet">
 {% endblock %}
 
 {% block content %}
 
   <!-- Hero Section -->
-  {% set heading = "Indexes Dashboard" %}
-  {% set description = "Browse popular U.S. market indexes and see all the stocks in each one along with some performance data. Sort and filter by key metrics like 200-day moving average percentage difference, or today's change to explore trends and performance." %}
+  {% set heading = "Indices Dashboard" %}
+  {% set description = "Browse popular U.S. market indices and see all the stocks in each one along with some performance data. Sort and filter by key metrics like 200-day moving average percentage difference, or today's change to explore trends and performance." %}
   {% set last_updated = last_updated | display %}
   {{ jumbotron(heading, description, last_updated) }}
 
   <!-- Index Cards Grid -->
   <section class="container mb-5 px-5 pt-2">
     <div class="row justify-content-center">
-      {% for index in indexes %}
+      {% for index in indices %}
         <div class="col-12 col-sm-6 col-md-4 col-lg-3 d-flex justify-content-center mb-4">
           <a href="{{ url_for('show_index', index_id=index.slug) }}" class="text-decoration-none w-100">
             <div class="index-card card-hover bg-light shadow-sm border d-flex align-items-center text-center justify-content-center">

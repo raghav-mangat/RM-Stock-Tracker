@@ -56,7 +56,7 @@ class Stock(db.Model):
 
 
 class Index(db.Model):
-    __tablename__ = "indexes"
+    __tablename__ = "indices"
 
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
@@ -71,7 +71,7 @@ class IndexHolding(db.Model):
     __tablename__ = "index_holdings"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    index_id: Mapped[int] = mapped_column(ForeignKey("indexes.id"), nullable=False)
+    index_id: Mapped[int] = mapped_column(ForeignKey("indices.id"), nullable=False)
     stock_id: Mapped[int] = mapped_column(ForeignKey("stocks.id"), nullable=False)
     weight: Mapped[float] = mapped_column(nullable=True)
 

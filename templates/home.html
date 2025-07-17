@@ -3,7 +3,7 @@
 {% extends "base.html" %}
 
 {% block title %}
-  RM Stock Tracker - Explore U.S. Stocks and Market Indexes Seamlessly
+  RM Stock Tracker - Explore U.S. Stocks and Market Indices Seamlessly
 {% endblock %}
 
 {% block content %}
@@ -14,12 +14,12 @@
     <div class="container text-center">
       <h1 class="display-4 text-body-emphasis">Welcome to RM Stock Tracker!</h1>
       <p class="lead mt-3 col-lg-8 mx-auto">
-        RM Stock Tracker helps you keep track of U.S. stocks and major market indexes in a clear and simple way. You can search for companies, check key stats, follow top movers, and explore detailed financial data - all in one place.
+        RM Stock Tracker helps you keep track of U.S. stocks and major market indices in a clear and simple way. You can search for companies, check key stats, follow top movers, and explore detailed financial data - all in one place.
       </p>
     </div>
   </section>
 
-  <!-- Cards Row for Stocks and Indexes -->
+  <!-- Cards Row for Stocks and Indices -->
   <section class="mb-5">
     <div class="container">
       <div class="row g-4">
@@ -30,11 +30,11 @@
         {% set url = url_for("all_stocks") %}
         {{ home_card(heading, description, button_text, url) }}
 
-        <!-- Indexes Dashboard Card -->
-        {% set heading = "Indexes Dashboard" %}
-        {% set description = "Explore popular U.S. market indexes like S&P 500 or Nasdaq 100 and see the list of companies inside them. Check performance data, sort or filter the data and click on any stock to learn more." %}
-        {% set button_text = "Explore Indexes" %}
-        {% set url = url_for("all_indexes") %}
+        <!-- Indices Dashboard Card -->
+        {% set heading = "Indices Dashboard" %}
+        {% set description = "Explore popular U.S. market indices like S&P 500 or Nasdaq 100 and see the list of companies inside them. Check performance data, sort or filter the data and click on any stock to learn more." %}
+        {% set button_text = "Explore Indices" %}
+        {% set url = url_for("all_indices") %}
         {{ home_card(heading, description, button_text, url) }}
       </div>
     </div>

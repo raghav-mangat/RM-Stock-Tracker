@@ -81,9 +81,9 @@ Version 2.2.0 builds on v2.1.0 with numerous user-facing improvements, better fi
   - Ticker symbol and company name now included in the stock details table.
   - DMA % Difference popover now works on hover in addition to click.
 
-- **Indexes Table Improvements**:
+- **Indices Table Improvements**:
   - The table on the index page can now be sorted by **company name**.
-  - Clean visual layout and spacing added to the **All Indexes** page for improved responsiveness and clarity.
+  - Clean visual layout and spacing added to the **All Indices** page for improved responsiveness and clarity.
 
 ### Filtering and Display Logic
 
@@ -164,7 +164,7 @@ This release builds on the solid foundation of v2.0.0 by polishing the interface
   - Footer now includes social links (GitHub, LinkedIn, Instagram).
 
 - **Homepage Redesign:**
-  - **Stocks** and **Indexes** sections shown **side-by-side** in responsive Bootstrap cards.
+  - **Stocks** and **Indices** sections shown **side-by-side** in responsive Bootstrap cards.
   - Improved homepage description for professionalism and clarity.
 
 - **Accessibility & SEO:**
@@ -225,7 +225,7 @@ Version `v2.1.0` brings a highly polished experience for users and developers. I
 
 ## Overview
 
-This release introduces a full **database-powered** version of RM Stock Tracker. It replaces the older JSON-based system with a dynamic and scalable backend using **Flask, SQLAlchemy, and SQLite**. You can now search and view real-time stock data and explore the composition of major stock market indexes.
+This release introduces a full **database-powered** version of RM Stock Tracker. It replaces the older JSON-based system with a dynamic and scalable backend using **Flask, SQLAlchemy, and SQLite**. You can now search and view real-time stock data and explore the composition of major stock market indices.
 
 ---
 
@@ -235,7 +235,7 @@ This release introduces a full **database-powered** version of RM Stock Tracker.
 
 - Choose between the two main options:
   - **Stocks**: Search for any stock in the U.S. market.
-  - **Indexes**: Browse a list of 6 major indexes.
+  - **Indices**: Browse a list of 6 major indices.
 
 ### Stock Search & Detail View
 
@@ -249,7 +249,7 @@ This release introduces a full **database-powered** version of RM Stock Tracker.
 
 ### Index Listings & Holdings View
 
-- View a list of 6 major indexes:
+- View a list of 6 major indices:
   - S&P 500, Nasdaq 100, Dow Jones, Magnificent Seven, ARKK, Berkshire Hathaway
 - Clicking an index shows all its holdings:
   - Company Name, Ticker, Weight in index

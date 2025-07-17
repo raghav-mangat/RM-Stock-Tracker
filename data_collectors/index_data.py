@@ -2,9 +2,9 @@ import time
 import requests
 from bs4 import BeautifulSoup
 
-# Define the indexes and their URLs
+# Define the indices and their URLs
 slick_charts_url = "https://www.slickcharts.com"
-indexes_info = {
+indices_info = {
     "sp500": {
         "name": "S&P 500 Index",
         "slug": "sp500",
@@ -37,17 +37,17 @@ indexes_info = {
     },
 }
 
-# List of all indexes available in this script
-all_indexes = list(indexes_info.keys())
+# List of all indices available in this script
+all_indices = list(indices_info.keys())
 
 def get_index_info(index):
     """
     Returns the information for the index given to the function using the
-    indexes_info dict defined at the top of the script.
-    :param index: key for a value in indexes_info dict
+    indices_info dict defined at the top of the script.
+    :param index: key for a value in indices_info dict
     :return: dict of information for the given index
     """
-    return indexes_info.get(index)
+    return indices_info.get(index)
 
 def fetch_index_data(index):
     """

@@ -6,7 +6,7 @@
       <meta name="viewport" content="width=device-width, initial-scale=1">
       <meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
       <!-- Contains Block meta_description -->
-      <meta name="description" content="{% block meta_description %}An informative and user-friendly web app to track U.S. stock market and major market indexes with real-time financial data.{% endblock %}">
+      <meta name="description" content="{% block meta_description %}An informative and user-friendly web app to track U.S. stock market and major market indices with real-time financial data.{% endblock %}">
 
       <!-- Block Title -->
       <title>{% block title %}RM Stock Tracker - Real-Time U.S. Stock Market Tracking App{% endblock %}</title>
@@ -45,9 +45,9 @@
               <a class="nav-link {% if request.endpoint == 'all_stocks' or request.endpoint == 'show_stock' %}active{% endif %}"
                  href="{{ url_for('all_stocks') }}"
                  {% if request.endpoint == 'all_stocks' or request.endpoint == 'show_stock' %}aria-current="page"{% endif %}>Stocks</a>
-              <a class="nav-link {% if request.endpoint == 'all_indexes' or request.endpoint == 'show_index' %}active{% endif %}"
-                 href="{{ url_for('all_indexes') }}"
-                 {% if request.endpoint == 'all_indexes' or request.endpoint == 'show_index' %}aria-current="page"{% endif %}>Indexes</a>
+              <a class="nav-link {% if request.endpoint == 'all_indices' or request.endpoint == 'show_index' %}active{% endif %}"
+                 href="{{ url_for('all_indices') }}"
+                 {% if request.endpoint == 'all_indices' or request.endpoint == 'show_index' %}aria-current="page"{% endif %}>Indices</a>
           </div>
         </div>
       </div>

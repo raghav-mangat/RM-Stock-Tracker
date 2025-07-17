@@ -1,6 +1,6 @@
 # RM Stock Tracker
 
-An informative and user-friendly web app to explore U.S. stocks and major market indexes using real-time financial data. Built with Python, Flask, SQLAlchemy, Bootstrap, and Polygon.io API.
+An informative and user-friendly web app to explore U.S. stocks and major market indices using real-time financial data. Built with Python, Flask, SQLAlchemy, Bootstrap, and Polygon.io API.
 
 > **Live Site:** [www.rmstocktracker.com](https://www.rmstocktracker.com)
 
@@ -20,7 +20,7 @@ An informative and user-friendly web app to explore U.S. stocks and major market
 - **Top Market Movers**
   - View top gainers, losers, and most traded stocks
   - Switch between overall market, S&P 500, Nasdaq 100, and Dow Jones
-- **Explore Indexes**:
+- **Explore Indices**:
   - S&P 500, Nasdaq 100, Dow Jones, Magnificent Seven, ARKK Innovation, Berkshire Hathaway
   - View top holdings with metrics like weight, day close, DMA values, % difference, and more
   - Sort by weight, company name, DMA %, or today's price change

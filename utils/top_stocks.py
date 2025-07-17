@@ -1,4 +1,4 @@
-# This script generates top stock data for the Overall Market and selected Indexes
+# This script generates top stock data for the Overall Market and selected Indices
 # (S&P 500, Nasdaq 100, Dow Jones).
 # It returns the top gainers, losers, and most traded stocks for each category.
 
@@ -49,14 +49,14 @@ def get_top_stocks():
 
     top_stocks = add_to_top_stocks(top_stocks, "overall", "Overall Market", gainers, losers, top_traded)
 
-    # Filter and loop over specific indexes to get their constituent stocks
+    # Filter and loop over specific indices to get their constituent stocks
     # and compute their top movers
-    indexes = Index.query.filter(or_(
+    indices = Index.query.filter(or_(
         Index.slug == "sp500",
         Index.slug == "nasdaq100",
         Index.slug == "dowjones"
     )).all()
-    for index in indexes:
+    for index in indices:
         # Query stocks that are part of the current index using IndexHolding join
         index_holdings = db.session.query(
             Stock.ticker,

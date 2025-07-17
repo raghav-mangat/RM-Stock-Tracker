@@ -24,7 +24,7 @@ from datetime import datetime
 from flask import Flask
 from pathlib import Path
 from models.database import db, Stock, Index, IndexHolding, StockMaster
-from data_collectors.index_data import all_indexes, get_index_info, fetch_index_data
+from data_collectors.index_data import all_indices, get_index_info, fetch_index_data
 from data_collectors.stock_data import STOCK_ATTRIBUTES, fetch_all_stocks_data, fetch_stock_data
 from utils.datetime_utils import format_et_datetime
 from utils.top_stocks import get_top_stocks
@@ -60,7 +60,7 @@ def update_stocks_master_table():
     db.session.commit()
     print("Updated stocks_master table!")
 
-def add_to_indexes_table(index, now):
+def add_to_indices_table(index, now):
     index_info = get_index_info(index)
     index = Index.query.filter_by(slug=index_info.get("slug")).first()
     if not index:
@@ -126,9 +126,9 @@ def populate_db():
         eastern = pytz.timezone("US/Eastern")
         now = datetime.now(eastern)
 
-        # Save the data for all indexes and the constituent stocks
-        for index in all_indexes:
-            index_id = add_to_indexes_table(index, now)
+        # Save the data for all indices and the constituent stocks
+        for index in all_indices:
+            index_id = add_to_indices_table(index, now)
             holdings = fetch_index_data(index)
             for holding in holdings:
                 ticker = holding.get("ticker")
