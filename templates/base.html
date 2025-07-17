@@ -6,7 +6,7 @@
       <meta name="viewport" content="width=device-width, initial-scale=1">
       <meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
       <!-- Contains Block meta_description -->
-      <meta name="description" content="{% block meta_description %}An informative and user-friendly web app to track U.S. stock market and indexes with real-time financial data.{% endblock %}">
+      <meta name="description" content="{% block meta_description %}An informative and user-friendly web app to track U.S. stock market and major market indexes with real-time financial data.{% endblock %}">
 
       <!-- Block Title -->
       <title>{% block title %}RM Stock Tracker - Real-Time U.S. Stock Market Tracking App{% endblock %}</title>
@@ -110,6 +110,11 @@
             </ul>
         </footer>
     </section>
+
+    <!-- Bootstrap Loading Spinner Overlay -->
+    <div id="loading-spinner" class="d-none position-fixed top-0 start-0 w-100 h-100 bg-white bg-opacity-75 backdrop-blur z-1050 d-flex justify-content-center align-items-center">
+      <div class="spinner-border text-primary" role="status" aria-hidden="true"></div>
+    </div>
 
     <!-- Base JS -->
     <script src="{{ url_for('static', filename='js/base.js') }}"></script>

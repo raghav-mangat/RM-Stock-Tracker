@@ -3,7 +3,7 @@
 {% extends "base.html" %}
 
 {% block title %}
-  RM Stock Tracker - Explore U.S. Stocks and Market Indexes Easily
+  RM Stock Tracker - Explore U.S. Stocks and Market Indexes Seamlessly
 {% endblock %}
 
 {% block content %}
@@ -14,7 +14,7 @@
     <div class="container text-center">
       <h1 class="display-4 text-body-emphasis">Welcome to RM Stock Tracker!</h1>
       <p class="lead mt-3 col-lg-8 mx-auto">
-        RM Stock Tracker helps you keep track of stocks and market indexes in a clear and simple way. You can search for companies, check key stats, follow top movers, and explore detailed financial data - all in one place.
+        RM Stock Tracker helps you keep track of U.S. stocks and major market indexes in a clear and simple way. You can search for companies, check key stats, follow top movers, and explore detailed financial data - all in one place.
       </p>
     </div>
   </section>
@@ -25,14 +25,14 @@
       <div class="row g-4">
         <!-- Stocks Dashboard Card -->
         {% set heading = "Stocks Dashboard" %}
-        {% set description = "Search for any stock or follow top movers. See important numbers like market cap, volume, daily price change, 200-day average, and more. Use this to understand how a stock is doing at a glance." %}
+        {% set description = "Search for any U.S. stock or follow top movers. See important numbers like market cap, volume, daily price change, 200-day average, and more. Use this to understand how a stock is doing at a glance." %}
         {% set button_text = "Explore Stocks" %}
         {% set url = url_for("all_stocks") %}
         {{ home_card(heading, description, button_text, url) }}
 
         <!-- Indexes Dashboard Card -->
         {% set heading = "Indexes Dashboard" %}
-        {% set description = "Explore popular indexes like S&P 500 or Nasdaq 100 and see the list of companies inside them. Check performance data, sort or filter the data and click on any stock to learn more." %}
+        {% set description = "Explore popular U.S. market indexes like S&P 500 or Nasdaq 100 and see the list of companies inside them. Check performance data, sort or filter the data and click on any stock to learn more." %}
         {% set button_text = "Explore Indexes" %}
         {% set url = url_for("all_indexes") %}
         {{ home_card(heading, description, button_text, url) }}

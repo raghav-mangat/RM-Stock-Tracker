@@ -28,6 +28,9 @@ document.addEventListener("DOMContentLoaded", function () {
   // Fetch suggestions as user types
   searchBar.addEventListener("input", function () {
     const query = this.value.trim();
+
+    suggestionsBox.scrollTop = 0; // Reset scroll position
+
     if (query.length < minSuggestionLen) {
       resetSuggestions();
       return;
@@ -61,6 +64,16 @@ document.addEventListener("DOMContentLoaded", function () {
       });
   });
 
+  // Handle focus event to show suggestions again
+  searchBar.addEventListener("focus", function () {
+    const query = this.value.trim();
+    if (query.length >= minSuggestionLen) {
+      // Manually trigger input event logic
+      const inputEvent = new Event('input');
+      this.dispatchEvent(inputEvent);
+    }
+  });
+
   // Handle up/down/enter keyboard navigation
   searchBar.addEventListener("keydown", function (e) {
     const items = suggestionsBox.querySelectorAll(".suggestion-item");
@@ -80,6 +93,19 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     }
   });
+
+  // Prevent page from scrolling when mouse is over suggestions box
+  suggestionsBox.addEventListener("wheel", function (e) {
+    const isScrollable = suggestionsBox.scrollHeight > suggestionsBox.clientHeight;
+    if (isScrollable) {
+      const atTop = suggestionsBox.scrollTop === 0;
+      const atBottom = suggestionsBox.scrollTop + suggestionsBox.clientHeight >= suggestionsBox.scrollHeight;
+
+      if ((e.deltaY < 0 && atTop) || (e.deltaY > 0 && atBottom)) {
+        e.preventDefault(); // Prevent scrolling the page
+      }
+    }
+  }, { passive: false });
 
   // Hide suggestions when clicking outside
   document.addEventListener("click", function (e) {
