@@ -1,3 +1,52 @@
+# Release Notes - v2.3.1
+
+**Release Date:** July 17, 2025
+
+**Project:** [RM-Stock-Tracker](https://github.com/raghav-mangat/RM-Stock-Tracker)
+
+> **Live Site:** [www.rmstocktracker.com](https://www.rmstocktracker.com)
+
+## Overview
+
+Version 2.3.1 is a small update that includes bug fixes, minor improvements, and better polish across the app. These changes make the website more stable, visually smoother, and more accessible.
+
+---
+
+## What's Improved
+
+### Bug Fixes and Backend Improvements
+- Fixed a server error in the top stocks script (`top_stocks.py`) by removing unnecessary Flask app creation
+- Improved database queries when collecting and showing top gainers and losers
+
+### Better Search Suggestions
+- Search suggestions now prioritize more popular stocks at the top
+- Suggestions appear as soon as the user starts typing
+- Fixed the highlight styling for keyboard navigation to be more consistent
+
+### UI and Visual Updates
+- Improved color contrast for price change indicators (green/red)
+- Adjusted ticker tape animation speed and card sizing for better visibility
+- Added loading spinner overlay that shows up if a page takes more than 200ms to load
+
+### Code and Structure Cleanup
+- Updated all `<title>` and `<meta description>` tags for better SEO and clarity
+- Refactored templates and renumbered all `<h>` heading tags to follow better semantic structure
+- Changed all instances of "indexes" to "indices" across the project for consistency
+- Improved accessibility by updating HTML structure around the spinner and key UI elements
+- Minor wording and layout improvements across pages
+
+---
+
+## Summary
+
+`v2.3.1` is a focused release with bug fixes, cleaner visuals, and smoother interaction, building on the solid improvements from `v2.3.0`.
+
+**Full Changelog:** https://github.com/raghav-mangat/RM-Stock-Tracker/compare/v2.3.0...v2.3.1
+
+
+------------------------------------------------------------------------------------------------------------
+
+
 # Release Notes - v2.3.0
 **Release Date:** July 10, 2025
 

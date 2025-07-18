@@ -1,6 +1,6 @@
 # RM Stock Tracker
 
-An informative and user-friendly web app to explore U.S. stocks and major market indices using real-time financial data. Built with Python, Flask, SQLAlchemy, Bootstrap, and Polygon.io API.
+An informative and user-friendly web app to explore U.S. stocks and major market indices using real-time financial data. Built with Python, Flask, SQLAlchemy, Bootstrap, and the Polygon.io API.
 
 > **Live Site:** [www.rmstocktracker.com](https://www.rmstocktracker.com)
 
@@ -20,7 +20,7 @@ An informative and user-friendly web app to explore U.S. stocks and major market
 - **Top Market Movers**
   - View top gainers, losers, and most traded stocks
   - Switch between overall market, S&P 500, Nasdaq 100, and Dow Jones
-- **Explore Indices**:
+- **Explore Indices**
   - S&P 500, Nasdaq 100, Dow Jones, Magnificent Seven, ARKK Innovation, Berkshire Hathaway
   - View top holdings with metrics like weight, day close, DMA values, % difference, and more
   - Sort by weight, company name, DMA %, or today's price change
@@ -31,18 +31,19 @@ An informative and user-friendly web app to explore U.S. stocks and major market
   - **Red**: -2% to -10%
   - **Dark Red**: ≤ -10%
 - Animated ticker tape showing popular and some random stocks
-- Improved stock search bar with search suggestions and keyboard navigation
+- Improved stock search bar with more relevant suggestions and better keyboard navigation
+- Loading spinner overlay when navigating pages that take longer time to load
 - Data last updated time shown in Eastern Time
-- User-friendly error pages and consistent navigation
-- Responsive design with Bootstrap 5 and custom styles
+- Responsive design with Bootstrap 5
+- Clean UI, consistent layout, and helpful error messages
 
 ---
 
 ## Tech Stack
 
-- **Backend**: Python, Flask, SQLAlchemy
-- **Frontend**: HTML, CSS, JS, Jinja2, Bootstrap 5
-- **Database**: SQLite (dev), MySQL (prod)
+- **Backend**: Python, Flask, SQLAlchemy  
+- **Frontend**: HTML, CSS, JS, Jinja2, Bootstrap 5  
+- **Database**: SQLite (dev), MySQL (prod)  
 - **APIs**: Polygon.io, SlickCharts
 
 ---
@@ -59,7 +60,7 @@ An informative and user-friendly web app to explore U.S. stocks and major market
 │   ├── js/
 │   └── styles/
 ├── templates/              # Jinja2 HTML templates
-│   └── macros/             # Reusable Jinja components (macros)
+│   └── macros/             # Reusable Jinja components
 └── utils/                  # Helpers for top stocks, filters, error handling, etc.
 ```
 
@@ -68,6 +69,7 @@ An informative and user-friendly web app to explore U.S. stocks and major market
 ## Getting Started
 
 1. **Clone the repository**
+
 2. **Set up a virtual environment**
 
    ```bash
