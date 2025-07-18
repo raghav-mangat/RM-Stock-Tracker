@@ -8,7 +8,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Spinner Overlay
     const spinner = document.getElementById("loading-spinner");
-    const spinnerDelay = 150; // delay before showing spinner (in ms)
+    const spinnerDelay = 200; // delay before showing spinner (in ms)
     let spinnerTimeout;
 
     window.addEventListener("beforeunload", () => {
