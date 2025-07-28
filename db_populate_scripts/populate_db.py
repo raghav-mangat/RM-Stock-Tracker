@@ -1,6 +1,7 @@
 import os
 import sys
 from dotenv import load_dotenv
+from utils.datetime_utils import get_current_et
 
 # Load environment variables from .env file
 load_dotenv()
@@ -18,9 +19,7 @@ elif IS_RELEASE == "0":
         db_dir = os.path.dirname(db_path)
         os.makedirs(db_dir, exist_ok=True)
 
-import pytz
 import json
-from datetime import datetime
 from flask import Flask
 from pathlib import Path
 from models.database import db, Stock, Index, IndexHolding, StockMaster
@@ -119,12 +118,9 @@ def populate_db():
     """
     with app.app_context():
         print("Starting Database Population...\n")
+        now = get_current_et()
         db.create_all()
         update_stocks_master_table()
-
-        # Set current timestamp in US/Eastern
-        eastern = pytz.timezone("US/Eastern")
-        now = datetime.now(eastern)
 
         # Save the data for all indices and the constituent stocks
         for index in all_indices:
@@ -155,10 +151,10 @@ def populate_db():
         db.session.commit()
         print(f"Stored data for top stocks!")
 
-        save_populate_db_info()
+        save_populate_db_info(now)
         print("\nDatabase Population Completed!")
 
-def save_populate_db_info():
+def save_populate_db_info(now):
     # Define file path
     base_dir = Path(__file__).resolve().parent.parent
     data_dir = base_dir / "data"
@@ -168,8 +164,6 @@ def save_populate_db_info():
     data_dir.mkdir(parents=True, exist_ok=True)
 
     # Set current timestamp in US/Eastern
-    eastern = pytz.timezone("US/Eastern")
-    now = datetime.now(eastern)
     timestamp = format_et_datetime(now)
 
     # Prepare data

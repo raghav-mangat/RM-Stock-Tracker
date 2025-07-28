@@ -1,9 +1,9 @@
 from datetime import datetime, timedelta
-import pytz
 from polygon import RESTClient
 from dotenv import load_dotenv
 import os
 from models.database import Stock, StockMaster
+from utils.datetime_utils import polygon_timestamp_et
 
 load_dotenv()
 
@@ -91,7 +91,7 @@ def fetch_all_stocks_data():
                 "volume": safe_getattr(stock.day, "volume"),
                 "todays_change": safe_getattr(stock, "todays_change"),
                 "todays_change_perc": safe_getattr(stock, "todays_change_percent"),
-                "last_updated": convert_polygon_timestamp(stock.updated)
+                "last_updated": polygon_timestamp_et(stock.updated, "nanosecond")
             }
 
             # Check that all fields are not None
@@ -105,25 +105,6 @@ def fetch_all_stocks_data():
 
     print(f"Retrieved {len(stock_master_data)} stocks from Polygon API!")
     return stock_master_data
-
-def convert_polygon_timestamp(nanosecond_timestamp):
-    """
-    Convert the given polygon timestamp in nanoseconds to datetime
-    object in Eastern Time (ET).
-    :param nanosecond_timestamp:
-    :return: Eastern Datetime Object
-    """
-    # Convert nanoseconds to seconds
-    unix_seconds = nanosecond_timestamp / 1_000_000_000
-
-    # Convert to UTC datetime
-    utc_dt = datetime.fromtimestamp(unix_seconds, tz=pytz.utc)
-
-    # Convert to US/Eastern timezone
-    eastern_tz = pytz.timezone('US/Eastern')
-    eastern_dt = utc_dt.astimezone(eastern_tz)
-
-    return eastern_dt
 
 def get_ticker_type(ticker_type):
     try:
@@ -177,7 +158,7 @@ def get_ticker_snapshot(ticker, stock_data):
         day = snapshot.day
 
         last_updated_timestamp = safe_getattr(snapshot, "updated", None)
-        stock_data["last_updated"] = convert_polygon_timestamp(last_updated_timestamp)
+        stock_data["last_updated"] = polygon_timestamp_et(last_updated_timestamp,"nanosecond")
         stock_data["day_high"] = safe_getattr(day, "high", None)
         stock_data["day_low"] = safe_getattr(day, "low", None)
         stock_data["day_close"] = safe_getattr(day, "close", None)
