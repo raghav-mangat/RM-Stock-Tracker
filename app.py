@@ -23,7 +23,7 @@ from utils.db_queries.all_indices import get_all_indices
 from utils.db_queries.show_index import get_index_data
 from utils.db_queries.all_stocks import get_ticker_tape_stocks, get_top_stocks
 from utils.db_queries.query_stocks import get_query_stocks
-from utils.db_queries.show_stock import get_stock_data
+from utils.db_queries.show_stock import get_stock_data, get_chart_data
 
 # Load environment variables
 load_dotenv()
@@ -112,12 +112,15 @@ def query_stocks():
 
 @app.route("/stocks/<string:ticker>")
 def show_stock(ticker):
+    timeframe = "1Y"
     stock_data = get_stock_data(ticker)
+    chart_data = get_chart_data(ticker, timeframe)
 
     return render_template(
         "show_stock.html",
         stock=stock_data.get("stock"),
         rel_companies=stock_data.get("rel_companies"),
+        chart_data=chart_data
     )
 
 

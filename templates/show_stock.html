@@ -8,8 +8,11 @@
   {{ stock.ticker | display }} - {{ stock.name | display }} | RM Stock Tracker
 {% endblock %}
 
-{% block content %}
+{% block style %}
+  <link href="{{ url_for('static', filename='styles/stock_chart.css') }}" rel="stylesheet">
+{% endblock %}
 
+{% block content %}
 {% if stock.ticker %}
   <!-- Hero Section -->
   {% set heading = stock.ticker ~ " - " ~ (stock.name | display) %}
@@ -106,6 +109,60 @@
     </div>
   </section>
 
+  <!-- Stock Chart Section -->
+  <section class="container my-5 py-2 border border-dark">
+    <!-- Top Controls: Timeframe Selector + Chart Tooltip Toggle -->
+    <div class="d-flex flex-wrap align-items-center gap-3 mb-2">
+        <div id="tf-btn-toolbar" class="btn-toolbar" role="toolbar" aria-label="Chart time frame selector">
+            <div class="btn-group" role="group" aria-label="Timeframe options">
+                <button type="button" class="tf-btn btn btn-outline-secondary border-end-0"
+                        data-bs-toggle="tooltip" data-bs-placement="bottom"
+                        data-bs-title="{{ chart_data.change_perc | percent }}"
+                        style="--tooltip-bg-color: {{ chart_data.change_perc | stock_change_color }};"
+                        aria-label="1 day, {{ chart_data.change_perc | percent }} change">
+                    1D
+                </button>
+                <button type="button" class="tf-btn btn btn-outline-secondary" data-bs-toggle="tooltip"
+                    data-bs-placement="bottom" data-bs-title="-2.22%" style="--tooltip-bg-color: red;"
+                    aria-label="5 day, -2.22% change">
+                    1W
+                </button>
+                <button type="button" class="btn btn-outline-secondary">1M</button>
+                <button type="button" class="btn btn-outline-secondary">6M</button>
+                <button type="button" class="btn btn-outline-secondary">YTD</button>
+                <button type="button" class="tf-btn btn btn-outline-secondary border-end-0 active"
+                        data-bs-toggle="tooltip" data-bs-placement="bottom"
+                        data-bs-title="{{ chart_data.change_perc | percent }}"
+                        style="--tooltip-bg-color: {{ chart_data.change_perc | stock_change_color }};"
+                        aria-label="1 year, {{ chart_data.change_perc | percent }} change">
+                    1Y
+                </button>
+            </div>
+        </div>
+        <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" role="switch" id="tooltip-toggle">
+            <label class="form-check-label" for="tooltip-toggle">Tooltips</label>
+        </div>
+    </div>
+
+    <!-- Chart Section -->
+    <div id="chart-container">
+        <canvas id="stock-chart"></canvas>
+    </div>
+
+    <!-- Hover Info Section Below Chart -->
+    <div id="hover-info" class="container-fluid mt-2">
+        <div class="row text-center border border-secondary rounded py-2">
+            <div id="date-value" class="col-6 col-sm-4 col-md-2 fw-semibold"></div>
+            <div id="close-price-value" class="col-6 col-sm-4 col-md-2 fw-semibold"></div>
+            <div id="ema-30-value" class="col-6 col-sm-4 col-md-2 fw-semibold"></div>
+            <div id="ema-50-value" class="col-6 col-sm-4 col-md-2 fw-semibold"></div>
+            <div id="ema-200-value" class="col-6 col-sm-4 col-md-2 fw-semibold"></div>
+            <div id="volume-value" class="col-6 col-sm-4 col-md-2 fw-semibold"></div>
+        </div>
+    </div>
+  </section>
+
 {% else %}
   <!-- Error Section -->
   <div class="pt-5 mt-5 text-center">
@@ -115,5 +172,25 @@
   </div>
 
 {% endif %}
+{% endblock %}
 
+{% block script %}
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@latest/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8/hammer.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
+
+  <script>
+    // Safely pass chart_data from Flask (Python dict) to JS (object)
+    const chartData = {{ chart_data | tojson }};
+
+    // Extract arrays from the chartData object
+    const dateData = chartData.date_data;
+    const closePriceData = chartData.close_price_data;
+    const ema30Data = chartData.ema_30_data;
+    const ema50Data = chartData.ema_50_data;
+    const ema200Data = chartData.ema_200_data;
+    const volumeData = chartData.volume_data;
+  </script>
+
+  <script src="{{ url_for('static', filename='js/stock_chart.js') }}" type="text/javascript"></script>
 {% endblock %}

@@ -99,3 +99,29 @@ class StockMaster(db.Model):
     volume: Mapped[float] = mapped_column(nullable=True)
     todays_change: Mapped[float] = mapped_column(nullable=True)
     todays_change_perc: Mapped[float] = mapped_column(nullable=True)
+
+class StockMinute(db.Model):
+    __tablename__ = "stocks_minute"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+
+    ticker: Mapped[str] = mapped_column(String(10), nullable=False)
+    date: Mapped[DateTime] = db.Column(db.DateTime(timezone=True), nullable=True)
+    close_price: Mapped[float] = mapped_column(nullable=True)
+    ema_30: Mapped[float] = mapped_column(nullable=True)
+    ema_50: Mapped[float] = mapped_column(nullable=True)
+    ema_200: Mapped[float] = mapped_column(nullable=True)
+    volume: Mapped[float] = mapped_column(nullable=True)
+
+class StockDay(db.Model):
+    __tablename__ = "stocks_day"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+
+    ticker: Mapped[str] = mapped_column(String(10), nullable=False)
+    date: Mapped[DateTime] = db.Column(db.DateTime(timezone=True), nullable=True)
+    close_price: Mapped[float] = mapped_column(nullable=True)
+    ema_30: Mapped[float] = mapped_column(nullable=True)
+    ema_50: Mapped[float] = mapped_column(nullable=True)
+    ema_200: Mapped[float] = mapped_column(nullable=True)
+    volume: Mapped[float] = mapped_column(nullable=True)

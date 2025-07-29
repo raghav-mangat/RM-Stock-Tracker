@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 from polygon import RESTClient
 from dotenv import load_dotenv
 import os
-from models.database import Stock, StockMaster
+from models.database import Stock, StockMaster, StockDay, StockMinute
 from utils.datetime_utils import polygon_timestamp_et
 
 load_dotenv()
@@ -263,3 +263,86 @@ def fetch_stock_data(ticker):
         print(f"Skipping {ticker}: Ticker Symbol Missing.")
 
     return stock
+
+def fetch_chart_data(ticker, timeframe):
+    today = datetime.now()
+    now = today.strftime("%Y-%m-%d")
+
+    timestamp_type = "millisecond"
+    timespan = None
+    before = None
+    db_table = None
+    if timeframe == "1D":
+        timespan = "minute"
+        before = now
+        db_table = StockMinute
+    elif timeframe == "1Y":
+        timespan = "day"
+        before = (today - timedelta(days=365)).strftime("%Y-%m-%d")
+        db_table = StockDay
+
+    close_price_data = {}
+    volume_data = {}
+    for day_data in client.list_aggs(
+            ticker=ticker,
+            multiplier=1,
+            timespan=timespan,
+            from_=before,
+            to=now,
+            adjusted=True,
+            sort="asc",
+            limit=1000,
+    ):
+        timestamp = day_data.timestamp
+        close_price_data[timestamp] = round(day_data.close, 2)
+        volume_data[timestamp] = int(day_data.volume)
+
+    def get_ema_data(ema_window):
+        ema_data = {}
+        ema = client.get_ema(
+            ticker=ticker,
+            timestamp_gte=before,
+            timespan=timespan,
+            adjusted="true",
+            window=ema_window,
+            series_type="close",
+            order="asc",
+            limit="1000",
+        )
+        for value in ema.values:
+            timestamp_ = value.timestamp
+            ema_data[timestamp_] = round(value.value, 2)
+        return ema_data
+
+    ema_30_data = get_ema_data("30")
+    ema_50_data = get_ema_data("50")
+    ema_200_data = get_ema_data("200")
+
+    close_price_dates = set(close_price_data.keys())
+    ema_30_dates = set(ema_30_data.keys())
+    ema_50_dates = set(ema_50_data.keys())
+    ema_200_dates = set(ema_200_data.keys())
+    volume_dates = set(volume_data.keys())
+    common_dates = close_price_dates.intersection(ema_30_dates).intersection(ema_50_dates).intersection(
+        ema_200_dates).intersection(volume_dates)
+
+    dates = list(sorted(common_dates))
+    chart_data = []
+    for date in dates:
+        et_date = polygon_timestamp_et(date, timestamp_type)
+
+        close_price = close_price_data[date]
+        ema_30 = ema_30_data[date]
+        ema_50 = ema_50_data[date]
+        ema_200 = ema_200_data[date]
+        volume = volume_data[date]
+        chart_data.append(db_table(
+            ticker=ticker,
+            date=et_date,
+            close_price=close_price,
+            ema_30=ema_30,
+            ema_50=ema_50,
+            ema_200=ema_200,
+            volume=volume
+        ))
+    return chart_data

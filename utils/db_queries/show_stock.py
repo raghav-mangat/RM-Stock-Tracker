@@ -1,6 +1,6 @@
 from models.database import StockMaster, Stock
 from flask import abort
-from data_collectors.stock_data import fetch_stock_data
+from data_collectors.stock_data import fetch_stock_data, fetch_chart_data
 
 def get_stock_data(ticker):
     # To verify if the given ticker is valid
@@ -21,5 +21,37 @@ def get_stock_data(ticker):
     result = {
         "stock": stock,
         "rel_companies": rel_companies
+    }
+    return result
+
+def get_chart_data(ticker, timeframe):
+    date_format = {
+        "1D": "%m-%d %I:%M %p",
+        "1Y": "%Y-%m-%d"
+    }
+
+    chart_data = fetch_chart_data(ticker, timeframe)
+    date_data = []
+    close_price_data = []
+    ema_30_data = []
+    ema_50_data = []
+    ema_200_data = []
+    volume_data = []
+    for data in chart_data:
+        date_data.append(data.date.strftime(date_format.get(timeframe)))
+        close_price_data.append(data.close_price)
+        ema_30_data.append(data.ema_30)
+        ema_50_data.append(data.ema_50)
+        ema_200_data.append(data.ema_200)
+        volume_data.append(data.volume)
+    change_perc = round(((close_price_data[-1] - close_price_data[0]) * 100 / close_price_data[0]), 2)
+    result = {
+        "date_data": date_data,
+        "close_price_data": close_price_data,
+        "ema_30_data": ema_30_data,
+        "ema_50_data": ema_50_data,
+        "ema_200_data": ema_200_data,
+        "volume_data": volume_data,
+        "change_perc": change_perc
     }
     return result
