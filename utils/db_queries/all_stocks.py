@@ -1,12 +1,34 @@
-# This script generates top stock data for the Overall Market and selected Indices
-# (S&P 500, Nasdaq 100, Dow Jones).
-# It returns the top gainers, losers, and most traded stocks for each category.
-
+import random
 from sqlalchemy import or_
 from models.database import db, StockMaster, Stock, Index, IndexHolding
 
 # Number of top stocks to be shown for each category
 NUM_TOP_STOCKS = 50
+
+def get_ticker_tape_stocks():
+    # Get all stocks in S&P 500 Index in descending order of weight
+    sp500_stocks = db.session.query(
+        Stock.ticker,
+        Stock.volume,
+        Stock.day_close,
+        Stock.todays_change,
+    ).select_from(IndexHolding).join(
+        Stock, IndexHolding.stock_id == Stock.id
+    ).order_by(IndexHolding.weight.desc()).all()
+
+    # Get all stocks from StockMaster Table
+    all_stocks_data = StockMaster.query.all()
+
+    # Get top 10 stocks in sp500
+    ticker_tape_stocks = sp500_stocks[:10]
+    # Add 20 random stocks from remaining stocks in sp500
+    ticker_tape_stocks.extend(random.sample(sp500_stocks[10:], 20))
+    # Add 20 random stocks from all stocks in StockMaster Table
+    ticker_tape_stocks.extend(random.sample(all_stocks_data, 20))
+    # Shuffle the selected 50 ticker tape stocks
+    random.shuffle(ticker_tape_stocks)
+
+    return ticker_tape_stocks
 
 def get_top_stocks():
     """

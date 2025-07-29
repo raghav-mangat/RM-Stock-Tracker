@@ -26,7 +26,7 @@ from models.database import db, Stock, Index, IndexHolding, StockMaster
 from data_collectors.index_data import all_indices, get_index_info, fetch_index_data
 from data_collectors.stock_data import STOCK_ATTRIBUTES, fetch_all_stocks_data, fetch_stock_data
 from utils.datetime_utils import format_et_datetime
-from utils.top_stocks import get_top_stocks
+from utils.db_queries.all_stocks import get_top_stocks
 
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URI")
