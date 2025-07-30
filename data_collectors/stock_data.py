@@ -2,8 +2,9 @@ from datetime import datetime, timedelta
 from polygon import RESTClient
 from dotenv import load_dotenv
 import os
-from models.database import Stock, StockMaster, StockDay, StockMinute
-from utils.datetime_utils import polygon_timestamp_et
+from models.database import Stock, StockMaster, StockMinute, StockHour, StockDay
+from utils.datetime_utils import polygon_timestamp_et, format_date
+from utils.populate_db_info import db_last_updated_date
 
 load_dotenv()
 
@@ -265,9 +266,14 @@ def fetch_stock_data(ticker):
     return stock
 
 def fetch_chart_data(stock_id, ticker, timeframe):
-    today = datetime.now()
-    now = today.strftime("%Y-%m-%d")
+    now = db_last_updated_date()
+    now_datetime = datetime.strptime(now, "%Y-%m-%d")
 
+    select_db_table = {
+        "minute": StockMinute,
+        "hour": StockHour,
+        "day": StockDay
+    }
     timestamp_type = "millisecond"
     timespan = None
     before = None
@@ -275,11 +281,33 @@ def fetch_chart_data(stock_id, ticker, timeframe):
     if timeframe == "1D":
         timespan = "minute"
         before = now
-        db_table = StockMinute
+        db_table = select_db_table.get(timespan)
+    elif timeframe == "1W":
+        timespan = "hour"
+        before = format_date(now_datetime - timedelta(days=7))
+        db_table = select_db_table.get(timespan)
+    elif timeframe == "1M":
+        timespan = "day"
+        before = format_date(now_datetime - timedelta(days=30))
+        db_table = select_db_table.get(timespan)
+    elif timeframe == "3M":
+        timespan = "day"
+        before = format_date(now_datetime - timedelta(days=90))
+        db_table = select_db_table.get(timespan)
+    elif timeframe == "6M":
+        timespan = "day"
+        before = format_date(now_datetime - timedelta(days=180))
+        db_table = select_db_table.get(timespan)
+    elif timeframe == "YTD":
+        timespan = "day"
+        current_year = now_datetime.year
+        first_day_of_year = datetime(current_year, 1, 1)
+        before = format_date(first_day_of_year)
+        db_table = select_db_table.get(timespan)
     elif timeframe == "1Y":
         timespan = "day"
-        before = (today - timedelta(days=365)).strftime("%Y-%m-%d")
-        db_table = StockDay
+        before = format_date(now_datetime - timedelta(days=365))
+        db_table = select_db_table.get(timespan)
 
     close_price_data = {}
     volume_data = {}

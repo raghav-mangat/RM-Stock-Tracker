@@ -25,10 +25,11 @@ def get_stock_data(ticker):
     return result
 
 def get_chart_data(ticker, timeframe):
-    date_format = {
-        "1D": "%m-%d %I:%M %p",
-        "1Y": "%Y-%m-%d"
-    }
+    date_format = None
+    if timeframe in {"1D", "1W"}:
+        date_format = "%m-%d %I:%M %p"
+    elif timeframe in {"1M", "3M", "6M", "YTD", "1Y"}:
+        date_format = "%Y-%m-%d"
 
     stock_id = Stock.query.filter_by(ticker=ticker).first().id
     chart_data = fetch_chart_data(stock_id, ticker, timeframe)
@@ -39,7 +40,7 @@ def get_chart_data(ticker, timeframe):
     ema_200_data = []
     volume_data = []
     for data in chart_data:
-        date_data.append(data.date.strftime(date_format.get(timeframe)))
+        date_data.append(data.date.strftime(date_format))
         close_price_data.append(data.close_price)
         ema_30_data.append(data.ema_30)
         ema_50_data.append(data.ema_50)

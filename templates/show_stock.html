@@ -115,28 +115,26 @@
     <div class="d-flex flex-wrap align-items-center gap-3 mb-2">
         <div id="tf-btn-toolbar" class="btn-toolbar" role="toolbar" aria-label="Chart time frame selector">
             <div class="btn-group" role="group" aria-label="Timeframe options">
-                <button type="button" class="tf-btn btn btn-outline-secondary border-end-0"
-                        data-bs-toggle="tooltip" data-bs-placement="bottom"
-                        data-bs-title="{{ chart_data.change_perc | percent }}"
-                        style="--tooltip-bg-color: {{ chart_data.change_perc | stock_change_color }};"
-                        aria-label="1 day, {{ chart_data.change_perc | percent }} change">
-                    1D
-                </button>
-                <button type="button" class="tf-btn btn btn-outline-secondary" data-bs-toggle="tooltip"
-                    data-bs-placement="bottom" data-bs-title="-2.22%" style="--tooltip-bg-color: red;"
-                    aria-label="5 day, -2.22% change">
-                    1W
-                </button>
-                <button type="button" class="btn btn-outline-secondary">1M</button>
-                <button type="button" class="btn btn-outline-secondary">6M</button>
-                <button type="button" class="btn btn-outline-secondary">YTD</button>
-                <button type="button" class="tf-btn btn btn-outline-secondary border-end-0 active"
-                        data-bs-toggle="tooltip" data-bs-placement="bottom"
-                        data-bs-title="{{ chart_data.change_perc | percent }}"
-                        style="--tooltip-bg-color: {{ chart_data.change_perc | stock_change_color }};"
-                        aria-label="1 year, {{ chart_data.change_perc | percent }} change">
-                    1Y
-                </button>
+                {% for timeframe in timeframe_options %}
+                    {% set url = url_for('show_stock', ticker=stock.ticker, timeframe=timeframe) %}
+                    {% if timeframe == current_timeframe %}
+                        <a role="button"
+                            class="tf-btn btn btn-outline-secondary active"
+                            data-bs-toggle="tooltip" data-bs-placement="bottom"
+                            data-bs-title="{{ chart_data.change_perc | percent }}"
+                            style="--tooltip-bg-color: {{ chart_data.change_perc | stock_change_color }};"
+                            aria-label="{{ timeframe }}, {{ chart_data.change_perc | percent }} change"
+                            aria-current="true"
+                            href="{{ url }}">
+                            {{ timeframe }}
+                        </a>
+                    {% else %}
+                        <a role="button" class="tf-btn btn btn-outline-secondary"
+                            href="{{ url }}">
+                            {{ timeframe }}
+                        </a>
+                    {% endif %}
+                {% endfor %}
             </div>
         </div>
         <div class="form-check form-switch">

@@ -112,7 +112,11 @@ def query_stocks():
 
 @app.route("/stocks/<string:ticker>")
 def show_stock(ticker):
-    timeframe = "1Y"
+    timeframe = request.args.get("timeframe", "").strip()
+    timeframe_options = ["1D", "1W", "1M", "3M", "6M", "YTD", "1Y"]
+    if not timeframe:
+        timeframe = "1D"
+
     stock_data = get_stock_data(ticker)
     chart_data = get_chart_data(ticker, timeframe)
 
@@ -120,7 +124,9 @@ def show_stock(ticker):
         "show_stock.html",
         stock=stock_data.get("stock"),
         rel_companies=stock_data.get("rel_companies"),
-        chart_data=chart_data
+        chart_data=chart_data,
+        timeframe_options=timeframe_options,
+        current_timeframe=timeframe
     )
 
 
