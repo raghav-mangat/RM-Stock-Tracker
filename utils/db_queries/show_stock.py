@@ -1,4 +1,5 @@
-from models.database import StockMaster, Stock
+from sqlalchemy import select
+from models.database import db, StockMaster, Stock
 from flask import abort
 from data_collectors.stock_data import fetch_stock_data, fetch_chart_data, TIMEFRAME_OPTIONS
 
@@ -27,7 +28,7 @@ def get_stock_data(ticker):
 def get_chart_data(ticker, timeframe):
     date_format = TIMEFRAME_OPTIONS[timeframe]["date_format"]
 
-    stock_id = Stock.query.filter_by(ticker=ticker).first().id
+    stock_id = db.session.execute(select(Stock.id).where(Stock.ticker == ticker)).scalar_one()
     chart_data = fetch_chart_data(stock_id, ticker, timeframe)
     date_data = []
     close_price_data = []

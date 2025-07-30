@@ -1,3 +1,11 @@
+// Chart Data Arrays
+let dateData = [];
+let closePriceData = [];
+let ema30Data = [];
+let ema50Data = [];
+let ema200Data = [];
+let volumeData = [];
+
 // Colors
 const DATE_COLOR = "rgba(100, 100, 100, 1)";
 const CLOSE_PRICE_COLOR = "rgba(54, 220, 235, 1)";
@@ -78,15 +86,6 @@ function updateHoverInfoText(
   )}`;
   volumeValue.textContent = `${VOLUME_LABEL}: ${volumeVal}`;
 }
-
-updateHoverInfoText(
-  dateData.at(-1),
-  closePriceData.at(-1),
-  ema30Data.at(-1),
-  ema50Data.at(-1),
-  ema200Data.at(-1),
-  volumeData.at(-1)
-);
 
 dateValue.style.color = DATE_COLOR;
 closePriceValue.style.color = CLOSE_PRICE_COLOR;
@@ -395,22 +394,112 @@ tooltipToggle.addEventListener("change", function () {
   stockChart.update();
 });
 
-// To show the active timeframe(tf) tooltip
-const activeTfBtn = document.querySelector(".tf-btn.active");
-// Create a tf tooltip manually
-const tfTooltip = new bootstrap.Tooltip(activeTfBtn, {
-  trigger: "manual",
-});
-tfTooltip.show();
+function activateTfBtn(button, change_perc) {
+  // Deactivate all timeframe buttons
+  const timeframeBtns = document.querySelectorAll(".tf-btn");
+  timeframeBtns.forEach((tfButton) => {
+    tfButton.removeAttribute("data-bs-toggle");
+    tfButton.removeAttribute("data-bs-placement");
+    tfButton.removeAttribute("data-bs-title");
+    tfButton.removeAttribute("style");
+    tfButton.removeAttribute("aria-label");
+    tfButton.removeAttribute("aria-current");
+    tfButton.classList.remove("active");
+  });
 
-// Get the hex color from CSS variable set via inline style
-const tfTooltipColor = getComputedStyle(activeTfBtn)
-  .getPropertyValue("--tooltip-bg-color")
-  .trim();
-// After showing, apply color manually
-const tfTooltipEl = document.querySelector(".tooltip.show .tooltip-inner");
-if (tfTooltipEl && tfTooltipColor) {
-  tfTooltipEl.style.backgroundColor = tfTooltipColor;
-  tfTooltipEl.style.color = TF_TOOLTIP_TEXT_COLOR;
-  tfTooltipEl.classList.add("fw-semibold");
+  // Active the given timeframe button
+  button.setAttribute("data-bs-toggle", "tooltip");
+  button.setAttribute("data-bs-placement", "bottom");
+  button.setAttribute("data-bs-title", change_perc);
+  button.setAttribute("style", "--tooltip-bg-color: green;");
+  button.setAttribute("aria-label", change_perc);
+  button.setAttribute("aria-current", "true");
+  button.classList.add("active");
 }
+
+function activateTfTooltip() {
+  // Dispose any existing tooltips
+  const existingTooltips = document.querySelectorAll(".tooltip");
+  existingTooltips.forEach((tip) => tip.remove());
+
+  // To show the active timeframe(tf) tooltip
+  const activeTfBtn = document.querySelector(".tf-btn.active");
+  // Create a tf tooltip manually
+  const tfTooltip = new bootstrap.Tooltip(activeTfBtn, {
+    trigger: "manual",
+  });
+  tfTooltip.show();
+
+  // Get the hex color from CSS variable set via inline style
+  const tfTooltipColor = getComputedStyle(activeTfBtn)
+    .getPropertyValue("--tooltip-bg-color")
+    .trim();
+  // After showing, apply color manually
+  const tfTooltipEl = document.querySelector(".tooltip.show .tooltip-inner");
+  if (tfTooltipEl && tfTooltipColor) {
+    tfTooltipEl.style.backgroundColor = tfTooltipColor;
+    tfTooltipEl.style.color = TF_TOOLTIP_TEXT_COLOR;
+    tfTooltipEl.classList.add("fw-semibold");
+  }
+}
+
+function resetChart(button, preloadedData = null) {
+  const timeframe = button.dataset.timeframe;
+
+  const handleChartData = (data) => {
+    dateData.length = 0;
+    closePriceData.length = 0;
+    ema30Data.length = 0;
+    ema50Data.length = 0;
+    ema200Data.length = 0;
+    volumeData.length = 0;
+
+    dateData.push(...data.date_data);
+    closePriceData.push(...data.close_price_data);
+    ema30Data.push(...data.ema_30_data);
+    ema50Data.push(...data.ema_50_data);
+    ema200Data.push(...data.ema_200_data);
+    volumeData.push(...data.volume_data);
+
+    stockChart.options.scales.volumeAxis.max =
+      Math.max(...volumeData) * VOLUME_AXIS_MAX_MULTIPLIER;
+
+    stockChart.update();
+    stockChart.resetZoom();
+
+    updateHoverInfoText(
+      dateData.at(-1),
+      closePriceData.at(-1),
+      ema30Data.at(-1),
+      ema50Data.at(-1),
+      ema200Data.at(-1),
+      volumeData.at(-1)
+    );
+
+    activateTfBtn(button, data.change_perc);
+    activateTfTooltip(button);
+  };
+
+  if (preloadedData) {
+    handleChartData(preloadedData);
+  } else {
+    fetch(
+      `/chart-data?ticker=${encodeURIComponent(ticker)}&timeframe=${timeframe}`
+    )
+      .then((response) => response.json())
+      .then(handleChartData);
+  }
+}
+
+const ticker = document.getElementById("stock-chart").dataset.ticker;
+resetChart(
+  document.querySelector(`.tf-btn[data-timeframe="${initialTimeframe}"]`),
+  initialChartData
+);
+
+const timeframeBtns = document.querySelectorAll(".tf-btn");
+timeframeBtns.forEach((button) => {
+  button.addEventListener("click", (event) => {
+    resetChart(event.currentTarget);
+  });
+});

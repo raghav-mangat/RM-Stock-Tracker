@@ -116,24 +116,10 @@
         <div id="tf-btn-toolbar" class="btn-toolbar" role="toolbar" aria-label="Chart time frame selector">
             <div class="btn-group" role="group" aria-label="Timeframe options">
                 {% for timeframe in timeframe_options %}
-                    {% set url = url_for('show_stock', ticker=stock.ticker, timeframe=timeframe) %}
-                    {% if timeframe == current_timeframe %}
-                        <a role="button"
-                            class="tf-btn btn btn-outline-secondary active"
-                            data-bs-toggle="tooltip" data-bs-placement="bottom"
-                            data-bs-title="{{ chart_data.change_perc | percent }}"
-                            style="--tooltip-bg-color: {{ chart_data.change_perc | stock_change_color }};"
-                            aria-label="{{ timeframe }}, {{ chart_data.change_perc | percent }} change"
-                            aria-current="true"
-                            href="{{ url }}">
+                        <button type="button" class="tf-btn btn btn-outline-secondary"
+                                data-timeframe="{{ timeframe }}">
                             {{ timeframe }}
-                        </a>
-                    {% else %}
-                        <a role="button" class="tf-btn btn btn-outline-secondary"
-                            href="{{ url }}">
-                            {{ timeframe }}
-                        </a>
-                    {% endif %}
+                        </button>
                 {% endfor %}
             </div>
         </div>
@@ -145,7 +131,7 @@
 
     <!-- Chart Section -->
     <div id="chart-container">
-        <canvas id="stock-chart"></canvas>
+        <canvas id="stock-chart" data-ticker="{{ stock.ticker }}"></canvas>
     </div>
 
     <!-- Hover Info Section Below Chart -->
@@ -178,16 +164,8 @@
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
 
   <script>
-    // Safely pass chart_data from Flask (Python dict) to JS (object)
-    const chartData = {{ chart_data | tojson }};
-
-    // Extract arrays from the chartData object
-    const dateData = chartData.date_data;
-    const closePriceData = chartData.close_price_data;
-    const ema30Data = chartData.ema_30_data;
-    const ema50Data = chartData.ema_50_data;
-    const ema200Data = chartData.ema_200_data;
-    const volumeData = chartData.volume_data;
+    const initialChartData = {{ initial_chart_data | tojson }};
+    const initialTimeframe = "{{ initial_timeframe }}";
   </script>
 
   <script src="{{ url_for('static', filename='js/stock_chart.js') }}" type="text/javascript"></script>

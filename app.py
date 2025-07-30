@@ -112,23 +112,27 @@ def query_stocks():
 
 @app.route("/stocks/<string:ticker>")
 def show_stock(ticker):
-    timeframe = request.args.get("timeframe", "").strip()
-    timeframe_options = get_timeframe_options()
-    if not timeframe:
-        timeframe = timeframe_options[0]
-
     stock_data = get_stock_data(ticker)
-    chart_data = get_chart_data(ticker, timeframe)
+
+    timeframe_options = get_timeframe_options()
+    initial_timeframe = timeframe_options[0]
+    initial_chart_data = get_chart_data(ticker, initial_timeframe)
 
     return render_template(
         "show_stock.html",
         stock=stock_data.get("stock"),
         rel_companies=stock_data.get("rel_companies"),
-        chart_data=chart_data,
         timeframe_options=timeframe_options,
-        current_timeframe=timeframe
+        initial_timeframe=initial_timeframe,
+        initial_chart_data=initial_chart_data,
     )
 
+@app.route("/chart-data")
+def chart_data():
+    ticker = request.args.get("ticker").strip()
+    timeframe = request.args.get("timeframe").strip()
+    data = get_chart_data(ticker, timeframe)
+    return data
 
 if __name__ == "__main__":
     app.run()
