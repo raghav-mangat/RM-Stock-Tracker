@@ -1,7 +1,6 @@
 import os
 import sys
 from dotenv import load_dotenv
-from utils.datetime_utils import get_current_et
 
 # Load environment variables from .env file
 load_dotenv()
@@ -25,7 +24,7 @@ from pathlib import Path
 from models.database import db, Stock, Index, IndexHolding, StockMaster
 from data_collectors.index_data import all_indices, get_index_info, fetch_index_data
 from data_collectors.stock_data import STOCK_ATTRIBUTES, fetch_all_stocks_data, fetch_stock_data
-from utils.datetime_utils import format_et_datetime
+from utils.datetime_utils import get_current_et, format_et_datetime, format_date
 from utils.db_queries.all_stocks import get_top_stocks
 
 app = Flask(__name__)
@@ -119,6 +118,8 @@ def populate_db():
     with app.app_context():
         print("Starting Database Population...\n")
         now = get_current_et()
+        save_populate_db_info(now)
+
         db.create_all()
         update_stocks_master_table()
 
@@ -151,7 +152,6 @@ def populate_db():
         db.session.commit()
         print(f"Stored data for top stocks!")
 
-        save_populate_db_info(now)
         print("\nDatabase Population Completed!")
 
 def save_populate_db_info(now):
@@ -165,10 +165,13 @@ def save_populate_db_info(now):
 
     # Set current timestamp in US/Eastern
     timestamp = format_et_datetime(now)
+    # Set current date
+    date = format_date(now)
 
     # Prepare data
     populate_db_info = {
         "last_updated": timestamp,
+        "last_updated_date": date
     }
 
     # Save to JSON
