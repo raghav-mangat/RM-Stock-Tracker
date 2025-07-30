@@ -1,6 +1,6 @@
 from models.database import StockMaster, Stock
 from flask import abort
-from data_collectors.stock_data import fetch_stock_data, fetch_chart_data
+from data_collectors.stock_data import fetch_stock_data, fetch_chart_data, TIMEFRAME_OPTIONS
 
 def get_stock_data(ticker):
     # To verify if the given ticker is valid
@@ -25,11 +25,7 @@ def get_stock_data(ticker):
     return result
 
 def get_chart_data(ticker, timeframe):
-    date_format = None
-    if timeframe in {"1D", "1W"}:
-        date_format = "%m-%d %I:%M %p"
-    elif timeframe in {"1M", "3M", "6M", "YTD", "1Y"}:
-        date_format = "%Y-%m-%d"
+    date_format = TIMEFRAME_OPTIONS[timeframe]["date_format"]
 
     stock_id = Stock.query.filter_by(ticker=ticker).first().id
     chart_data = fetch_chart_data(stock_id, ticker, timeframe)
@@ -57,3 +53,6 @@ def get_chart_data(ticker, timeframe):
         "change_perc": change_perc
     }
     return result
+
+def get_timeframe_options():
+    return list(TIMEFRAME_OPTIONS.keys())

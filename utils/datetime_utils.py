@@ -1,6 +1,9 @@
 import pytz
 from datetime import datetime
 
+DATETIME_FORMAT = "%m-%d %I:%M %p"
+DATE_FORMAT = "%Y-%m-%d"
+
 def polygon_timestamp_et(timestamp, timestamp_type):
     """
     Convert the given polygon timestamp to datetime
@@ -38,4 +41,4 @@ def format_et_datetime(et_datetime):
     return et_datetime.strftime('%A, %b %d, %Y, at %I:%M%p, ET.')
 
 def format_date(date):
-    return date.strftime("%Y-%m-%d")
+    return date.strftime(DATE_FORMAT)

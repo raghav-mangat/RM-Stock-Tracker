@@ -23,7 +23,7 @@ from utils.db_queries.all_indices import get_all_indices
 from utils.db_queries.show_index import get_index_data
 from utils.db_queries.all_stocks import get_ticker_tape_stocks, get_top_stocks
 from utils.db_queries.query_stocks import get_query_stocks
-from utils.db_queries.show_stock import get_stock_data, get_chart_data
+from utils.db_queries.show_stock import get_stock_data, get_chart_data, get_timeframe_options
 
 # Load environment variables
 load_dotenv()
@@ -113,9 +113,9 @@ def query_stocks():
 @app.route("/stocks/<string:ticker>")
 def show_stock(ticker):
     timeframe = request.args.get("timeframe", "").strip()
-    timeframe_options = ["1D", "1W", "1M", "3M", "6M", "YTD", "1Y"]
+    timeframe_options = get_timeframe_options()
     if not timeframe:
-        timeframe = "1D"
+        timeframe = timeframe_options[0]
 
     stock_data = get_stock_data(ticker)
     chart_data = get_chart_data(ticker, timeframe)

@@ -3,7 +3,7 @@ from polygon import RESTClient
 from dotenv import load_dotenv
 import os
 from models.database import Stock, StockMaster, StockMinute, StockHour, StockDay
-from utils.datetime_utils import polygon_timestamp_et, format_date
+from utils.datetime_utils import polygon_timestamp_et, format_date, DATE_FORMAT, DATETIME_FORMAT
 from utils.populate_db_info import db_last_updated_date
 
 load_dotenv()
@@ -27,6 +27,44 @@ STOCK_ATTRIBUTES = [
             "dma_50", "dma_200", "dma_200_perc_diff", "high_52w", "low_52w",
             "related_companies", "last_updated"
         ]
+
+TIMEFRAME_OPTIONS = {
+    "1D": {
+        "timespan": "minute",
+        "before": lambda now: format_date(now),
+        "date_format": DATETIME_FORMAT
+    },
+    "1W": {
+        "timespan": "hour",
+        "before": lambda now: format_date(now - timedelta(days=7)),
+        "date_format": DATETIME_FORMAT
+    },
+    "1M": {
+        "timespan": "day",
+        "before": lambda now: format_date(now - timedelta(days=30)),
+        "date_format": DATE_FORMAT
+    },
+    "3M": {
+        "timespan": "day",
+        "before": lambda now: format_date(now - timedelta(days=90)),
+        "date_format": DATE_FORMAT
+    },
+    "6M": {
+        "timespan": "day",
+        "before": lambda now: format_date(now - timedelta(days=180)),
+        "date_format": DATE_FORMAT
+    },
+    "YTD": {
+        "timespan": "day",
+        "before": lambda now: format_date(datetime(now.year, 1, 1)),
+        "date_format": DATE_FORMAT
+    },
+    "1Y": {
+        "timespan": "day",
+        "before": lambda now: format_date(now - timedelta(days=365)),
+        "date_format": DATE_FORMAT
+    }
+}
 
 def fetch_all_stocks_data():
     """
@@ -267,47 +305,17 @@ def fetch_stock_data(ticker):
 
 def fetch_chart_data(stock_id, ticker, timeframe):
     now = db_last_updated_date()
-    now_datetime = datetime.strptime(now, "%Y-%m-%d")
 
     select_db_table = {
         "minute": StockMinute,
         "hour": StockHour,
         "day": StockDay
     }
-    timestamp_type = "millisecond"
-    timespan = None
-    before = None
-    db_table = None
-    if timeframe == "1D":
-        timespan = "minute"
-        before = now
-        db_table = select_db_table.get(timespan)
-    elif timeframe == "1W":
-        timespan = "hour"
-        before = format_date(now_datetime - timedelta(days=7))
-        db_table = select_db_table.get(timespan)
-    elif timeframe == "1M":
-        timespan = "day"
-        before = format_date(now_datetime - timedelta(days=30))
-        db_table = select_db_table.get(timespan)
-    elif timeframe == "3M":
-        timespan = "day"
-        before = format_date(now_datetime - timedelta(days=90))
-        db_table = select_db_table.get(timespan)
-    elif timeframe == "6M":
-        timespan = "day"
-        before = format_date(now_datetime - timedelta(days=180))
-        db_table = select_db_table.get(timespan)
-    elif timeframe == "YTD":
-        timespan = "day"
-        current_year = now_datetime.year
-        first_day_of_year = datetime(current_year, 1, 1)
-        before = format_date(first_day_of_year)
-        db_table = select_db_table.get(timespan)
-    elif timeframe == "1Y":
-        timespan = "day"
-        before = format_date(now_datetime - timedelta(days=365))
-        db_table = select_db_table.get(timespan)
+
+    timeframe_data = TIMEFRAME_OPTIONS[timeframe]
+    timespan = timeframe_data.get("timespan")
+    before = timeframe_data.get("before")(datetime.strptime(now, DATE_FORMAT))
+    db_table = select_db_table.get(timespan)
 
     close_price_data = {}
     volume_data = {}
@@ -356,6 +364,7 @@ def fetch_chart_data(stock_id, ticker, timeframe):
 
     dates = list(sorted(common_dates))
     chart_data = []
+    timestamp_type = "millisecond"
     for date in dates:
         et_date = polygon_timestamp_et(date, timestamp_type)
 
