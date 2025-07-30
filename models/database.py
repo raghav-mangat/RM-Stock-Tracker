@@ -1,6 +1,7 @@
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-from sqlalchemy import String, Text, ForeignKey, Date, DateTime
+from sqlalchemy import String, Text, ForeignKey, Date, DateTime, UniqueConstraint
+from sqlalchemy import Index as DBIndex
 
 # Create a base class for SQLAlchemy
 class Base(DeclarativeBase):
@@ -51,9 +52,24 @@ class Stock(db.Model):
     # Related Companies (comma-separated string)
     related_companies: Mapped[str] = mapped_column(Text, nullable=True)
 
-    # Relationships
+    # Index Relationship
     index_holdings: Mapped[list["IndexHolding"]] = relationship(back_populates="stock")
 
+    # Chart Data Relationships
+    minute_data: Mapped[list["StockMinute"]] = relationship(
+        back_populates="stock", cascade="all, delete-orphan"
+    )
+    hour_data: Mapped[list["StockHour"]] = relationship(
+        back_populates="stock", cascade="all, delete-orphan"
+    )
+    day_data: Mapped[list["StockDay"]] = relationship(
+        back_populates="stock", cascade="all, delete-orphan"
+    )
+
+    # Adding Index for faster performance
+    __table_args__ = (
+        DBIndex("ix_stock_ticker", "ticker"),
+    )
 
 class Index(db.Model):
     __tablename__ = "indices"
@@ -100,28 +116,71 @@ class StockMaster(db.Model):
     todays_change: Mapped[float] = mapped_column(nullable=True)
     todays_change_perc: Mapped[float] = mapped_column(nullable=True)
 
+    # Adding Index for faster performance
+    __table_args__ = (
+        DBIndex("ix_stock_master_ticker", "ticker"),
+        DBIndex("ix_stock_master_name", "name"),
+    )
+
+
 class StockMinute(db.Model):
-    __tablename__ = "stocks_minute"
+    __tablename__ = "stock_minute_data"
 
-    id: Mapped[int] = mapped_column(primary_key=True)
-
-    ticker: Mapped[str] = mapped_column(String(10), nullable=False)
-    date: Mapped[DateTime] = db.Column(db.DateTime(timezone=True), nullable=True)
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    stock_id: Mapped[int] = mapped_column(ForeignKey("stocks.id", ondelete="CASCADE"), nullable=False)
+    date: Mapped[DateTime] = db.Column(db.DateTime(timezone=True), nullable=False)
     close_price: Mapped[float] = mapped_column(nullable=True)
     ema_30: Mapped[float] = mapped_column(nullable=True)
     ema_50: Mapped[float] = mapped_column(nullable=True)
     ema_200: Mapped[float] = mapped_column(nullable=True)
     volume: Mapped[float] = mapped_column(nullable=True)
+
+    stock: Mapped["Stock"] = relationship(back_populates="minute_data")
+
+    __table_args__ = (
+        UniqueConstraint("stock_id", "date", name="uq_stockminute_stockid_date"),
+        # Adding Index for faster performance
+        DBIndex("ix_stockminute_stockid_date", "stock_id", "date"),
+    )
+
+
+class StockHour(db.Model):
+    __tablename__ = "stock_hour_data"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    stock_id: Mapped[int] = mapped_column(ForeignKey("stocks.id", ondelete="CASCADE"), nullable=False)
+    date: Mapped[DateTime] = db.Column(db.DateTime(timezone=True), nullable=False)
+    close_price: Mapped[float] = mapped_column(nullable=True)
+    ema_30: Mapped[float] = mapped_column(nullable=True)
+    ema_50: Mapped[float] = mapped_column(nullable=True)
+    ema_200: Mapped[float] = mapped_column(nullable=True)
+    volume: Mapped[float] = mapped_column(nullable=True)
+
+    stock: Mapped["Stock"] = relationship(back_populates="hour_data")
+
+    __table_args__ = (
+        UniqueConstraint("stock_id", "date", name="uq_stockhour_stockid_date"),
+        # Adding Index for faster performance
+        DBIndex("ix_stockhour_stockid_date", "stock_id", "date"),
+    )
+
 
 class StockDay(db.Model):
-    __tablename__ = "stocks_day"
+    __tablename__ = "stock_day_data"
 
-    id: Mapped[int] = mapped_column(primary_key=True)
-
-    ticker: Mapped[str] = mapped_column(String(10), nullable=False)
-    date: Mapped[DateTime] = db.Column(db.DateTime(timezone=True), nullable=True)
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    stock_id: Mapped[int] = mapped_column(ForeignKey("stocks.id", ondelete="CASCADE"), nullable=False)
+    date: Mapped[DateTime] = db.Column(db.DateTime(timezone=True), nullable=False)
     close_price: Mapped[float] = mapped_column(nullable=True)
     ema_30: Mapped[float] = mapped_column(nullable=True)
     ema_50: Mapped[float] = mapped_column(nullable=True)
     ema_200: Mapped[float] = mapped_column(nullable=True)
     volume: Mapped[float] = mapped_column(nullable=True)
+
+    stock: Mapped["Stock"] = relationship(back_populates="day_data")
+
+    __table_args__ = (
+        UniqueConstraint("stock_id", "date", name="uq_stockday_stockid_date"),
+        # Adding Index for faster performance
+        DBIndex("ix_stockday_stockid_date", "stock_id", "date"),
+    )

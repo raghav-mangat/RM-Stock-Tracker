@@ -30,7 +30,8 @@ def get_chart_data(ticker, timeframe):
         "1Y": "%Y-%m-%d"
     }
 
-    chart_data = fetch_chart_data(ticker, timeframe)
+    stock_id = Stock.query.filter_by(ticker=ticker).first().id
+    chart_data = fetch_chart_data(stock_id, ticker, timeframe)
     date_data = []
     close_price_data = []
     ema_30_data = []

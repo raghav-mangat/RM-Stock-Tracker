@@ -264,7 +264,7 @@ def fetch_stock_data(ticker):
 
     return stock
 
-def fetch_chart_data(ticker, timeframe):
+def fetch_chart_data(stock_id, ticker, timeframe):
     today = datetime.now()
     now = today.strftime("%Y-%m-%d")
 
@@ -337,7 +337,7 @@ def fetch_chart_data(ticker, timeframe):
         ema_200 = ema_200_data[date]
         volume = volume_data[date]
         chart_data.append(db_table(
-            ticker=ticker,
+            stock_id=stock_id,
             date=et_date,
             close_price=close_price,
             ema_30=ema_30,
