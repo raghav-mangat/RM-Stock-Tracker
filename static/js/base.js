@@ -7,7 +7,7 @@ document.addEventListener("DOMContentLoaded", () => {
     popoverTriggerList.forEach(popoverTriggerEl => new bootstrap.Popover(popoverTriggerEl));
 
     // Spinner Overlay
-    const spinner = document.getElementById("loading-spinner");
+    const spinner = document.getElementById("page-loading-spinner");
     const spinnerDelay = 200; // delay before showing spinner (in ms)
     let spinnerTimeout;
 

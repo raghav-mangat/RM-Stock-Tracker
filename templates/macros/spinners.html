@@ -1,0 +1,8 @@
+{% macro loading_spinner(id, message, position="fixed") %}
+    <!--Bootstrap Loading Spinner Overlay -->
+    <div id="{{ id }}" class="d-none position-{{ position }} top-0 start-0 w-100 h-100 bg-white bg-opacity-75 backdrop-blur d-flex justify-content-center align-items-center">
+      <div class="spinner-border text-info" role="status">
+          <span class="visually-hidden">{{ message }}</span>
+      </div>
+    </div>
+{% endmacro %}

@@ -23,6 +23,7 @@ const MAX_X_TICKS = 12;
 const ZOOM_MIN_RANGE = 5; // minimum number of values to show when zoomed in
 const DECIMAL_PRECISION = 2;
 const DISPLAY_TOOLTIP_DEFAULT = false; // OFF by default
+const CHART_SPINNER_DELAY = 200; // in ms
 
 // Sizing
 const VOLUME_AXIS_MAX_MULTIPLIER = 5; // volume bars take (1/multplier) height of the chart
@@ -394,14 +395,24 @@ tooltipToggle.addEventListener("change", function () {
   stockChart.update();
 });
 
-function activateTfBtn(button, change_perc) {
+let chartSpinnerTimeout;
+function showChartSpinner() {
+  const spinner = document.getElementById("chart-loading-spinner");
+  if (spinner) spinner.classList.remove("d-none");
+}
+function hideChartSpinner() {
+  const spinner = document.getElementById("chart-loading-spinner");
+  if (spinner) spinner.classList.add("d-none");
+  clearTimeout(chartSpinnerTimeout);
+}
+
+function activateTfBtn(button, timeframe, change_perc) {
   // Deactivate all timeframe buttons
   const timeframeBtns = document.querySelectorAll(".tf-btn");
   timeframeBtns.forEach((tfButton) => {
     tfButton.removeAttribute("data-bs-toggle");
     tfButton.removeAttribute("data-bs-placement");
     tfButton.removeAttribute("data-bs-title");
-    tfButton.removeAttribute("style");
     tfButton.removeAttribute("aria-label");
     tfButton.removeAttribute("aria-current");
     tfButton.classList.remove("active");
@@ -410,34 +421,28 @@ function activateTfBtn(button, change_perc) {
   // Active the given timeframe button
   button.setAttribute("data-bs-toggle", "tooltip");
   button.setAttribute("data-bs-placement", "bottom");
-  button.setAttribute("data-bs-title", change_perc);
-  button.setAttribute("style", "--tooltip-bg-color: green;");
-  button.setAttribute("aria-label", change_perc);
+  button.setAttribute("data-bs-title", `${change_perc}%`);
+  button.setAttribute("aria-label", `${timeframe}, ${change_perc}% change`);
   button.setAttribute("aria-current", "true");
   button.classList.add("active");
 }
 
-function activateTfTooltip() {
-  // Dispose any existing tooltips
+function activateTfTooltip(button, color) {
+  // Remove any existing tooltips
   const existingTooltips = document.querySelectorAll(".tooltip");
   existingTooltips.forEach((tip) => tip.remove());
 
   // To show the active timeframe(tf) tooltip
-  const activeTfBtn = document.querySelector(".tf-btn.active");
   // Create a tf tooltip manually
-  const tfTooltip = new bootstrap.Tooltip(activeTfBtn, {
+  const tfTooltip = new bootstrap.Tooltip(button, {
     trigger: "manual",
   });
   tfTooltip.show();
 
-  // Get the hex color from CSS variable set via inline style
-  const tfTooltipColor = getComputedStyle(activeTfBtn)
-    .getPropertyValue("--tooltip-bg-color")
-    .trim();
-  // After showing, apply color manually
+  // After showing, apply color and styling manually
   const tfTooltipEl = document.querySelector(".tooltip.show .tooltip-inner");
-  if (tfTooltipEl && tfTooltipColor) {
-    tfTooltipEl.style.backgroundColor = tfTooltipColor;
+  if (tfTooltipEl) {
+    tfTooltipEl.style.backgroundColor = color;
     tfTooltipEl.style.color = TF_TOOLTIP_TEXT_COLOR;
     tfTooltipEl.classList.add("fw-semibold");
   }
@@ -476,18 +481,31 @@ function resetChart(button, preloadedData = null) {
       volumeData.at(-1)
     );
 
-    activateTfBtn(button, data.change_perc);
-    activateTfTooltip(button);
+    activateTfBtn(
+      button,
+      timeframe,
+      data.change_perc.toFixed(DECIMAL_PRECISION)
+    );
+    if (data.change_perc >= 0) color = positiveColor;
+    else color = negativeColor;
+    activateTfTooltip(button, color);
   };
 
   if (preloadedData) {
     handleChartData(preloadedData);
   } else {
+    chartSpinnerTimeout = setTimeout(showChartSpinner, CHART_SPINNER_DELAY);
     fetch(
       `/chart-data?ticker=${encodeURIComponent(ticker)}&timeframe=${timeframe}`
     )
       .then((response) => response.json())
-      .then(handleChartData);
+      .then((data) => {
+        hideChartSpinner();
+        handleChartData(data);
+      })
+      .catch((error) => {
+        hideChartSpinner();
+      });
   }
 }
 

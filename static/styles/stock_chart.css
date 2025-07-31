@@ -10,3 +10,7 @@
         margin-bottom: 25px;
     }
 }
+
+#chart-loading-spinner {
+    z-index: 10;
+}

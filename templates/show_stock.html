@@ -130,8 +130,10 @@
     </div>
 
     <!-- Chart Section -->
-    <div id="chart-container">
+    <div id="chart-container" class="position-relative">
         <canvas id="stock-chart" data-ticker="{{ stock.ticker }}"></canvas>
+        <!-- Chart Loading Spinner Overlay -->
+        {{ loading_spinner("chart-loading-spinner", "Chart Loading...", "absolute") }}
     </div>
 
     <!-- Hover Info Section Below Chart -->
@@ -164,8 +166,14 @@
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
 
   <script>
+    // Initial chart to show on page load
     const initialChartData = {{ initial_chart_data | tojson }};
     const initialTimeframe = "{{ initial_timeframe }}";
+
+    // Passing the stock change colors to the JS script to color
+    // the timeframe tooltips, using jinja filter on dummy values (1,-1)
+    const positiveColor = "{{ 1 | stock_change_color }}";
+    const negativeColor = "{{ -1 | stock_change_color }}";
   </script>
 
   <script src="{{ url_for('static', filename='js/stock_chart.js') }}" type="text/javascript"></script>
