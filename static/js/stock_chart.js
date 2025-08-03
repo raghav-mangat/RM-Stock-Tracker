@@ -6,6 +6,9 @@ let ema50Data = [];
 let ema200Data = [];
 let volumeData = [];
 
+// The Stock Chart
+let stockChart;
+
 // Colors
 const DATE_COLOR = "rgba(100, 100, 100, 1)";
 const CLOSE_PRICE_COLOR = "rgba(54, 220, 235, 1)";
@@ -64,6 +67,26 @@ const ema50Value = document.getElementById("ema-50-value");
 const ema200Value = document.getElementById("ema-200-value");
 const volumeValue = document.getElementById("volume-value");
 
+dateValue.style.color = DATE_COLOR;
+closePriceValue.style.color = CLOSE_PRICE_COLOR;
+ema30Value.style.color = EMA_30_COLOR;
+ema50Value.style.color = EMA_50_COLOR;
+ema200Value.style.color = EMA_200_COLOR;
+volumeValue.style.color = VOLUME_COLOR;
+
+const tooltipToggle = document.getElementById("tooltip-toggle");
+tooltipToggle.checked = displayTooltip;
+// Handle tooltop toggle event
+tooltipToggle.addEventListener("change", function () {
+  displayTooltip = tooltipToggle.checked;
+
+  // Dynamically enable/disable tooltip display while keeping its internal state alive
+  stockChart.options.plugins.tooltip.enabled = displayTooltip;
+  stockChart.update();
+});
+
+const ctx = document.getElementById("stock-chart").getContext("2d");
+
 function updateHoverInfoText(
   dateVal,
   closePriceVal,
@@ -88,21 +111,9 @@ function updateHoverInfoText(
   volumeValue.textContent = `${VOLUME_LABEL}: ${volumeVal}`;
 }
 
-dateValue.style.color = DATE_COLOR;
-closePriceValue.style.color = CLOSE_PRICE_COLOR;
-ema30Value.style.color = EMA_30_COLOR;
-ema50Value.style.color = EMA_50_COLOR;
-ema200Value.style.color = EMA_200_COLOR;
-volumeValue.style.color = VOLUME_COLOR;
-
-const tooltipToggle = document.getElementById("tooltip-toggle");
-tooltipToggle.checked = displayTooltip;
-
-const ctx = document.getElementById("stock-chart").getContext("2d");
-
 // Hover Plugin:
 // Draw Hover vertical/horizontal dashed lines +
-// Update Hover info on top left +
+// Update Hover info +
 // Display Hover data on the right with colored background +
 // Display Hover date on the bottom with colored background
 const hoverPlugin = {
@@ -225,152 +236,9 @@ const hoverPlugin = {
   },
 };
 
-// Chart configuration
-const stockChart = new Chart(ctx, {
-  type: "line",
-  data: {
-    labels: dateData,
-    datasets: [
-      {
-        label: CLOSE_PRICE_LABEL,
-        data: closePriceData,
-        borderColor: CLOSE_PRICE_COLOR,
-        backgroundColor: CHART_BACKGROUND_COLOR,
-        tension: CHART_TENSION,
-        fill: CHART_FILL,
-        pointHoverRadius: POINT_HOVER_RADIUS,
-        pointHoverBackgroundColor: POINT_HOVER_COLOR,
-      },
-      {
-        label: EMA_30_LABEL,
-        data: ema30Data,
-        borderColor: EMA_30_COLOR,
-        backgroundColor: CHART_BACKGROUND_COLOR,
-        tension: CHART_TENSION,
-        fill: CHART_FILL,
-        borderWidth: EMA_BORDER_WIDTH,
-        pointRadius: EMA_POINT_RADIUS,
-      },
-      {
-        label: EMA_50_LABEL,
-        data: ema50Data,
-        borderColor: EMA_50_COLOR,
-        backgroundColor: CHART_BACKGROUND_COLOR,
-        tension: CHART_TENSION,
-        fill: CHART_FILL,
-        borderWidth: EMA_BORDER_WIDTH,
-        pointRadius: EMA_POINT_RADIUS,
-      },
-      {
-        label: EMA_200_LABEL,
-        data: ema200Data,
-        borderColor: EMA_200_COLOR,
-        backgroundColor: CHART_BACKGROUND_COLOR,
-        tension: CHART_TENSION,
-        fill: CHART_FILL,
-        borderWidth: EMA_BORDER_WIDTH,
-        pointRadius: EMA_POINT_RADIUS,
-      },
-      {
-        type: "bar",
-        label: VOLUME_LABEL,
-        data: volumeData,
-        yAxisID: "volumeAxis", // To get separate Y-axis for volume bar chart
-        backgroundColor: VOLUME_COLOR,
-        borderSkipped: false,
-        barPercentage: 1.0,
-        categoryPercentage: 1.0,
-      },
-    ],
-  },
-  options: {
-    responsive: true,
-    maintainAspectRatio: false,
-    interaction: {
-      // Activate the nearest data point on mouse hover
-      mode: CHART_INTERACTION_MODE,
-      intersect: CHART_INTERACTION_INTERSECT,
-    },
-    plugins: {
-      tooltip: {
-        enabled: displayTooltip,
-      },
-      legend: {
-        position: "top",
-        align: "end",
-        labels: {
-          filter: (legendItem) =>
-            legendItem.text === EMA_30_LABEL ||
-            legendItem.text === EMA_50_LABEL ||
-            legendItem.text === EMA_200_LABEL,
-        },
-      },
-      zoom: {
-        pan: {
-          enabled: true,
-          mode: "x",
-          modifierKey: null,
-        },
-        zoom: {
-          wheel: { enabled: true },
-          pinch: { enabled: true },
-          mode: "x",
-        },
-        limits: {
-          x: { minRange: ZOOM_MIN_RANGE },
-        },
-      },
-    },
-    scales: {
-      x: {
-        offset: false, // To make grid lines go through line chart points rather than bar chart bar widths
-        grid: {
-          offset: false, // To remove excess space on the right caused by bar chart
-        },
-        ticks: {
-          maxTicksLimit: MAX_X_TICKS,
-          font: {
-            size: LABEL_FONT_SIZE,
-          },
-        },
-      },
-      y: {
-        position: "right",
-        ticks: {
-          precision: DECIMAL_PRECISION,
-          font: {
-            size: LABEL_FONT_SIZE,
-          },
-          callback: function (value) {
-            return value.toFixed(DECIMAL_PRECISION);
-          },
-        },
-      },
-      volumeAxis: {
-        type: "linear",
-        display: false, // No y-axis labels
-        min: 0,
-        max: Math.max(...volumeData) * VOLUME_AXIS_MAX_MULTIPLIER, // For better bar chart scaling
-        grid: {
-          drawOnChartArea: false, // No grid lines for volume
-        },
-      },
-    },
-  },
-  plugins: [hoverPlugin],
-});
-
-const canvas = stockChart.canvas;
-// To be able to drag-scroll the page while on the chart on mobile
-canvas.style.touchAction = "pan-y";
-
-// To get same functionality on chart as mouse hover while dragging on phone
-canvas.addEventListener("touchstart", handleTouch, { passive: true });
-canvas.addEventListener("touchmove", handleTouch, { passive: true });
-
 function handleTouch(event) {
   const touch = event.touches[0];
-  const rect = canvas.getBoundingClientRect();
+  const rect = stockChart.canvas.getBoundingClientRect();
   const x = touch.clientX - rect.left;
   const y = touch.clientY - rect.top;
 
@@ -385,15 +253,6 @@ function handleTouch(event) {
   stockChart.tooltip.setActiveElements(point, { x, y });
   stockChart.update();
 }
-
-// Handle tooltop toggle event
-tooltipToggle.addEventListener("change", function () {
-  displayTooltip = tooltipToggle.checked;
-
-  // Dynamically enable/disable tooltip display while keeping its internal state alive
-  stockChart.options.plugins.tooltip.enabled = displayTooltip;
-  stockChart.update();
-});
 
 let chartSpinnerTimeout;
 function showChartSpinner() {
@@ -448,6 +307,156 @@ function activateTfTooltip(button, color) {
   }
 }
 
+function createStockChart() {
+  // Chart configuration
+  let newStockChart = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: dateData,
+      datasets: [
+        {
+          label: CLOSE_PRICE_LABEL,
+          data: closePriceData,
+          borderColor: CLOSE_PRICE_COLOR,
+          backgroundColor: CHART_BACKGROUND_COLOR,
+          tension: CHART_TENSION,
+          fill: CHART_FILL,
+          pointHoverRadius: POINT_HOVER_RADIUS,
+          pointHoverBackgroundColor: POINT_HOVER_COLOR,
+        },
+        {
+          label: EMA_30_LABEL,
+          data: ema30Data,
+          borderColor: EMA_30_COLOR,
+          backgroundColor: CHART_BACKGROUND_COLOR,
+          tension: CHART_TENSION,
+          fill: CHART_FILL,
+          borderWidth: EMA_BORDER_WIDTH,
+          pointRadius: EMA_POINT_RADIUS,
+        },
+        {
+          label: EMA_50_LABEL,
+          data: ema50Data,
+          borderColor: EMA_50_COLOR,
+          backgroundColor: CHART_BACKGROUND_COLOR,
+          tension: CHART_TENSION,
+          fill: CHART_FILL,
+          borderWidth: EMA_BORDER_WIDTH,
+          pointRadius: EMA_POINT_RADIUS,
+        },
+        {
+          label: EMA_200_LABEL,
+          data: ema200Data,
+          borderColor: EMA_200_COLOR,
+          backgroundColor: CHART_BACKGROUND_COLOR,
+          tension: CHART_TENSION,
+          fill: CHART_FILL,
+          borderWidth: EMA_BORDER_WIDTH,
+          pointRadius: EMA_POINT_RADIUS,
+        },
+        {
+          type: "bar",
+          label: VOLUME_LABEL,
+          data: volumeData,
+          yAxisID: "volumeAxis", // To get separate Y-axis for volume bar chart
+          backgroundColor: VOLUME_COLOR,
+          borderSkipped: false,
+          barPercentage: 1.0,
+          categoryPercentage: 1.0,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: {
+        // Activate the nearest data point on mouse hover
+        mode: CHART_INTERACTION_MODE,
+        intersect: CHART_INTERACTION_INTERSECT,
+      },
+      plugins: {
+        tooltip: {
+          enabled: displayTooltip,
+        },
+        legend: {
+          position: "top",
+          align: "end",
+          labels: {
+            filter: (legendItem) =>
+              legendItem.text === EMA_30_LABEL ||
+              legendItem.text === EMA_50_LABEL ||
+              legendItem.text === EMA_200_LABEL,
+          },
+        },
+        zoom: {
+          pan: {
+            enabled: true,
+            mode: "x",
+            modifierKey: null,
+          },
+          zoom: {
+            wheel: { enabled: true },
+            pinch: { enabled: true },
+            mode: "x",
+          },
+          limits: {
+            x: { minRange: ZOOM_MIN_RANGE },
+          },
+        },
+      },
+      scales: {
+        x: {
+          offset: false, // To make grid lines go through line chart points rather than bar chart bar widths
+          grid: {
+            offset: false, // To remove excess space on the right caused by bar chart
+          },
+          ticks: {
+            maxTicksLimit: MAX_X_TICKS,
+            font: {
+              size: LABEL_FONT_SIZE,
+            },
+          },
+        },
+        y: {
+          position: "right",
+          ticks: {
+            precision: DECIMAL_PRECISION,
+            font: {
+              size: LABEL_FONT_SIZE,
+            },
+            callback: function (value) {
+              return value.toFixed(DECIMAL_PRECISION);
+            },
+          },
+        },
+        volumeAxis: {
+          type: "linear",
+          display: false, // No y-axis labels
+          min: 0,
+          max: Math.max(...volumeData) * VOLUME_AXIS_MAX_MULTIPLIER, // For better bar chart scaling
+          grid: {
+            drawOnChartArea: false, // No grid lines for volume
+          },
+        },
+      },
+    },
+    plugins: [hoverPlugin],
+  });
+
+  const canvas = newStockChart.canvas;
+  // To be able to drag-scroll the page while on the chart on mobile
+  canvas.style.touchAction = "pan-y";
+
+  // To get same functionality on chart as mouse hover while dragging on phone
+  canvas.addEventListener("touchstart", handleTouch, { passive: true });
+  canvas.addEventListener("touchmove", handleTouch, { passive: true });
+
+  newStockChart.options.scales.volumeAxis.max =
+    Math.max(...volumeData) * VOLUME_AXIS_MAX_MULTIPLIER;
+
+  return newStockChart;
+}
+
 function resetChart(button, preloadedData = null) {
   const timeframe = button.dataset.timeframe;
 
@@ -466,11 +475,12 @@ function resetChart(button, preloadedData = null) {
     ema200Data.push(...data.ema_200_data);
     volumeData.push(...data.volume_data);
 
-    stockChart.options.scales.volumeAxis.max =
-      Math.max(...volumeData) * VOLUME_AXIS_MAX_MULTIPLIER;
+    // Destroy the old chart if it exists
+    if (stockChart) {
+      stockChart.destroy();
+    }
 
-    stockChart.update();
-    stockChart.resetZoom();
+    stockChart = createStockChart();
 
     updateHoverInfoText(
       dateData.at(-1),
