@@ -365,8 +365,8 @@ const canvas = stockChart.canvas;
 canvas.style.touchAction = "pan-y";
 
 // To get same functionality on chart as mouse hover while dragging on phone
-canvas.addEventListener("touchstart", handleTouch);
-canvas.addEventListener("touchmove", handleTouch);
+canvas.addEventListener("touchstart", handleTouch, { passive: true });
+canvas.addEventListener("touchmove", handleTouch, { passive: true });
 
 function handleTouch(event) {
   const touch = event.touches[0];
