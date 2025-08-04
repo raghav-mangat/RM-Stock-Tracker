@@ -31,40 +31,48 @@ STOCK_ATTRIBUTES = [
 TIMEFRAME_OPTIONS = {
     "1D": {
         "timespan": "minute",
-        "before": lambda now: format_date(now),
+        "before": lambda now: now,
         "date_format": DATETIME_FORMAT
     },
     "1W": {
         "timespan": "hour",
-        "before": lambda now: format_date(now - timedelta(days=7)),
+        "before": lambda now: now - timedelta(days=7),
         "date_format": DATETIME_FORMAT
     },
     "1M": {
         "timespan": "day",
-        "before": lambda now: format_date(now - timedelta(days=30)),
+        "before": lambda now: now - timedelta(days=30),
         "date_format": DATE_FORMAT
     },
     "3M": {
         "timespan": "day",
-        "before": lambda now: format_date(now - timedelta(days=90)),
+        "before": lambda now: now - timedelta(days=90),
         "date_format": DATE_FORMAT
     },
     "6M": {
         "timespan": "day",
-        "before": lambda now: format_date(now - timedelta(days=180)),
+        "before": lambda now: now - timedelta(days=180),
         "date_format": DATE_FORMAT
     },
     "YTD": {
         "timespan": "day",
-        "before": lambda now: format_date(datetime(now.year, 1, 1)),
+        "before": lambda now: datetime(now.year, 1, 1),
         "date_format": DATE_FORMAT
     },
     "1Y": {
         "timespan": "day",
-        "before": lambda now: format_date(now - timedelta(days=365)),
+        "before": lambda now: now - timedelta(days=365),
         "date_format": DATE_FORMAT
     }
 }
+
+SELECT_DB_TABLE = {
+    "minute": StockMinute,
+    "hour": StockHour,
+    "day": StockDay
+}
+
+DB_TIMEFRAMES = ["1D", "1W", "1Y"]
 
 def fetch_all_stocks_data():
     """
@@ -306,16 +314,10 @@ def fetch_stock_data(ticker):
 def fetch_chart_data(stock_id, ticker, timeframe):
     now = db_last_updated_date()
 
-    select_db_table = {
-        "minute": StockMinute,
-        "hour": StockHour,
-        "day": StockDay
-    }
-
     timeframe_data = TIMEFRAME_OPTIONS[timeframe]
     timespan = timeframe_data.get("timespan")
-    before = timeframe_data.get("before")(datetime.strptime(now, DATE_FORMAT))
-    db_table = select_db_table.get(timespan)
+    before = format_date(timeframe_data.get("before")(datetime.strptime(now, DATE_FORMAT)))
+    db_table = SELECT_DB_TABLE.get(timespan)
 
     close_price_data = {}
     volume_data = {}

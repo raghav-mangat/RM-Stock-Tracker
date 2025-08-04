@@ -21,9 +21,10 @@ elif IS_RELEASE == "0":
 import json
 from flask import Flask
 from pathlib import Path
-from models.database import db, Stock, Index, IndexHolding, StockMaster
+from models.database import db, Stock, Index, IndexHolding, StockMaster, StockMinute, StockHour, StockDay
 from data_collectors.index_data import all_indices, get_index_info, fetch_index_data
-from data_collectors.stock_data import STOCK_ATTRIBUTES, fetch_all_stocks_data, fetch_stock_data
+from data_collectors.stock_data import STOCK_ATTRIBUTES, fetch_all_stocks_data, fetch_stock_data, fetch_chart_data, \
+    DB_TIMEFRAMES
 from utils.datetime_utils import get_current_et, format_et_datetime, format_date
 from utils.db_queries.all_stocks import get_top_stocks
 
@@ -76,6 +77,15 @@ def add_to_indices_table(index, now):
         index.last_updated = now
     return index.id
 
+def store_chart_data(stock_id, ticker):
+    timeframes = DB_TIMEFRAMES
+    for timeframe in timeframes:
+        chart_data = fetch_chart_data(stock_id, ticker, timeframe)
+        for data in chart_data:
+            db.session.add(data)
+            db.session.flush()
+        db.session.commit()
+
 def add_to_stocks_table(ticker):
     stock_data = fetch_stock_data(ticker)
     if not stock_data:
@@ -123,6 +133,12 @@ def populate_db():
         db.create_all()
         update_stocks_master_table()
 
+        # Delete the stored chart data for the stocks
+        db.session.query(StockMinute).delete()
+        db.session.query(StockHour).delete()
+        db.session.query(StockDay).delete()
+        db.session.commit()
+
         # Save the data for all indices and the constituent stocks
         for index in all_indices:
             index_id = add_to_indices_table(index, now)
@@ -132,6 +148,8 @@ def populate_db():
                 if ticker:
                     if ticker not in tickers_updated:
                         stock_id = add_to_stocks_table(ticker)
+                        if stock_id:
+                            store_chart_data(stock_id, ticker)
                     else:
                         stock_id = Stock.query.filter_by(ticker=ticker).first().id
                     if index_id and stock_id:

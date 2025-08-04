@@ -1,13 +1,14 @@
-from sqlalchemy import select
-from models.database import db, StockMaster, Stock
+from datetime import datetime
+from models.database import StockMaster, Stock
 from flask import abort
-from data_collectors.stock_data import fetch_stock_data, fetch_chart_data, TIMEFRAME_OPTIONS
+from data_collectors.stock_data import fetch_stock_data, fetch_chart_data, TIMEFRAME_OPTIONS, SELECT_DB_TABLE, \
+    DB_TIMEFRAMES
+from utils.datetime_utils import DATE_FORMAT
+from utils.populate_db_info import db_last_updated_date
 
 def get_stock_data(ticker):
-    # To verify if the given ticker is valid
-    stock = StockMaster.query.filter_by(ticker=ticker).first()
-    if not stock:
-        abort(404)
+    verify_ticker(ticker)
+
     # Check if the stock is present in the database
     stock = Stock.query.filter_by(ticker=ticker).first()
     # if not in db then use stock data collector script to get stock data
@@ -26,10 +27,24 @@ def get_stock_data(ticker):
     return result
 
 def get_chart_data(ticker, timeframe):
-    date_format = TIMEFRAME_OPTIONS[timeframe]["date_format"]
+    verify_ticker(ticker)
+    timeframe_data = TIMEFRAME_OPTIONS[timeframe]
+    now = db_last_updated_date()
 
-    stock_id = db.session.execute(select(Stock.id).where(Stock.ticker == ticker)).scalar_one()
-    chart_data = fetch_chart_data(stock_id, ticker, timeframe)
+    stock = Stock.query.filter_by(ticker=ticker).first()
+    if stock:
+        stock_id = stock.id
+        db_table = SELECT_DB_TABLE.get(timeframe_data["timespan"])
+        query = db_table.query.filter_by(stock_id=stock_id)
+        if timeframe not in DB_TIMEFRAMES:
+            before = timeframe_data.get("before")(datetime.strptime(now, DATE_FORMAT))
+            query = query.filter(db_table.date >= before)
+        chart_data = query.order_by(db_table.date.asc()).all()
+    else:
+        stock_id = -1
+        chart_data = fetch_chart_data(stock_id, ticker, timeframe)
+
+    date_format = timeframe_data["date_format"]
     date_data = []
     close_price_data = []
     ema_30_data = []
@@ -54,6 +69,12 @@ def get_chart_data(ticker, timeframe):
         "change_perc": change_perc
     }
     return result
+
+def verify_ticker(ticker):
+    # To verify if the given ticker is valid
+    stock = StockMaster.query.filter_by(ticker=ticker).first()
+    if not stock:
+        abort(404)
 
 def get_timeframe_options():
     return list(TIMEFRAME_OPTIONS.keys())
