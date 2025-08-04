@@ -41,6 +41,7 @@ class Stock(db.Model):
     todays_change_perc: Mapped[float] = mapped_column(nullable=True)
 
     # Moving Averages
+    dma_30: Mapped[float] = mapped_column(nullable=True)
     dma_50: Mapped[float] = mapped_column(nullable=True)
     dma_200: Mapped[float] = mapped_column(nullable=True)
     dma_200_perc_diff: Mapped[float] = mapped_column(nullable=True)

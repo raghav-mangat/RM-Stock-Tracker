@@ -176,16 +176,16 @@ def safe_getattr(obj, attr, default=None):
     except:
         return default
 
-def get_ticker_details(ticker, stock_data):
+def get_ticker_details(stock_data, ticker, now):
     try:
-        details = client.get_ticker_details(ticker)
+        details = client.get_ticker_details(ticker, date=now)
 
         stock_data["ticker"] = safe_getattr(details, "ticker", None)
         stock_data["icon_url"] = safe_getattr(details.branding, "icon_url", None)
         stock_data["description"] = safe_getattr(details, "description", None)
         stock_data["homepage_url"] = safe_getattr(details, "homepage_url", None)
         stock_data["list_date"] = (
-            datetime.strptime(details.list_date, "%Y-%m-%d").date()
+            datetime.strptime(details.list_date, DATE_FORMAT).date()
             if details.list_date else None
         )
         stock_data["name"] = safe_getattr(details, "name", None)
@@ -199,88 +199,84 @@ def get_ticker_details(ticker, stock_data):
         print(f"[Details Error] {ticker}: {e}")
     return stock_data
 
-def get_ticker_snapshot(ticker, stock_data):
-    try:
-        snapshot = client.get_snapshot_ticker("stocks", ticker)
-        day = snapshot.day
+def get_365_day_data(ticker, now):
+    before = datetime.strptime(now, DATE_FORMAT) - timedelta(days=365)
+    data = {
+        "timestamp": None,
+        "open": [],
+        "high": [],
+        "low": [],
+        "close": [],
+        "volume": []
+    }
 
-        last_updated_timestamp = safe_getattr(snapshot, "updated", None)
-        stock_data["last_updated"] = polygon_timestamp_et(last_updated_timestamp,"nanosecond")
-        stock_data["day_high"] = safe_getattr(day, "high", None)
-        stock_data["day_low"] = safe_getattr(day, "low", None)
-        stock_data["day_close"] = safe_getattr(day, "close", None)
-        stock_data["day_open"] = safe_getattr(day, "open", None)
-        stock_data["volume"] = safe_getattr(day, "volume", None)
-        stock_data["todays_change"] = round(safe_getattr(snapshot, "todays_change", 0), 2)
-        stock_data["todays_change_perc"] = round(safe_getattr(snapshot, "todays_change_percent", 0), 2)
-
-    except Exception as e:
-        print(f"[Snapshot Error] {ticker}: {e}")
-    return stock_data
-
-def get_200_day_close_data(ticker):
-    now = datetime.now()
-    now_300_days = now - timedelta(days=300)
-    data_200_days = []
-
+    first_iteration = True
     for day_data in client.list_aggs(
         ticker=ticker,
         multiplier=1,
         timespan="day",
-        from_=now_300_days,
+        from_=before,
         to=now,
         adjusted=True,
         sort="desc",
-        limit=200,
+        limit=365,
     ):
-        data_200_days.append(day_data.close)
+        if first_iteration:
+            data["timestamp"] = day_data.timestamp
+            first_iteration = False
+        data["open"].append(day_data.open)
+        data["high"].append(day_data.high)
+        data["low"].append(day_data.low)
+        data["close"].append(day_data.close)
+        data["volume"].append(day_data.volume)
+    return data
 
-    return data_200_days[:200]
-
-def get_ticker_dmas(ticker, stock_data):
+def get_ticker_values(stock_data, stock_365_day_data):
     try:
-        closing_200_days = get_200_day_close_data(ticker)
-        if not closing_200_days:
-            return stock_data
+        stock_data["day_open"] = stock_365_day_data["open"][0]
+        stock_data["day_high"] = stock_365_day_data["high"][0]
+        stock_data["day_low"] = stock_365_day_data["low"][0]
+        stock_data["day_close"] = stock_365_day_data["close"][0]
+        stock_data["volume"] = stock_365_day_data["volume"][0]
 
-        last_close = closing_200_days[0]
+        last_close = stock_365_day_data["close"][0]
+        prev_close = stock_365_day_data["close"][1]
+        todays_change = last_close - prev_close
+        todays_change_perc = (todays_change/prev_close) * 100
+
+        stock_data["todays_change"] = round(todays_change, 2)
+        stock_data["todays_change_perc"] = round(todays_change_perc, 2)
+    except Exception as e:
+        print(f"[Values Error] {stock_data.get("ticker")}: {e}")
+    return stock_data
+
+def get_ticker_dmas(stock_data, stock_365_day_data):
+    try:
+        last_close = stock_365_day_data["close"][0]
+        closing_200_days = stock_365_day_data["close"][:200]
         dma_200 = sum(closing_200_days) / len(closing_200_days)
         dma_200_perc_diff = (last_close - dma_200) / dma_200 * 100
 
-        closing_50_days = closing_200_days[:50]
+        closing_50_days = stock_365_day_data["close"][:50]
         dma_50 = sum(closing_50_days) / len(closing_50_days)
+
+        closing_30_days = stock_365_day_data["close"][:30]
+        dma_30 = sum(closing_30_days) / len(closing_30_days)
 
         stock_data["dma_200"] = round(dma_200, 2)
         stock_data["dma_50"] = round(dma_50, 2)
+        stock_data["dma_30"] = round(dma_30, 2)
         stock_data["dma_200_perc_diff"] = round(dma_200_perc_diff, 2)
     except Exception as e:
-        print(f"[DMA Error] {ticker}: {e}")
+        print(f"[DMA Error] {stock_data.get("ticker")}: {e}")
     return stock_data
 
-def get_ticker_52w_hl(ticker, stock_data):
+def get_ticker_52w_hl(stock_data, stock_365_day_data):
     try:
-        now = datetime.now()
-        now_365_days = now - timedelta(days=365)
-        data_365_days_high = []
-        data_365_days_low = []
-
-        for day_data in client.list_aggs(
-            ticker=ticker,
-            multiplier=1,
-            timespan="day",
-            from_=now_365_days,
-            to=now,
-            adjusted=True,
-            sort="desc",
-            limit=365,
-        ):
-            data_365_days_high.append(day_data.high)
-            data_365_days_low.append(day_data.low)
-
-        stock_data["high_52w"] = max(data_365_days_high) if data_365_days_high else None
-        stock_data["low_52w"] = min(data_365_days_low) if data_365_days_low else None
+        stock_data["high_52w"] = max(stock_365_day_data["high"]) if stock_365_day_data else None
+        stock_data["low_52w"] = min(stock_365_day_data["low"]) if stock_365_day_data else None
     except Exception as e:
-        print(f"[52W Error] {ticker}: {e}")
+        print(f"[52W Error] {stock_data.get("ticker")}: {e}")
     return stock_data
 
 def fetch_stock_data(ticker):
@@ -294,12 +290,15 @@ def fetch_stock_data(ticker):
     """
     stock = None
     stock_data = {}
+    now = db_last_updated_date()
     print(f"Fetching data for: {ticker}")
 
-    stock_data = get_ticker_details(ticker, stock_data)
-    stock_data = get_ticker_snapshot(ticker, stock_data)
-    stock_data = get_ticker_dmas(ticker, stock_data)
-    stock_data = get_ticker_52w_hl(ticker, stock_data)
+    stock_365_day_data = get_365_day_data(ticker, now)
+    stock_data["last_updated"] = polygon_timestamp_et(stock_365_day_data["timestamp"],"millisecond")
+    stock_data = get_ticker_details(stock_data, ticker, now)
+    stock_data = get_ticker_values(stock_data, stock_365_day_data)
+    stock_data = get_ticker_dmas(stock_data, stock_365_day_data)
+    stock_data = get_ticker_52w_hl(stock_data, stock_365_day_data)
 
     if stock_data.get("ticker"):
         for attribute in STOCK_ATTRIBUTES:
