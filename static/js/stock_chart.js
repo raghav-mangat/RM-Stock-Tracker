@@ -96,19 +96,21 @@ function updateHoverInfoText(
   volumeVal
 ) {
   dateValue.textContent = `${DATE_LABEL}: ${dateVal}`;
-  closePriceValue.textContent = `${CLOSE_PRICE_LABEL}: ${closePriceVal.toFixed(
-    DECIMAL_PRECISION
+  closePriceValue.textContent = `${CLOSE_PRICE_LABEL}: ${closePriceVal
+    .toFixed(DECIMAL_PRECISION)
+    .toLocaleString("en-US")}`;
+  ema30Value.textContent = `${EMA_30_LABEL}: ${ema30Val
+    .toFixed(DECIMAL_PRECISION)
+    .toLocaleString("en-US")}`;
+  ema50Value.textContent = `${EMA_50_LABEL}: ${ema50Val
+    .toFixed(DECIMAL_PRECISION)
+    .toLocaleString("en-US")}`;
+  ema200Value.textContent = `${EMA_200_LABEL}: ${ema200Val
+    .toFixed(DECIMAL_PRECISION)
+    .toLocaleString("en-US")}`;
+  volumeValue.textContent = `${VOLUME_LABEL}: ${volumeVal.toLocaleString(
+    "en-US"
   )}`;
-  ema30Value.textContent = `${EMA_30_LABEL}: ${ema30Val.toFixed(
-    DECIMAL_PRECISION
-  )}`;
-  ema50Value.textContent = `${EMA_50_LABEL}: ${ema50Val.toFixed(
-    DECIMAL_PRECISION
-  )}`;
-  ema200Value.textContent = `${EMA_200_LABEL}: ${ema200Val.toFixed(
-    DECIMAL_PRECISION
-  )}`;
-  volumeValue.textContent = `${VOLUME_LABEL}: ${volumeVal}`;
 }
 
 // Hover Plugin:
@@ -377,6 +379,21 @@ function createStockChart() {
       plugins: {
         tooltip: {
           enabled: displayTooltip,
+          callbacks: {
+            label: function (context) {
+              let label = context.dataset.label || "";
+              let value = context.parsed.y;
+              if (label && value !== null) {
+                if (label === VOLUME_LABEL)
+                  label += ": " + value.toLocaleString("en-US");
+                else
+                  label +=
+                    ": " +
+                    value.toFixed(DECIMAL_PRECISION).toLocaleString("en-US");
+              }
+              return label;
+            },
+          },
         },
         legend: {
           position: "top",

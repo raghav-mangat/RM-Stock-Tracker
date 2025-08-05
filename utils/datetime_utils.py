@@ -36,9 +36,15 @@ def get_current_et():
 
 def format_et_datetime(et_datetime):
     """
-    Formats datetime in ET into string: 'Friday, Jun 21, 2025, at 08:00PM, ET.'
+    Formats datetime in ET into string: 'Saturday, Jun 21, 2025, ET.'
     """
-    return et_datetime.strftime('%A, %b %d, %Y, at %I:%M%p, ET.')
+    return et_datetime.strftime('%A, %b %d, %Y, ET.')
 
 def format_date(date):
     return date.strftime(DATE_FORMAT)
+
+def format_et_datetime_extended(et_datetime):
+    """
+    Formats datetime in ET into string: 'Saturday, Jun 21, 2025, at 08:00PM, ET.'
+    """
+    return et_datetime.strftime('%A, %b %d, %Y, at %I:%M%p, ET.')

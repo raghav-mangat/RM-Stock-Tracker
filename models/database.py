@@ -36,7 +36,7 @@ class Stock(db.Model):
     day_open: Mapped[float] = mapped_column(nullable=True)
     day_high: Mapped[float] = mapped_column(nullable=True)
     day_low: Mapped[float] = mapped_column(nullable=True)
-    volume: Mapped[float] = mapped_column(nullable=True)
+    volume: Mapped[int] = mapped_column(nullable=True)
     todays_change: Mapped[float] = mapped_column(nullable=True)
     todays_change_perc: Mapped[float] = mapped_column(nullable=True)
 
@@ -113,7 +113,7 @@ class StockMaster(db.Model):
     day_open: Mapped[float] = mapped_column(nullable=True)
     day_high: Mapped[float] = mapped_column(nullable=True)
     day_low: Mapped[float] = mapped_column(nullable=True)
-    volume: Mapped[float] = mapped_column(nullable=True)
+    volume: Mapped[int] = mapped_column(nullable=True)
     todays_change: Mapped[float] = mapped_column(nullable=True)
     todays_change_perc: Mapped[float] = mapped_column(nullable=True)
 
@@ -134,7 +134,7 @@ class StockMinute(db.Model):
     ema_30: Mapped[float] = mapped_column(nullable=True)
     ema_50: Mapped[float] = mapped_column(nullable=True)
     ema_200: Mapped[float] = mapped_column(nullable=True)
-    volume: Mapped[float] = mapped_column(nullable=True)
+    volume: Mapped[int] = mapped_column(nullable=True)
 
     stock: Mapped["Stock"] = relationship(back_populates="minute_data")
 
@@ -155,7 +155,7 @@ class StockHour(db.Model):
     ema_30: Mapped[float] = mapped_column(nullable=True)
     ema_50: Mapped[float] = mapped_column(nullable=True)
     ema_200: Mapped[float] = mapped_column(nullable=True)
-    volume: Mapped[float] = mapped_column(nullable=True)
+    volume: Mapped[int] = mapped_column(nullable=True)
 
     stock: Mapped["Stock"] = relationship(back_populates="hour_data")
 
@@ -176,7 +176,7 @@ class StockDay(db.Model):
     ema_30: Mapped[float] = mapped_column(nullable=True)
     ema_50: Mapped[float] = mapped_column(nullable=True)
     ema_200: Mapped[float] = mapped_column(nullable=True)
-    volume: Mapped[float] = mapped_column(nullable=True)
+    volume: Mapped[int] = mapped_column(nullable=True)
 
     stock: Mapped["Stock"] = relationship(back_populates="day_data")
 

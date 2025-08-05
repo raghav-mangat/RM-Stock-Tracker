@@ -74,6 +74,8 @@ SELECT_DB_TABLE = {
 
 DB_TIMEFRAMES = ["1D", "1W", "1Y"]
 
+DECIMAL_PRECISION = 2
+
 def fetch_all_stocks_data():
     """
     For all the stocks available in polygon API, this function collects
@@ -224,11 +226,11 @@ def get_365_day_data(ticker, now):
         if first_iteration:
             data["timestamp"] = day_data.timestamp
             first_iteration = False
-        data["open"].append(day_data.open)
-        data["high"].append(day_data.high)
-        data["low"].append(day_data.low)
-        data["close"].append(day_data.close)
-        data["volume"].append(day_data.volume)
+        data["open"].append(round(day_data.open, DECIMAL_PRECISION))
+        data["high"].append(round(day_data.high, DECIMAL_PRECISION))
+        data["low"].append(round(day_data.low, DECIMAL_PRECISION))
+        data["close"].append(round(day_data.close, DECIMAL_PRECISION))
+        data["volume"].append(int(day_data.volume))
     return data
 
 def get_ticker_values(stock_data, stock_365_day_data):
@@ -244,8 +246,8 @@ def get_ticker_values(stock_data, stock_365_day_data):
         todays_change = last_close - prev_close
         todays_change_perc = (todays_change/prev_close) * 100
 
-        stock_data["todays_change"] = round(todays_change, 2)
-        stock_data["todays_change_perc"] = round(todays_change_perc, 2)
+        stock_data["todays_change"] = round(todays_change, DECIMAL_PRECISION)
+        stock_data["todays_change_perc"] = round(todays_change_perc, DECIMAL_PRECISION)
     except Exception as e:
         print(f"[Values Error] {stock_data.get("ticker")}: {e}")
     return stock_data
@@ -263,10 +265,10 @@ def get_ticker_dmas(stock_data, stock_365_day_data):
         closing_30_days = stock_365_day_data["close"][:30]
         dma_30 = sum(closing_30_days) / len(closing_30_days)
 
-        stock_data["dma_200"] = round(dma_200, 2)
-        stock_data["dma_50"] = round(dma_50, 2)
-        stock_data["dma_30"] = round(dma_30, 2)
-        stock_data["dma_200_perc_diff"] = round(dma_200_perc_diff, 2)
+        stock_data["dma_200"] = round(dma_200, DECIMAL_PRECISION)
+        stock_data["dma_50"] = round(dma_50, DECIMAL_PRECISION)
+        stock_data["dma_30"] = round(dma_30, DECIMAL_PRECISION)
+        stock_data["dma_200_perc_diff"] = round(dma_200_perc_diff, DECIMAL_PRECISION)
     except Exception as e:
         print(f"[DMA Error] {stock_data.get("ticker")}: {e}")
     return stock_data
@@ -321,17 +323,17 @@ def fetch_chart_data(stock_id, ticker, timeframe):
     close_price_data = {}
     volume_data = {}
     for day_data in client.list_aggs(
-            ticker=ticker,
-            multiplier=1,
-            timespan=timespan,
-            from_=before,
-            to=now,
-            adjusted=True,
-            sort="asc",
-            limit=1000,
+        ticker=ticker,
+        multiplier=1,
+        timespan=timespan,
+        from_=before,
+        to=now,
+        adjusted=True,
+        sort="asc",
+        limit=1000,
     ):
         timestamp = day_data.timestamp
-        close_price_data[timestamp] = round(day_data.close, 2)
+        close_price_data[timestamp] = round(day_data.close, DECIMAL_PRECISION)
         volume_data[timestamp] = int(day_data.volume)
 
     def get_ema_data(ema_window):
@@ -348,7 +350,7 @@ def fetch_chart_data(stock_id, ticker, timeframe):
         )
         for value in ema.values:
             timestamp_ = value.timestamp
-            ema_data[timestamp_] = round(value.value, 2)
+            ema_data[timestamp_] = round(value.value, DECIMAL_PRECISION)
         return ema_data
 
     ema_30_data = get_ema_data("30")
