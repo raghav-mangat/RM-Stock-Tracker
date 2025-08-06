@@ -52,23 +52,37 @@
       <div class="tab-pane fade" id="chart" role="tabpanel" aria-labelledby="chart-tab">
         <!-- Stock Chart Section -->
         <section class="container py-2 border border-dark">
-          <!-- Top Controls: Timeframe Selector + Percentage Change Display + Chart Tooltip Toggle -->
+          <!-- Top Controls: Timeframe Selector + % Change + Tooltip Toggle + Custom Chart Legend -->
           <div class="d-flex flex-wrap align-items-center gap-3 mb-2">
-              <div id="tf-btn-toolbar" class="btn-toolbar d-flex flex-nowrap overflow-auto" role="toolbar" aria-label="Chart time frame selector">
-                  <div class="btn-group" role="group" aria-label="Timeframe options">
-                      {% for timeframe in timeframe_options %}
-                        <button type="button" class="tf-btn btn btn-outline-secondary"
-                                data-timeframe="{{ timeframe }}">
-                            {{ timeframe }}
-                        </button>
-                      {% endfor %}
-                  </div>
+            <!-- Timeframe buttons -->
+            <div id="tf-btn-toolbar" class="btn-toolbar d-flex flex-nowrap overflow-auto" role="toolbar" aria-label="Chart time frame selector">
+              <div class="btn-group" role="group" aria-label="Timeframe options">
+                {% for timeframe in timeframe_options %}
+                  <button type="button" class="tf-btn btn btn-outline-secondary"
+                          data-timeframe="{{ timeframe }}">
+                      {{ timeframe }}
+                  </button>
+                {% endfor %}
               </div>
-              <span id="tf-change-perc" class="btn fw-semibold text-white border border-dark rounded-0" aria-label="Timeframe percentage change"></span>
-              <div class="form-check form-switch">
-                  <input class="form-check-input" type="checkbox" role="switch" id="tooltip-toggle">
-                  <label class="form-check-label" for="tooltip-toggle">Tooltips</label>
-              </div>
+            </div>
+
+            <!-- Percentage change -->
+            <span id="tf-change-perc" class="btn fw-semibold text-white border border-dark rounded-0" aria-label="Timeframe percentage change">
+              <!-- Populated by JS -->
+            </span>
+
+            <!-- Tooltip toggle -->
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" role="switch" id="tooltip-toggle">
+              <label class="form-check-label" for="tooltip-toggle">Tooltips</label>
+            </div>
+
+            <!-- Custom chart legend -->
+            <div id="chart-legend-container" class="ms-auto">
+              <ul id="chart-legend" class="list-unstyled d-flex mb-0 align-items-center gap-3">
+                <!-- Custom chart legend items inserted by plugin -->
+              </ul>
+            </div>
           </div>
 
           <!-- Chart Section -->

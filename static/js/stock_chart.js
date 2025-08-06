@@ -38,6 +38,7 @@ const Y_OFFSET = 18;
 const BOX_PADDING = 4;
 const LINE_DASH = [5, 5];
 const LINE_WIDTH = 1;
+const LEGEND_CIRCLE_SIZE = 12;
 
 // Font
 const LABEL_FONT_SIZE = 12;
@@ -127,6 +128,7 @@ const hoverPlugin = {
     ctx.setLineDash(LINE_DASH);
     ctx.lineWidth = LINE_WIDTH;
     ctx.font = `${LABEL_FONT_SIZE}px ${LABEL_FONT_STYLE}`;
+    ctx.textBaseline = "middle";
 
     if (tooltip._active && tooltip._active.length) {
       const active = tooltip._active[0];
@@ -236,6 +238,67 @@ const hoverPlugin = {
     }
 
     ctx.restore();
+  },
+};
+
+const htmlLegendPlugin = {
+  id: "htmlLegend",
+  afterUpdate(chart, args, options) {
+    const ul = document.getElementById(options.containerID);
+
+    // Clear previous legend
+    ul.innerHTML = "";
+
+    const items = chart.options.plugins.legend.labels.generateLabels(chart);
+
+    // Only include EMA datasets
+    const allowedLabels = [EMA_30_LABEL, EMA_50_LABEL, EMA_200_LABEL];
+    const filteredItems = items.filter((item) =>
+      allowedLabels.includes(item.text)
+    );
+
+    filteredItems.forEach((item) => {
+      const li = document.createElement("li");
+      li.classList.add(
+        "d-flex",
+        "align-items-center",
+        "gap-2",
+        "cursor-pointer"
+      );
+
+      // Click to toggle dataset visibility
+      li.onclick = () => {
+        const { type } = chart.config;
+        if (type === "pie" || type === "doughnut") {
+          // Pie and doughnut charts only have a single dataset and visibility is per item
+          chart.toggleDataVisibility(item.index);
+        } else {
+          chart.setDatasetVisibility(
+            item.datasetIndex,
+            !chart.isDatasetVisible(item.datasetIndex)
+          );
+        }
+        chart.update();
+      };
+
+      const colorBox = document.createElement("span");
+      colorBox.classList.add(
+        "d-inline-block",
+        "rounded-circle",
+        "flex-shrink-0"
+      );
+      colorBox.style.backgroundColor = item.strokeStyle;
+      colorBox.style.width = `${LEGEND_CIRCLE_SIZE}px`;
+      colorBox.style.height = `${LEGEND_CIRCLE_SIZE}px`;
+
+      const label = document.createElement("span");
+      label.textContent = item.text;
+      label.style.textDecoration = item.hidden ? "line-through" : "";
+
+      li.appendChild(colorBox);
+      li.appendChild(label);
+      ul.appendChild(li);
+    });
   },
 };
 
@@ -381,14 +444,10 @@ function createStockChart() {
           },
         },
         legend: {
-          position: "top",
-          align: "end",
-          labels: {
-            filter: (legendItem) =>
-              legendItem.text === EMA_30_LABEL ||
-              legendItem.text === EMA_50_LABEL ||
-              legendItem.text === EMA_200_LABEL,
-          },
+          display: false,
+        },
+        htmlLegend: {
+          containerID: "chart-legend",
         },
         zoom: {
           pan: {
@@ -442,7 +501,7 @@ function createStockChart() {
         },
       },
     },
-    plugins: [hoverPlugin],
+    plugins: [hoverPlugin, htmlLegendPlugin],
   });
 
   const canvas = newStockChart.canvas;
