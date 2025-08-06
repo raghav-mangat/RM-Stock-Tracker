@@ -122,6 +122,7 @@ def show_stock(ticker):
         "show_stock.html",
         stock=stock_data.get("stock"),
         rel_companies=stock_data.get("rel_companies"),
+        last_updated=stock_data.get("last_updated"),
         timeframe_options=timeframe_options,
         initial_timeframe=initial_timeframe,
         initial_chart_data=initial_chart_data,

@@ -2,6 +2,8 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy import String, Text, ForeignKey, Date, DateTime, UniqueConstraint
 from sqlalchemy import Index as DBIndex
+from datetime import datetime, date
+from utils.datetime_utils import DATE_FORMAT
 
 # Create a base class for SQLAlchemy
 class Base(DeclarativeBase):
@@ -71,6 +73,20 @@ class Stock(db.Model):
     __table_args__ = (
         DBIndex("ix_stock_ticker", "ticker"),
     )
+
+    # Returns a dict of all the stock attributes and their respective values
+    def to_dict(self):
+        def serialize(val):
+            if isinstance(val, (datetime, date)):
+                return val.strftime(DATE_FORMAT)
+            return val
+
+        stock_dict =  {
+            column.name: serialize(getattr(self, column.name))
+            for column in self.__table__.columns
+        }
+
+        return stock_dict
 
 class Index(db.Model):
     __tablename__ = "indices"

@@ -1,6 +1,7 @@
 {% from "macros/popovers.html" import dma_200_diff_popover %}
 {% from "macros/jumbotron.html" import jumbotron %}
 {% from "macros/stock_attributes.html" import stock_todays_change, stock_dma_200_perc_diff %}
+{% from "macros/arrow_direction.html" import arrow_direction %}
 
 {% extends "base.html" %}
 
@@ -17,7 +18,7 @@
   <!-- Hero Section -->
   {% set heading = stock.ticker ~ " - " ~ (stock.name | display) %}
   {% set description = "See full details about the selected stock, including daily and historical performance, volume, market cap, moving averages,  today's price change, and much more. You can also check related companies in the same sector." %}
-  {% set last_updated = stock.last_updated | format_et_datetime | display %}
+  {% set last_updated = last_updated | format_et_datetime | display %}
   {{ jumbotron(heading, description, last_updated) }}
 
   <!-- Stock Detail Tabs: Summary / Chart / Overview -->
@@ -44,7 +45,114 @@
       <div class="tab-pane fade show active" id="summary" role="tabpanel" aria-labelledby="summary-tab">
         <!-- Stock Summary Section -->
         <section class="container">
-          <p>Summary</p>
+          <!-- Summary Cards: Performance, 200-DMA, Related Companies -->
+          <div class="row g-4 mb-4">
+            <!-- Performance Summary Card -->
+            <div class="col-md-4">
+              <div class="card h-100 shadow-sm text-white" style="background-color: {{ stock.todays_change | stock_change_color }};">
+                <div class="card-body text-center">
+                  <h5 class="card-title border-bottom border-white pb-1">
+                    Performance
+                  </h5>
+
+                  <div class="mb-2">
+                    <span class="fw-semibold">Day Close:</span>
+                    <span class="fw-bold">{{ stock.day_close | currency }}</span>
+                  </div>
+
+                  <div class="mb-2">
+                    <span class="fw-semibold">Today's Change:</span>
+                    {% if (stock.todays_change is not none) and (stock.todays_change_perc is not none) %}
+                        <span class="fw-bold">
+                            {{ arrow_direction(stock.todays_change) }}
+                            {{ stock.todays_change_perc | abs | percent }} ({{ stock.todays_change | abs | float }})
+                        </span>
+                    {% else %}
+                        <span class="fw-bold">N/A</span>
+                    {% endif %}
+                  </div>
+
+                  <div>
+                    <span class="fw-semibold">Volume:</span>
+                    <span class="fw-bold">{{ stock.volume | int }} ({{ stock.volume | humanize_number(decimals=2) }})</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- DMA-200 Summary Card -->
+            <div class="col-md-4">
+              <div class="card h-100 shadow-sm text-dark" style="background-color: {{ stock.dma_200_perc_diff | dma_200_perc_diff_color }};">
+                <div class="card-body text-center">
+                  <h5 class="card-title border-bottom border-dark pb-1">200-Day Moving Average {{ dma_200_diff_popover() }}</h5>
+
+                  <div class="mb-2">
+                    <span class="fw-semibold">200 DMA:</span>
+                    <span class="fw-bold">{{ stock.dma_200 | currency }}</span>
+                  </div>
+
+                  <div>
+                    <span class="fw-semibold">200 DMA % Diff:</span>
+                    <span class="fw-bold">{{ stock.dma_200_perc_diff | percent }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Related Companies Card -->
+            <div class="col-md-4">
+              <div class="card h-100 shadow-sm text-dark bg-light">
+                <div class="card-body text-center">
+                  <h5 class="card-title border-bottom border-dark pb-1">Related Companies</h5>
+
+                  {% if rel_companies %}
+                    <div class="d-flex flex-wrap gap-2">
+                      {% for ticker in rel_companies %}
+                        <a href="{{ url_for('show_stock', ticker=ticker) }}" class="fw-semibold text-primary">
+                          {{ ticker }}
+                        </a>
+                      {% endfor %}
+                    </div>
+                  {% else %}
+                    <span>N/A</span>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Summary Charts Row -->
+          <div class="row g-3">
+            <!-- OHLC Chart -->
+            <div class="col-lg-4 col-md-6">
+              <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                  <h5 class="card-title text-center">Day Price Range</h5>
+                  <canvas id="ohlcChart" height="150"></canvas>
+                </div>
+              </div>
+            </div>
+
+            <!-- 52-Week Range Chart -->
+            <div class="col-lg-4 col-md-6">
+              <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                  <h5 class="card-title text-center">52-Week Range vs Close</h5>
+                  <canvas id="range52wChart" height="150"></canvas>
+                </div>
+              </div>
+            </div>
+
+            <!-- DMA Comparison Chart -->
+            <div class="col-lg-4 col-md-12">
+              <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                  <h5 class="card-title text-center">DMA Comparison vs Close</h5>
+                  <canvas id="dmaChart" height="150"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
         </section>
       </div>
 
@@ -218,6 +326,9 @@
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
 
   <script>
+    // Passing the stock data to JS script
+    const stockData = {{ stock | tojson }}
+
     // Initial chart to show on page load
     const initialChartData = {{ initial_chart_data | tojson }};
     const initialTimeframe = "{{ initial_timeframe }}";
@@ -228,5 +339,6 @@
     const negativeColor = "{{ -1 | stock_change_color }}";
   </script>
 
+  <script src="{{ url_for('static', filename='js/stock_summary.js') }}" type="text/javascript"></script>
   <script src="{{ url_for('static', filename='js/stock_chart.js') }}" type="text/javascript"></script>
 {% endblock %}

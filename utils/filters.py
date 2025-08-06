@@ -51,6 +51,8 @@ def humanize_number(num, fallback="N/A", decimals=1):
             result = f"{num/1_000_000:.{decimals}f}M"
         elif num >= 1_000:
             result = f"{num/1_000:.{decimals}f}K"
+        else:
+            result = f"{num:.{decimals}f}"
     else:
         result = fallback
     return result

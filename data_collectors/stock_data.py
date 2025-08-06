@@ -21,11 +21,11 @@ STOCK_MASTER_ATTRIBUTES = [
 # List of all attributes that we store in the database for a given stock.
 # Must be the same as all the fields in the Stock table in the database.
 STOCK_ATTRIBUTES = [
-            "name", "description", "homepage_url", "list_date", "industry", "type",
-            "total_employees", "market_cap", "icon_url", "day_close", "day_open",
-            "day_high", "day_low", "volume", "todays_change", "todays_change_perc",
+            "ticker", "name", "description", "homepage_url", "list_date", "industry", "type",
+            "total_employees", "market_cap", "icon_url", "last_updated", "day_close", "day_open",
+            "day_high", "day_low", "volume", "todays_change", "todays_change_perc", "dma_30",
             "dma_50", "dma_200", "dma_200_perc_diff", "high_52w", "low_52w",
-            "related_companies", "last_updated"
+            "related_companies"
         ]
 
 TIMEFRAME_OPTIONS = {

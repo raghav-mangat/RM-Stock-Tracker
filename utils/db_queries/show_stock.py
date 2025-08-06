@@ -21,8 +21,9 @@ def get_stock_data(ticker):
         rel_companies = stock.related_companies.split(',')
 
     result = {
-        "stock": stock,
-        "rel_companies": rel_companies
+        "stock": stock.to_dict(),
+        "rel_companies": rel_companies,
+        "last_updated": stock.last_updated
     }
     return result
 
