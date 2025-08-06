@@ -4,13 +4,6 @@
     aspect-ratio: 16 / 9;
 }
 
-/* On small screens */
-@media screen and (max-width: 768px) {
-    #tf-btn-toolbar {
-        margin-bottom: 25px;
-    }
-}
-
 #chart-loading-spinner {
     z-index: 10;
 }

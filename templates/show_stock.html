@@ -20,132 +20,170 @@
   {% set last_updated = stock.last_updated | format_et_datetime | display %}
   {{ jumbotron(heading, description, last_updated) }}
 
-  <!-- Stock Overview -->
-  <section class="container mb-5">
-    <div class="row">
-      <!-- Company Description -->
-      <div class="col-lg-4 mb-4 text-center">
-        <span class="fs-4 fw-semibold">{{ stock.name | display }}</span>
-        <p class="text-muted mt-1">{{ stock.description | display }}</p>
-      </div>
-
-      <!-- Data Table -->
-      <div class="col-lg-8">
-        <div class="table-responsive">
-          <table class="table table-bordered table-hover align-middle">
-            <tbody>
-              <tr><th>Ticker Symbol</th><td>{{ stock.ticker | display }}</td></tr>
-              <tr><th>Company Name</th><td>{{ stock.name | display }}</td></tr>
-              <tr>
-                <th>Homepage</th>
-                <td>
-                  {% if stock.homepage_url %}
-                    <a href="{{ stock.homepage_url }}" target="_blank" class="fw-semibold text-primary">
-                      {{ stock.homepage_url }}
-                    </a>
-                  {% else %}
-                    <span>N/A</span>
-                  {% endif %}
-                </td>
-              </tr>
-              <tr><th>Industry</th><td>{{ stock.industry | display }}</td></tr>
-              <tr><th>List Date</th><td>{{ stock.list_date | display }}</td></tr>
-              <tr><th>Type</th><td>{{ stock.type | display }}</td></tr>
-              <tr><th>Total Employees</th><td>{{ stock.total_employees | int }}</td></tr>
-              <tr>
-                <th>Market Cap</th>
-                <td>
-                  {{ stock.market_cap | currency }}
-                  {% if stock.market_cap is not none and stock.market_cap >= 1000 %}
-                    ({{ stock.market_cap | humanize_number(decimals=2) }})
-                  {% endif %}
-                </td>
-              </tr>
-              <tr><th>Day Open</th><td>{{ stock.day_open | currency }}</td></tr>
-              <tr><th>Day High</th><td>{{ stock.day_high | currency }}</td></tr>
-              <tr><th>Day Low</th><td>{{ stock.day_low | currency }}</td></tr>
-              <tr><th>Day Close</th><td class="fw-semibold bg-info-subtle">{{ stock.day_close | currency }}</td></tr>
-              <tr>
-                <th>Volume</th>
-                <td>
-                  {{ stock.volume | int }}
-                  {% if stock.volume is not none and stock.volume >= 1000 %}
-                      ({{ stock.volume | humanize_number(decimals=2) }})
-                  {% endif %}
-                </td>
-              </tr>
-              <tr>
-                <th>Today's Change</th>
-                <td>
-                  {{ stock_todays_change(stock) }}
-                </td>
-              </tr>
-              <tr><th>200 DMA</th><td>{{ stock.dma_200 | currency }}</td></tr>
-              <tr>
-                <th>200 DMA % Diff {{ dma_200_diff_popover() }}</th>
-                {{ stock_dma_200_perc_diff(stock) }}
-              </tr>
-              <tr><th>50 DMA</th><td>{{ stock.dma_50 | currency }}</td></tr>
-              <tr><th>52W High</th><td>{{ stock.high_52w | currency }}</td></tr>
-              <tr><th>52W Low</th><td>{{ stock.low_52w | currency }}</td></tr>
-              <tr>
-                <th>Related Companies</th>
-                <td>
-                  {% if rel_companies %}
-                    {% for ticker in rel_companies %}
-                      <a href="{{ url_for('show_stock', ticker=ticker) }}" class="fw-semibold text-primary">
-                        {{ ticker }}
-                      </a>{% if not loop.last %}, {% endif %}
-                    {% endfor %}
-                  {% else %}
-                    <span>N/A</span>
-                  {% endif %}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
+  <!-- Stock Detail Tabs: Summary / Chart / Overview -->
+  <section class="mb-5">
+    <!-- Horizontal Nav Tabs -->
+    <div class="container">
+      <ul class="nav nav-tabs mb-4" id="stockTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+          <button class="nav-link active fw-semibold" id="summary-tab" data-bs-toggle="tab" data-bs-target="#summary" type="button" role="tab" aria-controls="summary" aria-selected="true">Summary</button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link fw-semibold" id="chart-tab" data-bs-toggle="tab" data-bs-target="#chart" type="button" role="tab" aria-controls="chart" aria-selected="false">Chart</button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link fw-semibold" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button" role="tab" aria-controls="overview" aria-selected="false">Overview</button>
+        </li>
+      </ul>
     </div>
-  </section>
 
-  <!-- Stock Chart Section -->
-  <section class="container my-5 py-2 border border-dark">
-    <!-- Top Controls: Timeframe Selector + Chart Tooltip Toggle -->
-    <div class="d-flex flex-wrap align-items-center gap-3 mb-2">
-        <div id="tf-btn-toolbar" class="btn-toolbar" role="toolbar" aria-label="Chart time frame selector">
-            <div class="btn-group" role="group" aria-label="Timeframe options">
-                {% for timeframe in timeframe_options %}
+    <!-- Tab Panes -->
+    <div class="tab-content" id="stockTabContent">
+
+      <!-- Summary Tab -->
+      <div class="tab-pane fade show active" id="summary" role="tabpanel" aria-labelledby="summary-tab">
+        <!-- Stock Summary Section -->
+        <section class="container">
+          <p>Summary</p>
+        </section>
+      </div>
+
+      <!-- Chart Tab -->
+      <div class="tab-pane fade" id="chart" role="tabpanel" aria-labelledby="chart-tab">
+        <!-- Stock Chart Section -->
+        <section class="container py-2 border border-dark">
+          <!-- Top Controls: Timeframe Selector + Percentage Change Display + Chart Tooltip Toggle -->
+          <div class="d-flex flex-wrap align-items-center gap-3 mb-2">
+              <div id="tf-btn-toolbar" class="btn-toolbar d-flex flex-nowrap overflow-auto" role="toolbar" aria-label="Chart time frame selector">
+                  <div class="btn-group" role="group" aria-label="Timeframe options">
+                      {% for timeframe in timeframe_options %}
                         <button type="button" class="tf-btn btn btn-outline-secondary"
                                 data-timeframe="{{ timeframe }}">
                             {{ timeframe }}
                         </button>
-                {% endfor %}
+                      {% endfor %}
+                  </div>
+              </div>
+              <span id="tf-change-perc" class="btn fw-semibold text-white border border-dark rounded-0" aria-label="Timeframe percentage change"></span>
+              <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" role="switch" id="tooltip-toggle">
+                  <label class="form-check-label" for="tooltip-toggle">Tooltips</label>
+              </div>
+          </div>
+
+          <!-- Chart Section -->
+          <div id="chart-container" class="position-relative">
+              <canvas id="stock-chart" data-ticker="{{ stock.ticker }}"></canvas>
+              <!-- Chart Loading Spinner Overlay -->
+              {{ loading_spinner("chart-loading-spinner", "Chart Loading...", "absolute") }}
+          </div>
+
+          <!-- Hover Info Section Below Chart -->
+          <div id="hover-info" class="container-fluid mt-2">
+              <div class="row text-center border border-secondary rounded py-2">
+                  <div id="date-value" class="col-6 col-sm-4 col-md-2 fw-semibold d-flex align-items-center"></div>
+                  <div id="close-price-value" class="col-6 col-sm-4 col-md-2 fw-semibold d-flex align-items-center"></div>
+                  <div id="ema-30-value" class="col-6 col-sm-4 col-md-2 fw-semibold d-flex align-items-center"></div>
+                  <div id="ema-50-value" class="col-6 col-sm-4 col-md-2 fw-semibold d-flex align-items-center"></div>
+                  <div id="ema-200-value" class="col-6 col-sm-4 col-md-2 fw-semibold d-flex align-items-center"></div>
+                  <div id="volume-value" class="col-6 col-sm-4 col-md-2 fw-semibold d-flex align-items-center"></div>
+              </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- Overview Tab -->
+      <div class="tab-pane fade" id="overview" role="tabpanel" aria-labelledby="overview-tab">
+        <!-- Stock Overview Section -->
+        <section class="container">
+          <div class="row">
+            <!-- Company Description -->
+            <div class="col-lg-4 mb-4 text-center">
+              <span class="fs-4 fw-semibold">{{ stock.name | display }}</span>
+              <p class="text-muted mt-1">{{ stock.description | display }}</p>
             </div>
-        </div>
-        <div class="form-check form-switch">
-            <input class="form-check-input" type="checkbox" role="switch" id="tooltip-toggle">
-            <label class="form-check-label" for="tooltip-toggle">Tooltips</label>
-        </div>
-    </div>
 
-    <!-- Chart Section -->
-    <div id="chart-container" class="position-relative">
-        <canvas id="stock-chart" data-ticker="{{ stock.ticker }}"></canvas>
-        <!-- Chart Loading Spinner Overlay -->
-        {{ loading_spinner("chart-loading-spinner", "Chart Loading...", "absolute") }}
-    </div>
+            <!-- Data Table -->
+            <div class="col-lg-8">
+              <div class="table-responsive">
+                <table class="table table-bordered table-hover align-middle">
+                  <tbody>
+                    <tr><th>Ticker Symbol</th><td>{{ stock.ticker | display }}</td></tr>
+                    <tr><th>Company Name</th><td>{{ stock.name | display }}</td></tr>
+                    <tr>
+                      <th>Homepage</th>
+                      <td>
+                        {% if stock.homepage_url %}
+                          <a href="{{ stock.homepage_url }}" target="_blank" class="fw-semibold text-primary">
+                            {{ stock.homepage_url }}
+                          </a>
+                        {% else %}
+                          <span>N/A</span>
+                        {% endif %}
+                      </td>
+                    </tr>
+                    <tr><th>Industry</th><td>{{ stock.industry | display }}</td></tr>
+                    <tr><th>List Date</th><td>{{ stock.list_date | display }}</td></tr>
+                    <tr><th>Type</th><td>{{ stock.type | display }}</td></tr>
+                    <tr><th>Total Employees</th><td>{{ stock.total_employees | int }}</td></tr>
+                    <tr>
+                      <th>Market Cap</th>
+                      <td>
+                        {{ stock.market_cap | currency }}
+                        {% if stock.market_cap is not none and stock.market_cap >= 1000 %}
+                          ({{ stock.market_cap | humanize_number(decimals=2) }})
+                        {% endif %}
+                      </td>
+                    </tr>
+                    <tr><th>Day Open</th><td>{{ stock.day_open | currency }}</td></tr>
+                    <tr><th>Day High</th><td>{{ stock.day_high | currency }}</td></tr>
+                    <tr><th>Day Low</th><td>{{ stock.day_low | currency }}</td></tr>
+                    <tr><th>Day Close</th><td class="fw-semibold bg-info-subtle">{{ stock.day_close | currency }}</td></tr>
+                    <tr>
+                      <th>Volume</th>
+                      <td>
+                        {{ stock.volume | int }}
+                        {% if stock.volume is not none and stock.volume >= 1000 %}
+                            ({{ stock.volume | humanize_number(decimals=2) }})
+                        {% endif %}
+                      </td>
+                    </tr>
+                    <tr>
+                      <th>Today's Change</th>
+                      <td>
+                        {{ stock_todays_change(stock) }}
+                      </td>
+                    </tr>
+                    <tr><th>200 DMA</th><td>{{ stock.dma_200 | currency }}</td></tr>
+                    <tr>
+                      <th>200 DMA % Diff {{ dma_200_diff_popover() }}</th>
+                      {{ stock_dma_200_perc_diff(stock) }}
+                    </tr>
+                    <tr><th>50 DMA</th><td>{{ stock.dma_50 | currency }}</td></tr>
+                    <tr><th>52W High</th><td>{{ stock.high_52w | currency }}</td></tr>
+                    <tr><th>52W Low</th><td>{{ stock.low_52w | currency }}</td></tr>
+                    <tr>
+                      <th>Related Companies</th>
+                      <td>
+                        {% if rel_companies %}
+                          {% for ticker in rel_companies %}
+                            <a href="{{ url_for('show_stock', ticker=ticker) }}" class="fw-semibold text-primary">
+                              {{ ticker }}
+                            </a>{% if not loop.last %}, {% endif %}
+                          {% endfor %}
+                        {% else %}
+                          <span>N/A</span>
+                        {% endif %}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
 
-    <!-- Hover Info Section Below Chart -->
-    <div id="hover-info" class="container-fluid mt-2">
-        <div class="row text-center border border-secondary rounded py-2">
-            <div id="date-value" class="col-6 col-sm-4 col-md-2 fw-semibold"></div>
-            <div id="close-price-value" class="col-6 col-sm-4 col-md-2 fw-semibold"></div>
-            <div id="ema-30-value" class="col-6 col-sm-4 col-md-2 fw-semibold"></div>
-            <div id="ema-50-value" class="col-6 col-sm-4 col-md-2 fw-semibold"></div>
-            <div id="ema-200-value" class="col-6 col-sm-4 col-md-2 fw-semibold"></div>
-            <div id="volume-value" class="col-6 col-sm-4 col-md-2 fw-semibold"></div>
-        </div>
     </div>
   </section>
 

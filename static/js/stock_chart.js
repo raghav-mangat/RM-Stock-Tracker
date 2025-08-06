@@ -85,6 +85,7 @@ tooltipToggle.addEventListener("change", function () {
   stockChart.update();
 });
 
+const tfChangePerc = document.getElementById("tf-change-perc");
 const ctx = document.getElementById("stock-chart").getContext("2d");
 
 function updateHoverInfoText(
@@ -267,46 +268,30 @@ function hideChartSpinner() {
   clearTimeout(chartSpinnerTimeout);
 }
 
-function activateTfBtn(button, timeframe, change_perc) {
+function activateTfBtn(button, timeframe) {
   // Deactivate all timeframe buttons
   const timeframeBtns = document.querySelectorAll(".tf-btn");
   timeframeBtns.forEach((tfButton) => {
-    tfButton.removeAttribute("data-bs-toggle");
-    tfButton.removeAttribute("data-bs-placement");
-    tfButton.removeAttribute("data-bs-title");
     tfButton.removeAttribute("aria-label");
     tfButton.removeAttribute("aria-current");
     tfButton.classList.remove("active");
   });
 
   // Active the given timeframe button
-  button.setAttribute("data-bs-toggle", "tooltip");
-  button.setAttribute("data-bs-placement", "bottom");
-  button.setAttribute("data-bs-title", `${change_perc}%`);
-  button.setAttribute("aria-label", `${timeframe}, ${change_perc}% change`);
+  button.setAttribute("aria-label", `${timeframe}`);
   button.setAttribute("aria-current", "true");
   button.classList.add("active");
 }
 
-function activateTfTooltip(button, color) {
-  // Remove any existing tooltips
-  const existingTooltips = document.querySelectorAll(".tooltip");
-  existingTooltips.forEach((tip) => tip.remove());
+function updateTfChangePerc(changePerc) {
+  if (changePerc >= 0) color = positiveColor;
+  else color = negativeColor;
 
-  // To show the active timeframe(tf) tooltip
-  // Create a tf tooltip manually
-  const tfTooltip = new bootstrap.Tooltip(button, {
-    trigger: "manual",
-  });
-  tfTooltip.show();
+  changePerc = changePerc.toFixed(DECIMAL_PRECISION);
+  const formatted = `${changePerc >= 0 ? "+" : ""}${changePerc}%`;
 
-  // After showing, apply color and styling manually
-  const tfTooltipEl = document.querySelector(".tooltip.show .tooltip-inner");
-  if (tfTooltipEl) {
-    tfTooltipEl.style.backgroundColor = color;
-    tfTooltipEl.style.color = TF_TOOLTIP_TEXT_COLOR;
-    tfTooltipEl.classList.add("fw-semibold");
-  }
+  tfChangePerc.textContent = formatted;
+  tfChangePerc.style.backgroundColor = color;
 }
 
 function createStockChart() {
@@ -508,14 +493,8 @@ function resetChart(button, preloadedData = null) {
       volumeData.at(-1)
     );
 
-    activateTfBtn(
-      button,
-      timeframe,
-      data.change_perc.toFixed(DECIMAL_PRECISION)
-    );
-    if (data.change_perc >= 0) color = positiveColor;
-    else color = negativeColor;
-    activateTfTooltip(button, color);
+    activateTfBtn(button, timeframe);
+    updateTfChangePerc(data.change_perc);
   };
 
   if (preloadedData) {
