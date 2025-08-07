@@ -54,7 +54,11 @@ const EMA_50_LABEL = "50-EMA";
 const EMA_200_LABEL = "200-EMA";
 const VOLUME_LABEL = "Volume";
 
+// Defaults Texts
+const EMA_DATA_MISSING_TEXT = "N/A";
+
 let displayTooltip = DISPLAY_TOOLTIP_DEFAULT;
+let emaData = undefined; // Boolean value telling whether to show ema data or not
 
 const dateValue = document.getElementById("date-value");
 const closePriceValue = document.getElementById("close-price-value");
@@ -84,30 +88,38 @@ tooltipToggle.addEventListener("change", function () {
 const tfChangePerc = document.getElementById("tf-change-perc");
 const ctx = document.getElementById("stock-chart").getContext("2d");
 
-function updateHoverInfoText(
-  dateVal,
-  closePriceVal,
-  ema30Val,
-  ema50Val,
-  ema200Val,
-  volumeVal
-) {
+function updateHoverInfoText(index) {
+  const dateVal = dateData.at(index);
+  const closePriceVal = closePriceData
+    .at(index)
+    .toFixed(DECIMAL_PRECISION)
+    .toLocaleString("en-US");
+  const volumeVal = volumeData.at(index).toLocaleString("en-US");
+
+  let ema30Val = EMA_DATA_MISSING_TEXT;
+  let ema50Val = EMA_DATA_MISSING_TEXT;
+  let ema200Val = EMA_DATA_MISSING_TEXT;
+  if (emaData) {
+    ema30Val = ema30Data
+      .at(index)
+      .toFixed(DECIMAL_PRECISION)
+      .toLocaleString("en-US");
+    ema50Val = ema50Data
+      .at(index)
+      .toFixed(DECIMAL_PRECISION)
+      .toLocaleString("en-US");
+    ema200Val = ema200Data
+      .at(index)
+      .toFixed(DECIMAL_PRECISION)
+      .toLocaleString("en-US");
+  }
+
   dateValue.textContent = `${DATE_LABEL}: ${dateVal}`;
-  closePriceValue.textContent = `${CLOSE_PRICE_LABEL}: ${closePriceVal
-    .toFixed(DECIMAL_PRECISION)
-    .toLocaleString("en-US")}`;
-  ema30Value.textContent = `${EMA_30_LABEL}: ${ema30Val
-    .toFixed(DECIMAL_PRECISION)
-    .toLocaleString("en-US")}`;
-  ema50Value.textContent = `${EMA_50_LABEL}: ${ema50Val
-    .toFixed(DECIMAL_PRECISION)
-    .toLocaleString("en-US")}`;
-  ema200Value.textContent = `${EMA_200_LABEL}: ${ema200Val
-    .toFixed(DECIMAL_PRECISION)
-    .toLocaleString("en-US")}`;
-  volumeValue.textContent = `${VOLUME_LABEL}: ${volumeVal.toLocaleString(
-    "en-US"
-  )}`;
+  closePriceValue.textContent = `${CLOSE_PRICE_LABEL}: ${closePriceVal}`;
+  volumeValue.textContent = `${VOLUME_LABEL}: ${volumeVal}`;
+  ema30Value.textContent = `${EMA_30_LABEL}: ${ema30Val}`;
+  ema50Value.textContent = `${EMA_50_LABEL}: ${ema50Val}`;
+  ema200Value.textContent = `${EMA_200_LABEL}: ${ema200Val}`;
 }
 
 // Hover Plugin:
@@ -145,20 +157,20 @@ const hoverPlugin = {
       ctx.stroke();
 
       // Update HTML hover info
+      updateHoverInfoText(hoveredIndex);
+
+      // Get the dataset values at the hovered index
       const dateVal = dateData[hoveredIndex];
-      const closePriceVal = closePriceData[hoveredIndex];
-      const ema30val = ema30Data[hoveredIndex];
-      const ema50val = ema50Data[hoveredIndex];
-      const ema200Val = ema200Data[hoveredIndex];
-      const volumeVal = volumeData[hoveredIndex];
-      updateHoverInfoText(
-        dateVal,
-        closePriceVal,
-        ema30val,
-        ema50val,
-        ema200Val,
-        volumeVal
-      );
+      const closePriceVal =
+        closePriceData[hoveredIndex].toFixed(DECIMAL_PRECISION);
+      let ema30Val = undefined;
+      let ema50Val = undefined;
+      let ema200Val = undefined;
+      if (emaData) {
+        ema30Val = ema30Data[hoveredIndex].toFixed(DECIMAL_PRECISION);
+        ema50Val = ema50Data[hoveredIndex].toFixed(DECIMAL_PRECISION);
+        ema200Val = ema200Data[hoveredIndex].toFixed(DECIMAL_PRECISION);
+      }
 
       // Draw X-axis date under vertical dashed line
       const text = dateVal.toString();
@@ -178,38 +190,46 @@ const hoverPlugin = {
       ctx.fillText(text, x, chartArea.bottom + Y_OFFSET);
 
       // Get y positions for close-price, 30-EMA, 50-EMA, and 200-EMA at hovered index
-      const y200 = chart.scales.y.getPixelForValue(ema200Val);
-      const y50 = chart.scales.y.getPixelForValue(ema50val);
-      const y30 = chart.scales.y.getPixelForValue(ema30val);
       const yClose = y;
+      let y30 = undefined;
+      let y50 = undefined;
+      let y200 = undefined;
+
+      if (emaData) {
+        y30 = chart.scales.y.getPixelForValue(ema30Val);
+        y50 = chart.scales.y.getPixelForValue(ema50Val);
+        y200 = chart.scales.y.getPixelForValue(ema200Val);
+      }
 
       // Each item: { y position, value, color, dataset index }
       const values = [
         {
-          y: y200,
-          value: ema200Val.toFixed(DECIMAL_PRECISION),
-          color: EMA_200_COLOR,
-          index: 2,
-        },
-        {
-          y: y50,
-          value: ema50val.toFixed(DECIMAL_PRECISION),
-          color: EMA_50_COLOR,
-          index: 1,
-        },
-        {
-          y: y30,
-          value: ema30val.toFixed(DECIMAL_PRECISION),
-          color: EMA_30_COLOR,
-          index: 1,
-        },
-        {
           y: yClose,
-          value: closePriceVal.toFixed(DECIMAL_PRECISION),
+          value: closePriceVal,
           color: CLOSE_PRICE_COLOR,
           index: 0,
         },
       ];
+      if (emaData) {
+        values.unshift({
+          y: y30,
+          value: ema30Val,
+          color: EMA_30_COLOR,
+          index: 1,
+        });
+        values.unshift({
+          y: y50,
+          value: ema50Val,
+          color: EMA_50_COLOR,
+          index: 2,
+        });
+        values.unshift({
+          y: y200,
+          value: ema200Val,
+          color: EMA_200_COLOR,
+          index: 3,
+        });
+      }
 
       values.forEach(({ y, value, color, index }) => {
         if (chart.isDatasetVisible(index)) {
@@ -524,12 +544,15 @@ function resetChart(button, preloadedData = null) {
     ema200Data.length = 0;
     volumeData.length = 0;
 
+    emaData = data.ema_data;
     dateData.push(...data.date_data);
     closePriceData.push(...data.close_price_data);
-    ema30Data.push(...data.ema_30_data);
-    ema50Data.push(...data.ema_50_data);
-    ema200Data.push(...data.ema_200_data);
     volumeData.push(...data.volume_data);
+    if (emaData) {
+      ema30Data.push(...data.ema_30_data);
+      ema50Data.push(...data.ema_50_data);
+      ema200Data.push(...data.ema_200_data);
+    }
 
     // Destroy the old chart if it exists
     if (stockChart) {
@@ -539,15 +562,11 @@ function resetChart(button, preloadedData = null) {
     if (dateData.length != 0 && closePriceData.length != 0) {
       stockChart = createStockChart();
 
-      updateHoverInfoText(
-        dateData.at(-1),
-        closePriceData.at(-1),
-        ema30Data.at(-1),
-        ema50Data.at(-1),
-        ema200Data.at(-1),
-        volumeData.at(-1)
-      );
+      // Update the hover info text with the most recent values
+      // from the datasets as the initial values
+      updateHoverInfoText(-1);
     }
+
     activateTfBtn(button, timeframe);
     updateTfChangePerc(data.change_perc);
   };

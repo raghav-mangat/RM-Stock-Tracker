@@ -45,6 +45,7 @@ def get_chart_data(ticker, timeframe):
         stock_id = -1
         chart_data = fetch_chart_data(stock_id, ticker, timeframe)
 
+    ema_data = timeframe_data.get("ema_data")
     date_format = timeframe_data["date_format"]
     date_data = []
     close_price_data = []
@@ -55,10 +56,11 @@ def get_chart_data(ticker, timeframe):
     for data in chart_data:
         date_data.append(data.date.strftime(date_format))
         close_price_data.append(data.close_price)
-        ema_30_data.append(data.ema_30)
-        ema_50_data.append(data.ema_50)
-        ema_200_data.append(data.ema_200)
         volume_data.append(data.volume)
+        if ema_data:
+            ema_30_data.append(data.ema_30)
+            ema_50_data.append(data.ema_50)
+            ema_200_data.append(data.ema_200)
 
     change_perc = 0
     if len(close_price_data) > 1:
@@ -67,11 +69,12 @@ def get_chart_data(ticker, timeframe):
     result = {
         "date_data": date_data,
         "close_price_data": close_price_data,
+        "volume_data": volume_data,
         "ema_30_data": ema_30_data,
         "ema_50_data": ema_50_data,
         "ema_200_data": ema_200_data,
-        "volume_data": volume_data,
-        "change_perc": change_perc
+        "change_perc": change_perc,
+        "ema_data": ema_data,
     }
     return result
 

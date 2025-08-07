@@ -68,6 +68,9 @@ class Stock(db.Model):
     day_data: Mapped[list["StockDay"]] = relationship(
         back_populates="stock", cascade="all, delete-orphan"
     )
+    week_data: Mapped[list["StockWeek"]] = relationship(
+        back_populates="stock", cascade="all, delete-orphan"
+    )
 
     # Adding Index for faster performance
     __table_args__ = (
@@ -200,4 +203,21 @@ class StockDay(db.Model):
         UniqueConstraint("stock_id", "date", name="uq_stockday_stockid_date"),
         # Adding Index for faster performance
         DBIndex("ix_stockday_stockid_date", "stock_id", "date"),
+    )
+
+class StockWeek(db.Model):
+    __tablename__ = "stock_week_data"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    stock_id: Mapped[int] = mapped_column(ForeignKey("stocks.id", ondelete="CASCADE"), nullable=False)
+    date: Mapped[DateTime] = db.Column(db.DateTime(timezone=True), nullable=False)
+    close_price: Mapped[float] = mapped_column(nullable=True)
+    volume: Mapped[int] = mapped_column(nullable=True)
+
+    stock: Mapped["Stock"] = relationship(back_populates="week_data")
+
+    __table_args__ = (
+        UniqueConstraint("stock_id", "date", name="uq_stockweek_stockid_date"),
+        # Adding Index for faster performance
+        DBIndex("ix_stockweek_stockid_date", "stock_id", "date"),
     )

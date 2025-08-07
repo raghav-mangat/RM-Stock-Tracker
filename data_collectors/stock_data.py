@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 from polygon import RESTClient
 from dotenv import load_dotenv
 import os
-from models.database import Stock, StockMaster, StockMinute, StockHour, StockDay
+from models.database import Stock, StockMaster, StockMinute, StockHour, StockDay, StockWeek
 from utils.datetime_utils import polygon_timestamp_et, format_date, DATE_FORMAT, DATETIME_FORMAT
 from utils.populate_db_info import db_last_updated_date
 
@@ -32,47 +32,68 @@ TIMEFRAME_OPTIONS = {
     "1D": {
         "timespan": "minute",
         "before": lambda now: now,
-        "date_format": DATETIME_FORMAT
+        "date_format": DATETIME_FORMAT,
+        "ema_data": True,
     },
     "1W": {
         "timespan": "hour",
         "before": lambda now: now - timedelta(days=7),
-        "date_format": DATETIME_FORMAT
+        "date_format": DATETIME_FORMAT,
+        "ema_data": True,
     },
     "1M": {
         "timespan": "day",
         "before": lambda now: now - timedelta(days=30),
-        "date_format": DATE_FORMAT
+        "date_format": DATE_FORMAT,
+        "ema_data": True,
     },
     "3M": {
         "timespan": "day",
-        "before": lambda now: now - timedelta(days=90),
-        "date_format": DATE_FORMAT
+        "before": lambda now: now - timedelta(days=30*3),
+        "date_format": DATE_FORMAT,
+        "ema_data": True,
     },
     "6M": {
         "timespan": "day",
-        "before": lambda now: now - timedelta(days=180),
-        "date_format": DATE_FORMAT
+        "before": lambda now: now - timedelta(days=30*6),
+        "date_format": DATE_FORMAT,
+        "ema_data": True,
     },
     "YTD": {
         "timespan": "day",
         "before": lambda now: datetime(now.year, 1, 1),
-        "date_format": DATE_FORMAT
+        "date_format": DATE_FORMAT,
+        "ema_data": True,
     },
     "1Y": {
         "timespan": "day",
         "before": lambda now: now - timedelta(days=365),
-        "date_format": DATE_FORMAT
-    }
+        "date_format": DATE_FORMAT,
+        "ema_data": True,
+    },
+    "3Y": {
+        "timespan": "week",
+        "before": lambda now: now - timedelta(days=365*3),
+        "date_format": DATE_FORMAT,
+        "ema_data": False,
+    },
+    "5Y": {
+        "timespan": "week",
+        "before": lambda now: now - timedelta(days=365*5),
+        "date_format": DATE_FORMAT,
+        "ema_data": False,
+    },
 }
 
 SELECT_DB_TABLE = {
     "minute": StockMinute,
     "hour": StockHour,
-    "day": StockDay
+    "day": StockDay,
+    "week": StockWeek,
 }
 
-DB_TIMEFRAMES = ["1D", "1W", "1Y"]
+# Timeframes for which we store the chart data in the database
+DB_TIMEFRAMES = ["1D", "1W", "1Y", "5Y"]
 
 DECIMAL_PRECISION = 2
 
@@ -319,10 +340,12 @@ def fetch_chart_data(stock_id, ticker, timeframe):
     timespan = timeframe_data.get("timespan")
     before = format_date(timeframe_data.get("before")(datetime.strptime(now, DATE_FORMAT)))
     db_table = SELECT_DB_TABLE.get(timespan)
+    ema_data = timeframe_data.get("ema_data")
 
+    common_dates = set()
     close_price_data = {}
     volume_data = {}
-    for day_data in client.list_aggs(
+    for stock_data in client.list_aggs(
         ticker=ticker,
         multiplier=1,
         timespan=timespan,
@@ -332,12 +355,13 @@ def fetch_chart_data(stock_id, ticker, timeframe):
         sort="asc",
         limit=1000,
     ):
-        timestamp = day_data.timestamp
-        close_price_data[timestamp] = round(day_data.close, DECIMAL_PRECISION)
-        volume_data[timestamp] = int(day_data.volume)
+        timestamp = stock_data.timestamp
+        common_dates.add(timestamp)
+        close_price_data[timestamp] = round(stock_data.close, DECIMAL_PRECISION)
+        volume_data[timestamp] = int(stock_data.volume)
 
     def get_ema_data(ema_window):
-        ema_data = {}
+        ema_data_ = {}
         ema = client.get_ema(
             ticker=ticker,
             timestamp_gte=before,
@@ -350,20 +374,23 @@ def fetch_chart_data(stock_id, ticker, timeframe):
         )
         for value in ema.values:
             timestamp_ = value.timestamp
-            ema_data[timestamp_] = round(value.value, DECIMAL_PRECISION)
-        return ema_data
+            ema_data_[timestamp_] = round(value.value, DECIMAL_PRECISION)
+        return ema_data_
 
-    ema_30_data = get_ema_data("30")
-    ema_50_data = get_ema_data("50")
-    ema_200_data = get_ema_data("200")
+    ema_30_data = []
+    ema_50_data = []
+    ema_200_data = []
 
-    close_price_dates = set(close_price_data.keys())
-    ema_30_dates = set(ema_30_data.keys())
-    ema_50_dates = set(ema_50_data.keys())
-    ema_200_dates = set(ema_200_data.keys())
-    volume_dates = set(volume_data.keys())
-    common_dates = close_price_dates.intersection(ema_30_dates).intersection(ema_50_dates).intersection(
-        ema_200_dates).intersection(volume_dates)
+    if ema_data:
+        ema_30_data = get_ema_data("30")
+        ema_50_data = get_ema_data("50")
+        ema_200_data = get_ema_data("200")
+
+        ema_30_dates = set(ema_30_data.keys())
+        ema_50_dates = set(ema_50_data.keys())
+        ema_200_dates = set(ema_200_data.keys())
+        common_dates = common_dates.intersection(ema_30_dates).intersection(ema_50_dates).intersection(
+            ema_200_dates)
 
     dates = list(sorted(common_dates))
     chart_data = []
@@ -372,17 +399,27 @@ def fetch_chart_data(stock_id, ticker, timeframe):
         et_date = polygon_timestamp_et(date, timestamp_type)
 
         close_price = close_price_data[date]
-        ema_30 = ema_30_data[date]
-        ema_50 = ema_50_data[date]
-        ema_200 = ema_200_data[date]
         volume = volume_data[date]
-        chart_data.append(db_table(
-            stock_id=stock_id,
-            date=et_date,
-            close_price=close_price,
-            ema_30=ema_30,
-            ema_50=ema_50,
-            ema_200=ema_200,
-            volume=volume
-        ))
+
+        if ema_data:
+            ema_30 = ema_30_data[date]
+            ema_50 = ema_50_data[date]
+            ema_200 = ema_200_data[date]
+            chart_data.append(db_table(
+                stock_id=stock_id,
+                date=et_date,
+                close_price=close_price,
+                ema_30=ema_30,
+                ema_50=ema_50,
+                ema_200=ema_200,
+                volume=volume
+            ))
+        else:
+            chart_data.append(db_table(
+                stock_id=stock_id,
+                date=et_date,
+                close_price=close_price,
+                volume=volume
+            ))
+
     return chart_data
