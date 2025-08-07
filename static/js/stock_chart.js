@@ -536,17 +536,18 @@ function resetChart(button, preloadedData = null) {
       stockChart.destroy();
     }
 
-    stockChart = createStockChart();
+    if (dateData.length != 0 && closePriceData.length != 0) {
+      stockChart = createStockChart();
 
-    updateHoverInfoText(
-      dateData.at(-1),
-      closePriceData.at(-1),
-      ema30Data.at(-1),
-      ema50Data.at(-1),
-      ema200Data.at(-1),
-      volumeData.at(-1)
-    );
-
+      updateHoverInfoText(
+        dateData.at(-1),
+        closePriceData.at(-1),
+        ema30Data.at(-1),
+        ema50Data.at(-1),
+        ema200Data.at(-1),
+        volumeData.at(-1)
+      );
+    }
     activateTfBtn(button, timeframe);
     updateTfChangePerc(data.change_perc);
   };

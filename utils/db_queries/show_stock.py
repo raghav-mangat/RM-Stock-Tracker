@@ -59,7 +59,11 @@ def get_chart_data(ticker, timeframe):
         ema_50_data.append(data.ema_50)
         ema_200_data.append(data.ema_200)
         volume_data.append(data.volume)
-    change_perc = round(((close_price_data[-1] - close_price_data[0]) * 100 / close_price_data[0]), 2)
+
+    change_perc = 0
+    if len(close_price_data) > 1:
+        change_perc = round(((close_price_data[-1] - close_price_data[0]) * 100 / close_price_data[0]), 2)
+
     result = {
         "date_data": date_data,
         "close_price_data": close_price_data,

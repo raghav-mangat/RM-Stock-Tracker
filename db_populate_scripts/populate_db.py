@@ -166,7 +166,9 @@ def populate_db():
                 for stock in attribute_stocks:
                     ticker = stock.ticker
                     if ticker not in tickers_updated:
-                        add_to_stocks_table(ticker)
+                        stock_id = add_to_stocks_table(ticker)
+                        if stock_id:
+                            store_chart_data(stock_id, ticker)
         db.session.commit()
         print(f"Stored data for top stocks!")
 
