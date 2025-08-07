@@ -116,7 +116,7 @@ def show_stock(ticker):
 
     timeframe_options = get_timeframe_options()
     initial_timeframe = timeframe_options[0]
-    initial_chart_data = get_chart_data(ticker, initial_timeframe)
+    initial_stock_chart_data = get_chart_data(ticker, initial_timeframe)
 
     return render_template(
         "show_stock.html",
@@ -125,7 +125,7 @@ def show_stock(ticker):
         last_updated=stock_data.get("last_updated"),
         timeframe_options=timeframe_options,
         initial_timeframe=initial_timeframe,
-        initial_chart_data=initial_chart_data,
+        initial_stock_chart_data=initial_stock_chart_data,
     )
 
 @app.route("/chart-data")

@@ -11,10 +11,6 @@ let stockChart;
 
 // Colors
 const DATE_COLOR = "rgba(100, 100, 100, 1)";
-const CLOSE_PRICE_COLOR = "rgba(54, 220, 235, 1)";
-const EMA_30_COLOR = "rgba(0, 251, 25, 1)";
-const EMA_50_COLOR = "rgba(251, 188, 0, 1)";
-const EMA_200_COLOR = "rgba(255, 0, 0, 1)";
 const VOLUME_COLOR = "rgba(78, 140, 255, 0.75)";
 const FILL_COLOR = "rgba(255, 255, 255, 1)";
 const STROKE_STYLE = "rgba(0,0,0,0.4)";
@@ -24,7 +20,6 @@ const TF_TOOLTIP_TEXT_COLOR = "white";
 // Limits
 const MAX_X_TICKS = 12;
 const ZOOM_MIN_RANGE = 5; // minimum number of values to show when zoomed in
-const DECIMAL_PRECISION = 2;
 const DISPLAY_TOOLTIP_DEFAULT = false; // OFF by default
 const CHART_SPINNER_DELAY = 200; // in ms
 
@@ -347,8 +342,8 @@ function activateTfBtn(button, timeframe) {
 }
 
 function updateTfChangePerc(changePerc) {
-  if (changePerc >= 0) color = positiveColor;
-  else color = negativeColor;
+  if (changePerc >= 0) color = POSITIVE_COLOR;
+  else color = NEGATIVE_COLOR;
 
   changePerc = changePerc.toFixed(DECIMAL_PRECISION);
   const formatted = `${changePerc >= 0 ? "+" : ""}${changePerc}%`;
@@ -577,7 +572,7 @@ function resetChart(button, preloadedData = null) {
 const ticker = document.getElementById("stock-chart").dataset.ticker;
 resetChart(
   document.querySelector(`.tf-btn[data-timeframe="${initialTimeframe}"]`),
-  initialChartData
+  initialStockChartData
 );
 
 const timeframeBtns = document.querySelectorAll(".tf-btn");
