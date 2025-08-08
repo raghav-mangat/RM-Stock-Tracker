@@ -6,23 +6,32 @@ from models.database import db, StockMaster, Stock, Index, IndexHolding
 NUM_TOP_STOCKS = 50
 
 def get_ticker_tape_stocks():
-    # Get all stocks in S&P 500 Index in descending order of weight
-    sp500_stocks = db.session.query(
+    # Get all stocks in Nasdaq 100 Index in descending order of weight
+    nasdaq100_stocks = (db.session.query(
         Stock.ticker,
         Stock.volume,
         Stock.day_close,
         Stock.todays_change,
     ).select_from(IndexHolding).join(
         Stock, IndexHolding.stock_id == Stock.id
-    ).order_by(IndexHolding.weight.desc()).all()
+    ).join(
+        Index, IndexHolding.index_id == Index.id
+    ).filter(
+        Index.slug == "nasdaq100"
+    ).order_by(IndexHolding.weight.desc()).all())
 
     # Get all stocks from StockMaster Table
-    all_stocks_data = StockMaster.query.all()
+    all_stocks_data = (db.session.query(
+        StockMaster.ticker,
+        StockMaster.volume,
+        StockMaster.day_close,
+        StockMaster.todays_change,
+    ).all())
 
-    # Get top 10 stocks in sp500
-    ticker_tape_stocks = sp500_stocks[:10]
-    # Add 20 random stocks from remaining stocks in sp500
-    ticker_tape_stocks.extend(random.sample(sp500_stocks[10:], 20))
+    # Get top 10 stocks in nasdaq100
+    ticker_tape_stocks = nasdaq100_stocks[:10]
+    # Add 20 random stocks from remaining stocks in nasdaq100
+    ticker_tape_stocks.extend(random.sample(nasdaq100_stocks[10:], 20))
     # Add 20 random stocks from all stocks in StockMaster Table
     ticker_tape_stocks.extend(random.sample(all_stocks_data, 20))
     # Shuffle the selected 50 ticker tape stocks
@@ -52,14 +61,14 @@ def get_top_stocks():
     )
     # Top Gainers
     gainers = all_stocks_data.filter(
-        StockMaster.todays_change > 0
+        StockMaster.todays_change_perc > 0
     ).order_by(
         StockMaster.todays_change_perc.desc()
     ).limit(NUM_TOP_STOCKS).all()
 
     # Top Losers
     losers = all_stocks_data.filter(
-        StockMaster.todays_change < 0
+        StockMaster.todays_change_perc < 0
     ).order_by(
         StockMaster.todays_change_perc.asc()
     ).limit(NUM_TOP_STOCKS).all()
@@ -95,14 +104,14 @@ def get_top_stocks():
 
         # Top Gainers
         gainers = index_holdings.filter(
-            Stock.todays_change > 0
+            Stock.todays_change_perc > 0
         ).order_by(
             Stock.todays_change_perc.desc()
         ).limit(NUM_TOP_STOCKS).all()
 
         # Top Losers
         losers = index_holdings.filter(
-            Stock.todays_change < 0
+            Stock.todays_change_perc < 0
         ).order_by(
             Stock.todays_change_perc.asc()
         ).limit(NUM_TOP_STOCKS).all()
@@ -121,7 +130,7 @@ def add_to_top_stocks(top_stocks, key, name, gainers, losers, top_traded):
     """
     top_stocks[key] = {
         "name": name,
-        "attributes": {
+        "category": {
             "gainers": gainers,
             "losers": losers,
             "top_traded": top_traded

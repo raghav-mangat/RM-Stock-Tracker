@@ -91,6 +91,7 @@ class Stock(db.Model):
 
         return stock_dict
 
+
 class Index(db.Model):
     __tablename__ = "indices"
 
@@ -113,6 +114,11 @@ class IndexHolding(db.Model):
 
     index: Mapped[Index] = relationship(back_populates="holdings")
     stock: Mapped[Stock] = relationship(back_populates="index_holdings")
+
+    # Adding Index for faster performance
+    __table_args__ = (
+        DBIndex("ix_indexholding_indexid_stockid", "index_id", "stock_id"),
+    )
 
 
 class StockMaster(db.Model):
@@ -204,6 +210,7 @@ class StockDay(db.Model):
         # Adding Index for faster performance
         DBIndex("ix_stockday_stockid_date", "stock_id", "date"),
     )
+
 
 class StockWeek(db.Model):
     __tablename__ = "stock_week_data"

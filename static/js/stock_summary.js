@@ -117,18 +117,18 @@ const ohlcChart = createSummaryChart(
 );
 
 const dmaChartCtx = document.getElementById("dma-chart").getContext("2d");
-const dmaChartLabels = ["30-DMA", "50-DMA", "200-DMA", "Day Close"];
+const dmaChartLabels = ["Day Close", "30-DMA", "50-DMA", "200-DMA"];
 const dmaChartData = [
+  stockData.day_close,
   stockData.dma_30,
   stockData.dma_50,
   stockData.dma_200,
-  stockData.day_close,
 ];
 const dmaChartBackgroundColors = [
+  CLOSE_PRICE_COLOR,
   EMA_30_COLOR,
   EMA_50_COLOR,
   EMA_200_COLOR,
-  CLOSE_PRICE_COLOR,
 ];
 const dmaChart = createSummaryChart(
   dmaChartCtx,

@@ -8,6 +8,10 @@
     z-index: 10;
 }
 
+#stock-chart-missing-data {
+    z-index: 5;
+}
+
 .summary-chart-container {
     height: 300px;
 }

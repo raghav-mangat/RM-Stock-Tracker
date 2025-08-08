@@ -189,11 +189,17 @@
             </div>
           </div>
 
-          <!-- Chart Section -->
+          <!-- Stock Chart -->
           <div id="stock-chart-container" class="position-relative">
-              <canvas id="stock-chart" data-ticker="{{ stock.ticker }}"></canvas>
-              <!-- Chart Loading Spinner Overlay -->
-              {{ loading_spinner("stock-chart-loading-spinner", "Chart Loading...", "absolute") }}
+            <!-- Chart Canvas -->
+            <canvas id="stock-chart" data-ticker="{{ stock.ticker }}"></canvas>
+            <!-- Chart Loading Spinner Overlay -->
+            {{ loading_spinner("stock-chart-loading-spinner", "Chart Loading...", "absolute") }}
+            <!-- Missing Data Overlay -->
+            <div id="stock-chart-missing-data"
+                 class="d-none d-flex flex-column justify-content-center align-items-center position-absolute top-0 start-0 w-100 h-100 bg-white">
+                <p class="text-muted fs-5">No chart data available</p>
+            </div>
           </div>
 
           <!-- Hover Info Section Below Chart -->

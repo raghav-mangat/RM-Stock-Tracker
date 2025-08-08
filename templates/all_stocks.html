@@ -106,10 +106,10 @@
       <!-- Horizontal Tab Content Area -->
       <div class="col-md-9">
         <div class="tab-content" id="topStocksContent">
-          {{ top_stocks_tab_content('overall', top_stocks.overall.name, top_stocks.overall.attributes.gainers, top_stocks.overall.attributes.losers, top_stocks.overall.attributes.top_traded) }}
-          {{ top_stocks_tab_content('sp500', top_stocks.sp500.name, top_stocks.sp500.attributes.gainers, top_stocks.sp500.attributes.losers, top_stocks.sp500.attributes.top_traded) }}
-          {{ top_stocks_tab_content('nasdaq100', top_stocks.nasdaq100.name, top_stocks.nasdaq100.attributes.gainers, top_stocks.nasdaq100.attributes.losers, top_stocks.nasdaq100.attributes.top_traded) }}
-          {{ top_stocks_tab_content('dowjones', top_stocks.dowjones.name, top_stocks.dowjones.attributes.gainers, top_stocks.dowjones.attributes.losers, top_stocks.dowjones.attributes.top_traded) }}
+          {{ top_stocks_tab_content('overall', top_stocks.overall.name, top_stocks.overall.category.gainers, top_stocks.overall.category.losers, top_stocks.overall.category.top_traded) }}
+          {{ top_stocks_tab_content('sp500', top_stocks.sp500.name, top_stocks.sp500.category.gainers, top_stocks.sp500.category.losers, top_stocks.sp500.category.top_traded) }}
+          {{ top_stocks_tab_content('nasdaq100', top_stocks.nasdaq100.name, top_stocks.nasdaq100.category.gainers, top_stocks.nasdaq100.category.losers, top_stocks.nasdaq100.category.top_traded) }}
+          {{ top_stocks_tab_content('dowjones', top_stocks.dowjones.name, top_stocks.dowjones.category.gainers, top_stocks.dowjones.category.losers, top_stocks.dowjones.category.top_traded) }}
         </div>
       </div>
     </div>

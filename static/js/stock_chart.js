@@ -28,7 +28,7 @@ const VOLUME_AXIS_MAX_MULTIPLIER = 5; // volume bars take (1/multplier) height o
 const POINT_HOVER_RADIUS = 7;
 const EMA_BORDER_WIDTH = 1.5;
 const EMA_POINT_RADIUS = 0;
-const X_OFFSET = 28;
+const X_OFFSET = 10;
 const Y_OFFSET = 18;
 const BOX_PADDING = 4;
 const LINE_DASH = [5, 5];
@@ -55,7 +55,7 @@ const EMA_200_LABEL = "200-EMA";
 const VOLUME_LABEL = "Volume";
 
 // Defaults Texts
-const EMA_DATA_MISSING_TEXT = "N/A";
+const DATA_MISSING_TEXT = "N/A";
 
 let displayTooltip = DISPLAY_TOOLTIP_DEFAULT;
 let emaData = undefined; // Boolean value telling whether to show ema data or not
@@ -89,29 +89,35 @@ const tfChangePerc = document.getElementById("tf-change-perc");
 const ctx = document.getElementById("stock-chart").getContext("2d");
 
 function updateHoverInfoText(index) {
-  const dateVal = dateData.at(index);
-  const closePriceVal = closePriceData
-    .at(index)
-    .toFixed(DECIMAL_PRECISION)
-    .toLocaleString("en-US");
-  const volumeVal = volumeData.at(index).toLocaleString("en-US");
+  let dateVal = DATA_MISSING_TEXT;
+  let closePriceVal = DATA_MISSING_TEXT;
+  let volumeVal = DATA_MISSING_TEXT;
+  let ema30Val = DATA_MISSING_TEXT;
+  let ema50Val = DATA_MISSING_TEXT;
+  let ema200Val = DATA_MISSING_TEXT;
 
-  let ema30Val = EMA_DATA_MISSING_TEXT;
-  let ema50Val = EMA_DATA_MISSING_TEXT;
-  let ema200Val = EMA_DATA_MISSING_TEXT;
-  if (emaData) {
-    ema30Val = ema30Data
+  if (index !== null) {
+    dateVal = dateData.at(index);
+    closePriceVal = closePriceData
       .at(index)
       .toFixed(DECIMAL_PRECISION)
       .toLocaleString("en-US");
-    ema50Val = ema50Data
-      .at(index)
-      .toFixed(DECIMAL_PRECISION)
-      .toLocaleString("en-US");
-    ema200Val = ema200Data
-      .at(index)
-      .toFixed(DECIMAL_PRECISION)
-      .toLocaleString("en-US");
+    volumeVal = volumeData.at(index).toLocaleString("en-US");
+
+    if (emaData) {
+      ema30Val = ema30Data
+        .at(index)
+        .toFixed(DECIMAL_PRECISION)
+        .toLocaleString("en-US");
+      ema50Val = ema50Data
+        .at(index)
+        .toFixed(DECIMAL_PRECISION)
+        .toLocaleString("en-US");
+      ema200Val = ema200Data
+        .at(index)
+        .toFixed(DECIMAL_PRECISION)
+        .toLocaleString("en-US");
+    }
   }
 
   dateValue.textContent = `${DATE_LABEL}: ${dateVal}`;
@@ -237,17 +243,23 @@ const hoverPlugin = {
           const textW = ctx.measureText(text).width;
           const textH = LABEL_FONT_SIZE;
 
+          ctx.textAlign = "left";
+
+          // Fixed left position for background rectangle and text
+          const leftPos = chartArea.right + X_OFFSET;
+
+          // Draw background rectangle
           ctx.fillStyle = color;
           ctx.fillRect(
-            chartArea.right + X_OFFSET - textW / 2 - BOX_PADDING / 2,
+            leftPos - BOX_PADDING / 2,
             y - textH / 2 - BOX_PADDING / 2,
             textW + BOX_PADDING,
             textH + BOX_PADDING
           );
 
+          // Draw text
           ctx.fillStyle = FILL_COLOR;
-          ctx.textAlign = "center";
-          ctx.fillText(text, chartArea.right + X_OFFSET, y);
+          ctx.fillText(text, leftPos, y);
         }
       });
     }
@@ -559,12 +571,26 @@ function resetChart(button, preloadedData = null) {
       stockChart.destroy();
     }
 
+    const stockChartCanvas = document.getElementById("stock-chart");
+    const missingDataOverlay = document.getElementById(
+      "stock-chart-missing-data"
+    );
     if (dateData.length != 0 && closePriceData.length != 0) {
+      // Show chart, hide "missing data" text
+      stockChartCanvas.classList.remove("d-none");
+      missingDataOverlay.classList.add("d-none");
+
       stockChart = createStockChart();
 
       // Update the hover info text with the most recent values
       // from the datasets as the initial values
       updateHoverInfoText(-1);
+    } else {
+      // Hide chart, show "missing data" text
+      stockChartCanvas.classList.add("d-none");
+      missingDataOverlay.classList.remove("d-none");
+
+      updateHoverInfoText(null);
     }
 
     activateTfBtn(button, timeframe);
