@@ -42,7 +42,6 @@ def humanize_number(num, fallback="N/A", decimals=1):
     :return: result - string with compact readable form of the num
     """
     if num is not None and (isinstance(num, int) or isinstance(num, float)):
-        result = str(num)
         if num >= 1_000_000_000_000:
             result = f"{num/1_000_000_000_000:.{decimals}f}T"
         elif num >= 1_000_000_000:
@@ -52,7 +51,7 @@ def humanize_number(num, fallback="N/A", decimals=1):
         elif num >= 1_000:
             result = f"{num/1_000:.{decimals}f}K"
         else:
-            result = f"{num:.{decimals}f}"
+            result = str(int(num))
     else:
         result = fallback
     return result

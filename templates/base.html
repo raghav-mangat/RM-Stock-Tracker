@@ -35,7 +35,10 @@
     <!-- Navbar -->
     <nav id="main-navbar" class="navbar navbar-expand-lg bg-body-tertiary fixed-top border-bottom border-dark border-2" role="navigation">
       <div class="container-fluid">
-        <a class="navbar-brand" href="{{ url_for('home') }}">RM Stock Tracker</a>
+        <a class="navbar-brand d-flex align-items-center" href="{{ url_for('home') }}">
+            <img src="{{ url_for('static', filename='assets/android-chrome-192x192.png') }}" alt="RM Stock Tracker Logo" id="navbar-logo" class="border border-dark me-1">
+            <span>RM Stock Tracker</span>
+        </a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
         </button>

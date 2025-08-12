@@ -347,15 +347,15 @@ function handleTouch(event) {
   stockChart.update();
 }
 
-let chartSpinnerTimeout;
-function showChartSpinner() {
-  const spinner = document.getElementById("chart-loading-spinner");
+let stockChartSpinnerTimeout;
+function showStockChartSpinner() {
+  const spinner = document.getElementById("stock-chart-loading-spinner");
   if (spinner) spinner.classList.remove("d-none");
 }
-function hideChartSpinner() {
-  const spinner = document.getElementById("chart-loading-spinner");
+function hideStockChartSpinner() {
+  const spinner = document.getElementById("stock-chart-loading-spinner");
   if (spinner) spinner.classList.add("d-none");
-  clearTimeout(chartSpinnerTimeout);
+  clearTimeout(stockChartSpinnerTimeout);
 }
 
 function activateTfBtn(button, timeframe) {
@@ -599,17 +599,17 @@ function resetChart(button, preloadedData = null) {
   if (preloadedData) {
     handleChartData(preloadedData);
   } else {
-    chartSpinnerTimeout = setTimeout(showChartSpinner, CHART_SPINNER_DELAY);
+    stockChartSpinnerTimeout = setTimeout(showStockChartSpinner, CHART_SPINNER_DELAY);
     fetch(
       `/chart-data?ticker=${encodeURIComponent(ticker)}&timeframe=${timeframe}`
     )
       .then((response) => response.json())
       .then((data) => {
-        hideChartSpinner();
+        hideStockChartSpinner();
         handleChartData(data);
       })
       .catch((error) => {
-        hideChartSpinner();
+        hideStockChartSpinner();
       });
   }
 }

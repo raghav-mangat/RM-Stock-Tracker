@@ -16,7 +16,7 @@
 {% if stock.ticker %}
   <!-- Hero Section -->
   {% set heading = stock.ticker ~ " - " ~ (stock.name | display) %}
-  {% set description = "See full details about the selected stock, including daily and historical performance, volume, market cap, moving averages,  today's price change, and much more. You can also check related companies in the same sector." %}
+  {% set description = "See full details about the selected stock, including daily and historical performance, volume, market cap, moving averages, today's price change, and much more, or interact with the historical stock chart. Also check out related companies in the same sector." %}
   {% set last_updated = last_updated | format_et_datetime | display %}
   {{ jumbotron(heading, description, last_updated) }}
 

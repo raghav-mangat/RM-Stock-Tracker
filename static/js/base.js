@@ -9,19 +9,26 @@ popoverTriggerList.forEach(
   (popoverTriggerEl) => new bootstrap.Popover(popoverTriggerEl)
 );
 
-// Spinner Overlay
-const spinner = document.getElementById("page-loading-spinner");
-const spinnerDelay = 200; // delay before showing spinner (in ms)
-let spinnerTimeout;
+// Page Loading Spinner Overlay
+const pageSpinner = document.getElementById("page-loading-spinner");
+const pageSpinnerDelay = 200; // delay before showing page loading spinner (in ms)
+let pageSpinnerTimeout;
 
-window.addEventListener("beforeunload", () => {
-  spinnerTimeout = setTimeout(
-    () => spinner.classList.remove("d-none"),
-    spinnerDelay
-  );
-});
+// Show page loading spinner after delay
+function startSpinnerTimer() {
+  pageSpinnerTimeout = setTimeout(() => {
+    pageSpinner.classList.remove("d-none");
+  }, pageSpinnerDelay);
+}
 
-window.addEventListener("pageshow", () => {
-  clearTimeout(spinnerTimeout);
-  spinner.classList.add("d-none");
-});
+// Stop page loading spinner
+function stopSpinnerTimer() {
+  clearTimeout(pageSpinnerTimeout);
+  pageSpinner.classList.add("d-none");
+}
+
+// Show page loading spinner when page is loading
+window.addEventListener("beforeunload", startSpinnerTimer);
+
+// Clear page loading spinner when page is shown again
+window.addEventListener("pageshow", stopSpinnerTimer);
