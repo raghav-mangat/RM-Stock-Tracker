@@ -37,8 +37,8 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     fetch(`/query_stocks?q=${encodeURIComponent(query)}`)
-      .then(response => response.json())
-      .then(data => {
+      .then((response) => response.json())
+      .then((data) => {
         resetSuggestions();
         if (data.length === 0) return;
 
@@ -47,19 +47,27 @@ document.addEventListener("DOMContentLoaded", function () {
 
         // Create each suggestion as a Bootstrap list-group item
         data.forEach((item, idx) => {
-          const div = document.createElement("div");
-          div.textContent = `${item.ticker} - ${item.name}`;
-          div.classList.add("suggestion-item", "list-group-item", "list-group-item-action");
-          div.setAttribute("role", "option");
-          div.setAttribute("tabindex", "-1");
+          const anchor = document.createElement("a");
+          anchor.href = `/stocks/${item.ticker}`;
+          anchor.innerHTML = `<span><strong>${item.ticker}</strong> - ${item.name}</span>`;
+          anchor.classList.add(
+            "suggestion-item",
+            "list-group-item",
+            "list-group-item-action"
+          );
+          anchor.setAttribute("role", "option");
+          anchor.setAttribute("tabindex", "-1");
 
           // Mouse Hover styling will use updateActiveSuggestion
-          div.addEventListener("mouseover", () => updateActiveSuggestion(idx));
-          div.addEventListener("click", () => {
-            window.location.href = `/stocks/${item.ticker}`;
-          });
+          anchor.addEventListener("mouseover", () =>
+            updateActiveSuggestion(idx)
+          );
 
-          suggestionsBox.appendChild(div);
+          suggestionsBox.appendChild(anchor);
+
+          // Auto-select the first suggestion
+          activeIndex = 0;
+          updateActiveSuggestion(activeIndex);
         });
       });
   });
@@ -69,7 +77,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const query = this.value.trim();
     if (query.length >= minSuggestionLen) {
       // Manually trigger input event logic
-      const inputEvent = new Event('input');
+      const inputEvent = new Event("input");
       this.dispatchEvent(inputEvent);
     }
   });
@@ -95,17 +103,24 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   // Prevent page from scrolling when mouse is over suggestions box
-  suggestionsBox.addEventListener("wheel", function (e) {
-    const isScrollable = suggestionsBox.scrollHeight > suggestionsBox.clientHeight;
-    if (isScrollable) {
-      const atTop = suggestionsBox.scrollTop === 0;
-      const atBottom = suggestionsBox.scrollTop + suggestionsBox.clientHeight >= suggestionsBox.scrollHeight;
+  suggestionsBox.addEventListener(
+    "wheel",
+    function (e) {
+      const isScrollable =
+        suggestionsBox.scrollHeight > suggestionsBox.clientHeight;
+      if (isScrollable) {
+        const atTop = suggestionsBox.scrollTop === 0;
+        const atBottom =
+          suggestionsBox.scrollTop + suggestionsBox.clientHeight >=
+          suggestionsBox.scrollHeight;
 
-      if ((e.deltaY < 0 && atTop) || (e.deltaY > 0 && atBottom)) {
-        e.preventDefault(); // Prevent scrolling the page
+        if ((e.deltaY < 0 && atTop) || (e.deltaY > 0 && atBottom)) {
+          e.preventDefault(); // Prevent scrolling the page
+        }
       }
-    }
-  }, { passive: false });
+    },
+    { passive: false }
+  );
 
   // Hide suggestions when clicking outside
   document.addEventListener("click", function (e) {

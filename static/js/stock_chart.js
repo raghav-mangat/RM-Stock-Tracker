@@ -27,7 +27,7 @@ const CHART_SPINNER_DELAY = 200; // in ms
 const VOLUME_AXIS_MAX_MULTIPLIER = 5; // volume bars take (1/multplier) height of the chart
 const POINT_HOVER_RADIUS = 7;
 const EMA_BORDER_WIDTH = 1.5;
-const EMA_POINT_RADIUS = 0;
+const POINT_RADIUS = 0;
 const X_OFFSET = 10;
 const Y_OFFSET = 18;
 const BOX_PADDING = 4;
@@ -362,13 +362,11 @@ function activateTfBtn(button, timeframe) {
   // Deactivate all timeframe buttons
   const timeframeBtns = document.querySelectorAll(".tf-btn");
   timeframeBtns.forEach((tfButton) => {
-    tfButton.removeAttribute("aria-label");
     tfButton.removeAttribute("aria-current");
     tfButton.classList.remove("active");
   });
 
   // Active the given timeframe button
-  button.setAttribute("aria-label", `${timeframe}`);
   button.setAttribute("aria-current", "true");
   button.classList.add("active");
 }
@@ -398,6 +396,7 @@ function createStockChart() {
           backgroundColor: CHART_BACKGROUND_COLOR,
           tension: CHART_TENSION,
           fill: CHART_FILL,
+          pointRadius: POINT_RADIUS,
           pointHoverRadius: POINT_HOVER_RADIUS,
           pointHoverBackgroundColor: POINT_HOVER_COLOR,
         },
@@ -409,7 +408,7 @@ function createStockChart() {
           tension: CHART_TENSION,
           fill: CHART_FILL,
           borderWidth: EMA_BORDER_WIDTH,
-          pointRadius: EMA_POINT_RADIUS,
+          pointRadius: POINT_RADIUS,
         },
         {
           label: EMA_50_LABEL,
@@ -419,7 +418,7 @@ function createStockChart() {
           tension: CHART_TENSION,
           fill: CHART_FILL,
           borderWidth: EMA_BORDER_WIDTH,
-          pointRadius: EMA_POINT_RADIUS,
+          pointRadius: POINT_RADIUS,
         },
         {
           label: EMA_200_LABEL,
@@ -429,7 +428,7 @@ function createStockChart() {
           tension: CHART_TENSION,
           fill: CHART_FILL,
           borderWidth: EMA_BORDER_WIDTH,
-          pointRadius: EMA_POINT_RADIUS,
+          pointRadius: POINT_RADIUS,
         },
         {
           type: "bar",

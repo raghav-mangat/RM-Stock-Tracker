@@ -159,12 +159,18 @@
           <!-- Top Controls: Timeframe Selector + % Change + Tooltip Toggle + Custom Chart Legend -->
           <div class="d-flex flex-wrap align-items-center gap-3 mb-2">
             <!-- Timeframe buttons -->
-            <div id="tf-btn-toolbar" class="btn-toolbar d-flex flex-nowrap overflow-auto" role="toolbar" aria-label="Chart time frame selector">
+            <div id="tf-btn-toolbar"
+                 class="btn-toolbar d-flex flex-nowrap overflow-auto"
+                 role="toolbar"
+                 aria-label="Stock chart time frame selector">
               <div class="btn-group" role="group" aria-label="Timeframe options">
                 {% for timeframe in timeframe_options %}
-                  <button type="button" class="tf-btn btn btn-outline-secondary"
-                          data-timeframe="{{ timeframe }}">
-                      {{ timeframe }}
+                  <button
+                    type="button"
+                    class="tf-btn btn btn-outline-secondary mx-0"
+                    data-timeframe="{{ timeframe }}"
+                    aria-label="{{ timeframe }}">
+                    {{ timeframe }}
                   </button>
                 {% endfor %}
               </div>
