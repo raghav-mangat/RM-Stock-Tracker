@@ -1,5 +1,9 @@
 /**** Styling for Search Bar ****/
 
+#search-container {
+  max-width: 500px;
+}
+
 #suggestions {
   max-height: 200px;
   overflow-y: auto;
@@ -37,6 +41,10 @@
   min-width: 200px;
   flex-shrink: 0;
   overflow: hidden;
+}
+
+.ticker-content {
+  max-width: 300px;
 }
 
 /* Animate the Scroll */

@@ -5,3 +5,7 @@
 #page-loading-spinner {
   z-index: 2000;
 }
+
+.social-link {
+  font-size: 1.2rem;
+}

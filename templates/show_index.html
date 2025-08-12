@@ -29,7 +29,7 @@
             Filter
           </button>
 
-          <ul class="dropdown-menu p-3" style="min-width: 250px;" id="filter-dropdown">
+          <ul class="dropdown-menu p-3" id="filter-dropdown">
             <li class="fw-bold mb-3">Filter by 200-DMA % Diff</li>
 
             <li class="mb-3">
@@ -43,7 +43,7 @@
                 <input class="form-check-input me-2 mt-0" type="checkbox" name="filter" value="{{ color }}" id="filter-{{ color }}"
                   {% if not request.args.getlist('filter') or color in request.args.getlist('filter') %}checked{% endif %}>
 
-                <div class="border border-dark me-2" style="width: 14px; height: 14px; background-color: {{ color_hex }};"></div>
+                <div class="filter-color-box border border-dark me-2" style="background-color: {{ color_hex }};"></div>
 
                 <label class="form-check-label mb-0" for="filter-{{ color }}">
                   {{ color.replace('_', ' ').title() }}
