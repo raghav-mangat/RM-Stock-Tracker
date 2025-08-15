@@ -35,7 +35,7 @@ searchBar.addEventListener("input", function () {
     return;
   }
 
-  fetch(`/query_stocks?q=${encodeURIComponent(query)}`)
+  fetch(`/query-stocks?q=${encodeURIComponent(query)}`)
     .then((response) => response.json())
     .then((data) => {
       resetSuggestions();

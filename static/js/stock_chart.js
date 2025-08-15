@@ -601,7 +601,7 @@ function resetChart(button, preloadedData = null) {
   } else {
     stockChartSpinnerTimeout = setTimeout(showStockChartSpinner, CHART_SPINNER_DELAY);
     fetch(
-      `/chart-data?ticker=${encodeURIComponent(ticker)}&timeframe=${timeframe}`
+      `/chart-data?ticker=${encodeURIComponent(ticker)}&timeframe=${encodeURIComponent(timeframe)}`
     )
       .then((response) => response.json())
       .then((data) => {

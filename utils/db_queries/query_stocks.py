@@ -13,7 +13,10 @@ def get_query_stocks(query):
 
         # One combined query for both ticker and name startswith, ordered by popularity
         matches = (
-            db.session.query(StockMaster)
+            db.session.query(
+                StockMaster.ticker,
+                StockMaster.name
+            )
             .filter(
                 StockMaster.ticker.ilike(f"{query_upper}%") |
                 StockMaster.name.ilike(f"{query}%")
@@ -22,5 +25,5 @@ def get_query_stocks(query):
             .limit(num_suggestions)
             .all()
         )
-        result = jsonify([{"ticker": s.ticker, "name": s.name} for s in matches])
+        result = jsonify([{"ticker": match.ticker, "name": match.name} for match in matches])
     return result

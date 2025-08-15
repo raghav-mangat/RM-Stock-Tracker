@@ -104,7 +104,7 @@ def all_stocks():
         top_stocks=top_stocks
     )
 
-@app.route("/query_stocks")
+@app.route("/query-stocks")
 def query_stocks():
     query = request.args.get("q", "").strip()
     result = get_query_stocks(query)
@@ -130,8 +130,8 @@ def show_stock(ticker):
 
 @app.route("/chart-data")
 def chart_data():
-    ticker = request.args.get("ticker").strip()
-    timeframe = request.args.get("timeframe").strip()
+    ticker = request.args.get("ticker", "").strip()
+    timeframe = request.args.get("timeframe", "").strip()
     data = get_chart_data(ticker, timeframe)
     return data
 
