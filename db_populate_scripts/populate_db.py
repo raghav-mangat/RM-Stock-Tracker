@@ -18,19 +18,15 @@ elif IS_RELEASE == "0":
         db_dir = os.path.dirname(db_path)
         os.makedirs(db_dir, exist_ok=True)
 
-import json
-from flask import Flask
-from pathlib import Path
+from app import app
 from sqlalchemy import delete
 from models.database import db, Stock, Index, IndexHolding, StockMaster, StockMinute, StockHour, StockDay, StockWeek
 from data_collectors.index_data import all_indices, get_index_info, fetch_index_data
 from data_collectors.stock_data import fetch_all_stocks_data, fetch_stock_data, fetch_chart_data, DB_TIMEFRAMES
 from utils.datetime_utils import get_current_et, format_et_datetime, format_date
 from utils.db_queries.all_stocks import get_top_stocks
-
-app = Flask(__name__)
-app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URI")
-db.init_app(app)
+from pathlib import Path
+import json
 
 # -------- Stage all new data --------
 stocks_cache = {}  # ticker -> Stock object
@@ -159,14 +155,16 @@ def populate_db():
                     ticker = stock.ticker
                     if ticker:
                         get_or_fetch_stock(ticker, now_date)
+        print("Fetched Top Stocks data for updated database!")
 
         # Insert Top Stocks and their chart data
+        print("Storing Top Stocks data in the database...")
         if new_stocks or any(new_chart_data.values()):
             db.session.add_all(new_stocks)
             for value in new_chart_data.values():
                 db.session.add_all(value)
             db.session.commit()
-        print("Top Stocks data stored in the database!")
+        print("Stored Top Stocks data in the database!")
 
         db.session.close()
         print("\nDatabase Population Completed!")
