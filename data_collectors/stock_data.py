@@ -302,18 +302,20 @@ def get_ticker_52w_hl(stock_data, stock_365_day_data):
         print(f"[52W Error] {stock_data.get("ticker")}: {e}")
     return stock_data
 
-def fetch_stock_data(ticker):
+def fetch_stock_data(ticker, now=None):
     """
     For the given ticker symbol of a stock, this function collects
     the data for all the attributes in 'STOCK_ATTRIBUTES' defined
     at the top of the script, using the polygon API. It then saves
     all this data as a Stock DB model object, and returns it.
-    :param ticker: ticker symbol of a stock
-    :return: Stock DB model object containing data for all attributes
+    :param ticker: ticker symbol of a stock.
+    :param now: The date for which we collect the data from polygon API.
+    :return: Stock DB model object containing data for all attributes.
     """
     stock = None
     stock_data = {}
-    now = db_last_updated_date()
+    if not now:
+        now = db_last_updated_date()
     print(f"Fetching data for: {ticker}")
 
     stock_365_day_data = get_365_day_data(ticker, now)
@@ -333,8 +335,18 @@ def fetch_stock_data(ticker):
 
     return stock
 
-def fetch_chart_data(stock_id, ticker, timeframe):
-    now = db_last_updated_date()
+def fetch_chart_data(stock, timeframe, now=None):
+    """
+    Fetch chart data for a given stock object from Polygon API.
+    The `stock` argument should be a Stock ORM object.
+    """
+    chart_data = []
+    if not stock or not isinstance(stock, Stock):
+        return chart_data
+
+    ticker = stock.ticker
+    if not now:
+        now = db_last_updated_date()
 
     timeframe_data = TIMEFRAME_OPTIONS[timeframe]
     timespan = timeframe_data.get("timespan")
@@ -345,6 +357,8 @@ def fetch_chart_data(stock_id, ticker, timeframe):
     common_dates = set()
     close_price_data = {}
     volume_data = {}
+
+    # Price & volume
     for stock_data in client.list_aggs(
         ticker=ticker,
         multiplier=1,
@@ -360,6 +374,7 @@ def fetch_chart_data(stock_id, ticker, timeframe):
         close_price_data[timestamp] = round(stock_data.close, DECIMAL_PRECISION)
         volume_data[timestamp] = int(stock_data.volume)
 
+    # EMA helper
     def get_ema_data(ema_window):
         ema_data_ = {}
         ema = client.get_ema(
@@ -377,49 +392,37 @@ def fetch_chart_data(stock_id, ticker, timeframe):
             ema_data_[timestamp_] = round(value.value, DECIMAL_PRECISION)
         return ema_data_
 
-    ema_30_data = []
-    ema_50_data = []
-    ema_200_data = []
-
+    # EMA calculations
+    ema_30_data = {}
+    ema_50_data = {}
+    ema_200_data = {}
     if ema_data:
         ema_30_data = get_ema_data("30")
         ema_50_data = get_ema_data("50")
         ema_200_data = get_ema_data("200")
 
-        ema_30_dates = set(ema_30_data.keys())
-        ema_50_dates = set(ema_50_data.keys())
-        ema_200_dates = set(ema_200_data.keys())
-        common_dates = common_dates.intersection(ema_30_dates).intersection(ema_50_dates).intersection(
-            ema_200_dates)
+        common_dates &= set(ema_30_data) & set(ema_50_data) & set(ema_200_data)
 
-    dates = list(sorted(common_dates))
-    chart_data = []
-    timestamp_type = "millisecond"
-    for date in dates:
-        et_date = polygon_timestamp_et(date, timestamp_type)
-
+    # Build ORM objects
+    for date in sorted(common_dates):
+        et_date = polygon_timestamp_et(date, "millisecond")
         close_price = close_price_data[date]
         volume = volume_data[date]
 
+        kwargs = dict(
+            stock=stock,
+            date=et_date,
+            close_price=close_price,
+            volume=volume
+        )
+
         if ema_data:
-            ema_30 = ema_30_data[date]
-            ema_50 = ema_50_data[date]
-            ema_200 = ema_200_data[date]
-            chart_data.append(db_table(
-                stock_id=stock_id,
-                date=et_date,
-                close_price=close_price,
-                ema_30=ema_30,
-                ema_50=ema_50,
-                ema_200=ema_200,
-                volume=volume
-            ))
-        else:
-            chart_data.append(db_table(
-                stock_id=stock_id,
-                date=et_date,
-                close_price=close_price,
-                volume=volume
-            ))
+            kwargs.update(
+                ema_30=ema_30_data[date],
+                ema_50=ema_50_data[date],
+                ema_200=ema_200_data[date]
+            )
+
+        chart_data.append(db_table(**kwargs))
 
     return chart_data

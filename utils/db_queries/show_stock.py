@@ -42,8 +42,8 @@ def get_chart_data(ticker, timeframe):
             query = query.filter(db_table.date >= before)
         chart_data = query.order_by(db_table.date.asc()).all()
     else:
-        stock_id = -1
-        chart_data = fetch_chart_data(stock_id, ticker, timeframe)
+        stock = Stock(ticker=ticker)
+        chart_data = fetch_chart_data(stock, timeframe)
 
     ema_data = timeframe_data.get("ema_data")
     date_format = timeframe_data["date_format"]

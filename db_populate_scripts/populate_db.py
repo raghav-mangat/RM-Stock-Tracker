@@ -21,6 +21,7 @@ elif IS_RELEASE == "0":
 import json
 from flask import Flask
 from pathlib import Path
+from sqlalchemy import delete
 from models.database import db, Stock, Index, IndexHolding, StockMaster, StockMinute, StockHour, StockDay, StockWeek
 from data_collectors.index_data import all_indices, get_index_info, fetch_index_data
 from data_collectors.stock_data import fetch_all_stocks_data, fetch_stock_data, fetch_chart_data, DB_TIMEFRAMES
@@ -31,151 +32,143 @@ app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URI")
 db.init_app(app)
 
-def update_stocks_master_table():
-    print("Updating stocks_master table...")
+# -------- Stage all new data --------
+stocks_cache = {}  # ticker -> Stock object
+new_stock_master = []
+new_indices = []
+new_index_holdings = []
+new_stocks = []
+new_chart_data = {timeframe: [] for timeframe in DB_TIMEFRAMES}
 
-    # Get a list of all stocks data from Polygon API
-    stocks = fetch_all_stocks_data()
-    # To avoid adding duplicate data
-    tickers_added = set()
-    # To count the number of duplicates
-    duplicates = []
+# ---- Helper to get Stock object (with chart data) ----
+def get_or_fetch_stock(ticker, now_date):
+    ticker_upper = ticker.upper()
+    if ticker_upper in stocks_cache:
+        return stocks_cache[ticker_upper]
 
-    for stock in stocks:
-        ticker_upper = stock.ticker.upper()
-        # Only add to DB if it's unique
-        if ticker_upper not in tickers_added:
-            tickers_added.add(ticker_upper)
-            db.session.add(stock)
-            db.session.flush()
-        else:
-            duplicates.append(stock.ticker)
-            print(f"Duplicate ticker skipped: {stock.ticker}")
-    print(f"Skipped {len(duplicates)} duplicate tickers.")
+    try:
+        stock = fetch_stock_data(ticker, now_date)
+        if stock:
+            stocks_cache[ticker_upper] = stock
+            new_stocks.append(stock)
 
-    db.session.commit()
-    print("Updated stocks_master table!")
-
-def add_to_indices_table(index, now):
-    index_info = get_index_info(index)
-    index = Index(
-        name=index_info.get("name"),
-        slug=index_info.get("slug"),
-        url=index_info.get("url"),
-        last_updated = now
-    )
-    db.session.add(index)
-    db.session.flush()
-
-    return index.id
-
-def store_chart_data(stock_id, ticker):
-    timeframes = DB_TIMEFRAMES
-    for timeframe in timeframes:
-        chart_data = fetch_chart_data(stock_id, ticker, timeframe)
-        for data in chart_data:
-            db.session.add(data)
-            db.session.flush()
-
-def add_to_stocks_table(ticker):
-    stock_id = None
-    stock_data = fetch_stock_data(ticker)
-    if stock_data:
-        db.session.add(stock_data)
-        db.session.flush()
-
-        tickers_updated.add(stock_data.ticker)
-        stock_id = stock_data.id
-
-    return stock_id
-
-def add_to_index_holdings_table(index_id, stock_id, holding):
-    index_holding = IndexHolding(
-        index_id=index_id,
-        stock_id=stock_id,
-        weight=holding.get("weight"),
-    )
-    db.session.add(index_holding)
-    db.session.flush()
-
-def delete_db_data():
-    # Delete the data in StockMaster table
-    db.session.query(StockMaster).delete()
-    db.session.flush()
-
-    # Delete the stored chart data for the stocks
-    db.session.query(StockMinute).delete()
-    db.session.query(StockHour).delete()
-    db.session.query(StockDay).delete()
-    db.session.query(StockWeek).delete()
-    db.session.flush()
-
-    # Delete the stored index data
-    db.session.query(IndexHolding).delete()
-    db.session.query(Index).delete()
-    db.session.flush()
-
-    # Delete the data stored in Stock table
-    db.session.query(Stock).delete()
-    db.session.flush()
-
-    db.session.commit()
-
-# To keep track of tickers already updated in the database
-tickers_updated = set()
+            # Attach chart data via relationship
+            for timeframe, data_list in new_chart_data.items():
+                chart_records = fetch_chart_data(stock, timeframe, now_date)
+                data_list.extend(chart_records)
+        return stock
+    except Exception as e:
+        print(f"[Fetch Error] {ticker}: {e}")
+        return None
 
 def populate_db():
     """
-    Populates the Database using the data and functions defined
-    in index and stock data_collectors scripts.
-    :return: None
+    Populate the database by staging all data first, then replacing
+    the main tables in a single atomic transaction.
+    After the database is updated, compute Top Stocks and store them as well.
     """
     with app.app_context():
         print("Starting Database Population...\n")
         now = get_current_et()
-        save_populate_db_info(now)
+        now_date = format_date(now)
 
         db.create_all()
 
-        delete_db_data()
+        # ---- Stock Master ----
+        stocks = fetch_all_stocks_data()
+        seen_tickers = set()
+        for stock in stocks:
+            ticker_upper = stock.ticker.upper()
+            if ticker_upper not in seen_tickers:
+                seen_tickers.add(ticker_upper)
+                new_stock_master.append(stock)
+            else:
+                print(f"Duplicate ticker skipped: {stock.ticker}.")
 
-        update_stocks_master_table()
+        print(f"Skipped {len(stocks) - len(new_stock_master)} duplicate tickers.")
+        print(f"Total of {len(new_stock_master)} stocks fetched from polygon API!")
 
-        # Save the data for all indices and the constituent stocks
-        print(f"Storing data for indices...")
+        # ---- Indices and holdings ----
+        print(f"Fetching data for indices...")
         for index in all_indices:
-            index_id = add_to_indices_table(index, now)
+            index_info = get_index_info(index)
+            index_obj = Index(
+                name=index_info.get("name"),
+                slug=index_info.get("slug"),
+                url=index_info.get("url"),
+                last_updated=now
+            )
+            new_indices.append(index_obj)
+
             holdings = fetch_index_data(index)
             for holding in holdings:
                 ticker = holding.get("ticker")
                 if ticker:
-                    if ticker not in tickers_updated:
-                        stock_id = add_to_stocks_table(ticker)
-                        if stock_id:
-                            store_chart_data(stock_id, ticker)
-                    else:
-                        stock_id = Stock.query.filter_by(ticker=ticker).first().id
-                    if index_id and stock_id:
-                        add_to_index_holdings_table(index_id, stock_id, holding)
-            print(f"Updated data for: {index}!")
-        db.session.commit()
-        print(f"Stored data for indices!")
+                    stock = get_or_fetch_stock(ticker, now_date)
+                    if stock:
+                        index_holding = IndexHolding(
+                            index=index_obj,
+                            stock=stock,
+                            weight=holding.get("weight"),
+                        )
+                        new_index_holdings.append(index_holding)
+            print(f"Fetched data for: {index}!")
+        print(f"Fetched data for indices!")
 
-        print(f"Storing data for top stocks...")
-        # Get the top stocks from StockMaster table for each category
+        # -------- Transactional Replace --------
+        try:
+            print("\nUpdating the database with the new fetched data...")
+            with db.session.begin():
+                # Delete in FK-safe order
+                db.session.execute(delete(IndexHolding))
+                db.session.execute(delete(Index))
+                db.session.execute(delete(StockMinute))
+                db.session.execute(delete(StockHour))
+                db.session.execute(delete(StockDay))
+                db.session.execute(delete(StockWeek))
+                db.session.execute(delete(Stock))
+                db.session.execute(delete(StockMaster))
+
+                # Insert new data
+                db.session.add_all(new_stock_master)
+                db.session.add_all(new_indices)
+                db.session.add_all(new_stocks)
+                for value in new_chart_data.values():
+                    db.session.add_all(value)
+                db.session.add_all(new_index_holdings)
+            db.session.commit()
+
+            save_populate_db_info(now)
+            print("Updated the database with the new fetched data!\n")
+        except Exception as e:
+            print(f"Error: {e}")
+            db.session.rollback()
+            raise
+
+        print("Fetching Top Stocks data for updated database...")
         top_stocks = get_top_stocks()
-        # Save the stocks data in the Stocks table
+
+        # Clearing the collected data to collect data for top stocks
+        new_stocks.clear()
+        for data_list in new_chart_data.values():
+            data_list.clear()
+
         for top_stocks_category in top_stocks.values():
             for category_stocks in top_stocks_category.get("category").values():
                 for stock in category_stocks:
                     ticker = stock.ticker
-                    if ticker not in tickers_updated:
-                        stock_id = add_to_stocks_table(ticker)
-                        if stock_id:
-                            store_chart_data(stock_id, ticker)
-        db.session.commit()
-        print(f"Stored data for top stocks!")
+                    if ticker:
+                        get_or_fetch_stock(ticker, now_date)
 
+        # Insert Top Stocks and their chart data
+        if new_stocks or any(new_chart_data.values()):
+            db.session.add_all(new_stocks)
+            for value in new_chart_data.values():
+                db.session.add_all(value)
+            db.session.commit()
+        print("Top Stocks data stored in the database!")
+
+        db.session.close()
         print("\nDatabase Population Completed!")
 
 def save_populate_db_info(now):
