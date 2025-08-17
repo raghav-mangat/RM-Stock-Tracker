@@ -1,6 +1,6 @@
 # RM Stock Tracker
 
-An informative and user-friendly web app to explore U.S. stocks and major market indices using real-time financial data. Built with Python, Flask, SQLAlchemy, Bootstrap, and the Polygon.io API.
+An informative and user-friendly web app to explore U.S. stocks and major market indices using real-time financial data. Built with Python, Flask, SQLAlchemy, Bootstrap, Chart.js and the Polygon.io API.
 
 > **Live Site:** [www.rmstocktracker.com](https://www.rmstocktracker.com)
 
@@ -12,11 +12,19 @@ An informative and user-friendly web app to explore U.S. stocks and major market
 - View detailed stock information:
   - Day open, high, low, close, and volume
   - Today's price change and % change with up/down arrow
-  - 50-day and 200-day moving averages (DMA)
+  - 30-day, 50-day and 200-day moving averages (DMA)
   - % Difference from 200-DMA (color-coded)
   - 52-week high and low
   - Market cap (with readable formatting)
-  - Company summary and related companies
+  - Company overview and related companies
+- **Interactive Stock Charts**
+  - Choose from multiple timeframes: 1D, 1W, 1M, 3M, 6M, YTD, 1Y, 3Y, 5Y
+  - Smooth transitions using AJAX without page reloads
+  - Custom legends, hover info, and responsive design for mobile
+  - Loading indicators and missing-data overlays for a better experience
+- **Summary Section with Charts**
+  - Visualize stock performance with neat, professional, and color-coded summary charts
+  - Responsive summary cards with key highlights
 - **Top Market Movers**
   - View top gainers, losers, and most traded stocks
   - Switch between overall market, S&P 500, Nasdaq 100, and Dow Jones
@@ -31,8 +39,8 @@ An informative and user-friendly web app to explore U.S. stocks and major market
   - **Red**: -2% to -10%
   - **Dark Red**: ≤ -10%
 - Animated ticker tape showing popular and some random stocks
-- Improved stock search bar with more relevant suggestions and better keyboard navigation
-- Loading spinner overlay when navigating pages that take longer time to load
+- Stock search bar showing relevant suggestions with easy keyboard navigation
+- Loading spinner overlay when navigating pages or charts that take longer time to load
 - Data last updated time shown in Eastern Time
 - Responsive design with Bootstrap 5
 - Clean UI, consistent layout, and helpful error messages
@@ -42,7 +50,7 @@ An informative and user-friendly web app to explore U.S. stocks and major market
 ## Tech Stack
 
 - **Backend**: Python, Flask, SQLAlchemy  
-- **Frontend**: HTML, CSS, JS, Jinja2, Bootstrap 5  
+- **Frontend**: HTML, CSS, JS, Jinja2, Bootstrap 5, Chart.js  
 - **Database**: SQLite (dev), MySQL (prod)  
 - **APIs**: Polygon.io, SlickCharts
 
@@ -61,7 +69,8 @@ An informative and user-friendly web app to explore U.S. stocks and major market
 │   └── styles/
 ├── templates/              # Jinja2 HTML templates
 │   └── macros/             # Reusable Jinja components
-└── utils/                  # Helpers for top stocks, filters, error handling, etc.
+└── utils/                  # Helpers for datetime, filters, etc.
+    └── db_queries/         # Scripts to run database queries
 ```
 
 ---

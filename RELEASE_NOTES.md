@@ -1,3 +1,68 @@
+# Release Notes - v3.0.0
+
+**Release Date:** August 16, 2025
+
+**Project:** [RM-Stock-Tracker](https://github.com/raghav-mangat/RM-Stock-Tracker)
+
+> **Live Site:** [www.rmstocktracker.com](https://www.rmstocktracker.com)
+
+## Overview
+
+Version 3.0.0 is a major release introducing **interactive stock charts** and a brand-new **summary section** with visual insights. Alongside these big upgrades, we’ve reorganized the codebase for better performance, added database optimizations, and improved the overall user experience on both desktop and mobile.
+
+---
+
+## What's New
+
+### Features
+- **Interactive Stock Charts**
+  - Multiple timeframes supported: 1D, 1W, 1M, 3M, 6M, YTD, 1Y, 3Y, 5Y
+  - AJAX-powered updates (no page reload required)
+  - Custom HTML chart legend and better tooltips
+  - Mobile-friendly design with smooth transitions
+- **Summary Section**
+  - Professional summary cards with color coding
+  - Neat, responsive summary charts to visualize stock performance
+  - Cleaner overview table with reorganized data
+- **Stock Details Page**
+  - Organized into three tabs: Summary, Chart, and Overview
+  - Improved layout and spacing for better readability
+- **Top Stocks & Indices**
+  - Ticker tape now shows Nasdaq 100 stocks
+  - Optimized queries for faster loading
+- **UI Enhancements**
+  - Loading spinners for charts and pages
+  - Better color contrast, number formatting, and accessibility improvements
+  - Navbar logo and refined styling across the app
+
+### Improvements & Refactoring
+- New database models for minute, hourly, daily, and weekly stock data with indexing for performance
+- Chart data stored in the database during population instead of always fetching from API
+- Database population script improved with atomic transactions and better error handling
+- All DB queries moved to dedicated files under `utils/db_queries`
+- Major reorganization of JS and CSS for maintainability
+- Optimized Polygon API calls and reduced request count
+- Improved datetime utilities for ET conversions and timestamps
+
+### Fixes
+- Fixed jittery scrolling and rendering issues for charts on mobile
+- Fixed chart legend and tooltip inconsistencies
+- Fixed errors when chart data is missing (shows overlay instead of crashing)
+- Fixed spinner and border alignment issues
+- Fixed database connection loss on PythonAnywhere during populate script
+
+---
+
+## Summary
+
+`v3.0.0` is a **major upgrade** that makes RM Stock Tracker more powerful, interactive, and user-friendly. With stock charts, summary insights, and a cleaner backend, this release sets the foundation for future advanced features.
+
+**Full Changelog:** https://github.com/raghav-mangat/RM-Stock-Tracker/compare/v2.3.1...v3.0.0
+
+
+------------------------------------------------------------------------------------------------------------
+
+
 # Release Notes - v2.3.1
 
 **Release Date:** July 17, 2025
