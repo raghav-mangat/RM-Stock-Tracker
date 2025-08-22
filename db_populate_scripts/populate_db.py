@@ -1,22 +1,8 @@
 import os
 import sys
-from dotenv import load_dotenv
 
-# Load environment variables from .env file
-load_dotenv()
-
-IS_RELEASE = os.getenv("IS_RELEASE")
-
-if IS_RELEASE == "1":
-    # Ensure the project root is in Python's path: in PythonAnywhere
-    sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-elif IS_RELEASE == "0":
-    # Ensure the instance folder exists for the database: in local PC
-    db_uri = os.getenv("DATABASE_URI")
-    if db_uri and db_uri.startswith("sqlite:///"):
-        db_path = db_uri.replace("sqlite:///", "")
-        db_dir = os.path.dirname(db_path)
-        os.makedirs(db_dir, exist_ok=True)
+# Make sure that the project root is in Python's path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from app import app
 from sqlalchemy import delete
@@ -67,8 +53,6 @@ def populate_db():
         print("Starting Database Population...\n")
         now = get_current_et()
         now_date = format_date(now)
-
-        db.create_all()
 
         # ---- Stock Master ----
         stocks = fetch_all_stocks_data()
