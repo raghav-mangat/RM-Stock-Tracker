@@ -1,6 +1,6 @@
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-from sqlalchemy import String, Text, ForeignKey, Date, DateTime, UniqueConstraint
+from sqlalchemy import String, BigInteger, Text, ForeignKey, Date, DateTime, UniqueConstraint
 from sqlalchemy import Index as DBIndex
 from datetime import datetime, date
 from utils.datetime_utils import DATE_FORMAT
@@ -18,7 +18,7 @@ class Stock(db.Model):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     ticker: Mapped[str] = mapped_column(String(10), unique=True, nullable=False)
-    name: Mapped[str] = mapped_column(String(100), nullable=True)
+    name: Mapped[str] = mapped_column(String(300), nullable=True)
 
     # Company Info
     description: Mapped[str] = mapped_column(Text, nullable=True)
@@ -128,7 +128,7 @@ class StockMaster(db.Model):
 
     # All tickers data
     ticker: Mapped[str] = mapped_column(String(10), unique=True, nullable=False)
-    name: Mapped[str] = mapped_column(String(100), nullable=True)
+    name: Mapped[str] = mapped_column(String(300), nullable=True)
     type: Mapped[str] = mapped_column(String(100), nullable=True)
     primary_exchange: Mapped[str] = mapped_column(String(10), nullable=True)
 
@@ -219,7 +219,7 @@ class StockWeek(db.Model):
     stock_id: Mapped[int] = mapped_column(ForeignKey("stocks.id", ondelete="CASCADE"), nullable=False)
     date: Mapped[DateTime] = db.Column(db.DateTime(timezone=True), nullable=False)
     close_price: Mapped[float] = mapped_column(nullable=True)
-    volume: Mapped[int] = mapped_column(nullable=True)
+    volume: Mapped[int] = mapped_column(BigInteger, nullable=True)
 
     stock: Mapped["Stock"] = relationship(back_populates="week_data")
 
