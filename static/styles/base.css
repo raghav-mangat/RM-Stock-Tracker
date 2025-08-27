@@ -14,3 +14,12 @@
 .social-link {
   font-size: 1.2rem;
 }
+
+#toast-container-div {
+  z-index: 1100;
+}
+
+#auth-card {
+  max-width: 420px;
+  width: 100%;
+}

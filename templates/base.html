@@ -35,24 +35,50 @@
     <!-- Navbar -->
     <nav id="main-navbar" class="navbar navbar-expand-lg bg-body-tertiary fixed-top border-bottom border-dark border-2" role="navigation">
       <div class="container-fluid">
+        <!-- Brand -->
         <a class="navbar-brand d-flex align-items-center" href="{{ url_for('home') }}">
-            <img src="{{ url_for('static', filename='assets/android-chrome-192x192.png') }}" alt="RM Stock Tracker Logo" id="navbar-logo" class="border border-dark me-1">
-            <span>RM Stock Tracker</span>
+          <img src="{{ url_for('static', filename='assets/android-chrome-192x192.png') }}"
+               alt="RM Stock Tracker Logo"
+               id="navbar-logo"
+               class="border border-dark me-1">
+          <span>RM Stock Tracker</span>
         </a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
+
+        <!-- Navbar Toggler (mobile menu button) -->
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavAltMarkup"
+                aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
         </button>
+
+        <!-- Navbar Content -->
         <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+          <!-- Left side links -->
           <div class="navbar-nav">
-              <a class="nav-link {% if request.endpoint == 'home' %}active{% endif %}"
-                 href="{{ url_for('home') }}"
-                 {% if request.endpoint == 'home' %}aria-current="page"{% endif %}>Home</a>
-              <a class="nav-link {% if request.endpoint == 'all_stocks' or request.endpoint == 'show_stock' %}active{% endif %}"
-                 href="{{ url_for('all_stocks') }}"
-                 {% if request.endpoint == 'all_stocks' or request.endpoint == 'show_stock' %}aria-current="page"{% endif %}>Stocks</a>
-              <a class="nav-link {% if request.endpoint == 'all_indices' or request.endpoint == 'show_index' %}active{% endif %}"
-                 href="{{ url_for('all_indices') }}"
-                 {% if request.endpoint == 'all_indices' or request.endpoint == 'show_index' %}aria-current="page"{% endif %}>Indices</a>
+            <a class="nav-link {% if request.endpoint == 'home' %}active{% endif %}"
+               href="{{ url_for('home') }}"
+               {% if request.endpoint == 'home' %}aria-current="page"{% endif %}>Home</a>
+
+            <a class="nav-link {% if request.endpoint == 'all_stocks' or request.endpoint == 'show_stock' %}active{% endif %}"
+               href="{{ url_for('all_stocks') }}"
+               {% if request.endpoint == 'all_stocks' or request.endpoint == 'show_stock' %}aria-current="page"{% endif %}>Stocks</a>
+
+            <a class="nav-link {% if request.endpoint == 'all_indices' or request.endpoint == 'show_index' %}active{% endif %}"
+               href="{{ url_for('all_indices') }}"
+               {% if request.endpoint == 'all_indices' or request.endpoint == 'show_index' %}aria-current="page"{% endif %}>Indices</a>
+
+            <a class="nav-link {% if request.endpoint == 'watchlist' %}active{% endif %}"
+               href="{{ url_for('watchlist') }}"
+               {% if request.endpoint == 'watchlist' %}aria-current="page"{% endif %}>Watchlist</a>
+          </div>
+
+          <!-- Right side auth buttons -->
+          <div class="ms-auto d-flex">
+            {% if current_user.is_authenticated %}
+              <a class="btn btn-primary ms-0" href="{{ url_for('logout') }}" role="button">Log Out</a>
+            {% else %}
+              <a class="btn btn-outline-primary ms-0" href="{{ url_for('login') }}" role="button">Log In</a>
+              <a class="btn btn-primary ms-2" href="{{ url_for('signup') }}" role="button">Sign Up</a>
+            {% endif %}
           </div>
         </div>
       </div>
@@ -116,6 +142,28 @@
             </ul>
         </footer>
     </section>
+
+    <!-- Toast Container (bottom-right corner) -->
+    <div id="toast-container-div" class="toast-container position-fixed bottom-0 end-0 p-3">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="toast align-items-center text-bg-{{ category }} border-1 mb-2"
+                         role="alert"
+                         aria-live="assertive"
+                         aria-atomic="true"
+                         data-bs-delay="5000"> <!-- Time in ms after which the toast goes away -->
+                        <div class="d-flex">
+                            <div class="toast-body">
+                                {{ message }}
+                            </div>
+                            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
 
     <!-- Page Loading Spinner Overlay -->
     {{ loading_spinner("page-loading-spinner", "Page Loading...") }}

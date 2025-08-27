@@ -9,6 +9,12 @@ popoverTriggerList.forEach(
   (popoverTriggerEl) => new bootstrap.Popover(popoverTriggerEl)
 );
 
+// To auto-show all toasts
+document.addEventListener("DOMContentLoaded", () => {
+    const toastElList = [].slice.call(document.querySelectorAll('.toast'))
+    toastElList.map(toastEl => new bootstrap.Toast(toastEl).show())
+})
+
 // Page Loading Spinner Overlay
 const pageSpinner = document.getElementById("page-loading-spinner");
 const pageSpinnerDelay = 200; // delay before showing page loading spinner (in ms)

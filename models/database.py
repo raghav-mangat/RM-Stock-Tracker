@@ -1,8 +1,9 @@
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-from sqlalchemy import String, BigInteger, Text, ForeignKey, Date, DateTime, UniqueConstraint
+from sqlalchemy import String, Integer, BigInteger, Text, ForeignKey, Date, DateTime, UniqueConstraint
 from sqlalchemy import Index as DBIndex
 from datetime import datetime, date
+from flask_login import UserMixin
 from utils.datetime_utils import DATE_FORMAT
 
 # Create a base class for SQLAlchemy
@@ -227,4 +228,17 @@ class StockWeek(db.Model):
         UniqueConstraint("stock_id", "date", name="uq_stockweek_stockid_date"),
         # Adding Index for faster performance
         DBIndex("ix_stockweek_stockid_date", "stock_id", "date"),
+    )
+
+
+class User(UserMixin, db.Model):
+    __tablename__ = "users"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
+    email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
+    password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
+
+    __table_args__ = (
+        DBIndex("ix_user_email", "email"),
     )

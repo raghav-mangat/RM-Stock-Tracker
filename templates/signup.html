@@ -1,0 +1,51 @@
+{% from "macros/auth_error.html" import auth_error %}
+
+{% extends "base.html" %}
+
+{% block title %}
+    Sign Up
+{% endblock %}
+
+{% block content %}
+  <section class="container d-flex align-items-start justify-content-center pt-4 pb-4">
+    <div id="auth-card" class="card shadow-sm rounded-3">
+      <div class="card-body p-4">
+        <h3 class="text-center mb-4">Create an Account</h3>
+        <form method="POST" novalidate>
+          {{ form.hidden_tag() }}
+
+          <div class="mb-3">
+            {{ form.username.label(class="form-label fw-semibold") }}
+            {{ form.username(class="form-control", placeholder="Choose a username") }}
+            {{ auth_error(form.username.errors) }}
+          </div>
+
+          <div class="mb-3">
+            {{ form.email.label(class="form-label fw-semibold") }}
+            {{ form.email(class="form-control", placeholder="Enter your email") }}
+            {{ auth_error(form.email.errors) }}
+          </div>
+
+          <div class="mb-3">
+            {{ form.password.label(class="form-label fw-semibold") }}
+            {{ form.password(class="form-control", placeholder="Create a password") }}
+            {{ auth_error(form.password.errors) }}
+          </div>
+
+          <div class="mb-3">
+            {{ form.confirm_password.label(class="form-label fw-semibold") }}
+            {{ form.confirm_password(class="form-control", placeholder="Confirm password") }}
+            {{ auth_error(form.confirm_password.errors) }}
+          </div>
+
+          <div class="d-grid mb-3">
+            {{ form.submit(class="btn btn-success btn-lg") }}
+          </div>
+        </form>
+        <div class="text-center">
+          <small>Already have an account? <a class="text-primary fw-semibold" href="{{ url_for('login') }}">Log In here</a></small>
+        </div>
+      </div>
+    </div>
+  </section>
+{% endblock %}
