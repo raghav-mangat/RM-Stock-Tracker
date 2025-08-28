@@ -164,8 +164,8 @@ def signup():
             method='pbkdf2:sha256',
             salt_length=8
         )
-        name = form.username.data,
-        email = form.email.data,
+        name = form.username.data
+        email = form.email.data
         password_hash = hash_and_salted_password
 
         user = add_new_user(

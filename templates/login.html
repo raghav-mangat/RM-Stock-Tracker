@@ -1,4 +1,4 @@
-{% from "macros/auth_error.html" import auth_error %}
+{% from "macros/auth_field.html" import auth_field %}
 
 {% extends "base.html" %}
 
@@ -14,17 +14,8 @@
         <form method="POST" novalidate>
           {{ form.hidden_tag() }}
 
-          <div class="mb-3">
-            {{ form.email.label(class="form-label fw-semibold") }}
-            {{ form.email(class="form-control", placeholder="Enter your email") }}
-            {{ auth_error(form.email.errors) }}
-          </div>
-
-          <div class="mb-3">
-            {{ form.password.label(class="form-label fw-semibold") }}
-            {{ form.password(class="form-control", placeholder="Enter your password") }}
-            {{ auth_error(form.password.errors) }}
-          </div>
+          {{ auth_field(field=form.email, placeholder="Enter your email") }}
+          {{ auth_field(field=form.password, placeholder="Enter your password") }}
 
           <div class="d-grid mb-3">
             {{ form.submit(class="btn btn-primary btn-lg") }}

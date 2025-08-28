@@ -4,6 +4,9 @@ from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationE
 from werkzeug.security import check_password_hash
 from utils.db_queries.user_data import get_user_by_email, get_user_by_name
 
+def normalize_email(email):
+    return email.strip().lower() if email else email
+
 class LoginForm(FlaskForm):
     email = StringField('Email', validators=[
         DataRequired(message="Email is required"),
@@ -30,7 +33,7 @@ class SignupForm(FlaskForm):
         DataRequired(message="Username is required"),
         Length(max=50, message="Username must be at most 50 characters long")
     ])
-    email = StringField('Email', validators=[
+    email = StringField('Email', filters=[normalize_email], validators=[
         DataRequired(message="Email is required"),
         Email(message="Enter a valid email address")
     ])
