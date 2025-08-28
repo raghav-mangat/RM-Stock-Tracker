@@ -149,6 +149,17 @@ class StockMaster(db.Model):
         DBIndex("ix_stock_master_name", "name"),
     )
 
+    # Returns a list of all the attributes in the table except for the excluded ones
+    def attribute_list(self):
+        exclude = ["id"]
+
+        attributes = [
+            column.name
+            for column in self.__table__.columns
+            if column.name not in exclude
+        ]
+        return attributes
+
 
 class StockMinute(db.Model):
     __tablename__ = "stock_minute_data"

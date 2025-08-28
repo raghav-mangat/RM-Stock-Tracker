@@ -16,6 +16,7 @@ import json
 
 # -------- Stage all new data --------
 stocks_cache = {}  # ticker -> Stock object
+stock_master_tickers = set()
 new_stock_master = []
 new_indices = []
 new_index_holdings = []
@@ -43,6 +44,25 @@ def get_or_fetch_stock(ticker, now_date):
         print(f"[Fetch Error] {ticker}: {e}")
         return None
 
+def update_stock_master():
+    # Delete dead stocks (those not in the new stock master tickers set)
+    db.session.execute(
+        delete(StockMaster).where(StockMaster.ticker.notin_(stock_master_tickers))
+    )
+
+    # Upsert stocks
+    for stock in new_stock_master:
+        existing = db.session.execute(
+            db.select(StockMaster).where(StockMaster.ticker == stock.ticker)
+        ).scalar()
+        if existing:
+            # Update fields
+            for attr in stock.attribute_list():
+                setattr(existing, attr, getattr(stock, attr))
+        else:
+            # Insert new stock
+            db.session.add(stock)
+
 def populate_db():
     """
     Populate the database by staging all data first, then replacing
@@ -56,11 +76,10 @@ def populate_db():
 
         # ---- Stock Master ----
         stocks = fetch_all_stocks_data()
-        seen_tickers = set()
         for stock in stocks:
             ticker_upper = stock.ticker.upper()
-            if ticker_upper not in seen_tickers:
-                seen_tickers.add(ticker_upper)
+            if ticker_upper not in stock_master_tickers:
+                stock_master_tickers.add(ticker_upper)
                 new_stock_master.append(stock)
             else:
                 print(f"Duplicate ticker skipped: {stock.ticker}.")
@@ -107,10 +126,10 @@ def populate_db():
                 db.session.execute(delete(StockDay))
                 db.session.execute(delete(StockWeek))
                 db.session.execute(delete(Stock))
-                db.session.execute(delete(StockMaster))
+
+                update_stock_master()
 
                 # Insert new data
-                db.session.add_all(new_stock_master)
                 db.session.add_all(new_indices)
                 db.session.add_all(new_stocks)
                 for value in new_chart_data.values():
