@@ -1,6 +1,7 @@
 {% from "macros/arrow_direction.html" import arrow_direction %}
 {% from "macros/jumbotron.html" import jumbotron %}
 {% from "macros/top_stocks_tables.html" import top_stocks_tab_content %}
+{% from "macros/search_bar.html" import search_bar %}
 
 {% extends "base.html" %}
 
@@ -10,6 +11,7 @@
 
 {% block style %}
   <link rel="stylesheet" href="{{ url_for('static', filename='styles/all_stocks.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles/search_bar.css') }}">
 {% endblock %}
 
 {% block content %}
@@ -21,25 +23,9 @@
   {{ jumbotron(heading, description, last_updated) }}
 
   <!-- Search Bar Section -->
-  <section class="container my-5">
-    <div id="search-container" class="position-relative mx-auto">
-      <input
-        type="text"
-        id="search-bar"
-        class="form-control form-control-lg border border-dark border-2"
-        placeholder="Search for a stock (e.g., AAPL, Microsoft)..."
-        autocomplete="off"
-        role="combobox"
-        aria-label="Stock search bar"
-        aria-autocomplete="list"
-        aria-expanded="false"
-        aria-controls="suggestions"
-      />
-
-      <!-- Suggestions list will appear below the search bar -->
-      <div id="suggestions" class="list-group position-absolute w-100 d-none"></div>
-    </div>
-  </section>
+    <section class="container my-5">
+      {{ search_bar(id="all-stocks-search-bar") }}
+    </section>
 
   <!--
     Ticker Tape Section
@@ -118,5 +104,5 @@
 {% endblock %}
 
 {% block script %}
-  <script src="{{ url_for('static', filename='js/all_stocks.js') }}" type="text/javascript" defer></script>
+  <script src="{{ url_for('static', filename='js/search_bar.js') }}" type="text/javascript" defer></script>
 {% endblock %}

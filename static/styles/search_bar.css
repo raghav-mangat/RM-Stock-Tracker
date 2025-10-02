@@ -1,0 +1,15 @@
+/**** Styling for Search Bar ****/
+
+.search-container {
+  max-width: 500px;
+}
+
+#suggestions {
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 1000;
+}
+
+.suggestion-item {
+  cursor: pointer;
+}

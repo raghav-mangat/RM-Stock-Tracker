@@ -21,3 +21,7 @@ a.text-primary:hover {
 .cursor-pointer {
   cursor: pointer;
 }
+
+.modal {
+    z-index: 1200;
+}

@@ -1,4 +1,4 @@
-{% macro jumbotron(heading, description, last_updated) %}
+{% macro jumbotron(heading, description, last_updated, extra_content=None) %}
   <section class="bg-light py-5 mb-5 border-top border-bottom">
     <div class="container text-center">
       <h1 class="text-body-emphasis">{{ heading | display}}</h1>
@@ -8,6 +8,11 @@
       <p class="text-info fw-semibold mt-4">
         Last Updated: {{ last_updated | display }}
       </p>
+      {% if extra_content %}
+        <div class="mt-4">
+          {{ extra_content|safe }}
+        </div>
+      {% endif %}
     </div>
   </section>
 {% endmacro %}

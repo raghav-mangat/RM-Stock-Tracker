@@ -17,6 +17,7 @@ from dotenv import load_dotenv
 from flask_login import LoginManager, login_user, login_required, logout_user
 from werkzeug.security import generate_password_hash
 from models.database import db
+from watchlist import watchlist_bp
 from utils.filters import register_custom_filters
 from utils.error_handlers import register_error_handlers
 from utils.breadcrumbs import generate_breadcrumbs
@@ -48,6 +49,9 @@ app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
 
 # Initialize the database
 db.init_app(app)
+
+# Register the Flask Blueprints
+app.register_blueprint(watchlist_bp, url_prefix="/watchlist")
 
 # Initialize the Flask Login manager
 login_manager = LoginManager()
@@ -151,10 +155,6 @@ def chart_data():
     data = get_chart_data(ticker, timeframe)
     return data
 
-@app.route('/watchlist')
-def watchlist():
-    return render_template("watchlist.html")
-
 @app.route('/signup', methods=["GET", "POST"])
 def signup():
     form = SignupForm()
@@ -176,7 +176,7 @@ def signup():
 
         flash("Account created successfully!", "success")
         login_user(user)
-        return redirect(url_for('watchlist'))
+        return redirect(url_for('watchlist.index'))
 
     return render_template("signup.html", form=form)
 
@@ -187,7 +187,7 @@ def login():
         user = get_user_by_email(form.email.data)
         login_user(user)
         flash("Logged in successfully!", "success")
-        return redirect(url_for('watchlist'))
+        return redirect(url_for('watchlist.index'))
 
     return render_template("login.html", form=form)
 

@@ -1,0 +1,20 @@
+{% from "macros/jumbotron.html" import jumbotron %}
+
+{% extends "base.html" %}
+
+{% block title %}
+    Watchlist
+{% endblock %}
+
+{% block content %}
+    {% set heading = "Watchlist" %}
+    {% set description = "Create your own watchlist by signing up or logging in. Save your favourite stocks in folders and track them anytime." %}
+    {% set last_updated = last_updated | display %}
+    {{ jumbotron(heading, description, last_updated) }}
+
+
+    <section class="container text-center">
+        <a class="btn btn-lg btn-outline-primary mx-2" href="{{ url_for('login') }}">Log In</a>
+        <a class="btn btn-lg btn-primary" href="{{ url_for('signup') }}">Sign Up</a>
+    </section>
+{% endblock %}

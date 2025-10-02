@@ -20,8 +20,8 @@ def generate_breadcrumbs():
         breadcrumbs.append({'label': 'Indices', 'url': url_for('all_indices')})
         breadcrumbs.append({'label': view_args['index_id'], 'url': request.path})
 
-    elif endpoint == "watchlist":
-        breadcrumbs.append({'label': 'Watchlist', 'url': url_for('watchlist')})
+    elif endpoint == "watchlist.index":
+        breadcrumbs.append({'label': 'Watchlist', 'url': url_for('watchlist.index')})
 
     elif endpoint == "signup":
         breadcrumbs.append({'label': 'Sign Up', 'url': url_for('signup')})

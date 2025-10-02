@@ -1,0 +1,166 @@
+{% from "macros/popovers.html" import dma_200_diff_popover %}
+{% from "macros/jumbotron.html" import jumbotron %}
+{% from "macros/stock_attributes.html" import stock_todays_change, stock_dma_200_perc_diff %}
+{% from "macros/search_bar.html" import search_bar %}
+
+{% extends "base.html" %}
+
+{% block title %}
+    Watchlist
+{% endblock %}
+
+{% block style %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles/search_bar.css') }}">
+{% endblock %}
+
+{% block content %}
+
+<!-- Hero Section -->
+{% set heading = "Your Watchlist, " ~ current_user.name %}
+{% set description = "Here’s where you keep track of your favourite stocks. Group them into folders, and quickly check their performance whenever you log in." %}
+{% set last_updated = last_updated | display %}
+{{ jumbotron(heading, description, last_updated) }}
+
+
+<section class="container my-4">
+
+  <!-- Add Folder Form -->
+  <form method="POST" action="{{ url_for('watchlist.add_folder') }}" class="d-flex mb-4">
+    <input type="text" name="folder_name" class="form-control me-2" placeholder="New Folder Name" required>
+    <button type="submit" class="btn btn-success">Add Folder</button>
+  </form>
+
+  <!-- Accordion for Watchlist -->
+  <div class="accordion accordion-flush" id="watchlistAccordion">
+    {% for key, value in watchlist_data.items() %}
+      <div class="accordion-item border border-1 border-dark shadow-sm mb-3">
+        <h2 class="accordion-header" id="heading-{{ loop.index }}">
+          <button class="accordion-button fw-semibold {% if loop.index != 1 %} collapsed {% endif %}" type="button" data-bs-toggle="collapse"
+                  data-bs-target="#collapse-{{ loop.index }}" aria-expanded="{% if loop.index == 1 %}true{% else %}false{% endif %}"
+                  aria-controls="collapse-{{ loop.index }}">
+            {{ value.folder_name }}
+          </button>
+        </h2>
+
+        <div id="collapse-{{ loop.index }}" class="accordion-collapse collapse {% if loop.index == 1 %} show {% endif %}"
+             aria-labelledby="heading-{{ loop.index }}">
+          <div class="accordion-body">
+
+            <!-- Folder Actions -->
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <!-- Left: Add Stock Button -->
+              <button class="btn btn-sm btn-success"
+                      data-bs-toggle="modal"
+                      data-bs-target="#addStockModal"
+                      data-folder-id="{{ key }}">
+                + Add Stock
+              </button>
+
+              <!-- Right: Rename + Delete -->
+              <div class="d-flex align-items-center gap-2">
+                <!-- Rename Folder Form -->
+                <form method="POST" action="{{ url_for('watchlist.rename_folder', folder_id=key) }}" class="d-flex align-items-center gap-2">
+                  <input type="text" name="new_folder_name" class="form-control form-control-sm"
+                         placeholder="Rename Folder" required>
+                  <button type="submit" class="btn btn-sm btn-outline-primary">Rename</button>
+                </form>
+                <!-- Delete Folder Form -->
+                <form method="POST" action="{{ url_for('watchlist.delete_folder', folder_id=key) }}">
+                  <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                </form>
+              </div>
+            </div>
+
+            <!-- Table -->
+            <div class="table-responsive">
+              <table class="table table-bordered table-hover align-middle">
+                <thead class="table-light">
+                  <tr>
+                      <th scope="col">#</th>
+                      <th scope="col">Name</th>
+                      <th scope="col">Ticker</th>
+                      <th scope="col">52w Low</th>
+                      <th scope="col">Day Close</th>
+                      <th scope="col">52w High</th>
+                      <th scope="col">Today's Change</th>
+                      <th scope="col">200-DMA</th>
+                      <th scope="col">% Diff {{ dma_200_diff_popover() }}</th>
+                      <th scope="col">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for stock in value.folder_items %}
+                  <tr>
+                    <th scope="row">{{ loop.index }}</th>
+                    <td>
+                      <a href="{{ url_for('show_stock', ticker=stock.ticker) }}" class="fw-semibold text-primary">
+                        {{ stock.name | display }}
+                      </a>
+                    </td>
+                    <td>{{ stock.ticker | display }}</td>
+                    <td>{{ stock.low_52w | currency }}</td>
+                    <td class="fw-semibold bg-info-subtle">{{ stock.day_close | currency }}</td>
+                    <td>{{ stock.high_52w | currency }}</td>
+                    <td>{{ stock_todays_change(stock) }}</td>
+                    <td>{{ stock.dma_200 | currency }}</td>
+                    {{ stock_dma_200_perc_diff(stock) }}
+                      <td>
+                          <form method="POST" action="{{ url_for('watchlist.remove_item', folder_id=key, ticker=stock.ticker) }}">
+                              <button type="submit" class="btn btn-sm btn-outline-danger">
+                                  <i class="bi bi-trash"></i>
+                              </button>
+                          </form>
+                      </td>
+                  </tr>
+                  {% else %}
+                  <tr>
+                    <td colspan="10" class="text-center text-muted py-4">
+                      <em>No stocks to show in this folder yet.</em>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    {% else %}
+      <!-- Empty State when no folders -->
+      <div class="alert alert-info text-center shadow-sm py-4">
+        <h5 class="fw-bold mb-2">No folders created yet</h5>
+        <p class="mb-0">Start by creating a folder to organize your watchlist.</p>
+      </div>
+    {% endfor %}
+
+    <!-- Add Stock Modal -->
+    <div class="modal fade" id="addStockModal" tabindex="-1" aria-labelledby="addStockModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <form id="addStockForm" method="POST">
+            <div class="modal-header">
+              <h5 class="modal-title">Add Stock to Folder</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <!-- Hidden field for folder_id -->
+              <input type="hidden" name="folder_id" id="hidden-folder-id">
+              {{ search_bar(id="watchlist-search-bar") }}
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+{% endblock %}
+
+{% block script %}
+  <script src="{{ url_for('static', filename='js/search_bar.js') }}" type="text/javascript" defer></script>
+{% endblock %}

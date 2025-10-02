@@ -1,7 +1,23 @@
+const allStocksSearchBar = document.getElementById("all-stocks-search-bar");
+const watchlistSearchBar = document.getElementById("watchlist-search-bar");
+
 const searchBar = document.getElementById("search-bar");
 const suggestionsBox = document.getElementById("suggestions");
 const minSuggestionLen = 1;
 let activeIndex = -1;
+
+let currentFolderId = null;
+
+if (watchlistSearchBar) {
+  const modalEl = document.getElementById("addStockModal");
+  // Capture folder ID when modal is opened
+  modalEl.addEventListener("show.bs.modal", function (event) {
+    const button = event.relatedTarget;
+    currentFolderId = button.getAttribute("data-folder-id");
+    searchBar.value = "";
+    resetSuggestions();
+  });
+}
 
 // Reset suggestions UI
 function resetSuggestions() {
@@ -46,16 +62,37 @@ searchBar.addEventListener("input", function () {
 
       // Create each suggestion as a Bootstrap list-group item
       data.forEach((item, idx) => {
-        const anchor = document.createElement("a");
-        anchor.href = `/stocks/${item.ticker}`;
-        anchor.innerHTML = `<span><strong>${item.ticker}</strong> - ${item.name}</span>`;
-        anchor.classList.add(
-          "suggestion-item",
-          "list-group-item",
-          "list-group-item-action"
-        );
-        anchor.setAttribute("role", "option");
-        anchor.setAttribute("tabindex", "-1");
+        let anchor = undefined;
+        if (allStocksSearchBar) {
+          anchor = document.createElement("a");
+          anchor.href = `/stocks/${item.ticker}`;
+          anchor.innerHTML = `<span><strong>${item.ticker}</strong> - ${item.name}</span>`;
+          anchor.classList.add(
+            "suggestion-item",
+            "list-group-item",
+            "list-group-item-action"
+          );
+          anchor.setAttribute("role", "option");
+          anchor.setAttribute("tabindex", "-1");
+        } else if (watchlistSearchBar) {
+          anchor = document.createElement("button");
+          anchor.type = "button";
+          anchor.innerHTML = `<span><strong>${item.ticker}</strong> - ${item.name}</span>`;
+          anchor.classList.add(
+            "suggestion-item",
+            "list-group-item",
+            "list-group-item-action"
+          );
+          anchor.setAttribute("role", "option");
+
+          // Clicking a suggestion submits to watchlist.add_item
+          anchor.addEventListener("click", () => {
+            const form = document.getElementById("addStockForm");
+            document.getElementById("hidden-folder-id").value = currentFolderId;
+            form.action = `/watchlist/add-item/${item.ticker}`;
+            form.submit();
+          });
+        }
 
         // Mouse Hover styling will use updateActiveSuggestion
         anchor.addEventListener("mouseover", () => updateActiveSuggestion(idx));
