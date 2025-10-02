@@ -143,6 +143,9 @@ class StockMaster(db.Model):
     todays_change: Mapped[float] = mapped_column(nullable=True)
     todays_change_perc: Mapped[float] = mapped_column(nullable=True)
 
+    # Backref from watchlist items
+    watchlist_items: Mapped[list["WatchlistItem"]] = relationship("WatchlistItem", back_populates="stock")
+
     # Adding Index for faster performance
     __table_args__ = (
         DBIndex("ix_stock_master_ticker", "ticker"),
@@ -245,11 +248,85 @@ class StockWeek(db.Model):
 class User(UserMixin, db.Model):
     __tablename__ = "users"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
     email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
 
+    # One user -> many watchlist folders
+    watchlist_folders: Mapped[list["WatchlistFolder"]] = relationship(
+        "WatchlistFolder",
+        back_populates="user",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+
     __table_args__ = (
         DBIndex("ix_user_email", "email"),
     )
+
+    def __repr__(self) -> str:
+        return f"<User id={self.id} email={self.email}>"
+
+
+class WatchlistFolder(db.Model):
+    __tablename__ = "wl_folders"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    name: Mapped[str] = mapped_column(String(100), nullable=False)
+
+    # Relationship back to user
+    user: Mapped["User"] = relationship("User", back_populates="watchlist_folders")
+
+    # Items inside this folder
+    items: Mapped[list["WatchlistItem"]] = relationship(
+        "WatchlistItem",
+        back_populates="folder",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+
+    __table_args__ = (
+        # make folder names unique per user: (user_id, name) must be unique
+        UniqueConstraint("user_id", "name", name="uq_wl_folder_user_name"),
+        DBIndex("ix_wl_folders_user_id", "user_id"),
+    )
+
+    def __repr__(self) -> str:
+        return f"<WatchlistFolder id={self.id} user_id={self.user_id} name={self.name}>"
+
+
+class WatchlistItem(db.Model):
+    __tablename__ = "wl_folder_items"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+
+    folder_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("wl_folders.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    stock_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("stocks_master.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+
+    # relationships
+    folder: Mapped["WatchlistFolder"] = relationship("WatchlistFolder", back_populates="items")
+    stock: Mapped["StockMaster"] = relationship("StockMaster", back_populates="watchlist_items")
+
+    __table_args__ = (
+        # prevent duplicate (same stock in same folder)
+        UniqueConstraint("folder_id", "stock_id", name="uq_wl_folder_items_folder_stock"),
+        DBIndex("ix_wl_folder_items_folder_id", "folder_id"),
+        DBIndex("ix_wl_folder_items_stock_id", "stock_id"),
+    )
+
+    def __repr__(self) -> str:
+        return f"<WatchlistItem id={self.id} folder_id={self.folder_id} stock_id={self.stock_id}>"
