@@ -87,7 +87,14 @@ def add_watchlist_item(folder, stock):
     db.session.commit()
 
 def remove_watchlist_item(folder_id, ticker):
-    stock_id = db.session.execute(db.select(StockMaster.id).where(StockMaster.ticker == ticker)).scalar()
-    watchlist_item = db.session.execute(db.select(WatchlistItem).where(folder_id==folder_id, stock_id==stock_id)).scalar()
+    stock_id = db.session.execute(
+        db.select(StockMaster.id).where(
+            StockMaster.ticker == ticker)
+    ).scalar()
+    watchlist_item = db.session.execute(
+        db.select(WatchlistItem).where(
+            WatchlistItem.folder_id==folder_id, WatchlistItem.stock_id==stock_id
+        )
+    ).scalar()
     db.session.delete(watchlist_item)
     db.session.commit()

@@ -23,11 +23,11 @@ def add_folder():
         flash("Folder name cannot be empty", "danger")
         return redirect(url_for("watchlist.index"))
 
-    folder_name = folder_name.strip()
+    folder_name = folder_name.strip().upper()
     if db_add_folder(folder_name=folder_name, user=current_user):
         flash(f"Folder '{folder_name}' added successfully!", "success")
     else:
-        flash("Cannot have duplicate folders", "warning")
+        flash(f"Folder '{folder_name}' already exists.", "warning")
     return redirect(url_for("watchlist.index"))
 
 @watchlist_bp.route("/rename_folder/<int:folder_id>", methods=["POST"])
@@ -52,32 +52,35 @@ def delete_folder(folder_id):
     return redirect(url_for("watchlist.index"))
 
 @watchlist_bp.route("/add-item/<string:ticker>", methods=["POST"])
+@watchlist_bp.route("/add-item/", methods=["POST"])
 @login_required
-def add_item(ticker):
-    # Redirect to `next` if provided, else fallback
+def add_item(ticker=None):
+    # Redirect to 'next' if provided, else fallback
     next_url = request.form.get("next")
     if next_url:
         url = next_url
     else:
         url = url_for("watchlist.index")
 
-    folder_id = request.form.get("folder_id")
-
-    folder = get_folder_by_id(folder_id)
-    if not folder:
-        flash("Invalid folder selected.", "danger")
-        return redirect(url)
-
     stock = get_stock_master_by_ticker(ticker)
-    # Prevent duplicates
-    watchlist_item = get_watchlist_item(folder=folder, stock=stock)
-    if watchlist_item:
-        flash("This stock is already in the selected folder.", "warning")
-        return redirect(url)
+    if stock:
+        folder_id = request.form.get("folder_id")
 
-    add_watchlist_item(folder=folder, stock=stock)
+        folder = get_folder_by_id(folder_id)
+        if not folder:
+            flash("Invalid folder selected.", "danger")
+            return redirect(url)
 
-    flash(f"Added stock '{ticker}' to folder '{folder.name}'.", "success")
+        # Prevent duplicates
+        watchlist_item = get_watchlist_item(folder=folder, stock=stock)
+        if watchlist_item:
+            flash("This stock is already in the selected folder.", "warning")
+            return redirect(url)
+
+        add_watchlist_item(folder=folder, stock=stock)
+        flash(f"Added stock '{ticker}' to folder '{folder.name}'.", "success")
+    else:
+        flash(f"Please search for a valid stock.", "warning")
     return redirect(url)
 
 @watchlist_bp.route("/remove_item/<int:folder_id>/<string:ticker>", methods=["POST"])

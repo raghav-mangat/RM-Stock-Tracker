@@ -17,6 +17,10 @@ if (watchlistSearchBar) {
     searchBar.value = "";
     resetSuggestions();
   });
+  // Focus on search bar after modal is fully shown
+  modalEl.addEventListener("shown.bs.modal", function () {
+    searchBar.focus();
+  });
 }
 
 // Reset suggestions UI
