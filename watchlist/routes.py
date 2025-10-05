@@ -18,17 +18,24 @@ def index():
 @watchlist_bp.route("/add_folder", methods=["POST"])
 @login_required
 def add_folder():
+    # Redirect to 'next' if provided, else fallback
+    next_url = request.form.get("next")
+    if next_url:
+        url = next_url
+    else:
+        url = url_for("watchlist.index")
+
     folder_name = request.form.get("folder_name")
     if not folder_name:
         flash("Folder name cannot be empty", "danger")
-        return redirect(url_for("watchlist.index"))
+        return redirect(url)
 
     folder_name = folder_name.strip().upper()
     if db_add_folder(folder_name=folder_name, user=current_user):
         flash(f"Folder '{folder_name}' added successfully!", "success")
     else:
         flash(f"Folder '{folder_name}' already exists.", "warning")
-    return redirect(url_for("watchlist.index"))
+    return redirect(url)
 
 @watchlist_bp.route("/rename_folder/<int:folder_id>", methods=["POST"])
 @login_required
@@ -38,8 +45,9 @@ def rename_folder(folder_id):
         flash("Folder name cannot be empty!", "danger")
         return redirect(url_for("watchlist.index"))
 
+    new_folder_name = new_folder_name.strip().upper()
     if db_rename_folder(folder_id, new_folder_name):
-        flash(f"Folder renamed to {new_folder_name}!", "success")
+        flash(f"Folder renamed to {new_folder_name}.", "success")
     else:
         flash("Cannot have duplicate folders!", "warning")
     return redirect(url_for("watchlist.index"))

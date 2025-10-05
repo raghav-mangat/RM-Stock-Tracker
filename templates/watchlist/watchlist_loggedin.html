@@ -2,6 +2,7 @@
 {% from "macros/jumbotron.html" import jumbotron %}
 {% from "macros/stock_attributes.html" import stock_todays_change, stock_dma_200_perc_diff %}
 {% from "macros/search_bar.html" import search_bar %}
+{% from "macros/watchlist_forms.html" import add_folder_form %}
 
 {% extends "base.html" %}
 
@@ -11,6 +12,7 @@
 
 {% block style %}
   <link rel="stylesheet" href="{{ url_for('static', filename='styles/search_bar.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles/watchlist.css') }}">
 {% endblock %}
 
 {% block content %}
@@ -25,20 +27,27 @@
 <section class="container my-4">
 
   <!-- Add Folder Form -->
-  <form method="POST" action="{{ url_for('watchlist.add_folder') }}" class="d-flex mb-4">
-    <input type="text" name="folder_name" class="form-control me-2 text-uppercase" placeholder="NEW FOLDER NAME" required>
-    <button type="submit" class="btn btn-success">Add Folder</button>
-  </form>
+  {{ add_folder_form() }}
 
   <!-- Accordion for Watchlist -->
   <div class="accordion accordion-flush" id="watchlistAccordion">
     {% for key, value in watchlist_data.items() %}
       <div class="accordion-item border border-1 border-dark shadow-sm mb-3">
         <h2 class="accordion-header" id="heading-{{ loop.index }}">
-          <button class="accordion-button fw-semibold {% if loop.index != 1 %} collapsed {% endif %}" type="button" data-bs-toggle="collapse"
-                  data-bs-target="#collapse-{{ loop.index }}" aria-expanded="{% if loop.index == 1 %}true{% else %}false{% endif %}"
-                  aria-controls="collapse-{{ loop.index }}">
-            {{ value.folder_name }}
+          <button
+            class="accordion-button fw-semibold {% if loop.index != 1 %} collapsed {% endif %}"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#collapse-{{ loop.index }}"
+            aria-expanded="{% if loop.index == 1 %}true{% else %}false{% endif %}"
+            aria-controls="collapse-{{ loop.index }}"
+          >
+            <span class="d-flex align-middle">
+              {{ value.folder_name }}
+              <span class="badge bg-secondary rounded-pill ms-2">
+                {{ value.folder_items|length }}
+              </span>
+            </span>
           </button>
         </h2>
 
@@ -60,7 +69,7 @@
               <div class="d-flex align-items-center gap-2">
                 <!-- Rename Folder Form -->
                 <form method="POST" action="{{ url_for('watchlist.rename_folder', folder_id=key) }}" class="d-flex align-items-center gap-2">
-                  <input type="text" name="new_folder_name" class="form-control form-control-sm"
+                  <input type="text" name="new_folder_name" class="form-control form-control-sm text-uppercase"
                          placeholder="Rename Folder" required>
                   <button type="submit" class="btn btn-sm btn-outline-primary">Rename</button>
                 </form>

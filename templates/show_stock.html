@@ -1,6 +1,7 @@
 {% from "macros/jumbotron.html" import jumbotron %}
 {% from "macros/popovers.html" import dma_200_diff_popover %}
 {% from "macros/stock_attributes.html" import stock_todays_change %}
+{% from "macros/watchlist_forms.html" import add_folder_form %}
 
 {% extends "base.html" %}
 
@@ -33,19 +34,23 @@
 
   {{ jumbotron(heading, description, last_updated, add_to_watchlist_button) }}
 
-  <!-- Bootstrap Modal (only shown if logged in) -->
+  <!-- Add to Watchlist Bootstrap Modal (only shown if logged in) -->
   {% if current_user.is_authenticated %}
   <div class="modal fade" id="addToWatchlistModal" tabindex="-1" aria-labelledby="addToWatchlistModalLabel" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
-        <form method="POST" action="{{ url_for('watchlist.add_item', ticker=stock.ticker) }}">
-          <input type="hidden" name="next" value="{{ request.path }}">
-          <div class="modal-header">
-            <h5 class="modal-title">Add {{ stock.ticker }} to Watchlist</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
+        <div class="modal-header">
+          <h5 class="modal-title">Add {{ stock.ticker }} to Watchlist</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
 
-          <div class="modal-body">
+        <div class="modal-body">
+          <!-- Add Folder Form -->
+          {{ add_folder_form() }}
+
+          <!-- Select Folder Form -->
+          <form method="POST" action="{{ url_for('watchlist.add_item', ticker=stock.ticker) }}">
+            <input type="hidden" name="next" value="{{ request.path }}">
             <div class="mb-3">
               {% if current_user.watchlist_folders %}
                 <label for="folderSelect" class="form-label">Select Folder</label>
@@ -58,16 +63,15 @@
                 <a href="{{ url_for('watchlist.index') }}" class="text-primary fw-semibold">Create a Folder</a>
               {% endif %}
             </div>
-          </div>
 
-          <div class="modal-footer">
-            <!-- Close just dismisses modal -->
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-            <!-- Submit actually posts to watchlist.add_item route -->
-            <button type="submit" class="btn btn-primary" {% if not current_user.watchlist_folders %} disabled {% endif %}>Submit</button>
-          </div>
-
-        </form>
+            <div class="modal-footer">
+              <!-- Close just dismisses modal -->
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+              <!-- Submit actually posts to watchlist.add_item route -->
+              <button type="submit" class="btn btn-primary" {% if not current_user.watchlist_folders %} disabled {% endif %}>Submit</button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   </div>

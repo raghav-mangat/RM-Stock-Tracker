@@ -1,0 +1,8 @@
+{% macro add_folder_form() %}
+    <!-- Add Folder Form -->
+    <form method="POST" action="{{ url_for('watchlist.add_folder') }}" class="d-flex mb-4">
+        <input type="hidden" name="next" value="{{ request.path }}">
+        <input type="text" name="folder_name" class="form-control me-2 text-uppercase" placeholder="NEW FOLDER NAME" required>
+        <button type="submit" class="btn btn-success">Add Folder</button>
+    </form>
+{% endmacro %}
