@@ -43,6 +43,7 @@
             aria-controls="collapse-{{ loop.index }}"
           >
             <span class="d-flex align-middle">
+              {{ value.folder_order }})
               {{ value.folder_name }}
               <span class="badge bg-secondary rounded-pill ms-2">
                 {{ value.folder_items|length }}
@@ -56,25 +57,48 @@
           <div class="accordion-body">
 
             <!-- Folder Actions -->
-            <div class="d-flex justify-content-between align-items-center mb-3">
-              <!-- Left: Add Stock Button -->
-              <button class="btn btn-sm btn-success"
-                      data-bs-toggle="modal"
-                      data-bs-target="#addStockModal"
-                      data-folder-id="{{ key }}">
-                + Add Stock
-              </button>
+            <div class="row g-2 align-items-center mb-3">
+              <!-- Left Column: Order Selector + Add Stock -->
+              <div class="col-12 col-md-6 d-flex flex-wrap align-items-center gap-2">
+                <!-- Order Selector -->
+                <form method="POST"
+                      action="{{ url_for('watchlist.update_order', folder_id=key) }}"
+                      class="d-flex align-items-center">
+                  <label for="order-{{ key }}" class="me-2 mb-0 small text-muted">Order:</label>
+                  <select name="order" id="order-{{ key }}"
+                          class="form-select form-select-sm"
+                          onchange="this.form.submit()">
+                    {% for i in range(1, watchlist_data|length + 1) %}
+                      <option value="{{ i }}" {% if value.folder_order == i %}selected{% endif %}>{{ i }}</option>
+                    {% endfor %}
+                  </select>
+                </form>
 
-              <!-- Right: Rename + Delete -->
-              <div class="d-flex align-items-center gap-2">
+                <!-- Add Stock Button -->
+                <button class="btn btn-sm btn-success"
+                        data-bs-toggle="modal"
+                        data-bs-target="#addStockModal"
+                        data-folder-id="{{ key }}">
+                  + Add Stock
+                </button>
+              </div>
+
+              <!-- Right Column: Rename + Delete -->
+              <div class="col-12 col-md-6 d-flex flex-wrap justify-content-md-end gap-2">
                 <!-- Rename Folder Form -->
-                <form method="POST" action="{{ url_for('watchlist.rename_folder', folder_id=key) }}" class="d-flex align-items-center gap-2">
-                  <input type="text" name="new_folder_name" class="form-control form-control-sm text-uppercase"
+                <form method="POST"
+                      action="{{ url_for('watchlist.rename_folder', folder_id=key) }}"
+                      class="d-flex align-items-center gap-2">
+                  <input type="text"
+                         name="new_folder_name"
+                         class="form-control form-control-sm text-uppercase"
                          placeholder="Rename Folder" required>
                   <button type="submit" class="btn btn-sm btn-outline-primary">Rename</button>
                 </form>
+
                 <!-- Delete Folder Form -->
-                <form method="POST" action="{{ url_for('watchlist.delete_folder', folder_id=key) }}">
+                <form method="POST"
+                      action="{{ url_for('watchlist.delete_folder', folder_id=key) }}">
                   <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
                 </form>
               </div>

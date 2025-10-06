@@ -2,7 +2,7 @@ from . import watchlist_bp
 from flask import render_template, request, flash, redirect, url_for
 from flask_login import current_user, login_required
 from utils.populate_db_info import db_last_updated
-from utils.db_queries.watchlist import get_all_watchlist_data, db_add_folder, db_rename_folder, db_delete_folder, get_folder_by_id, get_stock_master_by_ticker, get_watchlist_item, add_watchlist_item, remove_watchlist_item
+from utils.db_queries.watchlist import *
 
 @watchlist_bp.route('/', methods=["GET"])
 def index():
@@ -55,9 +55,18 @@ def rename_folder(folder_id):
 @watchlist_bp.route("/delete_folder/<int:folder_id>", methods=["POST"])
 @login_required
 def delete_folder(folder_id):
-    db_delete_folder(folder_id)
+    db_delete_folder(folder_id=folder_id, user=current_user)
     flash("Folder deleted successfully!", "success")
     return redirect(url_for("watchlist.index"))
+
+@watchlist_bp.route("/update_order/<int:folder_id>", methods=["POST"])
+@login_required
+def update_order(folder_id):
+    new_order = int(request.form.get("order"))
+    db_update_order(folder_id, new_order, current_user)
+    flash("Folder reordered successfully!", "success")
+    return redirect(url_for("watchlist.index"))
+
 
 @watchlist_bp.route("/add-item/<string:ticker>", methods=["POST"])
 @watchlist_bp.route("/add-item/", methods=["POST"])
