@@ -273,12 +273,14 @@ class WatchlistFolder(db.Model):
     __tablename__ = "wl_folders"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    name: Mapped[str] = mapped_column(String(100), nullable=False)
+    order: Mapped[int] = mapped_column(Integer, nullable=False)
+
     user_id: Mapped[int] = mapped_column(
         Integer,
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
     )
-    name: Mapped[str] = mapped_column(String(100), nullable=False)
 
     # Relationship back to user
     user: Mapped["User"] = relationship("User", back_populates="watchlist_folders")
