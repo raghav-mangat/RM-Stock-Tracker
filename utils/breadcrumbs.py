@@ -23,10 +23,10 @@ def generate_breadcrumbs():
     elif endpoint == "watchlist.index":
         breadcrumbs.append({'label': 'Watchlist', 'url': url_for('watchlist.index')})
 
-    elif endpoint == "signup":
-        breadcrumbs.append({'label': 'Sign Up', 'url': url_for('signup')})
+    elif endpoint == "auth.signup":
+        breadcrumbs.append({'label': 'Sign Up', 'url': url_for('auth.signup')})
 
-    elif endpoint == "login":
-        breadcrumbs.append({'label': 'Log In', 'url': url_for('login')})
+    elif endpoint == "auth.login":
+        breadcrumbs.append({'label': 'Log In', 'url': url_for('auth.login')})
 
     return breadcrumbs

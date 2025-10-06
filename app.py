@@ -12,11 +12,11 @@ Started On: June 07, 2025
 """
 
 import os
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request
 from dotenv import load_dotenv
-from flask_login import LoginManager, login_user, login_required, logout_user
-from werkzeug.security import generate_password_hash
+from flask_login import LoginManager
 from models.database import db
+from auth import auth_bp
 from watchlist import watchlist_bp
 from utils.filters import register_custom_filters
 from utils.error_handlers import register_error_handlers
@@ -27,8 +27,7 @@ from utils.db_queries.show_index import get_index_data
 from utils.db_queries.all_stocks import get_ticker_tape_stocks, get_top_stocks
 from utils.db_queries.query_stocks import get_query_stocks
 from utils.db_queries.show_stock import get_stock_data, get_chart_data, get_timeframe_options
-from utils.db_queries.user_data import get_user_by_id, get_user_by_email, add_new_user
-from utils.forms import LoginForm, SignupForm
+from utils.db_queries.user_data import get_user_by_id
 
 # Load environment variables
 load_dotenv()
@@ -51,12 +50,13 @@ app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
 db.init_app(app)
 
 # Register the Flask Blueprints
+app.register_blueprint(auth_bp, url_prefix="/auth")
 app.register_blueprint(watchlist_bp, url_prefix="/watchlist")
 
 # Initialize the Flask Login manager
 login_manager = LoginManager()
 login_manager.init_app(app)
-login_manager.login_view = "login"
+login_manager.login_view = "auth.login"
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -154,49 +154,6 @@ def chart_data():
     timeframe = request.args.get("timeframe", "").strip()
     data = get_chart_data(ticker, timeframe)
     return data
-
-@app.route('/signup', methods=["GET", "POST"])
-def signup():
-    form = SignupForm()
-    if form.validate_on_submit():
-        hash_and_salted_password = generate_password_hash(
-            form.password.data,
-            method='pbkdf2:sha256',
-            salt_length=8
-        )
-        name = form.username.data
-        email = form.email.data
-        password_hash = hash_and_salted_password
-
-        user = add_new_user(
-            name=name,
-            email=email,
-            password_hash=password_hash
-        )
-
-        flash("Account created successfully!", "success")
-        login_user(user)
-        return redirect(url_for('watchlist.index'))
-
-    return render_template("signup.html", form=form)
-
-@app.route('/login', methods=["GET", "POST"])
-def login():
-    form = LoginForm()
-    if form.validate_on_submit():
-        user = get_user_by_email(form.email.data)
-        login_user(user)
-        flash("Logged in successfully!", "success")
-        return redirect(url_for('watchlist.index'))
-
-    return render_template("login.html", form=form)
-
-@app.route('/logout')
-@login_required
-def logout():
-    logout_user()
-    flash("Logged out successfully!", "success")
-    return redirect(url_for('home'))
 
 
 if __name__ == "__main__":
