@@ -15,6 +15,7 @@ import os
 from flask import Flask, render_template, request
 from dotenv import load_dotenv
 from flask_login import LoginManager
+from flask_mail import Mail
 from models.database import db
 from auth import auth_bp
 from watchlist import watchlist_bp
@@ -49,10 +50,6 @@ app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
 # Initialize the database
 db.init_app(app)
 
-# Register the Flask Blueprints
-app.register_blueprint(auth_bp, url_prefix="/auth")
-app.register_blueprint(watchlist_bp, url_prefix="/watchlist")
-
 # Initialize the Flask Login manager
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -61,6 +58,20 @@ login_manager.login_view = "auth.login"
 @login_manager.user_loader
 def load_user(user_id):
     return get_user_by_id(user_id)
+
+# Initialize Flask Mail
+app.config['MAIL_SERVER'] = os.getenv("MAIL_SERVER")
+app.config['MAIL_PORT'] = os.getenv("MAIL_PORT")
+app.config['MAIL_USE_TLS'] = os.getenv("MAIL_USE_TLS")
+app.config['MAIL_USERNAME'] = os.getenv("MAIL_USERNAME")
+app.config['MAIL_PASSWORD'] = os.getenv("MAIL_PASSWORD")
+app.config['MAIL_DEFAULT_SENDER'] = os.getenv("MAIL_DEFAULT_SENDER")
+
+mail = Mail(app)
+
+# Register the Flask Blueprints
+app.register_blueprint(auth_bp, url_prefix="/auth")
+app.register_blueprint(watchlist_bp, url_prefix="/watchlist")
 
 # Register custom filters
 register_custom_filters(app)

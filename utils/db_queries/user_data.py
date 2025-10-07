@@ -1,6 +1,8 @@
 from models.database import db, User
+from werkzeug.security import generate_password_hash
 
-def add_new_user(name, email, password_hash):
+def add_new_user(name, email, password):
+    password_hash = get_password_hash(password)
     new_user = User(
         name=name,
         email=email,
@@ -19,3 +21,14 @@ def get_user_by_name(name):
 def get_user_by_email(email):
     return db.session.execute(db.select(User).where(User.email == email)).scalar()
 
+def change_user_password(user, password):
+    user.password_hash = get_password_hash(password)
+    db.session.commit()
+
+def get_password_hash(password):
+    hash_and_salted_password = generate_password_hash(
+        password,
+        method='pbkdf2:sha256',
+        salt_length=8
+    )
+    return hash_and_salted_password

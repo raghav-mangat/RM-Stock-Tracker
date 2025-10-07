@@ -56,3 +56,21 @@ class SignupForm(FlaskForm):
         user = get_user_by_name(field.data)
         if user:
             raise ValidationError("This username is already taken. Please choose another")
+
+class ResetPasswordRequestForm(FlaskForm):
+    email = StringField('Email', validators=[
+        DataRequired(message="Email is required"),
+        Email(message="Enter a valid email address")
+    ])
+    submit = SubmitField("Request Password Reset")
+
+class ResetPasswordForm(FlaskForm):
+    password = PasswordField('New Password', validators=[
+        DataRequired(message="Password is required"),
+        Length(min=8, message="Password must be at least 8 characters long")
+    ])
+    confirm_password = PasswordField('Confirm Password', validators=[
+        DataRequired(message="Please confirm your password"),
+        EqualTo('password', message="Passwords must match")
+    ])
+    submit = SubmitField("Reset Password")
