@@ -2,9 +2,12 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy import String, Integer, BigInteger, Text, ForeignKey, Date, DateTime, UniqueConstraint
 from sqlalchemy import Index as DBIndex
-from datetime import datetime, date
 from flask_login import UserMixin
+import jwt
+from datetime import datetime, date
+from time import time
 from utils.datetime_utils import DATE_FORMAT
+from flask import current_app
 
 # Create a base class for SQLAlchemy
 class Base(DeclarativeBase):
@@ -264,6 +267,26 @@ class User(UserMixin, db.Model):
     __table_args__ = (
         DBIndex("ix_user_email", "email"),
     )
+
+    def get_reset_password_token(self, expires_in=600):
+        # Token expires in 600 seconds (10 minutes) by default
+        return jwt.encode(
+            {"reset_password": self.id, 'exp': time() + expires_in},
+            current_app.config["SECRET_KEY"],
+            algorithm="HS256"
+        )
+
+    @staticmethod
+    def verify_reset_password_token(token):
+        try:
+            user_id = jwt.decode(
+                token,
+                current_app.config["SECRET_KEY"],
+                algorithms=["HS256"]
+            )["reset_password"]
+        except:
+            return
+        return db.session.get(User, user_id)
 
     def __repr__(self) -> str:
         return f"<User id={self.id} email={self.email}>"
