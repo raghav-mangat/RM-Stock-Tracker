@@ -12,7 +12,7 @@ def send_email(subject, recipients, text_body, html_body):
     mail.send(msg)
 
 def send_password_reset_email(user):
-    token = user.get_reset_password_token()
+    token = user.get_token(token_type="reset_password")
     send_email(
         subject="[RM Stock Tracker] Reset Your Password",
         recipients=[user.email],
@@ -25,5 +25,36 @@ def send_password_reset_email(user):
             "email/reset_password.html",
             user=user,
             token=token
+        )
+    )
+
+def send_verify_user_email(user):
+    token = user.get_token(token_type="verify_email")
+    send_email(
+        subject="[RM Stock Tracker] Confirm Your Email",
+        recipients=[user.email],
+        text_body=render_template(
+            "email/verify_email.txt",
+            user=user,
+            token=token
+        ),
+        html_body=render_template(
+            "email/verify_email.html",
+            user=user,
+            token=token
+        )
+    )
+
+def send_user_verification_success_email(user):
+    send_email(
+        subject="[RM Stock Tracker] Email Confirmed!",
+        recipients=[user.email],
+        text_body=render_template(
+            "email/user_verification_success.txt",
+            user=user,
+        ),
+        html_body=render_template(
+            "email/user_verification_success.html",
+            user=user,
         )
     )

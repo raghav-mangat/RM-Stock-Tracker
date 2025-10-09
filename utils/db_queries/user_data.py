@@ -1,12 +1,13 @@
 from models.database import db, User
 from werkzeug.security import generate_password_hash
 
-def add_new_user(name, email, password):
+def add_new_user(name, email, password, is_verified=False):
     password_hash = get_password_hash(password)
     new_user = User(
         name=name,
         email=email,
-        password_hash=password_hash
+        password_hash=password_hash,
+        is_verified=is_verified
     )
     db.session.add(new_user)
     db.session.commit()
@@ -32,3 +33,7 @@ def get_password_hash(password):
         salt_length=8
     )
     return hash_and_salted_password
+
+def verify_user(user):
+    user.is_verified = True
+    db.session.commit()

@@ -1,0 +1,11 @@
+Dear {{ user.name }},
+
+Your email has been verified, thank you for joining RM Stock Tracker!
+
+Log in to your account and get started:
+
+{{ url_for('auth.login', _external=True) }}
+
+Sincerely,
+
+The RM Stock Tracker Team

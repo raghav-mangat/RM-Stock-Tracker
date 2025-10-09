@@ -1,0 +1,11 @@
+Dear {{ user.name }},
+
+To verify your email, {{ user.email }}, click on the following link:
+
+{{ url_for('auth.verify_email', token=token, _external=True) }}
+
+If you have not signed up for our website simply ignore this message.
+
+Sincerely,
+
+The RM Stock Tracker Team
