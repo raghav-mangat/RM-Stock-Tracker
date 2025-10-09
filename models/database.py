@@ -1,9 +1,10 @@
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-from sqlalchemy import String, Integer, BigInteger, Text, ForeignKey, Date, DateTime, UniqueConstraint
+from sqlalchemy import String, Integer, BigInteger, Text, Boolean, ForeignKey, Date, DateTime, UniqueConstraint
 from sqlalchemy import Index as DBIndex
 from flask_login import UserMixin
 import jwt
+from jwt import ExpiredSignatureError, InvalidTokenError
 from datetime import datetime, date
 from time import time
 from utils.datetime_utils import DATE_FORMAT
@@ -255,6 +256,7 @@ class User(UserMixin, db.Model):
     name: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
     email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
+    is_verified: Mapped[bool] = mapped_column(Boolean, nullable=False)
 
     # One user -> many watchlist folders
     watchlist_folders: Mapped[list["WatchlistFolder"]] = relationship(
@@ -268,25 +270,53 @@ class User(UserMixin, db.Model):
         DBIndex("ix_user_email", "email"),
     )
 
-    def get_reset_password_token(self, expires_in=600):
-        # Token expires in 600 seconds (10 minutes) by default
+    def get_token(self, token_type, expires_in=86400):
+        """
+        Create a JWT. Default expiry 86400 seconds (24 hours)
+        """
+        now = int(time())
+        payload = {
+            "sub": str(self.id),
+            "type": token_type,
+            "iat": now,
+            "exp": now + int(expires_in),
+        }
         return jwt.encode(
-            {"reset_password": self.id, 'exp': time() + expires_in},
-            current_app.config["SECRET_KEY"],
+            payload=payload,
+            key=current_app.config["SECRET_KEY"],
             algorithm="HS256"
         )
 
     @staticmethod
-    def verify_reset_password_token(token):
+    def verify_token(token, token_type):
+        """
+        Verify token and check if it is of the expected type.
+        Returns user instance or None.
+        """
+        result = None
         try:
-            user_id = jwt.decode(
+            payload = jwt.decode(
                 token,
                 current_app.config["SECRET_KEY"],
                 algorithms=["HS256"]
-            )["reset_password"]
-        except:
-            return
-        return db.session.get(User, user_id)
+            )
+        except ExpiredSignatureError:
+            # Token expired
+            return result
+        except InvalidTokenError:
+            # Invalid token
+            return result
+
+        if payload.get("type") != token_type:
+            # Invalid token type
+            return result
+
+        user_id = payload.get("sub")
+        if not user_id:
+            # Invalid user
+            return result
+
+        return db.session.get(User, int(user_id))
 
     def __repr__(self) -> str:
         return f"<User id={self.id} email={self.email}>"
