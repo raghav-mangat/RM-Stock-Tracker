@@ -1,17 +1,22 @@
-<!doctype html>
-<html>
-    <body>
-        <p>Dear {{ user.name }},</p>
-        <p>
-            Please verify your Email, {{ user.email }},
-            <a href="{{ url_for('auth.verify_email', token=token, _external=True) }}">
-                click here
-            </a>
-        </p>
-        <p>Alternatively, you can paste the following link in your browser's address bar:</p>
-        <p>{{ url_for('auth.verify_email', token=token, _external=True) }}</p>
-        <p>If you have not signed up for our website simply ignore this message.</p>
-        <p>Sincerely,</p>
-        <p>The RM Stock Tracker Team</p>
-    </body>
-</html>
+{% extends "email/base_email.html" %}
+
+{% block content %}
+
+<p>Hi {{ user.name }},</p>
+<p>Welcome to RM Stock Tracker! Please verify your email address to activate your account:</p>
+<div class="text-center my-3">
+  <a href="{{ url_for('auth.verify_email', token=token, _external=True) }}" class="btn">
+    Verify Email
+  </a>
+</div>
+<p>
+  This link will expire in
+  {% if expires_in %}
+    {{ (expires_in / 60) | int }} minutes.
+  {% else %}
+    24 hours.
+  {% endif %}
+  Once verified, you can access your account and set up your watchlist.
+</p>
+
+{% endblock %}

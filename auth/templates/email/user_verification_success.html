@@ -1,17 +1,17 @@
-<!doctype html>
-<html>
-    <body>
-        <p>Dear {{ user.name }},</p>
-        <p>
-            Your email has been verified, thank you for joining RM Stock Tracker!
-        </p>
-        <p>
-            Log in to your account and get started,
-            <a href="{{ url_for('auth.login', _external=True) }}">
-                Click Here
-            </a>
-        </p>
-        <p>Sincerely,</p>
-        <p>The RM Stock Tracker Team</p>
-    </body>
-</html>
+{% extends "email/base_email.html" %}
+
+{% block content %}
+
+<p>Hi {{ user.name }},</p>
+<p>Your email has been successfully verified.</p>
+<p>
+    Thank you for joining RM Stock Tracker.
+    Click the button below to log in and set up your watchlist, track top market movers, and get alerts.
+</p>
+<div class="text-center my-3">
+  <a href="{{ url_for('auth.login', _external=True) }}" class="btn">
+    Log In
+  </a>
+</div>
+
+{% endblock %}

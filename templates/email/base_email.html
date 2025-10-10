@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>{{ subject or "RM Stock Tracker" }}</title>
+    <style>
+      /* Container */
+      .email-container {
+        background-color: #fafafa;
+        color: #212529;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        font-size: 16px;
+        line-height: 1.5;
+        max-width: 600px;
+        margin: 32px auto;
+        border: 1px solid #dadce0;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        padding: 24px 20px;
+        box-sizing: border-box;
+      }
+
+      /* Header */
+      .email-header {
+        text-align: center;
+        color: #0d6efd;
+        padding-bottom: 16px;
+        border-bottom: 1px solid #dadce0;
+        margin-bottom: 24px;
+      }
+      .email-header h1 {
+        font-size: 24px;
+        margin: 0;
+        font-weight: 600;
+      }
+
+      /* Content */
+      .text-center {
+        text-align: center;
+      }
+      .my-3 {
+        margin: 24px 0;
+      }
+
+      /* Button */
+      .btn {
+        display: inline-block;
+        background-color: #0d6efd;
+        color: #ffffff !important;
+        text-decoration: none;
+        padding: 14px 28px;
+        border-radius: 6px;
+        font-weight: 500;
+        font-size: 16px;
+        text-align: center;
+      }
+      .btn-danger {
+        background-color: #dc3545;
+      }
+
+      /* Footer */
+      .email-footer {
+        text-align: center;
+        border-top: 1px solid #dadce0;
+        padding-top: 16px;
+        margin-top: 24px;
+      }
+      .email-footer p {
+        font-size: 12px;
+        color: #585f66;
+        line-height: 1;
+      }
+
+      /* Responsive */
+      @media (max-width: 600px) {
+        .email-container {
+          width: 100%;
+          margin: 0 auto;
+          padding: 20px 16px;
+        }
+        .btn {
+          display: block;
+          width: 100%;
+          padding: 14px 0px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="email-container">
+      <div class="email-header">
+        <h1>RM Stock Tracker</h1>
+      </div>
+      <div class="email-content">
+        {% block content %}{% endblock %}
+      </div>
+      <div class="email-footer">
+        <p>This email was sent by RM Stock Tracker.</p>
+        <p>If you didn’t request this, you can safely ignore it.</p>
+      </div>
+    </div>
+  </body>
+</html>

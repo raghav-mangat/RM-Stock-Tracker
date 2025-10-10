@@ -1,11 +1,14 @@
-Dear {{ user.name }},
+{% extends "email/base_email.txt" %}
 
-Your email has been verified, thank you for joining RM Stock Tracker!
+{% block content %}
 
-Log in to your account and get started:
+Hi {{ user.name }},
+
+Your email has been successfully verified.
+
+Thank you for joining RM Stock Tracker.
+Use the link below to log in and set up your watchlist, track top market movers, and get alerts.
 
 {{ url_for('auth.login', _external=True) }}
 
-Sincerely,
-
-The RM Stock Tracker Team
+{% endblock %}

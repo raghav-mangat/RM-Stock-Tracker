@@ -1,0 +1,8 @@
+RM Stock Tracker
+-----------------------------------
+
+{% block content %}{% endblock %}
+
+-----------------------------------
+This email was sent by RM Stock Tracker.
+If you didn’t request this, you can safely ignore it.

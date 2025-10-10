@@ -1,11 +1,20 @@
-Dear {{ user.name }},
+{% extends "email/base_email.txt" %}
 
-To verify your email, {{ user.email }}, click on the following link:
+{% block content %}
+
+Hi {{ user.name }},
+
+Welcome to RM Stock Tracker!
+Please verify your email address to activate your account:
 
 {{ url_for('auth.verify_email', token=token, _external=True) }}
 
-If you have not signed up for our website simply ignore this message.
+This link will expire in
+{% if expires_in %}
+    {{ (expires_in / 60) | int }} minutes.
+{% else %}
+    24 hours.
+{% endif %}
+Once verified, you can access your account and set up your watchlist.
 
-Sincerely,
-
-The RM Stock Tracker Team
+{% endblock %}

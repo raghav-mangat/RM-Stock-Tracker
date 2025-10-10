@@ -12,9 +12,10 @@ def send_email(subject, recipients, text_body, html_body):
     mail.send(msg)
 
 def send_password_reset_email(user):
-    token = user.get_token(token_type="reset_password")
+    expires_in = 1800 # 30 minutes
+    token = user.get_token(token_type="reset_password", expires_in=expires_in)
     send_email(
-        subject="[RM Stock Tracker] Reset Your Password",
+        subject="Reset Your Password - RM Stock Tracker",
         recipients=[user.email],
         text_body=render_template(
             "email/reset_password.txt",
@@ -24,14 +25,15 @@ def send_password_reset_email(user):
         html_body=render_template(
             "email/reset_password.html",
             user=user,
-            token=token
+            token=token,
+            expires_in=expires_in
         )
     )
 
 def send_verify_user_email(user):
     token = user.get_token(token_type="verify_email")
     send_email(
-        subject="[RM Stock Tracker] Confirm Your Email",
+        subject="Verify Your Email - RM Stock Tracker",
         recipients=[user.email],
         text_body=render_template(
             "email/verify_email.txt",
@@ -45,9 +47,23 @@ def send_verify_user_email(user):
         )
     )
 
+def send_password_reset_success_email(user):
+    send_email(
+        subject="Your Password Has Been Changed - RM Stock Tracker",
+        recipients=[user.email],
+        text_body=render_template(
+            "email/password_reset_success.txt",
+            user=user,
+        ),
+        html_body=render_template(
+            "email/password_reset_success.html",
+            user=user,
+        )
+    )
+
 def send_user_verification_success_email(user):
     send_email(
-        subject="[RM Stock Tracker] Email Confirmed!",
+        subject="Your Email Has Been Verified - RM Stock Tracker",
         recipients=[user.email],
         text_body=render_template(
             "email/user_verification_success.txt",

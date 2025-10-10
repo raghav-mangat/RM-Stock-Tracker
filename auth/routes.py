@@ -3,7 +3,7 @@ from flask import render_template, redirect, url_for, flash
 from flask_login import current_user, login_user, login_required, logout_user
 from models.database import User
 from .forms import LoginForm, SignupForm, ResetPasswordRequestForm, ResetPasswordForm
-from .emails import send_password_reset_email, send_verify_user_email, send_user_verification_success_email
+from .emails import send_password_reset_email, send_verify_user_email, send_password_reset_success_email, send_user_verification_success_email
 from utils.db_queries.user_data import get_user_by_email, add_new_user, change_user_password, verify_user
 
 @auth_bp.route("/signup", methods=["GET", "POST"])
@@ -76,6 +76,7 @@ def reset_password(token):
     form = ResetPasswordForm()
     if form.validate_on_submit():
         change_user_password(user, form.password.data)
+        send_password_reset_success_email(user)
         flash("Your password has been reset.", "success")
         return redirect(url_for("auth.login"))
     return render_template("reset_password.html", form=form)
@@ -96,6 +97,5 @@ def verify_email(token):
 
     verify_user(user)
     send_user_verification_success_email(user)
-    flash("Thanks, your email is verified!. You are now logged in.", "success")
-    login_user(user)
-    return redirect(url_for("watchlist.index"))
+    flash("Your email is verified! Now you can Log In.", "success")
+    return redirect(url_for("auth.login"))
