@@ -63,7 +63,9 @@
                 <!-- Order Selector -->
                 <form method="POST"
                       action="{{ url_for('watchlist.update_order', folder_id=key) }}"
-                      class="d-flex align-items-center">
+                      class="d-flex align-items-center"
+                      novalidate>
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                   <label for="order-{{ key }}" class="me-2 mb-0 small text-muted">Order:</label>
                   <select name="order" id="order-{{ key }}"
                           class="form-select form-select-sm"
@@ -88,7 +90,9 @@
                 <!-- Rename Folder Form -->
                 <form method="POST"
                       action="{{ url_for('watchlist.rename_folder', folder_id=key) }}"
-                      class="d-flex align-items-center gap-2">
+                      class="d-flex align-items-center gap-2"
+                      novalidate>
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                   <input type="text"
                          name="new_folder_name"
                          class="form-control form-control-sm text-uppercase"
@@ -98,7 +102,9 @@
 
                 <!-- Delete Folder Form -->
                 <form method="POST"
-                      action="{{ url_for('watchlist.delete_folder', folder_id=key) }}">
+                      action="{{ url_for('watchlist.delete_folder', folder_id=key) }}"
+                      novalidate>
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                   <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
                 </form>
               </div>
@@ -138,7 +144,10 @@
                     <td>{{ stock.dma_200 | currency }}</td>
                     {{ stock_dma_200_perc_diff(stock) }}
                       <td>
-                          <form method="POST" action="{{ url_for('watchlist.remove_item', folder_id=key, ticker=stock.ticker) }}">
+                          <form method="POST"
+                                action="{{ url_for('watchlist.remove_item', folder_id=key, ticker=stock.ticker) }}"
+                                novalidate>
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                               <button type="submit" class="btn btn-sm btn-outline-danger">
                                   <i class="bi bi-trash"></i>
                               </button>
@@ -171,14 +180,19 @@
     <div class="modal fade" id="addStockModal" tabindex="-1" aria-labelledby="addStockModalLabel" aria-hidden="true">
       <div class="modal-dialog">
         <div class="modal-content">
-          <form id="addStockForm" method="POST" action="{{ url_for('watchlist.add_item') }}">
+          <form method="POST"
+                action="{{ url_for('watchlist.add_item') }}"
+                id="addStockForm"
+                novalidate>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="modal-header">
               <h5 class="modal-title">Add Stock to Folder</h5>
               <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-              <!-- Hidden field for folder_id -->
+              <!-- Hidden fields for folder_id and ticker -->
               <input type="hidden" name="folder_id" id="hidden-folder-id">
+              <input type="hidden" name="ticker" id="hidden-ticker">
               {{ search_bar(id="watchlist-search-bar") }}
             </div>
             <div class="modal-footer">

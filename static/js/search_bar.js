@@ -93,7 +93,7 @@ searchBar.addEventListener("input", function () {
           anchor.addEventListener("click", () => {
             const form = document.getElementById("addStockForm");
             document.getElementById("hidden-folder-id").value = currentFolderId;
-            form.action = `/watchlist/add-item/${item.ticker}`;
+            document.getElementById("hidden-ticker").value = item.ticker;
             form.submit();
           });
         }

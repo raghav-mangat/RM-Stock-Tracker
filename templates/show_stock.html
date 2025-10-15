@@ -49,8 +49,12 @@
           {{ add_folder_form() }}
 
           <!-- Select Folder Form -->
-          <form method="POST" action="{{ url_for('watchlist.add_item', ticker=stock.ticker) }}">
+          <form method="POST"
+                action="{{ url_for('watchlist.add_item') }}"
+                novalidate>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="hidden" name="next" value="{{ request.path }}">
+            <input type="hidden" name="ticker" value="{{ stock.ticker }}">
             <div class="mb-3">
               {% if current_user.watchlist_folders %}
                 <label for="folderSelect" class="form-label">Select Folder</label>

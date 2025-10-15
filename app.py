@@ -16,6 +16,7 @@ from flask import Flask, render_template, request
 from dotenv import load_dotenv
 from flask_login import LoginManager
 from flask_mail import Mail
+from flask_wtf.csrf import CSRFProtect
 from models.database import db
 from auth import auth_bp
 from watchlist import watchlist_bp
@@ -68,6 +69,9 @@ app.config['MAIL_PASSWORD'] = os.getenv("MAIL_PASSWORD")
 app.config['MAIL_DEFAULT_SENDER'] = os.getenv("MAIL_DEFAULT_SENDER")
 
 mail = Mail(app)
+
+# Initialize Flask-WTF CSRF Protection
+csrf = CSRFProtect(app)
 
 # Register the Flask Blueprints
 app.register_blueprint(auth_bp, url_prefix="/auth")
