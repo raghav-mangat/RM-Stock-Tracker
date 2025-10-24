@@ -3,6 +3,7 @@
 {% from "macros/stock_attributes.html" import stock_todays_change, stock_dma_200_perc_diff %}
 {% from "macros/search_bar.html" import search_bar %}
 {% from "macros/watchlist_forms.html" import add_folder_form %}
+{% from "macros/alert_offcanvas.html" import alert_offcanvas %}
 
 {% extends "base.html" %}
 
@@ -58,7 +59,7 @@
 
             <!-- Folder Actions -->
             <div class="row g-2 align-items-center mb-3">
-              <!-- Left Column: Order Selector + Add Stock -->
+              <!-- Left Column: Order Selector + Folder Email Alert + Add Stock -->
               <div class="col-12 col-md-6 d-flex flex-wrap align-items-center gap-2">
                 <!-- Order Selector -->
                 <form method="POST"
@@ -75,6 +76,23 @@
                     {% endfor %}
                   </select>
                 </form>
+
+                <!-- Folder Email Alert Button -->
+                <button class="btn btn-sm btn-outline-primary" type="button"
+                        data-bs-toggle="offcanvas"
+                        data-bs-target="#offcanvas-folder-{{ key }}" aria-controls="#offcanvas-folder-{{ key }}">
+                  <i class="bi bi-bell"></i>
+                </button>
+                {{ alert_offcanvas(
+                    offcanvas_target_id="offcanvas-folder-" + key|string,
+                    form_action=url_for('watchlist.update_folder_alerts', folder_id=key),
+                    db_id=key,
+                    folder_name=value.folder_name,
+                    data=value.folder_alerts,
+                    attributes=alert_attributes,
+                    operators=alert_operators,
+                    ticker=None,
+                ) }}
 
                 <!-- Add Stock Button -->
                 <button class="btn btn-sm btn-success"
@@ -100,9 +118,9 @@
                   <button type="submit" class="btn btn-sm btn-outline-primary">Rename</button>
                 </form>
 
-                <!-- Delete Folder Form -->
+                <!-- Remove Folder Form -->
                 <form method="POST"
-                      action="{{ url_for('watchlist.delete_folder', folder_id=key) }}"
+                      action="{{ url_for('watchlist.remove_folder', folder_id=key) }}"
                       novalidate>
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                   <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
@@ -128,7 +146,8 @@
                   </tr>
                 </thead>
                 <tbody>
-                  {% for stock in value.folder_items %}
+                  {% for item_key, item_value in value.folder_items.items() %}
+                  {% set stock = item_value["stock_data"] %}
                   <tr>
                     <th scope="row">{{ loop.index }}</th>
                     <td>
@@ -143,11 +162,28 @@
                     <td>{{ stock_todays_change(stock) }}</td>
                     <td>{{ stock.dma_200 | currency }}</td>
                     {{ stock_dma_200_perc_diff(stock) }}
-                      <td>
+                      <td class="d-flex gap-1">
+                          <!-- Item Email Alert Button -->
+                          <button class="btn btn-sm btn-outline-primary" type="button"
+                                  data-bs-toggle="offcanvas"
+                                  data-bs-target="#offcanvas-item-{{ item_key }}" aria-controls="#offcanvas-item-{{ item_key }}">
+                            <i class="bi bi-bell"></i>
+                          </button>
+                          {{ alert_offcanvas(
+                              offcanvas_target_id="offcanvas-item-" + item_key|string,
+                              form_action=url_for('watchlist.update_item_alerts', item_id=item_key),
+                              db_id=item_key,
+                              folder_name=value.folder_name,
+                              data=item_value["item_alerts"],
+                              attributes=alert_attributes,
+                              operators=alert_operators,
+                              ticker=stock.ticker,
+                          ) }}
+                          <!-- Remove Item Button -->
                           <form method="POST"
                                 action="{{ url_for('watchlist.remove_item', folder_id=key, ticker=stock.ticker) }}"
                                 novalidate>
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                               <button type="submit" class="btn btn-sm btn-outline-danger">
                                   <i class="bi bi-trash"></i>
                               </button>
@@ -209,5 +245,6 @@
 {% endblock %}
 
 {% block script %}
-  <script src="{{ url_for('static', filename='js/search_bar.js') }}" type="text/javascript" defer></script>
+    <script src="{{ url_for('static', filename='js/search_bar.js') }}" type="text/javascript" defer></script>
+    <script src="{{ url_for('watchlist.static', filename='js/watchlist.js') }}" type="text/javascript" defer></script>
 {% endblock %}

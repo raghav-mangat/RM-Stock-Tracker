@@ -11,7 +11,13 @@ def index():
 
     if current_user.is_authenticated:
         watchlist_data = db_get_all_watchlist_data(current_user)
-        return render_template("watchlist_loggedin.html", watchlist_data=watchlist_data, last_updated=last_updated)
+        return render_template(
+            "watchlist_loggedin.html",
+            watchlist_data=watchlist_data,
+            alert_attributes=get_alert_attributes(),
+            alert_operators=get_alert_operators(),
+            last_updated=last_updated
+        )
     else:
         return render_template("watchlist_loggedout.html", last_updated=last_updated)
 
@@ -58,11 +64,11 @@ def rename_folder(folder_id):
         flash(folder_name_result["message"], "warning")
     return redirect(url_for("watchlist.index"))
 
-@watchlist_bp.route("/delete_folder/<int:folder_id>", methods=["POST"])
+@watchlist_bp.route("/remove_folder/<int:folder_id>", methods=["POST"])
 @login_required
-def delete_folder(folder_id):
+def remove_folder(folder_id):
     try:
-        db_delete_folder(folder_id=folder_id, user=current_user)
+        db_remove_folder(folder_id=folder_id, user=current_user)
     except NotFoundError:
         flash("Folder not found.", "danger")
     except ForbiddenError:
@@ -126,11 +132,56 @@ def remove_item(folder_id, ticker):
     except NotFoundError:
         flash("Folder or stock not found.", "danger")
     except ForbiddenError:
-        flash("Not authorized to remove stock from this folder", "danger")
+        flash("Not authorized to remove stock from this folder.", "danger")
     except Exception:
         flash("An error occurred while removing stock from this folder.", "danger")
     else:
         flash(f"Removed stock '{ticker}'.", "success")
+    return redirect(url_for("watchlist.index"))
+
+@watchlist_bp.route("/update_folder_alerts/<int:folder_id>", methods=["POST"])
+def update_folder_alerts(folder_id):
+    folder_name = request.form.get("folder_name")
+
+    alerts = get_alerts(request)
+    message = validate_alerts(alerts)
+
+    if message:
+        flash(message, "warning")
+    else:
+        try:
+            db_update_folder_alerts(folder_id, alerts, current_user)
+        except NotFoundError:
+            flash("Folder not found.", "danger")
+        except ForbiddenError:
+            flash("Not authorized to update alerts for this folder.", "danger")
+        except Exception:
+            flash("An error occurred while updating the alerts for this folder.", "danger")
+        else:
+            flash(f"Updated email alerts for folder '{folder_name}'.", "success")
+    return redirect(url_for("watchlist.index"))
+
+@watchlist_bp.route("/update_item_alerts/<int:item_id>", methods=["POST"])
+def update_item_alerts(item_id):
+    ticker = request.form.get("ticker")
+    folder_name = request.form.get("folder_name")
+
+    alerts = get_alerts(request)
+    message = validate_alerts(alerts)
+
+    if message:
+        flash(message, "warning")
+    else:
+        try:
+            db_update_item_alerts(item_id, alerts, current_user)
+        except NotFoundError:
+            flash("Stock not found.", "danger")
+        except ForbiddenError:
+            flash("Not authorized to update alerts for this stock.", "danger")
+        except Exception:
+            flash("An error occurred while updating the alerts for this stock.", "danger")
+        else:
+            flash(f"Updated email alerts for stock '{ticker}' in folder '{folder_name}'.", "success")
     return redirect(url_for("watchlist.index"))
 
 def validate_folder_name(folder_name):
@@ -147,10 +198,75 @@ def validate_folder_name(folder_name):
     folder_name = folder_name.strip().upper()
     if len(folder_name) > max_folder_name_len:
         result["message"] = f"Folder name must be at most {max_folder_name_len} characters."
-    elif db_check_duplicate_folder(folder_name, current_user):
+    elif check_duplicate_folder(folder_name, current_user):
         result["message"] = f"Folder '{folder_name}' already exists."
     else:
         result["valid"] = True
         result["folder_name"] = folder_name
 
     return result
+
+def get_alerts(update_alert_request):
+    num_alerts = int(update_alert_request.form.get("num_alerts"))
+
+    # Get values for all form inputs, save as dict for each alert
+    alerts = []
+    for i in range(1, num_alerts+1):
+        alerts.append({
+            "attribute": update_alert_request.form.get(f"attribute-{i}"),
+            "operator": update_alert_request.form.get(f"operator-{i}"),
+            "value": update_alert_request.form.get(f"value-{i}"),
+            "delete": update_alert_request.form.get(f"delete-{i}")
+        })
+    new_alert = {
+        "attribute": update_alert_request.form.get("attribute-new"),
+        "operator": update_alert_request.form.get(f"operator-new"),
+        "value": update_alert_request.form.get(f"value-new"),
+        "delete": None
+    }
+    # Add the new alert only if there was a selection made in it
+    if new_alert["attribute"] or new_alert["operator"] or new_alert["value"]:
+        alerts.append(new_alert)
+
+    return alerts
+
+def validate_alerts(alerts):
+    # Check if the user input is valid for all alerts
+    message = None
+
+    # To keep track of (attribute, operator) pairs in the alerts
+    alert_attributes = get_alert_attributes()
+    alert_operators = get_alert_operators()
+    alert_combinations = {(attribute, operator): 0 for attribute in list(alert_attributes.keys()) for operator in alert_operators}
+
+    for alert in alerts:
+        if not alert["delete"]:
+            attribute = alert["attribute"]
+            operator = alert["operator"]
+            if not attribute:
+                message = "Please select an attribute."
+                break
+            if not operator:
+                message = "Please select an operator."
+                break
+            try:
+                value = float(alert["value"])
+                alert["value"] = round(value, 2)
+                if value < 0.01:
+                    message = "Minimum value allowed is 0.01"
+                    break
+                if value > 1_000_000:
+                    message = "Maximum value allowed is 1,000,000"
+                    break
+            except ValueError:
+                message = "Value must be a valid number."
+                break
+
+            alert_combinations[(attribute, operator)] += 1
+
+    for key, value in alert_combinations.items():
+        if value > 1:
+            message = f'"{alert_attributes[key[0]]}" attribute already has an associated "{key[1]}" operator. Please change the value for the existing one.'
+            break
+
+    return message

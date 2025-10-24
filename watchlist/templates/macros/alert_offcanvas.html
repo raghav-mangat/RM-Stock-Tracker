@@ -1,0 +1,100 @@
+{% macro alert_offcanvas(offcanvas_target_id, form_action, db_id, folder_name, data, attributes, operators, ticker=None) %}
+    <div class="offcanvas offcanvas-end mt-5"
+         data-bs-scroll="true" data-bs-backdrop="false" tabindex="-1"
+         id="{{ offcanvas_target_id }}" aria-labelledby="{{ offcanvas_target_id }}">
+      <div class="offcanvas-header border-bottom border-1 border-dark">
+        <h5 class="offcanvas-title">
+            {% if ticker %}
+                Email Alerts for Ticker "{{ ticker }}" in Folder "{{ folder_name }}"
+            {% else %}
+                Email Alerts for Folder "{{ folder_name }}"
+            {% endif %}
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+      </div>
+      <div class="offcanvas-body">
+          <form method="POST"
+                action="{{ form_action }}"
+                novalidate>
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <input type="hidden" name="num_alerts" value="{{ data|length }}">
+              <input type="hidden" name="folder_name" value="{{ folder_name }}">
+              {% if ticker %}
+                <input type="hidden" name="ticker" value="{{ ticker }}">
+              {% endif %}
+
+              {% for alert in data %}
+                  <div class="d-flex my-3 gap-1 align-items-center">
+                      <div id="alert-row-{{ loop.index }}-{{ db_id }}" class="d-flex gap-1 align-items-center">
+                        <!-- Serial Number -->
+                        <span>{{ loop.index }})</span>
+                        <!-- Attribute Selector -->
+                        <select id="attribute-{{ loop.index }}-{{ db_id }}" name="attribute-{{ loop.index }}"
+                                class="form-select" aria-label="attribute-{{ loop.index }}">
+                            {% for key, value in attributes.items() %}
+                                <option value="{{ key }}" {% if key == alert.attribute %} selected {% endif %}>
+                                    {{ value }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <!-- Operator Selector -->
+                        <select id="operator-{{ loop.index }}-{{ db_id }}" name="operator-{{ loop.index }}"
+                            class="form-select" aria-label="operator-{{ loop.index }}">
+                                {% for value in operators %}
+                                    <option value="{{ value }}" {% if value == alert.operator %} selected {% endif %}>
+                                        {{ value }}
+                                    </option>
+                                {% endfor %}
+                        </select>
+                        <!-- Value Input -->
+                        <input id="value-{{ loop.index }}-{{ db_id }}" class="form-control" type="text"
+                               name="value-{{ loop.index }}" aria-label="value-{{ loop.index }}"
+                               value="{{ alert.value }}">
+                      </div>
+                      <!-- Delete Alert Checkbox Button -->
+                      <div>
+                          <input type="checkbox" class="btn-check btn-delete-alert" autocomplete="off"
+                                 id="delete-{{ loop.index }}-{{ db_id }}"
+                                 name="delete-{{ loop.index }}"
+                                 aria-describedby="Delete alert button">
+                          <label class="btn btn-sm btn-outline-danger" for="delete-{{ loop.index }}-{{ db_id }}">
+                              <i class="bi bi-trash"></i>
+                          </label>
+                      </div>
+                  </div>
+              {% endfor %}
+              <p class="fw-semibold text-center">Create a New Alert</p>
+              <div class="d-flex my-3 gap-1 align-items-center">
+                  <!-- Attribute Selector -->
+                  <select id="attribute-new-{{ db_id }}" name="attribute-new"
+                          class="form-select" aria-label="attribute-new">
+                    <option value="" selected>Attribute</option>
+                    {% for key, value in attributes.items() %}
+                        <option value="{{ key }}">
+                            {{ value }}
+                        </option>
+                    {% endfor %}
+                  </select>
+                  <!-- Operator Selector -->
+                  <select id="operator-new-{{ db_id }}" name="operator-new"
+                          class="form-select" aria-label="operator-new">
+                    <option value="" selected>Operator</option>
+                    {% for value in operators %}
+                        <option value="{{ value }}" >
+                            {{ value }}
+                        </option>
+                    {% endfor %}
+                  </select>
+                  <!-- Value Input -->
+                  <input id="value-new-{{ db_id }}" class="form-control" type="text"
+                         name="value-new" aria-label="value-new"
+                         placeholder="Value">
+              </div>
+              <!-- Alert Form Offcanvas Submit Button -->
+              <div class="text-center mt-4">
+                  <button type="submit" class="btn btn-primary">Save Changes</button>
+              </div>
+          </form>
+      </div>
+    </div>
+{% endmacro %}
