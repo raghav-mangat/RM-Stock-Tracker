@@ -2,6 +2,7 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy import String, Integer, BigInteger, Text, Boolean, ForeignKey, Date, DateTime, UniqueConstraint
 from sqlalchemy import Index as DBIndex
+from enum import Enum
 from flask_login import UserMixin
 import jwt
 from jwt import ExpiredSignatureError, InvalidTokenError
@@ -15,6 +16,26 @@ class Base(DeclarativeBase):
     pass
 
 db = SQLAlchemy(model_class=Base)
+
+# --- Enums ---
+
+class AlertAttribute(str, Enum):
+    DAY_CLOSE = "day_close"
+    TODAYS_PERC_CHANGE = "todays_change_perc"
+    DMA_200_PERC_CHANGE = "dma_200_perc_diff"
+
+    @property
+    def label(self):
+        return {
+            AlertAttribute.DAY_CLOSE: "Day Close",
+            AlertAttribute.TODAYS_PERC_CHANGE: "Today's Percentage Change",
+            AlertAttribute.DMA_200_PERC_CHANGE: "200-DMA Percentage Difference",
+        }[self]
+
+class AlertOperator(str, Enum):
+    ABOVE = ">"
+    BELOW = "<"
+    EQUAL = "="
 
 # --- Models ---
 
@@ -266,6 +287,14 @@ class User(UserMixin, db.Model):
         passive_deletes=True,
     )
 
+    # One user -> many watchlist alerts
+    watchlist_alerts: Mapped[list["WatchlistAlert"]] = relationship(
+        "WatchlistAlert",
+        back_populates="user",
+        cascade="all, delete-orphan",
+        passive_deletes=True
+    )
+
     __table_args__ = (
         DBIndex("ix_user_email", "email"),
     )
@@ -346,18 +375,26 @@ class WatchlistFolder(db.Model):
         passive_deletes=True,
     )
 
+    # Alerts for this folder
+    folder_alerts: Mapped[list["WatchlistFolderAlert"]] = relationship(
+        "WatchlistFolderAlert",
+        back_populates="folder",
+        cascade="all, delete-orphan",
+        passive_deletes=True
+    )
+
     __table_args__ = (
-        # make folder names unique per user: (user_id, name) must be unique
+        # Make folder names unique per user: (user_id, name) must be unique
         UniqueConstraint("user_id", "name", name="uq_wl_folder_user_name"),
         DBIndex("ix_wl_folders_user_id", "user_id"),
     )
 
     def __repr__(self) -> str:
-        return f"<WatchlistFolder id={self.id} user_id={self.user_id} name={self.name}>"
+        return f"<WatchlistFolder id={self.id} user_id={self.user_id} name={self.name} order={self.order}>"
 
 
 class WatchlistItem(db.Model):
-    __tablename__ = "wl_folder_items"
+    __tablename__ = "wl_items"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
 
@@ -372,16 +409,123 @@ class WatchlistItem(db.Model):
         nullable=False,
     )
 
-    # relationships
+    # Relationships
     folder: Mapped["WatchlistFolder"] = relationship("WatchlistFolder", back_populates="items")
     stock: Mapped["StockMaster"] = relationship("StockMaster", back_populates="watchlist_items")
 
+    # Alerts for this item
+    item_alerts: Mapped[list["WatchlistItemAlert"]] = relationship(
+        "WatchlistItemAlert",
+        back_populates="item",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+
     __table_args__ = (
         # prevent duplicate (same stock in same folder)
-        UniqueConstraint("folder_id", "stock_id", name="uq_wl_folder_items_folder_stock"),
-        DBIndex("ix_wl_folder_items_folder_id", "folder_id"),
-        DBIndex("ix_wl_folder_items_stock_id", "stock_id"),
+        UniqueConstraint("folder_id", "stock_id", name="uq_wl_items_folder_stock"),
+        DBIndex("ix_wl_items_folder_id", "folder_id"),
+        DBIndex("ix_wl_items_stock_id", "stock_id"),
     )
 
     def __repr__(self) -> str:
         return f"<WatchlistItem id={self.id} folder_id={self.folder_id} stock_id={self.stock_id}>"
+
+
+class WatchlistAlert(db.Model):
+    __tablename__ = "wl_alerts"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+
+    attribute: Mapped[AlertAttribute] = mapped_column(db.Enum(AlertAttribute), nullable=False)
+    operator: Mapped[AlertOperator] = mapped_column(db.Enum(AlertOperator), nullable=False)
+    value: Mapped[float] = mapped_column(nullable=False)
+
+    user_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+
+    # Relationships
+    user: Mapped["User"] = relationship("User", back_populates="watchlist_alerts")
+
+    # Folders for this Alert
+    alert_folders: Mapped[list["WatchlistFolderAlert"]] = relationship(
+        "WatchlistFolderAlert",
+        back_populates="alert",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+
+    # Items for this Alert
+    alert_items: Mapped[list["WatchlistItemAlert"]] = relationship(
+        "WatchlistItemAlert",
+        back_populates="alert",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+
+    __table_args__ = (
+        DBIndex("ix_wl_alerts_user_id", "user_id"),
+    )
+
+    def __repr__(self) -> str:
+        return (f"<WatchlistAlert id={self.id} user_id={self.user_id} attribute={self.attribute} "
+                f"operator={self.operator} value={self.value}>")
+
+
+class WatchlistFolderAlert(db.Model):
+    __tablename__ = "wl_folder_alerts"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+
+    folder_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("wl_folders.id", ondelete="CASCADE"),
+        nullable=False
+    )
+    alert_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("wl_alerts.id", ondelete="CASCADE"),
+        nullable=False
+    )
+
+    # Relationships
+    folder: Mapped["WatchlistFolder"] = relationship("WatchlistFolder", back_populates="folder_alerts")
+    alert: Mapped["WatchlistAlert"] = relationship("WatchlistAlert", back_populates="alert_folders")
+
+    __table_args__ = (
+        UniqueConstraint("folder_id", "alert_id", name="uq_folder_alert"),
+    )
+
+    def __repr__(self) -> str:
+        return f"<WatchlistFolderAlert id={self.id} folder_id={self.folder_id} alert_id={self.alert_id}>"
+
+
+class WatchlistItemAlert(db.Model):
+    __tablename__ = "wl_item_alerts"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+
+    item_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("wl_items.id", ondelete="CASCADE"),
+        nullable=False
+    )
+    alert_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("wl_alerts.id", ondelete="CASCADE"),
+        nullable=False
+    )
+
+    # Relationships
+    item: Mapped["WatchlistItem"] = relationship("WatchlistItem", back_populates="item_alerts")
+    alert: Mapped["WatchlistAlert"] = relationship("WatchlistAlert", back_populates="alert_items")
+
+    __table_args__ = (
+        UniqueConstraint("item_id", "alert_id", name="uq_item_alert"),
+    )
+
+    def __repr__(self) -> str:
+        return f"<WatchlistItemAlert id={self.id} item_id={self.item_id} alert_id={self.alert_id}>"
