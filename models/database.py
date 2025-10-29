@@ -19,23 +19,81 @@ db = SQLAlchemy(model_class=Base)
 
 # --- Enums ---
 
+class FolderAttribute(str, Enum):
+    NAME = "name"
+    DAY_CLOSE = "day_close"
+    TODAYS_CHANGE_PERC = "todays_change_perc"
+    DMA_200 = "dma_200"
+    DMA_200_PERC_DIFF = "dma_200_perc_diff"
+    DMA_50 = "dma_50"
+    DMA_50_PERC_DIFF = "dma_50_perc_diff"
+    DMA_30 = "dma_30"
+    DMA_30_PERC_DIFF = "dma_30_perc_diff"
+    LOW_52W = "low_52w"
+    LOW_52W_PERC_DIFF = "low_52w_perc_diff"
+    HIGH_52W = "high_52w"
+    HIGH_52W_PERC_DIFF = "high_52w_perc_diff"
+
+    @property
+    def label(self):
+        return {
+            FolderAttribute.NAME: "Name",
+            FolderAttribute.DAY_CLOSE: "Day Close",
+            FolderAttribute.TODAYS_CHANGE_PERC: "Today's % Change",
+            FolderAttribute.DMA_200: "200-DMA",
+            FolderAttribute.DMA_200_PERC_DIFF: "200-DMA % Diff",
+            FolderAttribute.DMA_50: "50-DMA",
+            FolderAttribute.DMA_50_PERC_DIFF: "50-DMA % Diff",
+            FolderAttribute.DMA_30: "30-DMA",
+            FolderAttribute.DMA_30_PERC_DIFF: "30-DMA % Diff",
+            FolderAttribute.HIGH_52W: "52w-High",
+            FolderAttribute.HIGH_52W_PERC_DIFF: "52w-High % Diff",
+            FolderAttribute.LOW_52W: "52w-Low",
+            FolderAttribute.LOW_52W_PERC_DIFF: "52w-Low % Diff",
+        }[self]
+
+    @property
+    def type(self):
+        return {
+            FolderAttribute.NAME: None,
+            FolderAttribute.DAY_CLOSE: "currency",
+            FolderAttribute.TODAYS_CHANGE_PERC: None,
+            FolderAttribute.DMA_200: "currency",
+            FolderAttribute.DMA_200_PERC_DIFF: None,
+            FolderAttribute.DMA_50: "currency",
+            FolderAttribute.DMA_50_PERC_DIFF: "percent",
+            FolderAttribute.DMA_30: "currency",
+            FolderAttribute.DMA_30_PERC_DIFF: "percent",
+            FolderAttribute.HIGH_52W: "currency",
+            FolderAttribute.HIGH_52W_PERC_DIFF: "percent",
+            FolderAttribute.LOW_52W: "currency",
+            FolderAttribute.LOW_52W_PERC_DIFF: "percent",
+        }[self]
+
 class AlertAttribute(str, Enum):
     DAY_CLOSE = "day_close"
-    TODAYS_PERC_CHANGE = "todays_change_perc"
-    DMA_200_PERC_CHANGE = "dma_200_perc_diff"
+    TODAYS_CHANGE_PERC = "todays_change_perc"
+    DMA_200_PERC_DIFF = "dma_200_perc_diff"
+    DMA_50_PERC_DIFF = "dma_50_perc_diff"
+    DMA_30_PERC_DIFF = "dma_30_perc_diff"
+    HIGH_52W_PERC_DIFF = "high_52w_perc_diff"
+    LOW_52W_PERC_DIFF = "low_52w_perc_diff"
 
     @property
     def label(self):
         return {
             AlertAttribute.DAY_CLOSE: "Day Close",
-            AlertAttribute.TODAYS_PERC_CHANGE: "Today's Percentage Change",
-            AlertAttribute.DMA_200_PERC_CHANGE: "200-DMA Percentage Difference",
+            AlertAttribute.TODAYS_CHANGE_PERC: "Today's Percentage Change",
+            AlertAttribute.DMA_200_PERC_DIFF: "200-DMA Percentage Difference",
+            AlertAttribute.DMA_50_PERC_DIFF: "50-DMA Percentage Difference",
+            AlertAttribute.DMA_30_PERC_DIFF: "30-DMA Percentage Difference",
+            AlertAttribute.HIGH_52W_PERC_DIFF: "52w-High Percentage Difference",
+            AlertAttribute.LOW_52W_PERC_DIFF: "52w-Low Percentage Difference",
         }[self]
 
-class AlertOperator(str, Enum):
-    ABOVE = ">"
-    BELOW = "<"
-    EQUAL = "="
+class OrderBy(str, Enum):
+    ASC = "asc"
+    DESC = "desc"
 
 # --- Models ---
 
@@ -64,19 +122,23 @@ class Stock(db.Model):
     day_open: Mapped[float] = mapped_column(nullable=True)
     day_high: Mapped[float] = mapped_column(nullable=True)
     day_low: Mapped[float] = mapped_column(nullable=True)
-    volume: Mapped[int] = mapped_column(nullable=True)
+    volume: Mapped[int] = mapped_column(BigInteger, nullable=True)
     todays_change: Mapped[float] = mapped_column(nullable=True)
     todays_change_perc: Mapped[float] = mapped_column(nullable=True)
 
-    # Moving Averages
+    # Daily Moving Averages
     dma_30: Mapped[float] = mapped_column(nullable=True)
+    dma_30_perc_diff: Mapped[float] = mapped_column(nullable=True)
     dma_50: Mapped[float] = mapped_column(nullable=True)
+    dma_50_perc_diff: Mapped[float] = mapped_column(nullable=True)
     dma_200: Mapped[float] = mapped_column(nullable=True)
     dma_200_perc_diff: Mapped[float] = mapped_column(nullable=True)
 
-    # 52 Week High/Low
+    # 52-Week High/Low
     high_52w: Mapped[float] = mapped_column(nullable=True)
+    high_52w_perc_diff: Mapped[float] = mapped_column(nullable=True)
     low_52w: Mapped[float] = mapped_column(nullable=True)
+    low_52w_perc_diff: Mapped[float] = mapped_column(nullable=True)
 
     # Related Companies (comma-separated string)
     related_companies: Mapped[str] = mapped_column(Text, nullable=True)
@@ -164,7 +226,7 @@ class StockMaster(db.Model):
     day_open: Mapped[float] = mapped_column(nullable=True)
     day_high: Mapped[float] = mapped_column(nullable=True)
     day_low: Mapped[float] = mapped_column(nullable=True)
-    volume: Mapped[int] = mapped_column(nullable=True)
+    volume: Mapped[int] = mapped_column(BigInteger, nullable=True)
     todays_change: Mapped[float] = mapped_column(nullable=True)
     todays_change_perc: Mapped[float] = mapped_column(nullable=True)
 
@@ -199,7 +261,7 @@ class StockMinute(db.Model):
     ema_30: Mapped[float] = mapped_column(nullable=True)
     ema_50: Mapped[float] = mapped_column(nullable=True)
     ema_200: Mapped[float] = mapped_column(nullable=True)
-    volume: Mapped[int] = mapped_column(nullable=True)
+    volume: Mapped[int] = mapped_column(BigInteger, nullable=True)
 
     stock: Mapped["Stock"] = relationship(back_populates="minute_data")
 
@@ -220,7 +282,7 @@ class StockHour(db.Model):
     ema_30: Mapped[float] = mapped_column(nullable=True)
     ema_50: Mapped[float] = mapped_column(nullable=True)
     ema_200: Mapped[float] = mapped_column(nullable=True)
-    volume: Mapped[int] = mapped_column(nullable=True)
+    volume: Mapped[int] = mapped_column(BigInteger, nullable=True)
 
     stock: Mapped["Stock"] = relationship(back_populates="hour_data")
 
@@ -241,7 +303,7 @@ class StockDay(db.Model):
     ema_30: Mapped[float] = mapped_column(nullable=True)
     ema_50: Mapped[float] = mapped_column(nullable=True)
     ema_200: Mapped[float] = mapped_column(nullable=True)
-    volume: Mapped[int] = mapped_column(nullable=True)
+    volume: Mapped[int] = mapped_column(BigInteger, nullable=True)
 
     stock: Mapped["Stock"] = relationship(back_populates="day_data")
 
@@ -357,6 +419,8 @@ class WatchlistFolder(db.Model):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String(100), nullable=False)
     order: Mapped[int] = mapped_column(Integer, nullable=False)
+    sort_by_attribute: Mapped["FolderAttribute"] = mapped_column("FolderAttribute", nullable=True)
+    sort_by_order: Mapped["OrderBy"] = mapped_column("OrderBy", nullable=True)
 
     user_id: Mapped[int] = mapped_column(
         Integer,
@@ -375,6 +439,14 @@ class WatchlistFolder(db.Model):
         passive_deletes=True,
     )
 
+    # Attributes for this folder
+    folder_attributes: Mapped[list["WatchlistFolderAttribute"]] = relationship(
+        "WatchlistFolderAttribute",
+        back_populates="folder",
+        cascade="all, delete-orphan",
+        passive_deletes=True
+    )
+
     # Alerts for this folder
     folder_alerts: Mapped[list["WatchlistFolderAlert"]] = relationship(
         "WatchlistFolderAlert",
@@ -390,7 +462,8 @@ class WatchlistFolder(db.Model):
     )
 
     def __repr__(self) -> str:
-        return f"<WatchlistFolder id={self.id} user_id={self.user_id} name={self.name} order={self.order}>"
+        return (f"<WatchlistFolder id={self.id} user_id={self.user_id} name={self.name} order={self.order} "
+                f"sort_by_attribute={self.sort_by_attribute} sort_by_order={self.sort_by_order}>")
 
 
 class WatchlistItem(db.Model):
@@ -432,14 +505,42 @@ class WatchlistItem(db.Model):
         return f"<WatchlistItem id={self.id} folder_id={self.folder_id} stock_id={self.stock_id}>"
 
 
+class WatchlistFolderAttribute(db.Model):
+    __tablename__ = "wl_folder_attributes"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    attribute: Mapped["FolderAttribute"] = mapped_column(db.Enum(FolderAttribute), nullable=False)
+
+    # Values for filters
+    min_value: Mapped[float] = mapped_column(nullable=True)
+    max_value: Mapped[float] = mapped_column(nullable=True)
+
+    folder_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("wl_folders.id", ondelete="CASCADE"),
+        nullable=False
+    )
+
+    # Relationships
+    folder: Mapped["WatchlistFolder"] = relationship("WatchlistFolder", back_populates="folder_attributes")
+
+    __table_args__ = (
+        UniqueConstraint("folder_id", "attribute", name="uq_folder_attribute"),
+    )
+
+    def __repr__(self) -> str:
+        return (f"<WatchlistFolderAttribute id={self.id} folder_id={self.folder_id} attribute={self.attribute} "
+                f"min_value={self.min_value} max_value={self.max_value}>")
+
+
 class WatchlistAlert(db.Model):
     __tablename__ = "wl_alerts"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
 
-    attribute: Mapped[AlertAttribute] = mapped_column(db.Enum(AlertAttribute), nullable=False)
-    operator: Mapped[AlertOperator] = mapped_column(db.Enum(AlertOperator), nullable=False)
-    value: Mapped[float] = mapped_column(nullable=False)
+    attribute: Mapped["AlertAttribute"] = mapped_column(db.Enum(AlertAttribute), nullable=False)
+    min_value: Mapped[float] = mapped_column(nullable=True)
+    max_value: Mapped[float] = mapped_column(nullable=True)
 
     user_id: Mapped[int] = mapped_column(
         Integer,
@@ -472,7 +573,7 @@ class WatchlistAlert(db.Model):
 
     def __repr__(self) -> str:
         return (f"<WatchlistAlert id={self.id} user_id={self.user_id} attribute={self.attribute} "
-                f"operator={self.operator} value={self.value}>")
+                f"min_value={self.min_value} max_value={self.max_value}>")
 
 
 class WatchlistFolderAlert(db.Model):
