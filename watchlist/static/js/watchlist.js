@@ -6,19 +6,19 @@ document.querySelectorAll(".btn-delete-alert").forEach((btn) => {
 
     alertRow = document.getElementById(`alert-row-${loop_index}-${db_id}`);
     attribute = document.getElementById(`attribute-${loop_index}-${db_id}`);
-    operator = document.getElementById(`operator-${loop_index}-${db_id}`);
-    value = document.getElementById(`value-${loop_index}-${db_id}`);
+    minValue = document.getElementById(`min-value-${loop_index}-${db_id}`);
+    maxValue = document.getElementById(`max-value-${loop_index}-${db_id}`);
 
     if (btn.checked) {
       alertRow.style.opacity = 0.4;
       attribute.disabled = true;
-      operator.disabled = true;
-      value.disabled = true;
+      minValue.disabled = true;
+      maxValue.disabled = true;
     } else {
       alertRow.style.opacity = 1;
       attribute.disabled = false;
-      operator.disabled = false;
-      value.disabled = false;
+      minValue.disabled = false;
+      maxValue.disabled = false;
     }
   });
 });

@@ -1,6 +1,6 @@
-from models.database import (db, WatchlistFolder, WatchlistItem, WatchlistAlert,
-                             WatchlistFolderAlert, WatchlistItemAlert, StockMaster,
-                             Stock, AlertAttribute, AlertOperator)
+from models.database import (db, WatchlistFolder, WatchlistItem, WatchlistFolderAttribute,
+                             WatchlistAlert, WatchlistFolderAlert, WatchlistItemAlert,
+                             StockMaster, Stock, FolderAttribute, OrderBy)
 
 from data_collectors.stock_data import fetch_stock_data
 
@@ -18,6 +18,9 @@ def db_get_all_watchlist_data(user):
     folders = get_all_user_folders(user)
 
     for folder in folders:
+        folder_attributes_data = folder.folder_attributes
+        folder_attributes_list = [folder_attribute.attribute for folder_attribute in folder.folder_attributes]
+
         folder_alerts = db.session.execute(
             db.select(
                 WatchlistAlert
@@ -37,7 +40,7 @@ def db_get_all_watchlist_data(user):
             WatchlistFolder
         ).where(
             WatchlistFolder.id == folder.id
-        )
+        ).all()
 
         all_items_data = {}
         for ticker, item_id in items:
@@ -56,16 +59,54 @@ def db_get_all_watchlist_data(user):
                         WatchlistItemAlert.item_id == item_id
                     )
                 ).scalars().all()
+
                 all_items_data[item_id] = {
-                    "stock_data": stock_data,
+                    "stock_data": stock_data.to_dict(),
                     "item_alerts": item_alerts
                 }
+
+        for attribute_data in folder_attributes_data:
+            if attribute_data.attribute.value != FolderAttribute.NAME:
+                min_value = attribute_data.min_value
+                max_value = attribute_data.max_value
+
+                def all_items_data_filter(data):
+                    filter_result = False
+                    attribute_value = data[1]["stock_data"].get(attribute_data.attribute.value)
+                    if (min_value is not None) and (max_value is not None):
+                        filter_result = min_value < attribute_value <= max_value
+                    elif min_value is not None:
+                        filter_result = min_value < attribute_value
+                    elif max_value is not None:
+                        filter_result = attribute_value <= max_value
+                    return filter_result
+
+                if (min_value is not None) or (max_value is not None):
+                    all_items_data = dict(filter(
+                        all_items_data_filter,
+                        all_items_data.items()
+                    ))
+
+        sort_by_attribute = folder.sort_by_attribute
+        sort_by_order = folder.sort_by_order
+
+        if sort_by_attribute and sort_by_order:
+            reverse = (sort_by_order == OrderBy.DESC)
+            all_items_data = dict(sorted(
+                all_items_data.items(),
+                key=lambda item: item[1]["stock_data"].get(sort_by_attribute, None),
+                reverse=reverse
+            ))
 
         result[folder.id] = {
             "folder_name": folder.name,
             "folder_order": folder.order,
+            "folder_attributes_data": folder_attributes_data,
+            "folder_attributes_list": folder_attributes_list,
             "folder_alerts": folder_alerts,
-            "folder_items": all_items_data
+            "folder_items": all_items_data,
+            "folder_sort_by_attribute": sort_by_attribute,
+            "folder_sort_by_order": sort_by_order
         }
     return result
 
@@ -74,7 +115,10 @@ def db_add_folder(folder_name, user):
     order = len(folders) + 1
     new_folder = WatchlistFolder(name=folder_name, order=order, user=user)
     db.session.add(new_folder)
-    db.session.commit()
+    db.session.flush()
+
+    # Add default folder attributes
+    add_default_folder_attributes(new_folder)
 
 def db_rename_folder(new_folder_name, folder_id, user):
     folder = get_user_folder_or_404(folder_id, user)
@@ -109,6 +153,10 @@ def db_update_order(folder_id, new_order, user):
 
     # Get all the user's folders
     folders = get_all_user_folders(user)
+
+    # Check if the new_order is valid
+    if new_order not in range(1, len(folders) + 1):
+        raise Exception(f"New order '{new_order}' not in range ({1}, {len(folders + 1)})")
 
     # Old order of the folder
     old_order = update_folder.order
@@ -173,8 +221,8 @@ def db_update_folder_alerts(folder_id, alerts, user):
         if not alert["delete"]:
             new_alert = WatchlistAlert(
                 attribute=alert["attribute"],
-                operator=alert["operator"],
-                value=alert["value"],
+                min_value=alert["min_value"],
+                max_value=alert["max_value"],
                 user=user
             )
             db.session.add(new_alert)
@@ -195,8 +243,8 @@ def db_update_item_alerts(item_id, alerts, user):
         if not alert["delete"]:
             new_alert = WatchlistAlert(
                 attribute=alert["attribute"],
-                operator=alert["operator"],
-                value=alert["value"],
+                min_value=alert["min_value"],
+                max_value=alert["max_value"],
                 user=user
             )
             db.session.add(new_alert)
@@ -206,6 +254,46 @@ def db_update_item_alerts(item_id, alerts, user):
                 alert=new_alert
             ))
         db.session.flush()
+    db.session.commit()
+
+def db_update_folder_attributes(folder_id, action, attributes, user):
+    folder = get_user_folder_or_404(folder_id, user)
+
+    for attribute in folder.folder_attributes:
+        db.session.delete(attribute)
+    db.session.flush()
+
+    if action == "save":
+        for attribute in attributes:
+            db.session.add(WatchlistFolderAttribute(
+                attribute=attribute,
+                folder=folder
+            ))
+        db.session.commit()
+    elif action == "restore":
+        add_default_folder_attributes(folder)
+    else:
+        raise Exception(f"Form action '{action}' does not exist.")
+
+    # Reset folder sorting
+    folder.sort_by_attribute = None
+    folder.sort_by_order = None
+    db.session.commit()
+
+def db_update_folder_sort_by(folder_id, sort_by_attribute, sort_by_order, user):
+    folder = get_user_folder_or_404(folder_id, user)
+    if folder.sort_by_attribute == sort_by_attribute and folder.sort_by_order == sort_by_order:
+        folder.sort_by_attribute = None
+        folder.sort_by_order = None
+    else:
+        folder.sort_by_attribute = sort_by_attribute
+        folder.sort_by_order = sort_by_order
+    db.session.commit()
+
+def db_update_attribute_filters(attribute_id, min_value, max_value, user):
+    attribute = get_folder_attribute_or_404(attribute_id, user)
+    attribute.min_value = min_value
+    attribute.max_value = max_value
     db.session.commit()
 
 def get_folder_by_id(folder_id):
@@ -251,6 +339,46 @@ def get_user_item_or_404(item_id, user):
     if item.folder.user_id != user.id:
         raise ForbiddenError(f"Item with id {item_id} does not belong to the user with id {user.id}")
     return item
+
+def get_folder_attribute_or_404(attribute_id, user):
+    attribute = db.session.execute(db.select(WatchlistFolderAttribute).where(WatchlistFolderAttribute.id == attribute_id)).scalar()
+    folder = attribute.folder
+    if not attribute:
+        raise NotFoundError(f"Attribute with id {attribute_id} not found.")
+    if folder and folder.user_id != user.id:
+        raise ForbiddenError(f"Attribute with id {attribute_id} does not belong to user with id {user.id}")
+    return attribute
+
+def add_default_folder_attributes(folder):
+    db.session.add(WatchlistFolderAttribute(
+        attribute=FolderAttribute.NAME,
+        folder=folder
+    ))
+    db.session.add(WatchlistFolderAttribute(
+        attribute=FolderAttribute.LOW_52W,
+        folder=folder
+    ))
+    db.session.add(WatchlistFolderAttribute(
+        attribute=FolderAttribute.DAY_CLOSE,
+        folder=folder
+    ))
+    db.session.add(WatchlistFolderAttribute(
+        attribute=FolderAttribute.HIGH_52W,
+        folder=folder
+    ))
+    db.session.add(WatchlistFolderAttribute(
+        attribute=FolderAttribute.TODAYS_CHANGE_PERC,
+        folder=folder
+    ))
+    db.session.add(WatchlistFolderAttribute(
+        attribute=FolderAttribute.DMA_200,
+        folder=folder
+    ))
+    db.session.add(WatchlistFolderAttribute(
+        attribute=FolderAttribute.DMA_200_PERC_DIFF,
+        folder=folder
+    ))
+    db.session.commit()
 
 def delete_watchlist_item(item, user):
     # Delete the alerts for the item
@@ -304,9 +432,3 @@ def check_duplicate_folder(folder_name, user):
         )
     ).first()
     return bool(exists)
-
-def get_alert_attributes():
-    return {member.value: member.label for member in AlertAttribute}
-
-def get_alert_operators():
-    return [member.value for member in AlertOperator]

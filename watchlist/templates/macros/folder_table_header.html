@@ -1,0 +1,120 @@
+{% from "macros/popovers.html" import dma_200_diff_popover %}
+
+{% macro folder_table_header(folder_id, label, attribute_data, folder_sort_by_attribute, folder_sort_by_order) %}
+
+<th scope="col" class="align-middle">
+  <div class="d-flex align-items-center justify-content-between">
+    <span class="fw-semibold">
+      {{ label }}
+      {% if attribute_data.attribute.value == FolderAttribute.DMA_200_PERC_DIFF %}
+        {{ dma_200_diff_popover() }}
+      {% endif %}
+    </span>
+    {% if attribute_data.attribute.value != FolderAttribute.NAME %}
+      <!-- Filter Dropdown -->
+      <div class="dropdown position-relative">
+        <!-- Filter button -->
+        <button
+          class="btn btn-link p-0 m-0 folder-table-header-btn
+                 {% if attribute_data.min_value is not none or attribute_data.max_value is not none %}
+                   text-primary
+                 {% else %}
+                   text-secondary
+                 {% endif %}"
+          type="button"
+          data-bs-toggle="dropdown"
+          data-bs-auto-close="outside"
+          title="Filter"
+          aria-expanded="false">
+          <i class="bi bi-filter-square fs-5"></i>
+        </button>
+
+        <!-- Form inside dropdown -->
+        <form method="POST"
+              action="{{ url_for('watchlist.update_attribute_filters', attribute_id=attribute_data.id) }}"
+              novalidate>
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+          <!-- Dropdown menu -->
+          <ul class="dropdown-menu p-3 shadow-lg rounded-3"
+              style="min-width: 280px;">
+
+            <!-- Header -->
+            <li class="mb-3 text-center fw-semibold border-bottom pb-2">
+              <i class="bi bi-funnel me-1"></i> Filter
+            </li>
+
+            <!-- Inline Filter Row -->
+            <li class="d-flex align-items-center gap-2 mb-3 justify-content-center flex-nowrap">
+
+              <!-- Greater than input -->
+              <input id="filter-min-value-{{ attribute_data.id }}"
+                     class="form-control form-control-sm text-center"
+                     type="text"
+                     name="min-value"
+                     placeholder="Min"
+                     value="{% if attribute_data.min_value is not none %}{{ attribute_data.min_value }}{% endif %}"
+                     style="max-width: 100px;">
+
+              <!-- Comparison text -->
+              <span class="fw-semibold text-secondary small text-nowrap">&lt; {{ label }} &lt;=</span>
+
+              <!-- Lower than input -->
+              <input id="filter-max-value-{{ attribute_data.id }}"
+                     class="form-control form-control-sm text-center"
+                     type="text"
+                     name="max-value"
+                     placeholder="Max"
+                     value="{% if attribute_data.max_value is not none %}{{ attribute_data.max_value }}{% endif %}"
+                     style="max-width: 100px;">
+
+            </li>
+
+            <!-- Divider -->
+            <li><hr class="dropdown-divider my-2"></li>
+
+            <!-- Buttons -->
+            <li class="d-flex justify-content-between">
+              <button type="submit" class="btn btn-sm btn-outline-secondary w-50 me-1" name="action" value="clear">
+                Clear
+              </button>
+              <button type="submit" class="btn btn-sm btn-secondary w-50 ms-1" name="action" value="apply">
+                Apply
+              </button>
+            </li>
+          </ul>
+
+        </form>
+      </div>
+    {% endif %}
+
+    <div class="d-flex flex-column ms-2">
+      <!-- Ascending Sort -->
+      <form method="POST"
+            action="{{ url_for('watchlist.update_folder_sort_by', folder_id=folder_id) }}"
+            novalidate>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="sort_by_attribute" value="{{ attribute_data.attribute.value }}">
+        <input type="hidden" name="sort_by_order" value="{{ OrderBy.ASC.value }}">
+        <button type="submit" title="Sort Ascending"
+                class="btn btn-link p-0 m-0 folder-table-header-btn {% if folder_sort_by_attribute == attribute_data.attribute.value and folder_sort_by_order == OrderBy.ASC.value %} text-primary {% else %} text-secondary {% endif %}">
+          <i class="bi bi-caret-up-fill"></i>
+        </button>
+      </form>
+      <!-- Descending Sort -->
+      <form method="POST"
+            action="{{ url_for('watchlist.update_folder_sort_by', folder_id=folder_id) }}"
+            novalidate>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="sort_by_attribute" value="{{ attribute_data.attribute.value }}">
+        <input type="hidden" name="sort_by_order" value="{{ OrderBy.DESC.value }}">
+        <button type="submit" title="Sort Descending"
+                class="btn btn-link p-0 m-0 folder-table-header-btn {% if folder_sort_by_attribute == attribute_data.attribute.value and folder_sort_by_order == OrderBy.DESC.value %} text-primary {% else %} text-secondary {% endif %}">
+          <i class="bi bi-caret-down-fill"></i>
+        </button>
+      </form>
+    </div>
+  </div>
+</th>
+
+{% endmacro %}

@@ -1,9 +1,9 @@
-{% from "macros/popovers.html" import dma_200_diff_popover %}
 {% from "macros/jumbotron.html" import jumbotron %}
 {% from "macros/stock_attributes.html" import stock_todays_change, stock_dma_200_perc_diff %}
 {% from "macros/search_bar.html" import search_bar %}
 {% from "macros/watchlist_forms.html" import add_folder_form %}
 {% from "macros/alert_offcanvas.html" import alert_offcanvas %}
+{% from "macros/folder_table_header.html" import folder_table_header with context %}
 
 {% extends "base.html" %}
 
@@ -59,7 +59,7 @@
 
             <!-- Folder Actions -->
             <div class="row g-2 align-items-center mb-3">
-              <!-- Left Column: Order Selector + Folder Email Alert + Add Stock -->
+              <!-- Left Column: Order Selector + Folder Attributes + Folder Email Alert + Add Stock -->
               <div class="col-12 col-md-6 d-flex flex-wrap align-items-center gap-2">
                 <!-- Order Selector -->
                 <form method="POST"
@@ -77,6 +77,60 @@
                   </select>
                 </form>
 
+                <!-- Folder Edit Attributes Button -->
+                <div class="dropdown">
+                    <!-- Dropdown toggle button -->
+                    <button class="btn btn-sm btn-outline-primary d-flex align-items-center"
+                            type="button"
+                            data-bs-toggle="dropdown"
+                            data-bs-auto-close="outside"
+                            aria-expanded="false">
+                      <i class="bi bi-pencil-square me-1"></i>
+                      Edit
+                    </button>
+                  <form method="POST"
+                        action="{{ url_for('watchlist.update_folder_attributes', folder_id=key) }}"
+                        novalidate>
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="folder_name" value="{{ value.folder_name }}">
+
+                    <!-- Dropdown menu -->
+                    <ul class="dropdown-menu p-3 shadow rounded-3" style="min-width: 260px;">
+                      <li class="mb-2 text-center fw-semibold border-bottom pb-2">
+                        Select Attributes
+                      </li>
+
+                      <!-- Attribute checkboxes -->
+                      {% for folder_attribute in FolderAttribute|list %}
+                          <li class="form-check mb-1">
+                            <input class="form-check-input"
+                                   type="checkbox"
+                                   value="{{ folder_attribute.value }}"
+                                   name="folder-attribute-{{ loop.index }}"
+                                   id="folder-attribute-{{ loop.index }}-{{ key }}"
+                                   {% if folder_attribute.value in value.folder_attributes_list %} checked {% endif %}>
+                            <label class="form-check-label" for="folder-attribute-{{ loop.index }}-{{ key }}">
+                              {{ folder_attribute.label }}
+                            </label>
+                          </li>
+                      {% endfor %}
+
+                      <!-- Divider -->
+                      <li><hr class="dropdown-divider my-3"></li>
+
+                      <!-- Buttons -->
+                      <li class="d-flex justify-content-between">
+                        <button type="submit" class="btn btn-sm btn-outline-secondary flex-fill me-1" name="action" value="restore">
+                          Restore
+                        </button>
+                        <button type="submit" class="btn btn-sm btn-secondary flex-fill ms-1" name="action" value="save">
+                          Save
+                        </button>
+                      </li>
+                    </ul>
+                  </form>
+                </div>
+
                 <!-- Folder Email Alert Button -->
                 <button class="btn btn-sm btn-outline-primary" type="button"
                         data-bs-toggle="offcanvas"
@@ -89,8 +143,7 @@
                     db_id=key,
                     folder_name=value.folder_name,
                     data=value.folder_alerts,
-                    attributes=alert_attributes,
-                    operators=alert_operators,
+                    attributes=AlertAttribute|list,
                     ticker=None,
                 ) }}
 
@@ -133,69 +186,85 @@
               <table class="table table-bordered table-hover align-middle">
                 <thead class="table-light">
                   <tr>
-                      <th scope="col">#</th>
-                      <th scope="col">Name</th>
-                      <th scope="col">Ticker</th>
-                      <th scope="col">52w Low</th>
-                      <th scope="col">Day Close</th>
-                      <th scope="col">52w High</th>
-                      <th scope="col">Today's Change</th>
-                      <th scope="col">200-DMA</th>
-                      <th scope="col">% Diff {{ dma_200_diff_popover() }}</th>
-                      <th scope="col">Actions</th>
+                    <th scope="col" class="align-middle">#</th>
+                    <th scope="col" class="align-middle">Ticker</th>
+
+                    {% for attribute_data in value.folder_attributes_data %}
+                        {{ folder_table_header(
+                            folder_id = key,
+                            label = attribute_data.attribute.label,
+                            attribute_data = attribute_data,
+                            folder_sort_by_attribute = value.folder_sort_by_attribute,
+                            folder_sort_by_order = value.folder_sort_by_order,
+                        ) }}
+                    {% endfor %}
+
+                    <th scope="col" class="align-middle">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {% for item_key, item_value in value.folder_items.items() %}
-                  {% set stock = item_value["stock_data"] %}
-                  <tr>
-                    <th scope="row">{{ loop.index }}</th>
-                    <td>
-                      <a href="{{ url_for('show_stock', ticker=stock.ticker) }}" class="fw-semibold text-primary">
-                        {{ stock.name | display }}
-                      </a>
-                    </td>
-                    <td>{{ stock.ticker | display }}</td>
-                    <td>{{ stock.low_52w | currency }}</td>
-                    <td class="fw-semibold bg-info-subtle">{{ stock.day_close | currency }}</td>
-                    <td>{{ stock.high_52w | currency }}</td>
-                    <td>{{ stock_todays_change(stock) }}</td>
-                    <td>{{ stock.dma_200 | currency }}</td>
-                    {{ stock_dma_200_perc_diff(stock) }}
-                      <td class="d-flex gap-1">
-                          <!-- Item Email Alert Button -->
-                          <button class="btn btn-sm btn-outline-primary" type="button"
-                                  data-bs-toggle="offcanvas"
-                                  data-bs-target="#offcanvas-item-{{ item_key }}" aria-controls="#offcanvas-item-{{ item_key }}">
-                            <i class="bi bi-bell"></i>
-                          </button>
-                          {{ alert_offcanvas(
-                              offcanvas_target_id="offcanvas-item-" + item_key|string,
-                              form_action=url_for('watchlist.update_item_alerts', item_id=item_key),
-                              db_id=item_key,
-                              folder_name=value.folder_name,
-                              data=item_value["item_alerts"],
-                              attributes=alert_attributes,
-                              operators=alert_operators,
-                              ticker=stock.ticker,
-                          ) }}
-                          <!-- Remove Item Button -->
-                          <form method="POST"
-                                action="{{ url_for('watchlist.remove_item', folder_id=key, ticker=stock.ticker) }}"
-                                novalidate>
-                              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                              <button type="submit" class="btn btn-sm btn-outline-danger">
-                                  <i class="bi bi-trash"></i>
-                              </button>
-                          </form>
-                      </td>
-                  </tr>
+                      {% set stock = item_value["stock_data"] %}
+                      <tr>
+                          <th scope="row">{{ loop.index }}</th>
+                          <td>
+                              <a href="{{ url_for('show_stock', ticker=stock.ticker) }}" class="fw-semibold text-primary">
+                                  {{ stock.ticker | display }}
+                              </a>
+                          </td>
+                          {% for attribute in value.folder_attributes_list %}
+                            {% if attribute.value == FolderAttribute.TODAYS_CHANGE_PERC %}
+                                <td>
+                                  {{ stock_todays_change(stock) }}
+                                </td>
+                            {% elif attribute.value == FolderAttribute.DMA_200_PERC_DIFF %}
+                                {{ stock_dma_200_perc_diff(stock) }}
+                            {% else %}
+                                {% if attribute.type == "currency" %}
+                                    <td>{{ stock[attribute.value] | currency }}</td>
+                                {% elif attribute.type == "percent" %}
+                                    <td>{{ stock[attribute.value] | percent }}</td>
+                                {% else %}
+                                    <td>{{ stock[attribute.value] | display }}</td>
+                                {% endif %}
+                            {% endif %}
+                          {% endfor %}
+                          <td>
+                              <div class="d-flex gap-1">
+                                  <!-- Item Email Alert Button -->
+                                  <button class="btn btn-sm btn-outline-primary" type="button"
+                                          data-bs-toggle="offcanvas"
+                                          data-bs-target="#offcanvas-item-{{ item_key }}" aria-controls="#offcanvas-item-{{ item_key }}">
+                                    <i class="bi bi-bell"></i>
+                                  </button>
+                                  {{ alert_offcanvas(
+                                      offcanvas_target_id="offcanvas-item-" + item_key|string,
+                                      form_action=url_for('watchlist.update_item_alerts', item_id=item_key),
+                                      db_id=item_key,
+                                      folder_name=value.folder_name,
+                                      data=item_value["item_alerts"],
+                                      attributes=AlertAttribute|list,
+                                      ticker=stock.ticker,
+                                  ) }}
+
+                                  <!-- Remove Item Button -->
+                                  <form method="POST"
+                                        action="{{ url_for('watchlist.remove_item', folder_id=key, ticker=stock.ticker) }}"
+                                        novalidate>
+                                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                      <button type="submit" class="btn btn-sm btn-outline-danger">
+                                          <i class="bi bi-trash"></i>
+                                      </button>
+                                  </form>
+                              </div>
+                          </td>
+                      </tr>
                   {% else %}
-                  <tr>
-                    <td colspan="10" class="text-center text-muted py-4">
-                      <em>No stocks to show in this folder yet.</em>
-                    </td>
-                  </tr>
+                      <tr>
+                        <td colspan="{{ value.folder_attributes_list|length + 3 }}" class="text-center text-muted py-4">
+                          <em>No stocks to show in this folder.</em>
+                        </td>
+                      </tr>
                   {% endfor %}
                 </tbody>
               </table>
