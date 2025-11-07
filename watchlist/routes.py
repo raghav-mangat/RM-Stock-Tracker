@@ -2,6 +2,7 @@ from . import watchlist_bp
 from flask import render_template, request, flash, redirect, url_for
 from flask_login import current_user, login_required
 from models.database import AlertAttribute
+from .services import Validators, get_alerts
 from utils.populate_db_info import db_last_updated
 from utils.db_queries.watchlist import *
 
@@ -34,7 +35,7 @@ def add_folder():
         url = next_url
 
     folder_name = request.form.get("folder_name")
-    folder_name_result = validate_folder_name(folder_name)
+    folder_name_result = Validators.validate_folder_name(folder_name, current_user)
     if folder_name_result["valid"]:
         try:
             db_add_folder(folder_name_result["folder_name"], current_user)
@@ -51,7 +52,7 @@ def add_folder():
 @login_required
 def rename_folder(folder_id):
     new_folder_name = request.form.get("new_folder_name")
-    folder_name_result = validate_folder_name(new_folder_name)
+    folder_name_result = Validators.validate_folder_name(new_folder_name, current_user)
     if folder_name_result["valid"]:
         try:
             db_rename_folder(folder_name_result["folder_name"], folder_id, current_user)
@@ -147,7 +148,7 @@ def update_folder_alerts(folder_id):
     folder_name = request.form.get("folder_name")
 
     alerts = get_alerts(request)
-    message = validate_alerts(alerts)
+    message = Validators.validate_alerts(alerts)
 
     if message:
         flash(message, "warning")
@@ -170,7 +171,7 @@ def update_item_alerts(item_id):
     folder_name = request.form.get("folder_name")
 
     alerts = get_alerts(request)
-    message = validate_alerts(alerts)
+    message = Validators.validate_alerts(alerts)
 
     if message:
         flash(message, "warning")
@@ -241,10 +242,12 @@ def update_folder_sort_by(folder_id):
             flash("An error occurred while updating the sorting for this folder.", "danger")
     return redirect(url_for("watchlist.index"))
 
-@watchlist_bp.route("/update_attribute_filters/<int:attribute_id>", methods=["POST"])
-def update_attribute_filters(attribute_id):
+@watchlist_bp.route("/update_attribute_filters", methods=["POST"])
+def update_attribute_filters():
+    attribute_id = request.form.get("attribute_id", type=int)
     action = request.form.get("action")
-    if action not in ["apply", "clear"]:
+
+    if not attribute_id or action not in ["apply", "clear"]:
         return redirect(url_for("watchlist.index"))
 
     (min_value, max_value, message) = (None, None, None)
@@ -253,7 +256,7 @@ def update_attribute_filters(attribute_id):
         min_value = request.form.get("min-value")
         max_value = request.form.get("max-value")
 
-        (min_value, max_value, message) = validate_values(min_value, max_value)
+        (min_value, max_value, message) = Validators.validate_values(min_value, max_value)
 
     if message:
         flash(message, "warning")
@@ -267,117 +270,3 @@ def update_attribute_filters(attribute_id):
         except Exception:
             flash("An error occurred while updating the filters for this attribute.", "danger")
     return redirect(url_for("watchlist.index"))
-
-def validate_folder_name(folder_name):
-    max_folder_name_len = 50
-    result = {
-        "valid": False,
-        "message": "",
-        "folder_name": ""
-    }
-    if not folder_name:
-        result["message"] = "Folder name cannot be empty."
-        return result
-
-    folder_name = folder_name.strip().upper()
-    if len(folder_name) > max_folder_name_len:
-        result["message"] = f"Folder name must be at most {max_folder_name_len} characters."
-    elif check_duplicate_folder(folder_name, current_user):
-        result["message"] = f"Folder '{folder_name}' already exists."
-    else:
-        result["valid"] = True
-        result["folder_name"] = folder_name
-
-    return result
-
-def get_alerts(update_alert_request):
-    num_alerts = int(update_alert_request.form.get("num_alerts"))
-
-    # Get values for all form inputs, save as dict for each alert
-    alerts = []
-    for i in range(1, num_alerts + 1):
-        alerts.append({
-            "attribute": update_alert_request.form.get(f"attribute-{i}"),
-            "min_value": update_alert_request.form.get(f"min-value-{i}"),
-            "max_value": update_alert_request.form.get(f"max-value-{i}"),
-            "delete": update_alert_request.form.get(f"delete-{i}")
-        })
-    new_alert = {
-        "attribute": update_alert_request.form.get("attribute-new"),
-        "min_value": update_alert_request.form.get(f"min-value-new"),
-        "max_value": update_alert_request.form.get(f"max-value-new"),
-        "delete": None
-    }
-    # Add the new alert only if there was a selection made in it
-    if new_alert["attribute"] or new_alert["min_value"] or new_alert["max_value"]:
-        alerts.append(new_alert)
-
-    return alerts
-
-def validate_alerts(alerts):
-    # Check if the user input is valid for all alerts
-    message = None
-
-    # To keep track of attributes selected by the user
-    selected_attributes = set()
-
-    for alert in alerts:
-        if not alert["delete"]:
-            attribute = alert["attribute"]
-            if not attribute:
-                message = "Please select an attribute."
-                break
-            if attribute not in list(AlertAttribute):
-                message = "Invalid attribute selected."
-                break
-            if attribute in selected_attributes:
-                message = f"Duplicate alert for '{attribute}'. Each attribute can have only one alert."
-                break
-            selected_attributes.add(attribute)
-
-            (min_value, max_value, message) = validate_values(alert["min_value"], alert["max_value"])
-
-            if message:
-                break
-            else:
-                alert["min_value"] = min_value
-                alert["max_value"] = max_value
-
-    return message
-
-def validate_values(min_value, max_value):
-    message = None
-    min_value_allowed = -1_000_000
-    max_value_allowed = 1_000_000
-
-    if not min_value and not max_value:
-        min_value = None
-        max_value = None
-        message = "Please enter a value."
-    else:
-        try:
-            if min_value:
-                min_value = round(float(min_value), 2)
-                if min_value < min_value_allowed:
-                    message = f"Minimum value allowed is {min_value_allowed:,}"
-                elif min_value > max_value_allowed:
-                    message = f"Maximum value allowed is {max_value_allowed:,}"
-            else:
-                min_value = None
-            if max_value:
-                max_value = round(float(max_value), 2)
-                if max_value < min_value_allowed:
-                    message = f"Minimum value allowed is {min_value_allowed:,}"
-                elif max_value > max_value_allowed:
-                    message = f"Maximum value allowed is {max_value_allowed:,}"
-            else:
-                max_value = None
-
-            if not message and (min_value is not None) and (max_value is not None) and (min_value > max_value):
-                message = f"Minimum value cannot be greater than maximum value."
-
-        except ValueError:
-            min_value = None
-            max_value = None
-            message = "Value must be a valid number."
-    return min_value, max_value, message

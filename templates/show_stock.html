@@ -36,7 +36,7 @@
 
   <!-- Add to Watchlist Bootstrap Modal (only shown if logged in) -->
   {% if current_user.is_authenticated %}
-  <div class="modal fade" id="addToWatchlistModal" tabindex="-1" aria-labelledby="addToWatchlistModalLabel" aria-hidden="true">
+  <div class="modal fade" id="addToWatchlistModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="addToWatchlistModalLabel" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
@@ -56,15 +56,20 @@
             <input type="hidden" name="next" value="{{ request.path }}">
             <input type="hidden" name="ticker" value="{{ stock.ticker }}">
             <div class="mb-3">
-              {% if current_user.watchlist_folders %}
+              {% if user_folders %}
                 <label for="folderSelect" class="form-label">Select Folder</label>
-                <select class="form-select" id="folderSelect" name="folder_id" required>
-                  {% for folder in current_user.watchlist_folders %}
-                    <option value="{{ folder.id }}">{{ folder.name }}</option>
+                <select class="form-select" id="folderSelect" name="folder_id">
+                  {% for folder in user_folders %}
+                    <option value="{{ folder.id }}">{{ folder.order }}) {{ folder.name }}</option>
                   {% endfor %}
                 </select>
               {% else %}
-                <a href="{{ url_for('watchlist.index') }}" class="text-primary fw-semibold">Create a Folder</a>
+                <p>
+                  Create a Folder or
+                  <a href="{{ url_for('watchlist.index') }}" class="text-primary fw-semibold">
+                    Go to Watchlist
+                  </a>
+                </p>
               {% endif %}
             </div>
 
@@ -72,7 +77,7 @@
               <!-- Close just dismisses modal -->
               <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
               <!-- Submit actually posts to watchlist.add_item route -->
-              <button type="submit" class="btn btn-primary" {% if not current_user.watchlist_folders %} disabled {% endif %}>Submit</button>
+              <button type="submit" class="btn btn-primary" {% if not user_folders %} disabled {% endif %}>Submit</button>
             </div>
           </form>
         </div>

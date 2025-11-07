@@ -14,7 +14,7 @@ Started On: June 07, 2025
 import os
 from flask import Flask, render_template, request
 from dotenv import load_dotenv
-from flask_login import LoginManager
+from flask_login import LoginManager, current_user
 from flask_mail import Mail
 from flask_wtf.csrf import CSRFProtect
 from models.database import db
@@ -30,6 +30,7 @@ from utils.db_queries.all_stocks import get_ticker_tape_stocks, get_top_stocks
 from utils.db_queries.query_stocks import get_query_stocks
 from utils.db_queries.show_stock import get_stock_data, get_chart_data, get_timeframe_options
 from utils.db_queries.user_data import get_user_by_id
+from utils.db_queries.watchlist import get_all_user_folders
 
 # Load environment variables
 load_dotenv()
@@ -153,6 +154,10 @@ def show_stock(ticker):
     initial_timeframe = timeframe_options[0]
     initial_stock_chart_data = get_chart_data(ticker, initial_timeframe)
 
+    user_folders = []
+    if current_user.is_authenticated:
+        user_folders = get_all_user_folders(current_user)
+
     return render_template(
         "show_stock.html",
         stock=stock_data.get("stock"),
@@ -161,6 +166,7 @@ def show_stock(ticker):
         timeframe_options=timeframe_options,
         initial_timeframe=initial_timeframe,
         initial_stock_chart_data=initial_stock_chart_data,
+        user_folders=user_folders
     )
 
 @app.route("/chart-data")

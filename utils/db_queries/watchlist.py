@@ -65,6 +65,7 @@ def db_get_all_watchlist_data(user):
                     "item_alerts": item_alerts
                 }
 
+        # Filter the items data if filters are applied to the folder
         for attribute_data in folder_attributes_data:
             if attribute_data.attribute.value != FolderAttribute.NAME:
                 min_value = attribute_data.min_value
@@ -87,9 +88,9 @@ def db_get_all_watchlist_data(user):
                         all_items_data.items()
                     ))
 
+        # Sort the items data if sorting is applied to the folder
         sort_by_attribute = folder.sort_by_attribute
         sort_by_order = folder.sort_by_order
-
         if sort_by_attribute and sort_by_order:
             reverse = (sort_by_order == OrderBy.DESC)
             all_items_data = dict(sorted(

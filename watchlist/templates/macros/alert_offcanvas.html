@@ -1,4 +1,4 @@
-{% macro alert_offcanvas(offcanvas_target_id, form_action, db_id, folder_name, data, attributes, ticker=None) %}
+{% macro alert_offcanvas(offcanvas_target_id, form_action, db_id, folder_name, alert_data, attributes, ticker=None) %}
     <div class="offcanvas offcanvas-end mt-5"
          data-bs-scroll="true" data-bs-backdrop="false" tabindex="-1"
          id="{{ offcanvas_target_id }}" aria-labelledby="{{ offcanvas_target_id }}">
@@ -17,13 +17,13 @@
                 action="{{ form_action }}"
                 novalidate>
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <input type="hidden" name="num_alerts" value="{{ data|length }}">
+              <input type="hidden" name="num_alerts" value="{{ alert_data|length }}">
               <input type="hidden" name="folder_name" value="{{ folder_name }}">
               {% if ticker %}
                 <input type="hidden" name="ticker" value="{{ ticker }}">
               {% endif %}
 
-              {% for alert in data %}
+              {% for alert in alert_data %}
                   <div class="d-flex my-3 gap-1 align-items-center">
                       <div id="alert-row-{{ loop.index }}-{{ db_id }}" class="d-flex gap-1 align-items-center">
                         <!-- Serial Number -->
@@ -34,7 +34,7 @@
                                name="min-value-{{ loop.index }}" aria-label="min-value-{{ loop.index }}"
                                placeholder="Min"
                                value="{% if alert.min_value is not none %}{{ alert.min_value }}{% endif %}">
-                        <span class="fw-semibold text-secondary small text-nowrap"> &lt; </span>
+                        <span class="fw-semibold text-secondary text-nowrap"> &lt; </span>
 
                         <!-- Attribute Selector -->
                         <select id="attribute-{{ loop.index }}-{{ db_id }}" name="attribute-{{ loop.index }}"
@@ -47,7 +47,7 @@
                         </select>
 
                         <!-- Max Value Input -->
-                        <span class="fw-semibold text-secondary small text-nowrap"> &lt;= </span>
+                        <span class="fw-semibold text-secondary text-nowrap"> &lt;= </span>
                         <input id="max-value-{{ loop.index }}-{{ db_id }}" class="form-control" type="text"
                                name="max-value-{{ loop.index }}" aria-label="max-value-{{ loop.index }}"
                                placeholder="Max"
@@ -71,7 +71,7 @@
                   <input id="min-value-new-{{ db_id }}" class="form-control" type="text"
                          name="min-value-new" aria-label="min-value-new"
                          placeholder="Min">
-                  <span class="fw-semibold text-secondary small text-nowrap"> &lt; </span>
+                  <span class="fw-semibold text-secondary text-nowrap"> &lt; </span>
 
                   <!-- Attribute Selector -->
                   <select id="attribute-new-{{ db_id }}" name="attribute-new"
@@ -85,7 +85,7 @@
                   </select>
 
                   <!-- Max Value Input -->
-                  <span class="fw-semibold text-secondary small text-nowrap"> &lt;= </span>
+                  <span class="fw-semibold text-secondary text-nowrap"> &lt;= </span>
                   <input id="max-value-new-{{ db_id }}" class="form-control" type="text"
                          name="max-value-new" aria-label="max-value-new"
                          placeholder="Max">
