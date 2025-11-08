@@ -4,6 +4,7 @@ from sqlalchemy import String, Integer, BigInteger, Text, Boolean, ForeignKey, D
 from sqlalchemy import Index as DBIndex
 from enum import Enum
 from flask_login import UserMixin
+from werkzeug.security import generate_password_hash,check_password_hash
 import jwt
 from jwt import ExpiredSignatureError, InvalidTokenError
 from datetime import datetime, date
@@ -336,10 +337,29 @@ class User(UserMixin, db.Model):
     __tablename__ = "users"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    name: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
     email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
-    password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
+    username: Mapped[str] = mapped_column(String(30), unique=True, nullable=False)
+    first_name: Mapped[str] = mapped_column(String(50), nullable=False)
+    last_name: Mapped[str] = mapped_column(String(50), nullable=False)
+
     is_verified: Mapped[bool] = mapped_column(Boolean, nullable=False)
+
+    password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
+
+    @property
+    def password(self):
+        raise AttributeError("Password is not readable")
+
+    @password.setter
+    def password(self, raw_password):
+        self.password_hash = generate_password_hash(
+            raw_password,
+            method='pbkdf2:sha256',
+            salt_length=8
+        )
+
+    def verify_password(self, password):
+        return check_password_hash(self.password_hash, password)
 
     # One user -> many watchlist folders
     watchlist_folders: Mapped[list["WatchlistFolder"]] = relationship(
@@ -410,7 +430,8 @@ class User(UserMixin, db.Model):
         return db.session.get(User, int(user_id))
 
     def __repr__(self) -> str:
-        return f"<User id={self.id} email={self.email}>"
+        return (f"<User id={self.id} email={self.email} username={self.username} "
+                f"first_name={self.first_name} last_name={self.last_name}>")
 
 
 class WatchlistFolder(db.Model):
