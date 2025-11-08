@@ -2,7 +2,7 @@
 
 {% block content %}
 
-<p>Hi {{ user.name }},</p>
+<p>Hi {{ user.first_name }},</p>
 <p>Welcome to RM Stock Tracker! Please verify your email address to activate your account:</p>
 <div class="text-center my-3">
   <a href="{{ url_for('auth.verify_email', token=token, _external=True) }}" class="btn">

@@ -13,8 +13,10 @@ def signup():
     form = SignupForm()
     if form.validate_on_submit():
         user = add_new_user(
-            name=form.username.data,
+            first_name=form.first_name.data,
+            last_name=form.last_name.data,
             email=form.email.data,
+            username=form.username.data,
             password=form.password.data
         )
         send_verify_user_email(user)

@@ -2,7 +2,7 @@
 
 {% block content %}
 
-Hi {{ user.name }},
+Hi {{ user.first_name }},
 
 Your email has been successfully verified.
 

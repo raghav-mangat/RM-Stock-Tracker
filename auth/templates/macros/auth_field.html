@@ -1,0 +1,20 @@
+{% macro auth_field(field, placeholder) %}
+    {% set class = "" %}
+    {% if field.name == "email" or field.name == "username" %}
+        {% set class = "text-lowercase" %}
+    {% elif field.name == "first_name" or field.name == "last_name" %}
+        {% set class = "text-capitalize" %}
+    {% endif %}
+
+    <div class="form-floating mb-3">
+        {% if field.name == "confirm_password" %}
+            {{ field(class="form-control", placeholder=placeholder, autocomplete="new-password") }}
+        {% else %}
+            {{ field(class="form-control " + class, placeholder=placeholder) }}
+        {% endif %}
+        {{ field.label() }}
+        {% if field.errors %}
+            <div id="error-{{ field.name }}" class="text-danger small">{{ field.errors[0] }}</div>
+        {% endif %}
+    </div>
+{% endmacro %}

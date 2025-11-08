@@ -2,7 +2,7 @@
 
 {% block content %}
 
-Hi {{ user.name }},
+Hi {{ user.first_name }},
 
 Welcome to RM Stock Tracker!
 Please verify your email address to activate your account:

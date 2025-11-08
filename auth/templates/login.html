@@ -1,4 +1,5 @@
 {% from "macros/auth_field.html" import auth_field %}
+{% from "macros/password_field.html" import password_field %}
 
 {% extends "base.html" %}
 
@@ -15,7 +16,7 @@
           {{ form.hidden_tag() }}
 
           {{ auth_field(field=form.email, placeholder="Enter your email") }}
-          {{ auth_field(field=form.password, placeholder="Enter your password") }}
+          {{ password_field(field=form.password, placeholder="Enter your password") }}
 
           <div class="d-grid mb-3">
             {{ form.submit(class="btn btn-primary btn-lg") }}
@@ -29,4 +30,9 @@
       </div>
     </div>
   </section>
+{% endblock %}
+
+{% block script %}
+  <script src="{{ url_for('auth.static', filename='js/auth.js') }}" type="text/javascript" defer></script>
+  <script src="{{ url_for('auth.static', filename='js/password_field.js') }}" type="text/javascript" defer></script>
 {% endblock %}
