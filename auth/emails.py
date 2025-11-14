@@ -11,25 +11,6 @@ def send_email(subject, recipients, text_body, html_body):
     msg.html = html_body
     mail.send(msg)
 
-def send_password_reset_email(user):
-    expires_in = 1800 # 30 minutes
-    token = user.get_token(token_type="reset_password", expires_in=expires_in)
-    send_email(
-        subject="Reset Your Password - RM Stock Tracker",
-        recipients=[user.email],
-        text_body=render_template(
-            "email/reset_password.txt",
-            user=user,
-            token=token
-        ),
-        html_body=render_template(
-            "email/reset_password.html",
-            user=user,
-            token=token,
-            expires_in=expires_in
-        )
-    )
-
 def send_verify_user_email(user):
     token = user.get_token(token_type="verify_email")
     send_email(
@@ -47,6 +28,81 @@ def send_verify_user_email(user):
         )
     )
 
+def send_password_reset_email(user):
+    expires_in = 1800 # 30 minutes
+    token = user.get_token(token_type="reset_password", expires_in=expires_in)
+    send_email(
+        subject="Reset Your Password - RM Stock Tracker",
+        recipients=[user.email],
+        text_body=render_template(
+            "email/reset_password.txt",
+            user=user,
+            token=token,
+            expires_in=expires_in
+        ),
+        html_body=render_template(
+            "email/reset_password.html",
+            user=user,
+            token=token,
+            expires_in=expires_in
+        )
+    )
+
+def send_settings_password_reset_email(user):
+    expires_in = 1800 # 30 minutes
+    token = user.get_token(token_type="settings_reset_password", expires_in=expires_in)
+    send_email(
+        subject="Reset Your Password - RM Stock Tracker",
+        recipients=[user.email],
+        text_body=render_template(
+            "email/settings_reset_password.txt",
+            user=user,
+            token=token,
+            expires_in=expires_in
+        ),
+        html_body=render_template(
+            "email/settings_reset_password.html",
+            user=user,
+            token=token,
+            expires_in=expires_in
+        )
+    )
+
+def send_delete_account_email(user):
+    expires_in = 1200 # 20 minutes
+    token = user.get_token(token_type="delete_account", expires_in=expires_in)
+    send_email(
+        subject="Delete Your Account - RM Stock Tracker",
+        recipients=[user.email],
+        text_body=render_template(
+            "email/delete_account.txt",
+            user=user,
+            token=token,
+            expires_in=expires_in
+        ),
+        html_body=render_template(
+            "email/delete_account.html",
+            user=user,
+            token=token,
+            expires_in=expires_in
+        )
+    )
+
+def send_user_verification_success_email(user):
+    send_email(
+        subject="Your Email Has Been Verified - RM Stock Tracker",
+        recipients=[user.email],
+        text_body=render_template(
+            "email/user_verification_success.txt",
+            user=user,
+        ),
+        html_body=render_template(
+            "email/user_verification_success.html",
+            user=user,
+        )
+    )
+
+
 def send_password_reset_success_email(user):
     send_email(
         subject="Your Password Has Been Changed - RM Stock Tracker",
@@ -61,16 +117,16 @@ def send_password_reset_success_email(user):
         )
     )
 
-def send_user_verification_success_email(user):
+def send_account_delete_success_email(user):
     send_email(
-        subject="Your Email Has Been Verified - RM Stock Tracker",
+        subject="Your Account Has Been Deleted - RM Stock Tracker",
         recipients=[user.email],
         text_body=render_template(
-            "email/user_verification_success.txt",
+            "email/account_delete_success.txt",
             user=user,
         ),
         html_body=render_template(
-            "email/user_verification_success.html",
+            "email/account_delete_success.html",
             user=user,
         )
     )

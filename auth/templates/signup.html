@@ -1,5 +1,4 @@
-{% from "macros/auth_field.html" import auth_field %}
-{% from "macros/password_field.html" import password_field %}
+{% from "macros/auth_fields.html" import form_field, password_field %}
 
 {% extends "base.html" %}
 
@@ -16,15 +15,15 @@
           {{ form.hidden_tag() }}
 
           <div class="d-flex gap-2">
-            {{ auth_field(field=form.first_name, placeholder="Enter your first name") }}
-            {{ auth_field(field=form.last_name, placeholder="Enter your last name") }}
+            {{ form_field(field=form.first_name, placeholder="Enter your first name") }}
+            {{ form_field(field=form.last_name, placeholder="Enter your last name") }}
           </div>
 
-          {{ auth_field(field=form.email, placeholder="Enter your email") }}
-          {{ auth_field(field=form.username, placeholder="Choose a username") }}
+          {{ form_field(field=form.email, placeholder="Enter your email") }}
+          {{ form_field(field=form.username, placeholder="Choose a username") }}
 
           {{ password_field(field=form.password, placeholder="Create a password", check_requirements=True) }}
-          {{ auth_field(field=form.confirm_password, placeholder="Confirm password") }}
+          {{ form_field(field=form.confirm_password, placeholder="Confirm password") }}
 
           <div class="d-grid mb-3">
             {{ form.submit(class="btn btn-success btn-lg") }}
@@ -40,5 +39,4 @@
 
 {% block script %}
   <script src="{{ url_for('auth.static', filename='js/auth.js') }}" type="text/javascript" defer></script>
-  <script src="{{ url_for('auth.static', filename='js/password_field.js') }}" type="text/javascript" defer></script>
 {% endblock %}

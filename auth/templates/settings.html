@@ -1,0 +1,172 @@
+{% from "macros/auth_fields.html" import settings_field, form_field %}
+
+{% extends "base.html" %}
+
+{% block title %}
+    Settings
+{% endblock %}
+
+{% block content %}
+  <section class="container my-3">
+    <div class="row">
+      <div class="col-md-3 mb-3 mb-md-0">
+        <div class="list-group" id="settings-tab" role="tablist">
+          <a class="list-group-item list-group-item-action active" id="settings-profile-list" data-bs-toggle="list" href="#settings-profile" role="tab" aria-controls="settings-profile">
+            Profile
+          </a>
+          <a class="list-group-item list-group-item-action" id="settings-account-list" data-bs-toggle="list" href="#settings-account" role="tab" aria-controls="settings-account">
+            Account
+          </a>
+        </div>
+      </div>
+      <div class="col-md-9">
+        <div class="tab-content" id="settings-tab-content">
+          <div class="tab-pane fade show active" id="settings-profile" role="tabpanel" aria-labelledby="settings-profile-list">
+            <div class="container">
+              <h2>
+                Profile Settings
+              </h2>
+
+              <hr>
+
+              <form method="POST" novalidate>
+                {{ profile_settings_form.hidden_tag() }}
+
+                {{ settings_field(field=profile_settings_form.first_name, placeholder="Change your first name") }}
+                {{ settings_field(field=profile_settings_form.last_name, placeholder="Change your last name") }}
+                {{ settings_field(field=profile_settings_form.username, placeholder="Change your username") }}
+
+                {{ profile_settings_form.submit(class="btn btn-success") }}
+              </form>
+            </div>
+          </div>
+
+          <div class="tab-pane fade" id="settings-account" role="tabpanel" aria-labelledby="settings-account-list">
+            <div class="container">
+              <h2>
+                Account Settings
+              </h2>
+
+              <hr>
+
+              <!-- Account Email (View Only) -->
+              <div class="mb-4">
+                <label class="form-label fw-semibold">Email</label>
+                <input type="email" class="form-control" value="{{ current_user.email }}" disabled>
+              </div>
+
+              <hr>
+
+              <!-- Reset Password -->
+              <div class="mb-4">
+                <h6 class="fw-bold">Password</h6>
+                <p class="text-muted small mb-2">
+                  For your account security, resetting your password requires email verification.
+                </p>
+                <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#resetPasswordModal">
+                  Reset Password
+                </button>
+              </div>
+
+              <hr>
+
+              <!-- Delete Account -->
+              <div class="mb-4">
+                <h6 class="fw-bold text-danger">Delete Account</h6>
+                <p class="text-muted small mb-2">
+                  Permanently delete your account and all associated data. This action cannot be undone.
+                </p>
+                <button class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteAccountModal">
+                  Delete Account
+                </button>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="resetPasswordModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <form method="POST" action="{{ url_for('auth.settings_reset_password_request') }}" novalidate>
+            {{ settings_reset_password_request_form.hidden_tag() }}
+            <div class="modal-header">
+              <h5 class="modal-title">Reset Password</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+              We will send a secure link to <strong>{{ current_user.email }}</strong> to reset your password.
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                Cancel
+              </button>
+              {{ settings_reset_password_request_form.submit(class="btn btn-primary") }}
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="deleteAccountModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content shadow border-0">
+          <form method="POST" action="{{ url_for('auth.delete_account_request') }}" novalidate>
+            {{ delete_account_request_form.hidden_tag() }}
+
+            <div class="modal-header bg-danger text-white">
+              <h5 class="modal-title fw-semibold">
+                <i class="bi bi-exclamation-triangle me-1"></i> Delete Account
+              </h5>
+              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+              <div class="alert alert-danger small" role="alert">
+                This action is <strong>permanent</strong> and cannot be undone.
+              </div>
+
+              <p class="mb-3">
+                All your watchlist data, alerts, and profile settings will be
+                <strong>permanently deleted</strong>.
+              </p>
+
+              <p class="text-muted small">
+                To confirm this action, enter your password.
+                A secure confirmation link will be sent to:
+              </p>
+
+              <p class="mb-3"><strong>{{ current_user.email }}</strong></p>
+
+              <div class="mb-3">
+                {{ form_field(
+                    field=delete_account_request_form.password,
+                    placeholder="Enter your password to continue"
+                ) }}
+              </div>
+
+              <p class="text-muted small">
+                Once confirmed, your account will be permanently deleted.
+              </p>
+            </div>
+
+            <div class="modal-footer border-0">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                Cancel
+              </button>
+              {{ delete_account_request_form.submit(class="btn btn-danger fw-semibold px-3") }}
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+
+  </section>
+{% endblock %}
+
+{% block script %}
+  <script src="{{ url_for('auth.static', filename='js/auth.js') }}" type="text/javascript" defer></script>
+{% endblock %}

@@ -13,7 +13,7 @@
     {% if attribute_data.attribute.value != FolderAttribute.NAME %}
       <!-- Filter Button -->
       <button
-        class="btn btn-link p-0 m-0 folder-table-header-btn
+        class="btn btn-link p-0 m-0 ms-1 folder-table-header-btn
          {% if attribute_data.min_value is not none or attribute_data.max_value is not none %}
            text-primary
          {% else %}
@@ -31,7 +31,7 @@
       </button>
     {% endif %}
 
-    <div class="d-flex flex-column ms-2">
+    <div class="d-flex flex-column ms-1">
       <!-- Ascending Sort -->
       <form method="POST"
             action="{{ url_for('watchlist.update_folder_sort_by', folder_id=folder_id) }}"

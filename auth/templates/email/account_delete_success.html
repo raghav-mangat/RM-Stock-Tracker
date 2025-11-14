@@ -1,0 +1,15 @@
+{% extends "email/base_email.html" %}
+
+{% block content %}
+
+<p>Hi {{ user.first_name }},</p>
+
+<p>
+  Your account associated with
+  <strong>{{ user.email }}</strong>
+  has been permanently deleted.
+</p>
+
+<p>We’re sorry to see you go.</p>
+
+{% endblock %}

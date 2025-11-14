@@ -1,0 +1,75 @@
+{% macro settings_field(field, placeholder) %}
+    <div class="mb-4">
+        {{ field.label(class="form-label fw-semibold") }}
+        {{ field(class="form-control " + get_field_class(field), placeholder=placeholder) }}
+        {{ display_field_errors(field) }}
+    </div>
+{% endmacro %}
+
+{% macro form_field(field, placeholder) %}
+    <div class="form-floating mb-3">
+        {% if field.name == "email" %}
+            {{ field(class="form-control " + get_field_class(field), placeholder=placeholder, autocomplete="email") }}
+        {% elif field.name == "confirm_password" %}
+            {{ field(class="form-control", placeholder=placeholder, autocomplete="new-password") }}
+        {% else %}
+            {{ field(class="form-control " + get_field_class(field), placeholder=placeholder) }}
+        {% endif %}
+        {{ field.label() }}
+        {{ display_field_errors(field) }}
+    </div>
+{% endmacro %}
+
+{% macro password_field(field, placeholder, check_requirements=False) %}
+<div class="mb-3">
+  <div class="input-group">
+    <div class="form-floating">
+        {{ field(class="form-control", placeholder=placeholder, autocomplete="new-password") }}
+        {{ field.label() }}
+    </div>
+    <button id="toggle-password" type="button" class="btn btn-outline-secondary">
+      <i class="bi bi-eye-slash fs-5"></i>
+    </button>
+  </div>
+  {{ display_field_errors(field) }}
+
+  {% if check_requirements %}
+    <div id="password-requirements" class="small mt-2 text-start d-none">
+      <ul class="list-unstyled ms-1">
+        <li class="text-secondary">Password must include:</li>
+        <li id="pw-length" class="text-danger">
+          <i class="bi bi-x-circle-fill"></i> At least 8 characters
+        </li>
+        <li id="pw-upper" class="text-danger">
+          <i class="bi bi-x-circle-fill"></i> An uppercase letter
+        </li>
+        <li id="pw-lower" class="text-danger">
+          <i class="bi bi-x-circle-fill"></i> A lowercase letter
+        </li>
+        <li id="pw-number" class="text-danger">
+          <i class="bi bi-x-circle-fill"></i> A number
+        </li>
+        <li id="pw-special" class="text-danger">
+          <i class="bi bi-x-circle-fill"></i> A special character (e.g., !@#$...)
+        </li>
+      </ul>
+    </div>
+  {% endif %}
+</div>
+{% endmacro %}
+
+{% macro get_field_class(field) %}
+    {% set class = "" %}
+    {% if field.name == "email" or field.name == "username" %}
+        {% set class = "text-lowercase" %}
+    {% elif field.name == "first_name" or field.name == "last_name" %}
+        {% set class = "text-capitalize" %}
+    {% endif %}
+    {{ class }}
+{% endmacro %}
+
+{% macro display_field_errors(field) %}
+    {% if field.errors %}
+        <div id="error-{{ field.name }}" class="text-danger small">{{ field.errors[0] }}</div>
+    {% endif %}
+{% endmacro %}

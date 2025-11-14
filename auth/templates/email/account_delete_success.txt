@@ -1,0 +1,11 @@
+{% extends "email/base_email.txt" %}
+
+{% block content %}
+
+Hi {{ user.first_name }},
+
+Your account associated with "{{ user.email }}" has been permanently deleted.
+
+We’re sorry to see you go.
+
+{% endblock %}

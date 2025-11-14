@@ -1,0 +1,43 @@
+{% from "macros/auth_fields.html" import form_field %}
+
+{% extends "base.html" %}
+
+{% block title %}
+    Delete Account
+{% endblock %}
+
+{% block content %}
+  <section class="container d-flex align-items-start justify-content-center pt-4 pb-4">
+    <div id="auth-card" class="card border-danger border-2 shadow-sm rounded-3">
+      <div class="card-body p-4">
+        <h3 class="text-center mb-4">Delete Account</h3>
+        <div class="text-center mb-4">
+          <p class="mb-2">
+            This action is <strong>permanent</strong> and cannot be undone.
+          </p>
+          <p class="text-muted small mb-2">
+            All your watchlist data, alerts, and profile settings will be
+            <strong>permanently removed</strong>.
+          </p>
+          <p class="text-muted small">
+            Once confirmed, your account will be permanently deleted.
+          </p>
+        </div>
+
+        <form method="POST" novalidate>
+          {{ form.hidden_tag() }}
+
+          {{ form_field(field=form.email, placeholder="Enter your email") }}
+
+          <div class="d-grid mb-3">
+            {{ form.submit(class="btn btn-danger btn-lg") }}
+          </div>
+        </form>
+      </div>
+    </div>
+  </section>
+{% endblock %}
+
+{% block script %}
+  <script src="{{ url_for('auth.static', filename='js/auth.js') }}" type="text/javascript" defer></script>
+{% endblock %}

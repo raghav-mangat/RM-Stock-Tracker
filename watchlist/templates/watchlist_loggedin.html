@@ -59,7 +59,7 @@
 
             <!-- Folder Actions -->
             <div class="row g-2 align-items-center mb-3">
-              <!-- Left Column: Order Selector + Folder Attributes + Add Stock + Folder Email Alert -->
+              <!-- Left Column: Order Selector + Add Stock + Folder Attributes + Folder Email Alert -->
               <div class="col-12 col-md-6 d-flex flex-wrap align-items-center gap-2">
                 <!-- Order Selector -->
                 <form method="POST"
@@ -77,90 +77,92 @@
                   </select>
                 </form>
 
-                <!-- Folder Edit Attributes Button -->
-                <div class="dropdown-center">
-                    <!-- Dropdown toggle button -->
-                    <button class="btn btn-sm btn-outline-primary d-flex align-items-center"
-                            type="button"
-                            data-bs-toggle="dropdown"
-                            data-bs-auto-close="outside"
-                            aria-expanded="false">
-                      <i class="bi bi-pencil-square me-1"></i>
-                      Edit
+                <div class="d-flex flex-wrap align-items-center gap-2">
+                    <!-- Add Stock Button -->
+                    <button class="btn btn-sm btn-success"
+                            data-bs-toggle="modal"
+                            data-bs-target="#addStockModal"
+                            data-folder-id="{{ folder_id }}">
+                      + Add Stock
                     </button>
-                  <form method="POST"
-                        action="{{ url_for('watchlist.update_folder_attributes', folder_id=folder_id) }}"
-                        novalidate>
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <input type="hidden" name="folder_name" value="{{ folder_data.folder_name }}">
 
-                    <!-- Dropdown menu -->
-                    <ul class="dropdown-menu p-3 shadow rounded-3" style="min-width: 260px;">
-                      <li class="mb-2 text-center fw-semibold border-bottom pb-2">
-                        Select Attributes
-                      </li>
+                    <!-- Folder Edit Attributes Button -->
+                    <div class="dropdown-center">
+                        <!-- Dropdown toggle button -->
+                        <button class="btn btn-sm btn-outline-primary d-flex align-items-center"
+                                type="button"
+                                data-bs-toggle="dropdown"
+                                data-bs-auto-close="outside"
+                                aria-expanded="false">
+                          <i class="bi bi-pencil-square me-1"></i>
+                          Edit
+                        </button>
+                      <form method="POST"
+                            action="{{ url_for('watchlist.update_folder_attributes', folder_id=folder_id) }}"
+                            novalidate>
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="folder_name" value="{{ folder_data.folder_name }}">
 
-                      <!-- Attribute checkboxes -->
-                      {% for folder_attribute in FolderAttribute|list %}
-                          <li class="form-check mb-1">
-                            <input class="form-check-input"
-                                   type="checkbox"
-                                   value="{{ folder_attribute.value }}"
-                                   name="folder-attribute-{{ loop.index }}"
-                                   id="folder-attribute-{{ loop.index }}-{{ folder_id }}"
-                                   {% if folder_attribute.value in folder_data.folder_attributes_list %} checked {% endif %}>
-                            <label class="form-check-label" for="folder-attribute-{{ loop.index }}-{{ folder_id }}">
-                              {{ folder_attribute.label }}
-                            </label>
+                        <!-- Dropdown menu -->
+                        <ul class="dropdown-menu p-3 shadow rounded-3" style="min-width: 260px;">
+                          <li class="mb-2 text-center fw-semibold border-bottom pb-2">
+                            Select Attributes
                           </li>
-                      {% endfor %}
 
-                      <!-- Divider -->
-                      <li><hr class="dropdown-divider my-3"></li>
+                          <!-- Attribute checkboxes -->
+                          {% for folder_attribute in FolderAttribute|list %}
+                              <li class="form-check mb-1">
+                                <input class="form-check-input"
+                                       type="checkbox"
+                                       value="{{ folder_attribute.value }}"
+                                       name="folder-attribute-{{ loop.index }}"
+                                       id="folder-attribute-{{ loop.index }}-{{ folder_id }}"
+                                       {% if folder_attribute.value in folder_data.folder_attributes_list %} checked {% endif %}>
+                                <label class="form-check-label" for="folder-attribute-{{ loop.index }}-{{ folder_id }}">
+                                  {{ folder_attribute.label }}
+                                </label>
+                              </li>
+                          {% endfor %}
 
-                      <!-- Buttons -->
-                      <li class="d-flex justify-content-between">
-                        <button type="submit" class="btn btn-sm btn-outline-secondary flex-fill me-1" name="action" value="restore">
-                          Restore
-                        </button>
-                        <button type="submit" class="btn btn-sm btn-secondary flex-fill ms-1" name="action" value="save">
-                          Save
-                        </button>
-                      </li>
-                    </ul>
-                  </form>
+                          <!-- Divider -->
+                          <li><hr class="dropdown-divider my-3"></li>
+
+                          <!-- Buttons -->
+                          <li class="d-flex justify-content-between">
+                            <button type="submit" class="btn btn-sm btn-outline-secondary flex-fill me-1" name="action" value="restore">
+                              Restore
+                            </button>
+                            <button type="submit" class="btn btn-sm btn-secondary flex-fill ms-1" name="action" value="save">
+                              Save
+                            </button>
+                          </li>
+                        </ul>
+                      </form>
+                    </div>
+
+                    <!-- Folder Email Alert Button -->
+                    <button class="btn btn-sm btn-outline-primary position-relative" type="button"
+                            data-bs-toggle="offcanvas"
+                            data-bs-target="#offcanvas-folder-{{ folder_id }}" aria-controls="#offcanvas-folder-{{ folder_id }}">
+                        <i class="bi bi-bell"></i>
+                        Alerts
+                        {% if folder_data.folder_alerts | length > 0 %}
+                          <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-secondary">
+                            {{ folder_data.folder_alerts | length }}
+                            <span class="visually-hidden">folder alerts</span>
+                          </span>
+                        {% endif %}
+                    </button>
+                    {{ alert_offcanvas(
+                        offcanvas_target_id="offcanvas-folder-" + folder_id|string,
+                        form_action=url_for('watchlist.update_folder_alerts', folder_id=folder_id),
+                        db_id=folder_id,
+                        folder_name=folder_data.folder_name,
+                        alert_data=folder_data.folder_alerts,
+                        attributes=AlertAttribute|list,
+                        ticker=None,
+                    ) }}
                 </div>
-
-                <!-- Add Stock Button -->
-                <button class="btn btn-sm btn-success"
-                        data-bs-toggle="modal"
-                        data-bs-target="#addStockModal"
-                        data-folder-id="{{ folder_id }}">
-                  + Add Stock
-                </button>
-
-                <!-- Folder Email Alert Button -->
-                <button class="btn btn-sm btn-outline-primary position-relative" type="button"
-                        data-bs-toggle="offcanvas"
-                        data-bs-target="#offcanvas-folder-{{ folder_id }}" aria-controls="#offcanvas-folder-{{ folder_id }}">
-                    <i class="bi bi-bell"></i>
-                    Alerts
-                    {% if folder_data.folder_alerts | length > 0 %}
-                      <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-secondary">
-                        {{ folder_data.folder_alerts | length }}
-                        <span class="visually-hidden">folder alerts</span>
-                      </span>
-                    {% endif %}
-                </button>
-                {{ alert_offcanvas(
-                    offcanvas_target_id="offcanvas-folder-" + folder_id|string,
-                    form_action=url_for('watchlist.update_folder_alerts', folder_id=folder_id),
-                    db_id=folder_id,
-                    folder_name=folder_data.folder_name,
-                    alert_data=folder_data.folder_alerts,
-                    attributes=AlertAttribute|list,
-                    ticker=None,
-                ) }}
               </div>
 
               <!-- Right Column: Rename + Delete -->
@@ -171,11 +173,13 @@
                       class="d-flex align-items-center gap-2"
                       novalidate>
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                  <input type="text"
-                         name="new_folder_name"
-                         class="form-control form-control-sm text-uppercase"
-                         placeholder="Rename Folder" required>
-                  <button type="submit" class="btn btn-sm btn-outline-primary">Rename</button>
+                  <div class="input-group">
+                    <input type="text"
+                           name="new_folder_name"
+                           class="form-control form-control-sm text-uppercase"
+                           placeholder="Rename Folder">
+                    <button type="submit" class="btn btn-sm btn-outline-primary">Rename</button>
+                  </div>
                 </form>
 
                 <!-- Delete Folder Form -->
