@@ -1,5 +1,6 @@
 from flask import render_template, current_app
 from flask_mail import Message
+from pathlib import Path
 
 def send_email(subject, recipients, text_body, html_body):
     mail = current_app.extensions.get("mail")
@@ -9,6 +10,23 @@ def send_email(subject, recipients, text_body, html_body):
     )
     msg.body = text_body
     msg.html = html_body
+
+    # Attach inline images
+    images={
+        "logo": "static/assets/email_icons/logo.png",
+        "instagram": "static/assets/email_icons/instagram.png",
+        "github": "static/assets/email_icons/github.png"
+    }
+    for cid, image_path in images.items():
+        with current_app.open_resource(image_path) as f:
+            msg.attach(
+                filename=Path(image_path).name,
+                content_type="image/png",
+                data=f.read(),
+                disposition="inline",
+                headers={'Content-ID': f'<{cid}>'}
+            )
+
     mail.send(msg)
 
 def send_verify_user_email(user):
@@ -101,7 +119,6 @@ def send_user_verification_success_email(user):
             user=user,
         )
     )
-
 
 def send_password_reset_success_email(user):
     send_email(

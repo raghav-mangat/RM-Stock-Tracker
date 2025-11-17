@@ -1,0 +1,14 @@
+{% macro greeting(user) %}
+    <p>Hi {{ user.first_name }},</p>
+{% endmacro %}
+
+{% macro show_expires_in(expires_in) %}
+    <p>
+      This link will expire in
+      {% if expires_in %}
+        {{ (expires_in / 60) | int }} minutes.
+      {% else %}
+        24 hours.
+      {% endif %}
+    </p>
+{% endmacro %}

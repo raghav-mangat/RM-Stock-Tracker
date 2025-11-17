@@ -10,6 +10,8 @@
     <div class="form-floating mb-3">
         {% if field.name == "email" %}
             {{ field(class="form-control " + get_field_class(field), placeholder=placeholder, autocomplete="email") }}
+        {% elif field.name == "username" %}
+            {{ field(class="form-control " + get_field_class(field), placeholder=placeholder, autocomplete="username") }}
         {% elif field.name == "confirm_password" %}
             {{ field(class="form-control", placeholder=placeholder, autocomplete="new-password") }}
         {% else %}

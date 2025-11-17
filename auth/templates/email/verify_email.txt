@@ -1,20 +1,19 @@
-{% extends "email/base_email.txt" %}
+{%- from "macros/email/email_content.txt" import greeting -%}
+{%- from "macros/email/email_content.txt" import show_expires_in -%}
+
+{%- extends "email/base_email.txt" -%}
 
 {% block content %}
 
-Hi {{ user.first_name }},
+{{ greeting(user) }}
 
 Welcome to RM Stock Tracker!
 Please verify your email address to activate your account:
 
 {{ url_for('auth.verify_email', token=token, _external=True) }}
 
-This link will expire in
-{% if expires_in %}
-    {{ (expires_in / 60) | int }} minutes.
-{% else %}
-    24 hours.
-{% endif %}
-Once verified, you can access your account and set up your watchlist.
+{{ show_expires_in(expires_in) }}
+
+Once verified, you can access your account to set up your watchlist, track your favourite stocks, and get alerts.
 
 {% endblock %}

@@ -1,8 +1,10 @@
+{% from "macros/email/email_content.html" import greeting %}
+
 {% extends "email/base_email.html" %}
 
 {% block content %}
 
-<p>Hi {{ user.first_name }},</p>
+{{ greeting(user) }}
 
 <p>
   Your account associated with

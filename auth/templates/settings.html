@@ -1,4 +1,4 @@
-{% from "macros/auth_fields.html" import settings_field, form_field %}
+{% from "macros/auth_fields.html" import settings_field, password_field %}
 
 {% extends "base.html" %}
 
@@ -141,7 +141,7 @@
               <p class="mb-3"><strong>{{ current_user.email }}</strong></p>
 
               <div class="mb-3">
-                {{ form_field(
+                {{ password_field(
                     field=delete_account_request_form.password,
                     placeholder="Enter your password to continue"
                 ) }}
