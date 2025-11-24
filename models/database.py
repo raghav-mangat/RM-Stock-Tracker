@@ -339,12 +339,13 @@ class User(UserMixin, db.Model):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
     username: Mapped[str] = mapped_column(String(30), unique=True, nullable=False)
-    first_name: Mapped[str] = mapped_column(String(50), nullable=False)
-    last_name: Mapped[str] = mapped_column(String(50), nullable=False)
+    first_name: Mapped[str] = mapped_column(String(50), nullable=True)
+    last_name: Mapped[str] = mapped_column(String(50), nullable=True)
 
     is_verified: Mapped[bool] = mapped_column(Boolean, nullable=False)
 
-    password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
+    password_hash: Mapped[str] = mapped_column(String(255), nullable=True)
+    google_id: Mapped[str] = mapped_column(String(255), unique=True, nullable=True)
 
     @property
     def password(self):
@@ -359,6 +360,8 @@ class User(UserMixin, db.Model):
         )
 
     def verify_password(self, password):
+        if not self.password_hash:
+            return False
         return check_password_hash(self.password_hash, password)
 
     # One user -> many watchlist folders
@@ -379,6 +382,7 @@ class User(UserMixin, db.Model):
 
     __table_args__ = (
         DBIndex("ix_user_email", "email"),
+        DBIndex("ix_user_username", "username")
     )
 
     def get_token(self, token_type, expires_in=86400):
