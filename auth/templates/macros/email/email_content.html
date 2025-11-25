@@ -1,5 +1,5 @@
 {% macro greeting(user) %}
-    <p>Hi {{ user.first_name }},</p>
+    <p>Hi {{ user | display_name }},</p>
 {% endmacro %}
 
 {% macro show_expires_in(expires_in) %}

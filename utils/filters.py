@@ -94,6 +94,12 @@ def format_percent(value, fallback="N/A", decimals=2):
     except (ValueError, TypeError):
         return fallback
 
+def display_name(user, fallback="N/A"):
+    if user:
+        return user.first_name or user.username
+    else:
+        return fallback
+
 # Register the filters in the Flask app
 def register_custom_filters(app: Flask):
     app.jinja_env.filters['dma_200_perc_diff_color'] = dma_200_perc_diff_color
@@ -105,3 +111,4 @@ def register_custom_filters(app: Flask):
     app.jinja_env.filters['float'] = format_float
     app.jinja_env.filters['int'] = format_int
     app.jinja_env.filters['percent'] = format_percent
+    app.jinja_env.filters['display_name'] = display_name

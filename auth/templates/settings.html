@@ -1,4 +1,4 @@
-{% from "macros/auth_fields.html" import settings_field, password_field %}
+{% from "macros/auth_fields.html" import settings_field, form_field, password_field %}
 
 {% extends "base.html" %}
 
@@ -57,16 +57,44 @@
 
               <hr>
 
-              <!-- Reset Password -->
+              <!-- Google Account -->
               <div class="mb-4">
-                <h6 class="fw-bold">Password</h6>
-                <p class="text-muted small mb-2">
-                  For your account security, resetting your password requires email verification.
-                </p>
+                <h6 class="fw-bold">Google Account</h6>
+                {% if current_user.google_id %}
+                  <p class="text-success small mb-2">
+                    Your Google account is linked.
+                  </p>
+                  <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#unlinkGoogleAccountModal">
+                    Unlink Google Account
+                  </button>
+                {% else %}
+                  <p class="text-muted small mb-2">
+                    Your Google account is not linked.
+                  </p>
+                  <a role="button" class="btn btn-success" href="{{ url_for('auth.link_google') }}">
+                    Link Google Account
+                  </a>
+                {% endif %}
+              </div>
+
+              <hr>
+
+              <!-- Password -->
+              <h6 class="fw-bold">Password</h6>
+
+              {% if current_user.password_hash %}
+                <p class="text-muted small mb-2">You can reset your password after email verification.</p>
                 <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#resetPasswordModal">
                   Reset Password
                 </button>
-              </div>
+              {% else %}
+                <p class="text-muted small mb-2">
+                  You currently sign in with Google only. Set a password to enable email login.
+                </p>
+                <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#setPasswordModal">
+                  Set Password
+                </button>
+              {% endif %}
 
               <hr>
 
@@ -87,28 +115,108 @@
       </div>
     </div>
 
-    <div class="modal fade" id="resetPasswordModal" tabindex="-1" aria-hidden="true">
-      <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-          <form method="POST" action="{{ url_for('auth.settings_reset_password_request') }}" novalidate>
-            {{ settings_reset_password_request_form.hidden_tag() }}
+    {% if current_user.google_id %}
+      <div class="modal fade" id="unlinkGoogleAccountModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
             <div class="modal-header">
-              <h5 class="modal-title">Reset Password</h5>
+              <h5 class="modal-title">Unlink Google Account</h5>
               <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
-              We will send a secure link to <strong>{{ current_user.email }}</strong> to reset your password.
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                Cancel
-              </button>
-              {{ settings_reset_password_request_form.submit(class="btn btn-primary") }}
-            </div>
-          </form>
+            {% if current_user.password_hash %}
+              <div class="modal-body">
+                Are you sure you want to unlink your Google account?
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                  Cancel
+                </button>
+                <form method="POST" action="{{ url_for('auth.unlink_google') }}" novalidate>
+                  {{ unlink_google_account_form.hidden_tag() }}
+                  {{ unlink_google_account_form.submit(class="btn btn-danger") }}
+                </form>
+              </div>
+            {% else %}
+              <div class="modal-body">
+                <div class="alert alert-warning small mt-2">
+                  To unlink your Google account, you must first set a password.
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                  Cancel
+                </button>
+                <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#setPasswordModal">
+                  Set Password
+                </button>
+              </div>
+            {% endif %}
+          </div>
         </div>
       </div>
-    </div>
+    {% endif %}
+
+    {% if current_user.password_hash %}
+
+      <div class="modal fade" id="resetPasswordModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <form method="POST" action="{{ url_for('auth.settings_reset_password_request') }}" novalidate>
+              {{ settings_reset_password_request_form.hidden_tag() }}
+
+              <div class="modal-header">
+                <h5 class="modal-title">
+                  Reset Password
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+              </div>
+
+              <div class="modal-body">
+                We will send a secure link to <strong>{{ current_user.email }}</strong> to change your password.
+              </div>
+
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                {{ settings_reset_password_request_form.submit(class="btn btn-primary") }}
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+    {% else %}
+
+      <div class="modal fade" id="setPasswordModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <form method="POST" action="{{ url_for('auth.settings_set_password') }}" novalidate>
+              {{ settings_set_password_form.hidden_tag() }}
+
+              <div class="modal-header">
+                <h5 class="modal-title">Set Password</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+              </div>
+
+              <div class="modal-body">
+                <p>
+                  Create a password so you can log in using email and password.
+                </p>
+
+                {{ password_field(field=settings_set_password_form.password, placeholder="Create a password", check_requirements=True) }}
+                {{ form_field(field=settings_set_password_form.confirm_password, placeholder="Confirm password") }}
+
+              </div>
+
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                {{ settings_set_password_form.submit(class="btn btn-success") }}
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+    {% endif %}
 
     <div class="modal fade" id="deleteAccountModal" tabindex="-1" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered">
@@ -133,23 +241,34 @@
                 <strong>permanently deleted</strong>.
               </p>
 
-              <p class="text-muted small">
-                To confirm this action, enter your password.
-                A secure confirmation link will be sent to:
-              </p>
+              {% if current_user.password_hash %}
+                <!-- Require password -->
+                <p class="text-muted small">
+                  To confirm this action, enter your password. A secure deletion link will be sent to:
+                </p>
 
-              <p class="mb-3"><strong>{{ current_user.email }}</strong></p>
+                <p class="mb-3"><strong>{{ current_user.email }}</strong></p>
 
-              <div class="mb-3">
-                {{ password_field(
-                    field=delete_account_request_form.password,
-                    placeholder="Enter your password to continue"
-                ) }}
-              </div>
+                <div class="mb-3">
+                  {{ password_field(
+                      field=delete_account_request_form.password,
+                      placeholder="Enter your password to continue"
+                  ) }}
+                </div>
 
-              <p class="text-muted small">
-                Once confirmed, your account will be permanently deleted.
-              </p>
+                <p class="text-muted small">
+                  Once confirmed, your account will be permanently deleted.
+                </p>
+              {% else %}
+                <!-- No password required -->
+                <p class="text-muted small">
+                  A secure deletion link will be sent to:
+                </p>
+
+                <p class="mb-3"><strong>{{ current_user.email }}</strong></p>
+
+                {{ delete_account_request_form.password(value="", type="hidden") }}
+              {% endif %}
             </div>
 
             <div class="modal-footer border-0">

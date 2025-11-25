@@ -1,17 +1,34 @@
+import re
+import unicodedata
 from models.database import db, User
+from utils.constants import USERNAME_ALLOWED_CHARS_REGEX, MIN_USERNAME_LEN, MAX_USERNAME_LEN
 
-def add_new_user(first_name, last_name, email, username, password, is_verified=False):
+def add_new_user(email, first_name="", last_name="", username=None, password=None, google_id=None, is_verified=False):
+    if not username:
+        username = create_username_from_email(email)
+
     new_user = User(
         email=email,
         username=username,
+        google_id=google_id,
         first_name=first_name,
         last_name=last_name,
         is_verified=is_verified
     )
-    new_user.password = password
+    if password:
+        new_user.password = password
+
     db.session.add(new_user)
     db.session.commit()
     return new_user
+
+def add_user_google_id(user, google_id):
+    user.google_id = google_id
+    db.session.commit()
+
+def remove_user_google_id(user):
+    user.google_id = None
+    db.session.commit()
 
 def verify_user(user):
     user.is_verified = True
@@ -39,3 +56,42 @@ def get_user_by_username(username):
 
 def get_user_by_email(email):
     return db.session.execute(db.select(User).where(User.email == email)).scalar()
+
+def get_user_by_google_id(google_id):
+    return db.session.execute(db.select(User).where(User.google_id == google_id)).scalar()
+
+def create_username_from_email(email):
+    base = email.split("@")[0].lower()
+
+    # Normalize unicode (remove accents)
+    base = unicodedata.normalize("NFKD", base).encode("ascii", "ignore").decode()
+
+    # Replace invalid characters with underscore
+    pattern = r"[^" + USERNAME_ALLOWED_CHARS_REGEX[1:-1] + r"]"
+    base = re.sub(pattern, "_", base)
+
+    # Must start with a letter, prepend "user_" if needed, ensure min length
+    if not base:
+        base = "user"
+    elif not base[0].isalpha() or len(base) < MIN_USERNAME_LEN:
+        base = f"user_{base}"
+
+    # Collapse multiple underscores
+    base = re.sub(r"_+", "_", base)
+
+    # Remove trailing underscore
+    base = base.strip("_")
+
+    # Clamp max length
+    base = base[:MAX_USERNAME_LEN]
+
+    # Enforce uniqueness
+    username = base
+    i = 1
+    while get_user_by_username(username):
+        suffix = f"_{i}"
+        allowed_length = MAX_USERNAME_LEN - len(suffix)
+        username = base[:allowed_length] + suffix
+        i += 1
+
+    return username

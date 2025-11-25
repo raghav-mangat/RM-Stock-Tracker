@@ -1,10 +1,23 @@
 from . import auth_bp
-from flask import render_template, redirect, url_for, flash
+from flask import render_template, redirect, url_for, flash, session, request, current_app
 from flask_login import current_user, login_user, login_required, logout_user
+from authlib.integrations.flask_client import OAuthError
+import secrets
 from models.database import User
-from .forms import LoginForm, SignupForm, ResetPasswordRequestForm, ResetPasswordForm, ProfileSettingsForm, DeleteAccountRequestForm, DeleteAccountForm, SettingsResetPasswordRequestForm
-from .emails import send_password_reset_email, send_verify_user_email, send_password_reset_success_email, send_user_verification_success_email, send_delete_account_email, send_account_delete_success_email, send_settings_password_reset_email
-from utils.db_queries.user_data import add_new_user, update_user_profile, change_user_password, verify_user, get_user_by_email, delete_user_account
+from .forms import (
+    LoginForm, SignupForm, ResetPasswordRequestForm, ResetPasswordForm, ProfileSettingsForm,
+    DeleteAccountRequestForm, DeleteAccountForm, SettingsResetPasswordRequestForm, UnlinkGoogleAccountForm,
+    SettingsSetPasswordForm
+)
+from .emails import (
+    send_password_reset_email, send_verify_user_email, send_password_reset_success_email,
+    send_user_verification_success_email, send_delete_account_email, send_account_delete_success_email,
+    send_settings_password_reset_email, send_settings_password_set_success_email, send_login_google_success_email
+)
+from utils.db_queries.user_data import (
+    add_new_user, update_user_profile, change_user_password, verify_user,
+    get_user_by_email, get_user_by_google_id, delete_user_account, add_user_google_id, remove_user_google_id
+)
 
 @auth_bp.route("/signup", methods=["GET", "POST"])
 def signup():
@@ -55,6 +68,10 @@ def logout():
 def settings():
     profile_settings_form = ProfileSettingsForm(obj=current_user)
 
+    unlink_google_account_form = UnlinkGoogleAccountForm()
+
+    settings_set_password_form = SettingsSetPasswordForm()
+
     settings_reset_password_request_form = SettingsResetPasswordRequestForm()
     settings_reset_password_request_form.email.data = current_user.email
 
@@ -74,6 +91,8 @@ def settings():
     return render_template(
         "settings.html",
         profile_settings_form=profile_settings_form,
+        unlink_google_account_form=unlink_google_account_form,
+        settings_set_password_form=settings_set_password_form,
         settings_reset_password_request_form=settings_reset_password_request_form,
         delete_account_request_form=delete_account_request_form
     )
@@ -110,6 +129,23 @@ def reset_password_request():
         flash("Check your email for the instructions to reset your password.", "success")
         return redirect(url_for("auth.login"))
     return render_template("reset_password_request.html", form=form)
+
+@auth_bp.route("/settings_set_password", methods=["POST"])
+@login_required
+def settings_set_password():
+    if current_user.password_hash:
+        flash("You already have a password. Use Reset Password instead.", "warning")
+        return redirect(url_for("auth.settings"))
+
+    form = SettingsSetPasswordForm()
+    if form.validate_on_submit():
+        change_user_password(current_user, form.password.data)
+        send_settings_password_set_success_email(current_user)
+        flash("Your password has been created successfully!", "success")
+        return redirect(url_for("auth.settings"))
+
+    flash("Could not set password.", "danger")
+    return redirect(url_for("auth.settings"))
 
 @auth_bp.route("/settings_reset_password_request", methods=["POST"])
 @login_required
@@ -153,16 +189,25 @@ def reset_password(token):
 @login_required
 def delete_account_request():
     form = DeleteAccountRequestForm()
-    if form.validate_on_submit:
-        user = get_user_by_email(form.email.data)
-        if not user:
-            flash("Invalid user.", "danger")
-        else:
-            if user.verify_password(form.password.data):
-                send_delete_account_email(user)
-                flash("Check your email for the instructions to delete your account.", "success")
-            else:
-                flash("Incorrect password.", "warning")
+
+    email = form.email.data
+    if not email or email != current_user.email:
+        flash("Incorrect email.", "danger")
+        return redirect(url_for("auth.settings"))
+
+    if current_user.password_hash:
+        # User must enter password
+        if not form.validate_on_submit():
+            flash("Please enter your password.", "warning")
+            return redirect(url_for("auth.settings"))
+
+        if not current_user.verify_password(form.password.data):
+            flash("Incorrect password.", "warning")
+            return redirect(url_for("auth.settings"))
+
+    # If no password exists, skip password check
+    send_delete_account_email(current_user)
+    flash("Check your email for the instructions to delete your account.", "success")
     return redirect(url_for("auth.settings"))
 
 @auth_bp.route("/delete_account/<string:token>", methods=["GET", "POST"])
@@ -186,3 +231,173 @@ def delete_account(token):
             flash("Incorrect email to delete account.", "warning")
             return redirect(url_for("auth.delete_account", token=token))
     return render_template("delete_account.html", form=form)
+
+@auth_bp.route("/login/google")
+def login_google():
+    if current_user.is_authenticated:
+        return redirect(url_for("watchlist.index"))
+
+    oauth = current_app.config["OAUTH"]
+
+    # create state to protect against CSRF
+    state = secrets.token_urlsafe(16)
+    nonce = secrets.token_urlsafe(16)
+
+    session["oauth_state"] = state
+    session["oauth_nonce"] = nonce
+
+    redirect_uri = url_for("auth.login_google_callback", _external=True)
+    return oauth.google.authorize_redirect(redirect_uri, state=state, nonce=nonce)
+
+@auth_bp.route("/login/google/callback")
+def login_google_callback():
+    oauth = current_app.config["OAUTH"]
+
+    # check state
+    state_in_session = session.pop("oauth_state", None)
+    state_returned = request.args.get("state")
+    if not state_in_session or state_in_session != state_returned:
+        flash("Something went wrong during login. Please try again.", "danger")
+        return redirect(url_for("auth.login"))
+
+    try:
+        token = oauth.google.authorize_access_token()  # exchanges code for tokens
+    except OAuthError:
+        flash("Authentication failed. Try again.", "danger")
+        return redirect(url_for("auth.login"))
+
+    # parse and verify id_token (Authlib will validate the token)
+    try:
+        userinfo = oauth.google.parse_id_token(
+            token,
+            nonce=session.pop("oauth_nonce", None)
+        )
+    except Exception:
+        flash("Failed to fetch account information from Google.", "danger")
+        return redirect(url_for("auth.login"))
+
+    # Extract important claims
+    google_id = userinfo.get("sub")
+    email = userinfo.get("email")
+    email_verified = userinfo.get("email_verified", False)
+    first_name = userinfo.get("given_name") or ""
+    last_name = userinfo.get("family_name") or ""
+
+    if not email or not google_id:
+        flash("Google did not return required information", "danger")
+        return redirect(url_for("auth.login"))
+
+    if not email_verified:
+        flash("Please verify your Google email before signing in.", "warning")
+        return redirect(url_for("auth.login"))
+
+    # Find or create user (linking if same email exists)
+    user = get_user_by_email(email)
+    if user and not user.google_id:
+        existing = get_user_by_google_id(google_id)
+        if existing:
+            flash("This Google account is already linked to another user.", "danger")
+            return redirect(url_for("auth.login"))
+        add_user_google_id(user, google_id)
+    else:
+        user = add_new_user(
+            first_name=first_name,
+            last_name=last_name,
+            email=email,
+            username=None,
+            password=None,
+            google_id=google_id,
+            is_verified=True
+        )
+        send_login_google_success_email(user)
+
+    login_user(user)
+    flash("Logged in with Google", "success")
+    return redirect(url_for("watchlist.index"))
+
+@auth_bp.route("/link/google")
+@login_required
+def link_google():
+    oauth = current_app.config["OAUTH"]
+
+    state = secrets.token_urlsafe(16)
+    nonce = secrets.token_urlsafe(16)
+
+    session["link_state"] = state
+    session["link_nonce"] = nonce
+
+    redirect_uri = url_for("auth.link_google_callback", _external=True)
+
+    return oauth.google.authorize_redirect(
+        redirect_uri,
+        state=state,
+        nonce=nonce
+    )
+
+@auth_bp.route("/link/google/callback")
+@login_required
+def link_google_callback():
+    oauth = current_app.config["OAUTH"]
+
+    state_in_session = session.pop("link_state", None)
+    state_returned = request.args.get("state")
+    if not state_in_session or state_in_session != state_returned:
+        flash("Something went wrong while linking your Google account. Please try again.", "danger")
+        return redirect(url_for("auth.settings"))
+
+    try:
+        token = oauth.google.authorize_access_token()  # exchanges code for tokens
+    except OAuthError:
+        flash("Authentication failed. Try again.", "danger")
+        return redirect(url_for("auth.settings"))
+
+    # parse and verify id_token (Authlib will validate the token)
+    try:
+        userinfo = oauth.google.parse_id_token(
+            token,
+            nonce=session.pop("link_nonce", None)
+        )
+    except Exception:
+        flash("Failed to fetch account information from Google.", "danger")
+        return redirect(url_for("auth.settings"))
+
+    # Extract important claims
+    google_id = userinfo.get("sub")
+    email = userinfo.get("email")
+    email_verified = userinfo.get("email_verified", False)
+
+    if not email or not google_id:
+        flash("Google did not return required information", "danger")
+        return redirect(url_for("auth.settings"))
+
+    # Emails must match
+    if email != current_user.email:
+        flash("The Google account email must match your account email.", "warning")
+        return redirect(url_for("auth.settings"))
+
+    # Email must be verified
+    if not email_verified:
+        flash("Please verify your Google email before linking your account.", "warning")
+        return redirect(url_for("auth.settings"))
+
+    existing = get_user_by_google_id(google_id)
+    if existing and existing.id != current_user.id:
+        flash("This Google account is already linked to another user.", "danger")
+        return redirect(url_for("auth.settings"))
+
+    add_user_google_id(current_user, google_id)
+
+    flash("Google account linked successfully.", "success")
+    return redirect(url_for("auth.settings"))
+
+@auth_bp.route("/unlink/google", methods=["POST"])
+@login_required
+def unlink_google():
+    form = UnlinkGoogleAccountForm()
+    if form.validate_on_submit():
+        if not current_user.password_hash:
+            flash("You must set a password before unlinking your Google account.", "warning")
+        else:
+            remove_user_google_id(current_user)
+            flash("Your Google account has been unlinked.", "success")
+    return redirect(url_for("auth.settings"))

@@ -1,6 +1,3 @@
-// Footer Year
-document.getElementById("currentYear").textContent = new Date().getFullYear();
-
 // Initialize Bootstrap Popovers
 const popoverTriggerList = [].slice.call(
   document.querySelectorAll('[data-bs-toggle="popover"]')

@@ -17,6 +17,8 @@ from dotenv import load_dotenv
 from flask_login import LoginManager, current_user
 from flask_mail import Mail
 from flask_wtf.csrf import CSRFProtect
+from authlib.integrations.flask_client import OAuth
+from datetime import datetime
 from models.database import db
 from auth import auth_bp
 from watchlist import watchlist_bp
@@ -74,6 +76,22 @@ mail = Mail(app)
 # Initialize Flask-WTF CSRF Protection
 csrf = CSRFProtect(app)
 
+# Initialize OAuth
+oauth = OAuth(app)
+
+# Register Sign In with Google
+app.config["GOOGLE_CLIENT_ID"] = os.getenv("GOOGLE_CLIENT_ID")
+app.config["GOOGLE_CLIENT_SECRET"] = os.getenv("GOOGLE_CLIENT_SECRET")
+GOOGLE_DISCOVERY = "https://accounts.google.com/.well-known/openid-configuration"
+oauth.register(
+    name="google",
+    client_id=app.config["GOOGLE_CLIENT_ID"],
+    client_secret=app.config["GOOGLE_CLIENT_SECRET"],
+    server_metadata_url=GOOGLE_DISCOVERY,
+    client_kwargs={"scope": "openid email profile"}
+)
+app.config["OAUTH"] = oauth
+
 # Register the Flask Blueprints
 app.register_blueprint(auth_bp, url_prefix="/auth")
 app.register_blueprint(watchlist_bp, url_prefix="/watchlist")
@@ -88,6 +106,11 @@ register_error_handlers(app)
 @app.context_processor
 def inject_breadcrumbs():
     return {'breadcrumbs': generate_breadcrumbs()}
+
+# Make current year available to all templates
+@app.context_processor
+def inject_current_year():
+    return {"current_year": datetime.now().year}
 
 @app.route("/")
 def home():
@@ -175,6 +198,14 @@ def chart_data():
     timeframe = request.args.get("timeframe", "").strip()
     data = get_chart_data(ticker, timeframe)
     return data
+
+@app.route("/privacy")
+def privacy():
+    return render_template("privacy.html")
+
+@app.route("/terms")
+def terms():
+    return render_template("terms.html")
 
 
 if __name__ == "__main__":

@@ -4,11 +4,8 @@ from wtforms.fields.simple import HiddenField
 from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError
 from flask_login import current_user
 import re
+from utils.constants import PASSWORD_SPECIAL_CHARS_REGEX, NAME_REGEX, USERNAME_REGEX, MIN_USERNAME_LEN, MAX_USERNAME_LEN
 from utils.db_queries.user_data import get_user_by_email, get_user_by_username
-
-PASSWORD_SPECIAL_CHARS_REGEX = r"[!@#$%^&*()_\-+=|\\{}\[\]:;\"'<>,.?/~` ]"
-NAME_REGEX = r"^[A-Za-zÀ-ÖØ-öø-ÿ'’.-]+$"
-USERNAME_REGEX = r"^[a-z][a-z0-9._-]+$"
 
 def normalize_email(email):
     return email.strip().lower() if email else email
@@ -65,7 +62,10 @@ def get_last_name_field():
 def get_username_field():
     username = StringField('Username', filters=[normalize_username], validators=[
         DataRequired(message="Username is required"),
-        Length(min=3, max=30, message="Username must be between 3 and 30 characters"),
+        Length(
+            min=MIN_USERNAME_LEN,
+            max=MAX_USERNAME_LEN,
+            message=f"Username must be between {MIN_USERNAME_LEN} and {MAX_USERNAME_LEN} characters"),
     ])
     return username
 
@@ -144,6 +144,11 @@ class ResetPasswordRequestForm(FlaskForm):
     email = get_email_field()
     submit = SubmitField("Request Password Reset")
 
+class SettingsSetPasswordForm(FlaskForm):
+    password = get_password_field(label="Password", validate_strong_password=True)
+    confirm_password = get_confirm_password_field("password")
+    submit = SubmitField("Set Password")
+
 class SettingsResetPasswordRequestForm(FlaskForm):
     email = HiddenField("Email")
     submit = SubmitField("Send Reset Link")
@@ -169,6 +174,9 @@ class ProfileSettingsForm(FlaskForm):
         if field.data == current_user.username:
             return
         validate_username_field(field)
+
+class UnlinkGoogleAccountForm(FlaskForm):
+    submit = SubmitField("Unlink Google Account")
 
 class DeleteAccountRequestForm(FlaskForm):
     password = get_password_field()

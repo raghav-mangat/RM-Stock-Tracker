@@ -1,4 +1,5 @@
 {% from "macros/auth_fields.html" import form_field, password_field %}
+{% from "macros/google_btn.html" import google_btn %}
 
 {% extends "base.html" %}
 
@@ -11,6 +12,11 @@
     <div id="auth-card" class="card shadow-sm rounded-3">
       <div class="card-body p-4">
         <h3 class="text-center mb-4">Create an Account</h3>
+
+        <hr>
+        {{ google_btn() }}
+        <p class="my-3 text-center text-muted">or</p>
+
         <form method="POST" novalidate>
           {{ form.hidden_tag() }}
 
@@ -29,9 +35,11 @@
             {{ form.submit(class="btn btn-success btn-lg") }}
           </div>
         </form>
+
         <div class="text-center">
           <small>Already have an account? <a class="text-primary fw-semibold" href="{{ url_for('auth.login') }}">Log In</a></small>
         </div>
+
       </div>
     </div>
   </section>

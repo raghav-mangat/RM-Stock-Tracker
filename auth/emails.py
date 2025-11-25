@@ -120,6 +120,34 @@ def send_user_verification_success_email(user):
         )
     )
 
+def send_login_google_success_email(user):
+    send_email(
+        subject="You have Logged In With Google - RM Stock Tracker",
+        recipients=[user.email],
+        text_body=render_template(
+            "email/login_google_success.txt",
+            user=user,
+        ),
+        html_body=render_template(
+            "email/login_google_success.html",
+            user=user,
+        )
+    )
+
+def send_settings_password_set_success_email(user):
+    send_email(
+        subject="Password Created for Your Account - RM Stock Tracker",
+        recipients=[user.email],
+        text_body=render_template(
+            "email/settings_password_set_success.txt",
+            user=user,
+        ),
+        html_body=render_template(
+            "email/settings_password_set_success.html",
+            user=user,
+        )
+    )
+
 def send_password_reset_success_email(user):
     send_email(
         subject="Your Password Has Been Changed - RM Stock Tracker",

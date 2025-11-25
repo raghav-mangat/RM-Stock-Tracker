@@ -1,0 +1,9 @@
+{% macro google_btn() %}
+<div class="d-grid mt-4">
+  <a href="{{ url_for('auth.login_google') }}"
+     class="btn btn-light btn-lg border d-flex align-items-center justify-content-center gap-2 shadow-sm">
+    <i class="bi bi-google"></i>
+    <span class="fw-semibold">Continue with Google</span>
+  </a>
+</div>
+{% endmacro %}

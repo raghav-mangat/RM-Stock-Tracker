@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block meta_tag %}
+    <meta name="robots" content="noindex">
+{% endblock %}
+
+{% block title %}
+    Privacy Policy
+{% endblock %}
+
+{% block content %}
+<section class="container py-4">
+    <h2 class="mb-3">Privacy Policy</h2>
+    <p class="text-muted">Last updated: {{ current_year }}</p>
+
+    <p>
+        RM Stock Tracker (“we”, “our”, or “the service”) collects only the minimum
+        information necessary to operate your account and provide core functionality.
+    </p>
+
+    <h4 class="mt-4">Information We Collect</h4>
+    <ul>
+        <li>Email address (required for authentication)</li>
+        <li>First and last name (only if provided by Google)</li>
+        <li>Google Account ID (used strictly for secure login identification)</li>
+    </ul>
+
+    <h4 class="mt-4">How We Use Your Information</h4>
+    <ul>
+        <li>Authenticate your account</li>
+        <li>Provide access to your watchlist and saved data</li>
+        <li>Maintain platform security and prevent unauthorized access</li>
+    </ul>
+
+    <h4 class="mt-4">What We Do Not Do</h4>
+    <ul>
+        <li>We do not sell any personal data</li>
+        <li>We do not share information with third parties</li>
+        <li>We do not store Google OAuth access tokens</li>
+    </ul>
+
+    <h4 class="mt-4">Data Deletion</h4>
+    <p>
+        You may delete your account at any time. All personal information associated
+        with your account will be permanently removed.
+    </p>
+
+    <!-- Optional contact area, leave commented out for now -->
+    <!-- <h4 class="mt-4">Contact</h4>
+    <p>If you have questions, you will be able to reach us at: support@rmstocktracker.com</p> -->
+</section>
+{% endblock %}

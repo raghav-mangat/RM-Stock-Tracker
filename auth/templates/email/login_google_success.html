@@ -1,0 +1,22 @@
+{% from "macros/email/email_content.html" import greeting %}
+
+{% extends "email/base_email.html" %}
+
+{% block content %}
+
+{{ greeting(user) }}
+
+<p>You have successfully logged in with Google.</p>
+
+<p>
+    Thank you for joining RM Stock Tracker.
+    Click the button below to log in and set up your watchlist, track your favourite stocks, and get alerts.
+</p>
+
+<div class="text-center my-3">
+  <a href="{{ url_for('auth.login', _external=True) }}" class="btn">
+    Log In
+  </a>
+</div>
+
+{% endblock %}
