@@ -1,50 +1,40 @@
+{% from "macros/auth_form_components.html" import form_heading, form_submit %}
 {% from "macros/auth_fields.html" import form_field, password_field %}
 {% from "macros/google_btn.html" import google_btn %}
 
-{% extends "base.html" %}
+{% extends "auth_form_base.html" %}
 
-{% block title %}
+{% block auth_form_title %}
     Sign Up
 {% endblock %}
 
-{% block content %}
-  <section class="container d-flex align-items-start justify-content-center pt-4 pb-4">
-    <div id="auth-card" class="card shadow-sm rounded-3">
-      <div class="card-body p-4">
-        <h3 class="text-center mb-4">Create an Account</h3>
+{% block auth_form_content %}
 
-        <hr>
-        {{ google_btn() }}
-        <p class="my-3 text-center text-muted">or</p>
+{{ form_heading(text="Create an Account") }}
 
-        <form method="POST" novalidate>
-          {{ form.hidden_tag() }}
+{{ google_btn() }}
+<p class="my-3 text-center text-muted">or</p>
 
-          <div class="d-flex gap-2">
-            {{ form_field(field=form.first_name, placeholder="Enter your first name") }}
-            {{ form_field(field=form.last_name, placeholder="Enter your last name") }}
-          </div>
+<form method="POST" novalidate>
+  {{ form.hidden_tag() }}
 
-          {{ form_field(field=form.email, placeholder="Enter your email") }}
-          {{ form_field(field=form.username, placeholder="Choose a username") }}
+  {{ form_field(field=form.email, placeholder="Enter your email") }}
 
-          {{ password_field(field=form.password, placeholder="Create a password", check_requirements=True) }}
-          {{ form_field(field=form.confirm_password, placeholder="Confirm password") }}
+  <div class="d-flex gap-2">
+    {{ form_field(field=form.first_name, placeholder="Enter your first name") }}
+    {{ form_field(field=form.last_name, placeholder="Enter your last name") }}
+  </div>
 
-          <div class="d-grid mb-3">
-            {{ form.submit(class="btn btn-success btn-lg") }}
-          </div>
-        </form>
+  {{ form_field(field=form.username, placeholder="Choose a username") }}
 
-        <div class="text-center">
-          <small>Already have an account? <a class="text-primary fw-semibold" href="{{ url_for('auth.login') }}">Log In</a></small>
-        </div>
+  {{ password_field(field=form.password, placeholder="Create a password", check_requirements=True) }}
+  {{ form_field(field=form.confirm_password, placeholder="Confirm password") }}
 
-      </div>
-    </div>
-  </section>
-{% endblock %}
+  {{ form_submit(form=form, class="btn btn-success btn-lg") }}
+</form>
 
-{% block script %}
-  <script src="{{ url_for('auth.static', filename='js/auth.js') }}" type="text/javascript" defer></script>
+<div class="text-center">
+  <small>Already have an account? <a class="text-primary fw-semibold" href="{{ url_for('auth.login') }}">Log In</a></small>
+</div>
+
 {% endblock %}

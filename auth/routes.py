@@ -239,7 +239,7 @@ def login_google():
 
     oauth = current_app.config["OAUTH"]
 
-    # create state to protect against CSRF
+    # Create state to protect against CSRF
     state = secrets.token_urlsafe(16)
     nonce = secrets.token_urlsafe(16)
 
@@ -253,7 +253,7 @@ def login_google():
 def login_google_callback():
     oauth = current_app.config["OAUTH"]
 
-    # check state
+    # Check state
     state_in_session = session.pop("oauth_state", None)
     state_returned = request.args.get("state")
     if not state_in_session or state_in_session != state_returned:
@@ -266,7 +266,7 @@ def login_google_callback():
         flash("Authentication failed. Try again.", "danger")
         return redirect(url_for("auth.login"))
 
-    # parse and verify id_token (Authlib will validate the token)
+    # Parse and verify id_token (Authlib will validate the token)
     try:
         userinfo = oauth.google.parse_id_token(
             token,
@@ -293,12 +293,13 @@ def login_google_callback():
 
     # Find or create user (linking if same email exists)
     user = get_user_by_email(email)
-    if user and not user.google_id:
-        existing = get_user_by_google_id(google_id)
-        if existing:
-            flash("This Google account is already linked to another user.", "danger")
-            return redirect(url_for("auth.login"))
-        add_user_google_id(user, google_id)
+    if user:
+        if not user.google_id:
+            existing = get_user_by_google_id(google_id)
+            if existing:
+                flash("This Google account is already linked to another user.", "danger")
+                return redirect(url_for("auth.login"))
+            add_user_google_id(user, google_id)
     else:
         user = add_new_user(
             first_name=first_name,
@@ -351,7 +352,7 @@ def link_google_callback():
         flash("Authentication failed. Try again.", "danger")
         return redirect(url_for("auth.settings"))
 
-    # parse and verify id_token (Authlib will validate the token)
+    # Parse and verify id_token (Authlib will validate the token)
     try:
         userinfo = oauth.google.parse_id_token(
             token,

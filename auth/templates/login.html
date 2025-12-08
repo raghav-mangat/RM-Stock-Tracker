@@ -1,44 +1,33 @@
+{% from "macros/auth_form_components.html" import form_heading, form_submit %}
 {% from "macros/auth_fields.html" import form_field, password_field %}
 {% from "macros/google_btn.html" import google_btn %}
 
-{% extends "base.html" %}
+{% extends "auth_form_base.html" %}
 
-{% block title %}
+{% block auth_form_title %}
     Login
 {% endblock %}
 
-{% block content %}
-  <section class="container d-flex align-items-start justify-content-center pt-4 pb-4">
-    <div id="auth-card" class="card shadow-sm rounded-3">
-      <div class="card-body p-4">
-        <h3 class="text-center mb-4">Log In</h3>
+{% block auth_form_content %}
 
-        <hr>
-        {{ google_btn() }}
-        <p class="my-3 text-center text-muted">or</p>
+{{ form_heading(text="Log In") }}
 
-        <form method="POST" novalidate>
-          {{ form.hidden_tag() }}
+{{ google_btn() }}
+<p class="my-3 text-center text-muted">or</p>
 
-          {{ form_field(field=form.email, placeholder="Enter your email") }}
-          {{ password_field(field=form.password, placeholder="Enter your password") }}
+<form method="POST" novalidate>
+  {{ form.hidden_tag() }}
 
-          <div class="d-grid mb-3">
-            {{ form.submit(class="btn btn-primary btn-lg") }}
-          </div>
-        </form>
+  {{ form_field(field=form.email, placeholder="Enter your email") }}
+  {{ password_field(field=form.password, placeholder="Enter your password") }}
 
-        <div class="text-center">
-          <small>Don't Have an Account? <a class="text-primary fw-semibold"  href="{{ url_for('auth.signup') }}">Sign Up</a></small>
-          <br>
-          <small>Forgot Your Password? <a class="text-primary fw-semibold"  href="{{ url_for('auth.reset_password_request') }}">Reset Password</a></small>
-        </div>
+  {{ form_submit(form=form, class="btn btn-primary btn-lg") }}
+</form>
 
-      </div>
-    </div>
-  </section>
-{% endblock %}
+<div class="text-center">
+  <small>Don't Have an Account? <a class="text-primary fw-semibold"  href="{{ url_for('auth.signup') }}">Sign Up</a></small>
+  <br>
+  <small>Forgot Your Password? <a class="text-primary fw-semibold"  href="{{ url_for('auth.reset_password_request') }}">Reset Password</a></small>
+</div>
 
-{% block script %}
-  <script src="{{ url_for('auth.static', filename='js/auth.js') }}" type="text/javascript" defer></script>
 {% endblock %}

@@ -27,7 +27,7 @@
                 Profile Settings
               </h2>
 
-              <hr>
+              <div class="my-4 border-top"></div>
 
               <form method="POST" novalidate>
                 {{ profile_settings_form.hidden_tag() }}
@@ -47,7 +47,7 @@
                 Account Settings
               </h2>
 
-              <hr>
+             <div class="my-4 border-top"></div>
 
               <!-- Account Email (View Only) -->
               <div class="mb-4">
@@ -55,7 +55,7 @@
                 <input type="email" class="form-control" value="{{ current_user.email }}" disabled>
               </div>
 
-              <hr>
+              <div class="my-4 border-top"></div>
 
               <!-- Google Account -->
               <div class="mb-4">
@@ -77,7 +77,7 @@
                 {% endif %}
               </div>
 
-              <hr>
+              <div class="my-4 border-top"></div>
 
               <!-- Password -->
               <h6 class="fw-bold">Password</h6>
@@ -96,7 +96,7 @@
                 </button>
               {% endif %}
 
-              <hr>
+              <div class="my-4 border-top"></div>
 
               <!-- Delete Account -->
               <div class="mb-4">
@@ -116,7 +116,7 @@
     </div>
 
     {% if current_user.google_id %}
-      <div class="modal fade" id="unlinkGoogleAccountModal" tabindex="-1" aria-hidden="true">
+      <div class="modal fade" id="unlinkGoogleAccountModal" tabindex="-1" aria-labelledby="unlinkGoogleAccountModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
           <div class="modal-content">
             <div class="modal-header">
@@ -158,7 +158,7 @@
 
     {% if current_user.password_hash %}
 
-      <div class="modal fade" id="resetPasswordModal" tabindex="-1" aria-hidden="true">
+      <div class="modal fade" id="resetPasswordModal" tabindex="-1" aria-labelledby="resetPasswordModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
           <div class="modal-content">
             <form method="POST" action="{{ url_for('auth.settings_reset_password_request') }}" novalidate>
@@ -186,7 +186,7 @@
 
     {% else %}
 
-      <div class="modal fade" id="setPasswordModal" tabindex="-1" aria-hidden="true">
+      <div class="modal fade" id="setPasswordModal" tabindex="-1" aria-labelledby="setPasswordModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
           <div class="modal-content">
             <form method="POST" action="{{ url_for('auth.settings_set_password') }}" novalidate>
@@ -218,7 +218,7 @@
 
     {% endif %}
 
-    <div class="modal fade" id="deleteAccountModal" tabindex="-1" aria-hidden="true">
+    <div class="modal fade" id="deleteAccountModal" tabindex="-1" aria-labelledby="deleteAccountModalLabel" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content shadow border-0">
           <form method="POST" action="{{ url_for('auth.delete_account_request') }}" novalidate>
