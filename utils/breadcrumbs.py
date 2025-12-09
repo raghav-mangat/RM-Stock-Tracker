@@ -38,6 +38,10 @@ def generate_breadcrumbs():
     elif endpoint == "auth.settings":
         breadcrumbs.append({'label': 'Settings', 'url': url_for(endpoint)})
 
+    elif endpoint == "auth.settings_set_password":
+        breadcrumbs.append({'label': 'Settings', 'url': url_for("auth.settings")})
+        breadcrumbs.append({'label': 'Set Password', 'url': url_for(endpoint)})
+
     elif endpoint == "auth.reset_password_request":
         breadcrumbs.append({'label': 'Reset Password Request', 'url': url_for(endpoint)})
 

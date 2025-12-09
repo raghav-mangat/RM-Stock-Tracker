@@ -1,0 +1,26 @@
+{% from "macros/email/email_content.html" import greeting %}
+{% extends "email/base_email.html" %}
+
+{% block content %}
+
+{{ greeting(user) }}
+
+<p>
+  Your Google account has been unlinked from your RM Stock Tracker account.
+</p>
+
+<p>
+  You will now need to sign in using your email and password.
+</p>
+
+<p>
+  If you did not make this change, please secure your account immediately:
+</p>
+
+<div class="text-center my-3">
+  <a href="{{ url_for('auth.reset_password_request', _external=True) }}" class="btn btn-danger">
+    Secure My Account
+  </a>
+</div>
+
+{% endblock %}

@@ -153,6 +153,10 @@ class SettingsResetPasswordRequestForm(FlaskForm):
     email = HiddenField("Email")
     submit = SubmitField("Send Reset Link")
 
+class SettingsRemovePasswordForm(FlaskForm):
+    password = get_password_field()
+    submit = SubmitField("Remove Password")
+
 class ResetPasswordForm(FlaskForm):
     password = get_password_field(label="New Password", validate_strong_password=True)
     confirm_password = get_confirm_password_field("password")
@@ -176,6 +180,7 @@ class ProfileSettingsForm(FlaskForm):
         validate_username_field(field)
 
 class UnlinkGoogleAccountForm(FlaskForm):
+    password = get_password_field()
     submit = SubmitField("Unlink Google Account")
 
 class DeleteAccountRequestForm(FlaskForm):

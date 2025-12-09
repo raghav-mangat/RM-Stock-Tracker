@@ -32,9 +32,9 @@
               <form method="POST" novalidate>
                 {{ profile_settings_form.hidden_tag() }}
 
-                {{ settings_field(field=profile_settings_form.first_name, placeholder="Change your first name") }}
-                {{ settings_field(field=profile_settings_form.last_name, placeholder="Change your last name") }}
-                {{ settings_field(field=profile_settings_form.username, placeholder="Change your username") }}
+                {{ settings_field(field=profile_settings_form.first_name, placeholder="Update your first name") }}
+                {{ settings_field(field=profile_settings_form.last_name, placeholder="Update your last name") }}
+                {{ settings_field(field=profile_settings_form.username, placeholder="Update your public username") }}
 
                 {{ profile_settings_form.submit(class="btn btn-success") }}
               </form>
@@ -47,29 +47,38 @@
                 Account Settings
               </h2>
 
-             <div class="my-4 border-top"></div>
+              <div class="my-4 border-top"></div>
 
               <!-- Account Email (View Only) -->
               <div class="mb-4">
-                <label class="form-label fw-semibold">Email</label>
+                <label class="form-label fw-bold">Email Address</label>
                 <input type="email" class="form-control" value="{{ current_user.email }}" disabled>
+                <div class="form-text">
+                  This is the email associated with your account and cannot be changed.
+                </div>
               </div>
 
               <div class="my-4 border-top"></div>
 
               <!-- Google Account -->
               <div class="mb-4">
-                <h6 class="fw-bold">Google Account</h6>
+                <h6 class="fw-bold">Google Sign-In</h6>
                 {% if current_user.google_id %}
-                  <p class="text-success small mb-2">
-                    Your Google account is linked.
+                  <p class="text-success small mb-1">
+                    Your Google account is currently linked to your profile.
+                  </p>
+                  <p class="text-muted small mb-2">
+                    You can use Google to sign in securely without entering a password.
                   </p>
                   <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#unlinkGoogleAccountModal">
                     Unlink Google Account
                   </button>
                 {% else %}
+                  <p class="text-muted small mb-1">
+                    Your account is not linked to Google.
+                  </p>
                   <p class="text-muted small mb-2">
-                    Your Google account is not linked.
+                    Linking a Google account allows faster and more secure sign-in.
                   </p>
                   <a role="button" class="btn btn-success" href="{{ url_for('auth.link_google') }}">
                     Link Google Account
@@ -80,16 +89,27 @@
               <div class="my-4 border-top"></div>
 
               <!-- Password -->
-              <h6 class="fw-bold">Password</h6>
+              <h6 class="fw-bold">Password & Login</h6>
 
               {% if current_user.password_hash %}
-                <p class="text-muted small mb-2">You can reset your password after email verification.</p>
-                <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#resetPasswordModal">
+                <p class="text-success small mb-1">
+                  Your account is protected with a password.
+                </p>
+                <p class="text-muted small mb-2">
+                  You can reset your password or remove it if you prefer Google-only sign-in.
+                </p>
+                <button class="btn btn-outline-primary me-1" data-bs-toggle="modal" data-bs-target="#resetPasswordModal">
                   Reset Password
                 </button>
+                <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#removePasswordModal">
+                  Remove Password
+                </button>
               {% else %}
+                <p class="text-muted small mb-1">
+                  You currently sign in using Google only.
+                </p>
                 <p class="text-muted small mb-2">
-                  You currently sign in with Google only. Set a password to enable email login.
+                  Setting a password enables email-based login as a backup option.
                 </p>
                 <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#setPasswordModal">
                   Set Password
@@ -101,8 +121,11 @@
               <!-- Delete Account -->
               <div class="mb-4">
                 <h6 class="fw-bold text-danger">Delete Account</h6>
+                <p class="text-muted small mb-1">
+                  Permanently delete your account and all associated data.
+                </p>
                 <p class="text-muted small mb-2">
-                  Permanently delete your account and all associated data. This action cannot be undone.
+                  This action is irreversible and cannot be undone.
                 </p>
                 <button class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteAccountModal">
                   Delete Account
@@ -124,22 +147,28 @@
               <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             {% if current_user.password_hash %}
-              <div class="modal-body">
-                Are you sure you want to unlink your Google account?
-              </div>
-              <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                  Cancel
-                </button>
-                <form method="POST" action="{{ url_for('auth.unlink_google') }}" novalidate>
-                  {{ unlink_google_account_form.hidden_tag() }}
-                  {{ unlink_google_account_form.submit(class="btn btn-danger") }}
-                </form>
-              </div>
+            <form method="POST" action="{{ url_for('auth.unlink_google') }}" novalidate>
+              {{ unlink_google_account_form.hidden_tag() }}
+                <div class="modal-body">
+                  <p class="mb-3">
+                    Confirm your password to unlink your Google account from this profile.
+                  </p>
+                  {{ password_field(
+                      field=unlink_google_account_form.password,
+                      placeholder="Enter your password to continue"
+                  ) }}
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    Cancel
+                  </button>
+                    {{ unlink_google_account_form.submit(class="btn btn-danger") }}
+                </div>
+              </form>
             {% else %}
               <div class="modal-body">
                 <div class="alert alert-warning small mt-2">
-                  To unlink your Google account, you must first set a password.
+                  To unlink Google sign-in, you must first set a password to ensure continued account access.
                 </div>
               </div>
               <div class="modal-footer">
@@ -172,7 +201,8 @@
               </div>
 
               <div class="modal-body">
-                We will send a secure link to <strong>{{ current_user.email }}</strong> to change your password.
+                We will send a secure password reset link to:
+                <strong>{{ current_user.email }}</strong>
               </div>
 
               <div class="modal-footer">
@@ -184,34 +214,75 @@
         </div>
       </div>
 
+      <div class="modal fade" id="removePasswordModal" tabindex="-1" aria-labelledby="removePasswordModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Remove Password</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            {% if current_user.google_id %}
+            <form method="POST" action="{{ url_for('auth.settings_remove_password') }}" novalidate>
+              {{ settings_remove_password_form.hidden_tag() }}
+                <div class="modal-body">
+                  <p class="mb-3">
+                    Enter your password to remove password-based login from your account.
+                  </p>
+                  {{ password_field(
+                      field=settings_remove_password_form.password,
+                      placeholder="Enter your password to confirm"
+                  ) }}
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    Cancel
+                  </button>
+                    {{ settings_remove_password_form.submit(class="btn btn-danger") }}
+                </div>
+              </form>
+            {% else %}
+              <div class="modal-body">
+                <div class="alert alert-warning small mt-2">
+                  To remove your password, you must first link a Google account as a sign-in method.
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                  Cancel
+                </button>
+                <a role="button" class="btn btn-success" href="{{ url_for('auth.link_google') }}">
+                    Link Google Account
+                </a>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
     {% else %}
 
       <div class="modal fade" id="setPasswordModal" tabindex="-1" aria-labelledby="setPasswordModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
           <div class="modal-content">
-            <form method="POST" action="{{ url_for('auth.settings_set_password') }}" novalidate>
-              {{ settings_set_password_form.hidden_tag() }}
+            <div class="modal-header">
+              <h5 class="modal-title">Set a Password</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
 
-              <div class="modal-header">
-                <h5 class="modal-title">Set Password</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-              </div>
+            <div class="modal-body">
+              <p>
+                For security, you’ll need to re-authenticate with Google before creating a password.
+              </p>
+            </div>
 
-              <div class="modal-body">
-                <p>
-                  Create a password so you can log in using email and password.
-                </p>
-
-                {{ password_field(field=settings_set_password_form.password, placeholder="Create a password", check_requirements=True) }}
-                {{ form_field(field=settings_set_password_form.confirm_password, placeholder="Confirm password") }}
-
-              </div>
-
-              <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                {{ settings_set_password_form.submit(class="btn btn-success") }}
-              </div>
-            </form>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                Cancel
+              </button>
+              <a role="button" class="btn btn-success" href="{{ url_for('auth.settings_set_password') }}">
+                Continue
+              </a>
+            </div>
           </div>
         </div>
       </div>
@@ -281,7 +352,6 @@
         </div>
       </div>
     </div>
-
 
   </section>
 {% endblock %}

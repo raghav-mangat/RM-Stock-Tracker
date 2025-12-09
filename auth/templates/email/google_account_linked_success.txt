@@ -1,0 +1,15 @@
+{%- from "macros/email/email_content.txt" import greeting -%}
+{%- extends "email/base_email.txt" -%}
+
+{% block content %}
+
+{{ greeting(user) }}
+
+Your Google account has been successfully linked to your RM Stock Tracker account.
+
+You can now sign in using either Google or your email and password.
+
+If you did not do this, review your account security here:
+{{ url_for('auth.settings', _external=True) }}
+
+{% endblock %}

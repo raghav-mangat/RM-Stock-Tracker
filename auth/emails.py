@@ -148,6 +148,48 @@ def send_settings_password_set_success_email(user):
         )
     )
 
+def send_settings_password_removed_success_email(user):
+    send_email(
+        subject="Password Removed from Your Account - RM Stock Tracker",
+        recipients=[user.email],
+        text_body=render_template(
+            "email/settings_password_removed_success.txt",
+            user=user,
+        ),
+        html_body=render_template(
+            "email/settings_password_removed_success.html",
+            user=user,
+        )
+    )
+
+def send_google_account_linked_success_email(user):
+    send_email(
+        subject="Google Account Linked Successfully - RM Stock Tracker",
+        recipients=[user.email],
+        text_body=render_template(
+            "email/google_account_linked_success.txt",
+            user=user,
+        ),
+        html_body=render_template(
+            "email/google_account_linked_success.html",
+            user=user,
+        )
+    )
+
+def send_google_account_unlinked_success_email(user):
+    send_email(
+        subject="Google Account Unlinked - RM Stock Tracker",
+        recipients=[user.email],
+        text_body=render_template(
+            "email/google_account_unlinked_success.txt",
+            user=user,
+        ),
+        html_body=render_template(
+            "email/google_account_unlinked_success.html",
+            user=user,
+        )
+    )
+
 def send_password_reset_success_email(user):
     send_email(
         subject="Your Password Has Been Changed - RM Stock Tracker",

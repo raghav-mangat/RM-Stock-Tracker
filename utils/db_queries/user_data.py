@@ -30,6 +30,10 @@ def remove_user_google_id(user):
     user.google_id = None
     db.session.commit()
 
+def remove_user_password(user):
+    user.password_hash = None
+    db.session.commit()
+
 def verify_user(user):
     user.is_verified = True
     db.session.commit()
