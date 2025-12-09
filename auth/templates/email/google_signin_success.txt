@@ -6,7 +6,7 @@
 
 {{ greeting(user) }}
 
-You have successfully logged in with Google.
+You have successfully signed in with Google.
 
 Thank you for joining RM Stock Tracker.
 Use the link below to log in and set up your watchlist, track your favourite stocks, and get alerts.

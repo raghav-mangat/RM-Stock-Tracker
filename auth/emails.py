@@ -120,16 +120,16 @@ def send_user_verification_success_email(user):
         )
     )
 
-def send_login_google_success_email(user):
+def send_google_signin_success_email(user):
     send_email(
-        subject="You have Logged In With Google - RM Stock Tracker",
+        subject="You have Signed In With Google - RM Stock Tracker",
         recipients=[user.email],
         text_body=render_template(
-            "email/login_google_success.txt",
+            "email/google_signin_success.txt",
             user=user,
         ),
         html_body=render_template(
-            "email/login_google_success.html",
+            "email/google_signin_success.html",
             user=user,
         )
     )

@@ -13,7 +13,7 @@ from .forms import (
 from .emails import (
     send_password_reset_email, send_verify_user_email, send_password_reset_success_email,
     send_user_verification_success_email, send_delete_account_email, send_account_delete_success_email,
-    send_settings_password_reset_email, send_settings_password_set_success_email, send_login_google_success_email,
+    send_settings_password_reset_email, send_settings_password_set_success_email, send_google_signin_success_email,
     send_settings_password_removed_success_email, send_google_account_linked_success_email,
     send_google_account_unlinked_success_email
 )
@@ -172,7 +172,7 @@ def settings_set_password():
         session["reauth_next"] = url_for(
             "auth.settings_set_password", _external=True
         )
-        return redirect(url_for("auth.reauth_google"))
+        return redirect(url_for("auth.google_reauth"))
 
     return render_template("settings_set_password.html", form=form)
 
@@ -280,8 +280,8 @@ def delete_account(token):
             return redirect(url_for("auth.delete_account", token=token))
     return render_template("delete_account.html", form=form)
 
-@auth_bp.route("/login/google")
-def login_google():
+@auth_bp.route("/google/signin")
+def google_signin():
     if current_user.is_authenticated:
         return redirect(url_for("watchlist.index"))
 
@@ -294,11 +294,11 @@ def login_google():
     session["oauth_state"] = state
     session["oauth_nonce"] = nonce
 
-    redirect_uri = url_for("auth.login_google_callback", _external=True)
+    redirect_uri = url_for("auth.google_signin_callback", _external=True)
     return oauth.google.authorize_redirect(redirect_uri, state=state, nonce=nonce)
 
-@auth_bp.route("/login/google/callback")
-def login_google_callback():
+@auth_bp.route("/google/signin/callback")
+def google_signin_callback():
     oauth = current_app.config["OAUTH"]
 
     # Check state
@@ -359,15 +359,15 @@ def login_google_callback():
             google_id=google_id,
             is_verified=True
         )
-        send_login_google_success_email(user)
+        send_google_signin_success_email(user)
 
     login_user(user)
-    flash("Logged in with Google", "success")
+    flash("Signed in with Google", "success")
     return redirect(url_for("watchlist.index"))
 
-@auth_bp.route("/link/google")
+@auth_bp.route("/google/link")
 @login_required
-def link_google():
+def google_link():
     oauth = current_app.config["OAUTH"]
 
     state = secrets.token_urlsafe(16)
@@ -376,7 +376,7 @@ def link_google():
     session["link_state"] = state
     session["link_nonce"] = nonce
 
-    redirect_uri = url_for("auth.link_google_callback", _external=True)
+    redirect_uri = url_for("auth.google_link_callback", _external=True)
 
     return oauth.google.authorize_redirect(
         redirect_uri,
@@ -384,9 +384,9 @@ def link_google():
         nonce=nonce
     )
 
-@auth_bp.route("/link/google/callback")
+@auth_bp.route("/google/link/callback")
 @login_required
-def link_google_callback():
+def google_link_callback():
     oauth = current_app.config["OAUTH"]
 
     state_in_session = session.pop("link_state", None)
@@ -441,9 +441,9 @@ def link_google_callback():
     flash("Google account linked successfully.", "success")
     return redirect(url_for("auth.settings"))
 
-@auth_bp.route("/unlink/google", methods=["POST"])
+@auth_bp.route("/google/unlink", methods=["POST"])
 @login_required
-def unlink_google():
+def google_unlink():
     form = UnlinkGoogleAccountForm()
 
     if not current_user.password_hash:
@@ -458,9 +458,9 @@ def unlink_google():
         flash("Your Google account has been unlinked.", "success")
     return redirect(url_for("auth.settings"))
 
-@auth_bp.route("/reauth/google")
+@auth_bp.route("/google/reauth")
 @login_required
-def reauth_google():
+def google_reauth():
     oauth = current_app.config["OAUTH"]
 
     state = secrets.token_urlsafe(16)
@@ -469,7 +469,7 @@ def reauth_google():
     session["reauth_state"] = state
     session["reauth_nonce"] = nonce
 
-    redirect_uri = url_for("auth.reauth_google_callback", _external=True)
+    redirect_uri = url_for("auth.google_reauth_callback", _external=True)
 
     return oauth.google.authorize_redirect(
         redirect_uri,
@@ -478,9 +478,9 @@ def reauth_google():
         prompt="login"
     )
 
-@auth_bp.route("/reauth/google/callback")
+@auth_bp.route("/google/reauth/callback")
 @login_required
-def reauth_google_callback():
+def google_reauth_callback():
     oauth = current_app.config["OAUTH"]
 
     # Validate state

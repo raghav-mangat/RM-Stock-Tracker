@@ -80,7 +80,7 @@
                   <p class="text-muted small mb-2">
                     Linking a Google account allows faster and more secure sign-in.
                   </p>
-                  <a role="button" class="btn btn-success" href="{{ url_for('auth.link_google') }}">
+                  <a role="button" class="btn btn-success" href="{{ url_for('auth.google_link') }}">
                     Link Google Account
                   </a>
                 {% endif %}
@@ -147,7 +147,7 @@
               <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             {% if current_user.password_hash %}
-            <form method="POST" action="{{ url_for('auth.unlink_google') }}" novalidate>
+            <form method="POST" action="{{ url_for('auth.google_unlink') }}" novalidate>
               {{ unlink_google_account_form.hidden_tag() }}
                 <div class="modal-body">
                   <p class="mb-3">
@@ -250,7 +250,7 @@
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                   Cancel
                 </button>
-                <a role="button" class="btn btn-success" href="{{ url_for('auth.link_google') }}">
+                <a role="button" class="btn btn-success" href="{{ url_for('auth.google_link') }}">
                     Link Google Account
                 </a>
               </div>
