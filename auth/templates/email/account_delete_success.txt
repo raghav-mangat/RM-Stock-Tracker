@@ -8,6 +8,6 @@
 
 Your account associated with "{{ user.email }}" has been permanently deleted.
 
-We’re sorry to see you go.
+We are sorry to see you go.
 
 {% endblock %}

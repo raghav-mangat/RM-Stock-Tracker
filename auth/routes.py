@@ -55,18 +55,20 @@ def login():
                   "warning")
             return redirect(url_for('auth.login'))
         login_user(user)
+        session["security_timestamp"] = user.security_timestamp
         flash("Logged in successfully!", "success")
         return redirect(url_for('watchlist.index'))
 
     return render_template("login.html", form=form)
 
 @auth_bp.route("/logout")
-@login_required
 def logout():
+    session.pop("security_timestamp", None)
     session.pop("reauth_verified", None)
     session.pop("reauth_verified_at", None)
+
     logout_user()
-    flash("Logged out successfully!", "success")
+
     return redirect(url_for('home'))
 
 @auth_bp.route("/settings", methods=["GET", "POST"])
@@ -119,7 +121,7 @@ def verify_email(token):
 
     verify_user(user)
     send_user_verification_success_email(user)
-    flash("Your email is verified! Now you can Log In.", "success")
+    flash("Your email is verified! Now you can log in.", "success")
     return redirect(url_for("auth.login"))
 
 @auth_bp.route("/reset_password_request", methods=["GET", "POST"])
@@ -165,8 +167,8 @@ def settings_set_password():
             change_user_password(current_user, form.password.data)
             send_settings_password_set_success_email(current_user)
 
-            flash("Your password has been set successfully.", "success")
-            return redirect(url_for("auth.settings"))
+            flash("Your password has been set. Please log in again.", "success")
+            return redirect(url_for("auth.logout"))
 
     if reauth_expired:
         session["reauth_next"] = url_for(
@@ -203,7 +205,8 @@ def settings_remove_password():
     else:
         remove_user_password(current_user)
         send_settings_password_removed_success_email(current_user)
-        flash("Your password has been removed.", "success")
+        flash("Your password has been removed. Please log in again.", "success")
+        return redirect(url_for("auth.logout"))
     return redirect(url_for("auth.settings"))
 
 @auth_bp.route("/reset_password/<string:token>", methods=["GET", "POST"])
@@ -223,14 +226,9 @@ def reset_password(token):
     if form.validate_on_submit():
         change_user_password(user, form.password.data)
         send_password_reset_success_email(user)
-        flash_text = "Your password has been reset."
+        flash("Your password has been reset. Please log in again.", "success")
+        return redirect(url_for("auth.logout"))
 
-        if current_user.is_authenticated and current_user.id == user.id:
-            logout_user()
-            flash_text += " You have now been logged out."
-
-        flash(flash_text, "success")
-        return redirect(url_for("auth.login"))
     return render_template("reset_password.html", form=form)
 
 @auth_bp.route("/delete_account_request", methods=["POST"])
@@ -270,11 +268,9 @@ def delete_account(token):
     if form.validate_on_submit():
         if user.email == form.email.data:
             delete_user_account(user)
-            if current_user.is_authenticated and current_user.id == user.id:
-                logout_user()
             send_account_delete_success_email(user)
             flash("Your account has been deleted.", "success")
-            return redirect(url_for("auth.login"))
+            return redirect(url_for("auth.logout"))
         else:
             flash("Incorrect email to delete account.", "warning")
             return redirect(url_for("auth.delete_account", token=token))
@@ -343,12 +339,21 @@ def google_signin_callback():
     # Find or create user (linking if same email exists)
     user = get_user_by_email(email)
     if user:
-        if not user.google_id:
+        if user.google_id:
+            if user.google_id != google_id:
+                flash("This Google account is not linked to your profile.", "warning")
+                return redirect(url_for("auth.login"))
+            else:
+                flash("Signed in with Google.", "success")
+        else:
             existing = get_user_by_google_id(google_id)
             if existing:
                 flash("This Google account is already linked to another user.", "danger")
                 return redirect(url_for("auth.login"))
-            add_user_google_id(user, google_id)
+            else:
+                add_user_google_id(user, google_id)
+                send_google_account_linked_success_email(user)
+                flash("Signed in with Google. Linked Google account successfully.", "success")
     else:
         user = add_new_user(
             first_name=first_name,
@@ -360,9 +365,10 @@ def google_signin_callback():
             is_verified=True
         )
         send_google_signin_success_email(user)
+        flash("Signed in with Google. Account created successfully.", "success")
 
     login_user(user)
-    flash("Signed in with Google", "success")
+    session["security_timestamp"] = user.security_timestamp
     return redirect(url_for("watchlist.index"))
 
 @auth_bp.route("/google/link")
@@ -438,8 +444,8 @@ def google_link_callback():
 
     add_user_google_id(current_user, google_id)
     send_google_account_linked_success_email(current_user)
-    flash("Google account linked successfully.", "success")
-    return redirect(url_for("auth.settings"))
+    flash("Google account linked successfully. Please log in again.", "success")
+    return redirect(url_for("auth.logout"))
 
 @auth_bp.route("/google/unlink", methods=["POST"])
 @login_required
@@ -455,7 +461,8 @@ def google_unlink():
     else:
         remove_user_google_id(current_user)
         send_google_account_unlinked_success_email(current_user)
-        flash("Your Google account has been unlinked.", "success")
+        flash("Your Google account has been unlinked. Please log in again.", "success")
+        return redirect(url_for("auth.logout"))
     return redirect(url_for("auth.settings"))
 
 @auth_bp.route("/google/reauth")

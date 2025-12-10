@@ -12,7 +12,7 @@ Started On: June 07, 2025
 """
 
 import os
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, session, redirect, url_for, flash
 from dotenv import load_dotenv
 from flask_login import LoginManager, current_user
 from flask_mail import Mail
@@ -111,6 +111,38 @@ def inject_breadcrumbs():
 @app.context_processor
 def inject_current_year():
     return {"current_year": datetime.now().year}
+
+# Make sure the session is secure and up to date before every request
+@app.before_request
+def enforce_session_security():
+    if request.endpoint in (
+        "auth.signup",
+        "auth.login",
+        "auth.google_signin",
+        "auth.google_signin_callback",
+        "auth.logout",
+    ):
+        return None
+
+    if not current_user.is_authenticated:
+        return None
+
+    session_timestamp = session.get("security_timestamp")
+    if not session_timestamp:
+        flash(
+            "Invalid session. Please log in again.",
+            "danger"
+        )
+        return redirect(url_for("auth.logout"))
+
+    if session_timestamp != current_user.security_timestamp:
+        flash(
+            "Your session expired. Please log in again.",
+            "warning"
+        )
+        return redirect(url_for("auth.logout"))
+    return None
+
 
 @app.route("/")
 def home():

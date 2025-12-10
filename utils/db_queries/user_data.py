@@ -1,5 +1,6 @@
 import re
 import unicodedata
+from time import time
 from models.database import db, User
 from utils.constants import USERNAME_ALLOWED_CHARS_REGEX, MIN_USERNAME_LEN, MAX_USERNAME_LEN
 
@@ -24,22 +25,27 @@ def add_new_user(email, first_name="", last_name="", username=None, password=Non
 
 def add_user_google_id(user, google_id):
     user.google_id = google_id
+    update_security_timestamp(user)
     db.session.commit()
 
 def remove_user_google_id(user):
     user.google_id = None
+    update_security_timestamp(user)
     db.session.commit()
 
 def remove_user_password(user):
     user.password_hash = None
+    update_security_timestamp(user)
     db.session.commit()
 
 def verify_user(user):
     user.is_verified = True
+    update_security_timestamp(user)
     db.session.commit()
 
 def change_user_password(user, password):
     user.password = password
+    update_security_timestamp(user)
     db.session.commit()
 
 def update_user_profile(user, first_name, last_name, username):
@@ -51,6 +57,9 @@ def update_user_profile(user, first_name, last_name, username):
 def delete_user_account(user):
     db.session.delete(user)
     db.session.commit()
+
+def update_security_timestamp(user):
+    user.security_timestamp = int(time())
 
 def get_user_by_id(user_id):
     return db.session.execute(db.select(User).where(User.id == user_id)).scalar()
