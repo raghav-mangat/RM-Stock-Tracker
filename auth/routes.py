@@ -4,11 +4,11 @@ from flask_login import current_user, login_user, login_required, logout_user
 from authlib.integrations.flask_client import OAuthError
 import secrets
 import time
-from models.database import User
+from models.database import User, SignupSource
 from .forms import (
     LoginForm, SignupForm, ResetPasswordRequestForm, ResetPasswordForm, ProfileSettingsForm,
     DeleteAccountRequestForm, DeleteAccountForm, SettingsResetPasswordRequestForm, UnlinkGoogleAccountForm,
-    SettingsSetPasswordForm, SettingsRemovePasswordForm
+    SettingsSetPasswordForm, SettingsRemovePasswordForm, SettingsToggleEmailAlertsForm
 )
 from .emails import (
     send_password_reset_email, send_verify_user_email, send_password_reset_success_email,
@@ -20,7 +20,7 @@ from .emails import (
 from utils.db_queries.user_data import (
     add_new_user, update_user_profile, change_user_password, verify_user,
     get_user_by_email, get_user_by_google_id, delete_user_account, add_user_google_id, remove_user_google_id,
-    remove_user_password
+    remove_user_password, update_user_last_login_at, toggle_user_email_alerts_on
 )
 
 @auth_bp.route("/signup", methods=["GET", "POST"])
@@ -34,7 +34,8 @@ def signup():
             last_name=form.last_name.data,
             email=form.email.data,
             username=form.username.data,
-            password=form.password.data
+            password=form.password.data,
+            signup_source=SignupSource.EMAIL
         )
         send_verify_user_email(user)
         flash("Account created, we sent a verification email. Please click the link in your inbox (check spam).", "success")
@@ -55,6 +56,7 @@ def login():
                   "warning")
             return redirect(url_for('auth.login'))
         login_user(user)
+        update_user_last_login_at(user)
         session["security_timestamp"] = user.security_timestamp
         flash("Logged in successfully!", "success")
         return redirect(url_for('watchlist.index'))
@@ -75,6 +77,8 @@ def logout():
 @login_required
 def settings():
     profile_settings_form = ProfileSettingsForm(obj=current_user)
+
+    settings_toggle_email_alerts_form = SettingsToggleEmailAlertsForm()
 
     unlink_google_account_form = UnlinkGoogleAccountForm()
 
@@ -99,6 +103,7 @@ def settings():
     return render_template(
         "settings.html",
         profile_settings_form=profile_settings_form,
+        settings_toggle_email_alerts_form=settings_toggle_email_alerts_form,
         unlink_google_account_form=unlink_google_account_form,
         settings_reset_password_request_form=settings_reset_password_request_form,
         settings_remove_password_form=settings_remove_password_form,
@@ -137,6 +142,22 @@ def reset_password_request():
         flash("Check your email for the instructions to reset your password.", "success")
         return redirect(url_for("auth.login"))
     return render_template("reset_password_request.html", form=form)
+
+@auth_bp.route("/settings_toggle_email_alerts", methods=["POST"])
+@login_required
+def settings_toggle_email_alerts():
+    form = SettingsToggleEmailAlertsForm()
+
+    if form.validate_on_submit():
+        toggle_user_email_alerts_on(current_user)
+        if current_user.email_alerts_on:
+            flash("Email alerts have been turned ON.", "success")
+        else:
+            flash("Email alerts have been turned OFF.","success")
+    else:
+        flash("Invalid request.", "danger")
+
+    return redirect(url_for("auth.settings"))
 
 @auth_bp.route("/settings/set_password", methods=["GET", "POST"])
 @login_required
@@ -362,12 +383,14 @@ def google_signin_callback():
             username=None,
             password=None,
             google_id=google_id,
-            is_verified=True
+            is_verified=True,
+            signup_source=SignupSource.GOOGLE
         )
         send_google_signin_success_email(user)
         flash("Signed in with Google. Account created successfully.", "success")
 
     login_user(user)
+    update_user_last_login_at(user)
     session["security_timestamp"] = user.security_timestamp
     return redirect(url_for("watchlist.index"))
 

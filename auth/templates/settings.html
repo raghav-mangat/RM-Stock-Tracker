@@ -60,11 +60,43 @@
 
               <div class="my-4 border-top"></div>
 
+              <!-- Email Alerts -->
+              <div class="mb-4">
+                <h6 class="fw-bold">Email Alerts</h6>
+                {% if current_user.email_alerts_on %}
+                  <p class="text-success fw-semibold small mb-1">
+                    You are receiving email alerts for your watchlist.
+                  </p>
+                {% else %}
+                  <p class="text-muted fw-semibold small mb-1">
+                    You are not receiving email alerts for your watchlist.
+                  </p>
+                {% endif %}
+                <p class="text-muted small mb-2">
+                  Enable or disable email alerts for your watchlist.
+                </p>
+                <div class="form-check form-switch fs-5">
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    role="switch"
+                    id="emailAlertsSwitch"
+                    data-bs-toggle="modal"
+                    data-bs-target="#emailAlertsConfirmModal"
+                    {% if current_user.email_alerts_on %}
+                      checked
+                    {% endif %}
+                  >
+                </div>
+              </div>
+
+              <div class="my-4 border-top"></div>
+
               <!-- Google Account -->
               <div class="mb-4">
                 <h6 class="fw-bold">Google Sign-In</h6>
                 {% if current_user.google_id %}
-                  <p class="text-success small mb-1">
+                  <p class="text-success fw-semibold small mb-1">
                     Your Google account is currently linked to your profile.
                   </p>
                   <p class="text-muted small mb-2">
@@ -74,7 +106,7 @@
                     Unlink Google Account
                   </button>
                 {% else %}
-                  <p class="text-muted small mb-1">
+                  <p class="text-muted fw-semibold small mb-1">
                     Your account is not linked to Google.
                   </p>
                   <p class="text-muted small mb-2">
@@ -92,7 +124,7 @@
               <h6 class="fw-bold">Password & Login</h6>
 
               {% if current_user.password_hash %}
-                <p class="text-success small mb-1">
+                <p class="text-success fw-semibold small mb-1">
                   Your account is protected with a password.
                 </p>
                 <p class="text-muted small mb-2">
@@ -105,7 +137,7 @@
                   Remove Password
                 </button>
               {% else %}
-                <p class="text-muted small mb-1">
+                <p class="text-muted fw-semibold small mb-1">
                   You currently sign in using Google only.
                 </p>
                 <p class="text-muted small mb-2">
@@ -121,7 +153,7 @@
               <!-- Delete Account -->
               <div class="mb-4">
                 <h6 class="fw-bold text-danger">Delete Account</h6>
-                <p class="text-muted small mb-1">
+                <p class="text-muted fw-semibold small mb-1">
                   Permanently delete your account and all associated data.
                 </p>
                 <p class="text-muted small mb-2">
@@ -135,6 +167,49 @@
             </div>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- Email Alerts Confirmation Modal -->
+    <div class="modal fade" id="emailAlertsConfirmModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="emailAlertsConfirmModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <form method="POST" action="{{ url_for('auth.settings_toggle_email_alerts') }}" novalidate>
+          {{ settings_toggle_email_alerts_form.hidden_tag() }}
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Email Alerts</h5>
+              <button type="button" class="btn-close modal-close-btn" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body">
+              <p class="mb-2 fw-medium">
+                {% if current_user.email_alerts_on %}
+                  Turn OFF email alerts?
+                {% else %}
+                  Turn ON email alerts?
+                {% endif %}
+              </p>
+              <div class="text-muted small">
+                {% if current_user.email_alerts_on %}
+                  <div class="alert alert-warning" role="alert">
+                    You will stop receiving email notifications for your watchlist.
+                  </div>
+                {% else %}
+                  <div class="alert alert-success" role="alert">
+                    You will start receiving email notifications for your watchlist.
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary modal-close-btn" data-bs-dismiss="modal">
+                Cancel
+              </button>
+              {{ settings_toggle_email_alerts_form.submit(class="btn btn-primary fw-semibold px-3") }}
+            </div>
+          </div>
+        </form>
       </div>
     </div>
 
@@ -358,4 +433,5 @@
 
 {% block script %}
   <script src="{{ url_for('auth.static', filename='js/auth.js') }}" type="text/javascript" defer></script>
+  <script src="{{ url_for('auth.static', filename='js/settings.js') }}" type="text/javascript" defer></script>
 {% endblock %}

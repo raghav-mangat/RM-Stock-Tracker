@@ -1,10 +1,11 @@
 import re
 import unicodedata
 from time import time
+from datetime import datetime, UTC
 from models.database import db, User
 from utils.constants import USERNAME_ALLOWED_CHARS_REGEX, MIN_USERNAME_LEN, MAX_USERNAME_LEN
 
-def add_new_user(email, first_name="", last_name="", username=None, password=None, google_id=None, is_verified=False):
+def add_new_user(signup_source, email, first_name="", last_name="", username=None, password=None, google_id=None, is_verified=False):
     if not username:
         username = create_username_from_email(email)
 
@@ -14,7 +15,8 @@ def add_new_user(email, first_name="", last_name="", username=None, password=Non
         google_id=google_id,
         first_name=first_name,
         last_name=last_name,
-        is_verified=is_verified
+        is_verified=is_verified,
+        signup_source=signup_source
     )
     if password:
         new_user.password = password
@@ -34,7 +36,7 @@ def remove_user_google_id(user):
     db.session.commit()
 
 def remove_user_password(user):
-    user.password_hash = None
+    user.remove_password()
     update_security_timestamp(user)
     db.session.commit()
 
@@ -52,6 +54,14 @@ def update_user_profile(user, first_name, last_name, username):
     user.first_name = first_name
     user.last_name = last_name
     user.username = username
+    db.session.commit()
+
+def update_user_last_login_at(user):
+    user.last_login_at = datetime.now(UTC)
+    db.session.commit()
+
+def toggle_user_email_alerts_on(user):
+    user.email_alerts_on = not user.email_alerts_on
     db.session.commit()
 
 def delete_user_account(user):

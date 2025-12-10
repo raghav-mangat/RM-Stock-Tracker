@@ -144,6 +144,9 @@ class ResetPasswordRequestForm(FlaskForm):
     email = get_email_field()
     submit = SubmitField("Request Password Reset")
 
+class SettingsToggleEmailAlertsForm(FlaskForm):
+    submit = SubmitField("Confirm")
+
 class SettingsSetPasswordForm(FlaskForm):
     password = get_password_field(label="Password", validate_strong_password=True)
     confirm_password = get_confirm_password_field("password")
