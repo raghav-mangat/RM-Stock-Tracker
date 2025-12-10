@@ -29,14 +29,16 @@
 
               <div class="my-4 border-top"></div>
 
-              <form method="POST" novalidate>
+              <form method="POST" id="profile-settings-form" novalidate>
                 {{ profile_settings_form.hidden_tag() }}
 
                 {{ settings_field(field=profile_settings_form.first_name, placeholder="Update your first name") }}
                 {{ settings_field(field=profile_settings_form.last_name, placeholder="Update your last name") }}
-                {{ settings_field(field=profile_settings_form.username, placeholder="Update your public username") }}
+                {{ settings_field(field=profile_settings_form.username, placeholder="Update your username") }}
 
-                {{ profile_settings_form.submit(class="btn btn-success") }}
+                <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#profileSettingsConfirmModal">
+                  Update Profile
+                </button>
               </form>
             </div>
           </div>
@@ -170,6 +172,33 @@
       </div>
     </div>
 
+    <!-- Profile Settings Confirmation Modal -->
+    <div class="modal fade" id="profileSettingsConfirmModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="profileSettingsConfirmModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Confirm Profile Update</h5>
+            <button type="button" class="btn-close modal-close-btn" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+
+          <div class="modal-body">
+            <p class="my-2">
+              Please confirm that you want to update your profile details.
+            </p>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+              Cancel
+            </button>
+            <button type="button" id="profileSettingsConfirmModalBtn" class="btn btn-success">
+              Confirm
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Email Alerts Confirmation Modal -->
     <div class="modal fade" id="emailAlertsConfirmModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="emailAlertsConfirmModalLabel" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered">
@@ -182,11 +211,11 @@
             </div>
 
             <div class="modal-body">
-              <p class="mb-2 fw-medium">
+              <p class="mb-2">
                 {% if current_user.email_alerts_on %}
-                  Turn OFF email alerts?
+                  Turn <strong>OFF</strong> email alerts?
                 {% else %}
-                  Turn ON email alerts?
+                  Turn <strong>ON</strong> email alerts?
                 {% endif %}
               </p>
               <div class="text-muted small">

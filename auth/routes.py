@@ -97,8 +97,13 @@ def settings():
             last_name=profile_settings_form.last_name.data,
             username=profile_settings_form.username.data
         )
-        flash("Profile updated successfully", "success")
+        flash("Profile updated successfully.", "success")
         return redirect(url_for("auth.settings"))
+    elif request.method == "POST":
+        flash(
+            "Could not update your profile. Please review the highlighted fields and try again.",
+            "warning"
+        )
 
     return render_template(
         "settings.html",

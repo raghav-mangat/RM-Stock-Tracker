@@ -169,7 +169,6 @@ class ProfileSettingsForm(FlaskForm):
     first_name = get_first_name_field()
     last_name = get_last_name_field()
     username = get_username_field()
-    submit = SubmitField("Update Profile")
 
     def validate_first_name(self, field):
         validate_first_name_field(field)
