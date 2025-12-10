@@ -2,15 +2,16 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy import String, Integer, BigInteger, Text, Boolean, ForeignKey, Date, DateTime, UniqueConstraint
 from sqlalchemy import Index as DBIndex
-from enum import Enum
 from flask_login import UserMixin
+from flask import current_app
+from enum import Enum
 from werkzeug.security import generate_password_hash,check_password_hash
+from typing import Optional
 import jwt
 from jwt import ExpiredSignatureError, InvalidTokenError
-from datetime import datetime, date
+from datetime import datetime, date, UTC
 from time import time
 from utils.datetime_utils import DATE_FORMAT
-from flask import current_app
 
 # Create a base class for SQLAlchemy
 class Base(DeclarativeBase):
@@ -19,6 +20,10 @@ class Base(DeclarativeBase):
 db = SQLAlchemy(model_class=Base)
 
 # --- Enums ---
+
+class SignupSource(str, Enum):
+    EMAIL = "email"
+    GOOGLE = "google"
 
 class FolderAttribute(str, Enum):
     NAME = "name"
@@ -339,20 +344,34 @@ class User(UserMixin, db.Model):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
     username: Mapped[str] = mapped_column(String(30), unique=True, nullable=False)
-    first_name: Mapped[str] = mapped_column(String(50), nullable=True)
-    last_name: Mapped[str] = mapped_column(String(50), nullable=True)
+    first_name: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    last_name: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+
+    password_hash: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    google_id: Mapped[Optional[str]] = mapped_column(String(255), unique=True, nullable=True)
 
     is_verified: Mapped[bool] = mapped_column(Boolean, nullable=False)
 
-    password_hash: Mapped[str] = mapped_column(String(255), nullable=True)
-    google_id: Mapped[str] = mapped_column(String(255), unique=True, nullable=True)
+    # Timestamps
+    created_at: Mapped[DateTime] = db.Column(
+        db.DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
+    )
+    last_login_at: Mapped[DateTime] = db.Column(
+        db.DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
+    )
 
-    # To validate User sessions
+    # Session validation
     security_timestamp: Mapped[int] = mapped_column(
         Integer,
         nullable=False,
         default=lambda: int(time())
     )
+
+    # User preferences
+    email_alerts_on: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+
+    # For analytics
+    signup_source: Mapped["SignupSource"] = mapped_column("SignupSource", nullable=False)
 
     @property
     def password(self):
@@ -365,6 +384,9 @@ class User(UserMixin, db.Model):
             method='pbkdf2:sha256',
             salt_length=8
         )
+
+    def remove_password(self):
+        self.password_hash = None
 
     def verify_password(self, password):
         if not self.password_hash:
@@ -439,9 +461,12 @@ class User(UserMixin, db.Model):
             # Invalid user
             return result
 
-        user = db.session.get(User, int(user_id))
-        if user and payload["stamp"] != user.security_timestamp:
-            return None
+        user = db.session.execute(db.select(User).where(User.id == int(user_id))).scalar()
+        if not user:
+            return result
+
+        if payload.get("stamp") != user.security_timestamp:
+            return result
 
         return user
 
