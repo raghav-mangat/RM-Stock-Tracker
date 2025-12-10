@@ -347,6 +347,13 @@ class User(UserMixin, db.Model):
     password_hash: Mapped[str] = mapped_column(String(255), nullable=True)
     google_id: Mapped[str] = mapped_column(String(255), unique=True, nullable=True)
 
+    # To validate User sessions
+    security_timestamp: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        default=lambda: int(time())
+    )
+
     @property
     def password(self):
         raise AttributeError("Password is not readable")
@@ -393,6 +400,7 @@ class User(UserMixin, db.Model):
         payload = {
             "sub": str(self.id),
             "type": token_type,
+            "stamp": self.security_timestamp,
             "iat": now,
             "exp": now + int(expires_in),
         }
@@ -431,7 +439,11 @@ class User(UserMixin, db.Model):
             # Invalid user
             return result
 
-        return db.session.get(User, int(user_id))
+        user = db.session.get(User, int(user_id))
+        if user and payload["stamp"] != user.security_timestamp:
+            return None
+
+        return user
 
     def __repr__(self) -> str:
         return (f"<User id={self.id} email={self.email} username={self.username} "
