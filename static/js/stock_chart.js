@@ -137,132 +137,136 @@ const hoverPlugin = {
   id: "hoverPlugin",
   afterDraw(chart) {
     const { ctx, chartArea, tooltip } = chart;
+
+    // Return if the tooltip is undefined
+    if (!tooltip || !tooltip._active || !tooltip._active.length) {
+      return;
+    }
+
     ctx.save();
     ctx.setLineDash(LINE_DASH);
     ctx.lineWidth = LINE_WIDTH;
     ctx.font = `${LABEL_FONT_SIZE}px ${LABEL_FONT_STYLE}`;
     ctx.textBaseline = "middle";
 
-    if (tooltip && tooltip._active && tooltip._active.length) {
-      const active = tooltip._active[0];
-      const x = active.element.x;
-      const y = active.element.y;
-      const hoveredIndex = active.index;
+    const active = tooltip._active[0];
+    const x = active.element.x;
+    const y = active.element.y;
+    const hoveredIndex = active.index;
 
-      ctx.strokeStyle = STROKE_STYLE;
-      // Draw vertical dashed line
-      ctx.beginPath();
-      ctx.moveTo(x, chartArea.top);
-      ctx.lineTo(x, chartArea.bottom);
-      ctx.stroke();
+    ctx.strokeStyle = STROKE_STYLE;
+    // Draw vertical dashed line
+    ctx.beginPath();
+    ctx.moveTo(x, chartArea.top);
+    ctx.lineTo(x, chartArea.bottom);
+    ctx.stroke();
 
-      // Draw horizontal dashed line
-      ctx.beginPath();
-      ctx.moveTo(chartArea.left, y);
-      ctx.lineTo(chartArea.right, y);
-      ctx.stroke();
+    // Draw horizontal dashed line
+    ctx.beginPath();
+    ctx.moveTo(chartArea.left, y);
+    ctx.lineTo(chartArea.right, y);
+    ctx.stroke();
 
-      // Update HTML hover info
-      updateHoverInfoText(hoveredIndex);
+    // Update HTML hover info
+    updateHoverInfoText(hoveredIndex);
 
-      // Get the dataset values at the hovered index
-      const dateVal = dateData[hoveredIndex];
-      const closePriceVal =
-        closePriceData[hoveredIndex].toFixed(DECIMAL_PRECISION);
-      let ema30Val = undefined;
-      let ema50Val = undefined;
-      let ema200Val = undefined;
-      if (emaData) {
-        ema30Val = ema30Data[hoveredIndex].toFixed(DECIMAL_PRECISION);
-        ema50Val = ema50Data[hoveredIndex].toFixed(DECIMAL_PRECISION);
-        ema200Val = ema200Data[hoveredIndex].toFixed(DECIMAL_PRECISION);
-      }
+    // Get the dataset values at the hovered index
+    const dateVal = dateData[hoveredIndex];
+    const closePriceVal =
+      closePriceData[hoveredIndex].toFixed(DECIMAL_PRECISION);
+    let ema30Val = undefined;
+    let ema50Val = undefined;
+    let ema200Val = undefined;
+    if (emaData) {
+      ema30Val = ema30Data[hoveredIndex].toFixed(DECIMAL_PRECISION);
+      ema50Val = ema50Data[hoveredIndex].toFixed(DECIMAL_PRECISION);
+      ema200Val = ema200Data[hoveredIndex].toFixed(DECIMAL_PRECISION);
+    }
 
-      // Draw X-axis date under vertical dashed line
-      const text = dateVal.toString();
-      const textW = ctx.measureText(text).width;
-      const textH = LABEL_FONT_SIZE;
+    // Draw X-axis date under vertical dashed line
+    const text = dateVal.toString();
+    const textW = ctx.measureText(text).width;
+    const textH = LABEL_FONT_SIZE;
 
-      ctx.fillStyle = DATE_COLOR;
-      ctx.fillRect(
-        x - textW / 2 - BOX_PADDING / 2,
-        chartArea.bottom + Y_OFFSET - textH / 2 - BOX_PADDING / 2,
-        textW + BOX_PADDING,
-        textH + BOX_PADDING
-      );
+    ctx.fillStyle = DATE_COLOR;
+    ctx.fillRect(
+      x - textW / 2 - BOX_PADDING / 2,
+      chartArea.bottom + Y_OFFSET - textH / 2 - BOX_PADDING / 2,
+      textW + BOX_PADDING,
+      textH + BOX_PADDING
+    );
 
-      ctx.fillStyle = FILL_COLOR;
-      ctx.textAlign = "center";
-      ctx.fillText(text, x, chartArea.bottom + Y_OFFSET);
+    ctx.fillStyle = FILL_COLOR;
+    ctx.textAlign = "center";
+    ctx.fillText(text, x, chartArea.bottom + Y_OFFSET);
 
-      // Get y positions for close-price, 30-EMA, 50-EMA, and 200-EMA at hovered index
-      const yClose = y;
-      let y30 = undefined;
-      let y50 = undefined;
-      let y200 = undefined;
+    // Get y positions for close-price, 30-EMA, 50-EMA, and 200-EMA at hovered index
+    const yClose = y;
+    let y30 = undefined;
+    let y50 = undefined;
+    let y200 = undefined;
 
-      if (emaData) {
-        y30 = chart.scales.y.getPixelForValue(ema30Val);
-        y50 = chart.scales.y.getPixelForValue(ema50Val);
-        y200 = chart.scales.y.getPixelForValue(ema200Val);
-      }
+    if (emaData) {
+      y30 = chart.scales.y.getPixelForValue(ema30Val);
+      y50 = chart.scales.y.getPixelForValue(ema50Val);
+      y200 = chart.scales.y.getPixelForValue(ema200Val);
+    }
 
-      // Each item: { y position, value, color, dataset index }
-      const values = [
-        {
-          y: yClose,
-          value: closePriceVal,
-          color: CLOSE_PRICE_COLOR,
-          index: 0,
-        },
-      ];
-      if (emaData) {
-        values.unshift({
-          y: y30,
-          value: ema30Val,
-          color: EMA_30_COLOR,
-          index: 1,
-        });
-        values.unshift({
-          y: y50,
-          value: ema50Val,
-          color: EMA_50_COLOR,
-          index: 2,
-        });
-        values.unshift({
-          y: y200,
-          value: ema200Val,
-          color: EMA_200_COLOR,
-          index: 3,
-        });
-      }
-
-      values.forEach(({ y, value, color, index }) => {
-        if (chart.isDatasetVisible(index)) {
-          const text = value.toString();
-          const textW = ctx.measureText(text).width;
-          const textH = LABEL_FONT_SIZE;
-
-          ctx.textAlign = "left";
-
-          // Fixed left position for background rectangle and text
-          const leftPos = chartArea.right + X_OFFSET;
-
-          // Draw background rectangle
-          ctx.fillStyle = color;
-          ctx.fillRect(
-            leftPos - BOX_PADDING / 2,
-            y - textH / 2 - BOX_PADDING / 2,
-            textW + BOX_PADDING,
-            textH + BOX_PADDING
-          );
-
-          // Draw text
-          ctx.fillStyle = FILL_COLOR;
-          ctx.fillText(text, leftPos, y);
-        }
+    // Each item: { y position, value, color, dataset index }
+    const values = [
+      {
+        y: yClose,
+        value: closePriceVal,
+        color: CLOSE_PRICE_COLOR,
+        index: 0,
+      },
+    ];
+    if (emaData) {
+      values.unshift({
+        y: y30,
+        value: ema30Val,
+        color: EMA_30_COLOR,
+        index: 1,
+      });
+      values.unshift({
+        y: y50,
+        value: ema50Val,
+        color: EMA_50_COLOR,
+        index: 2,
+      });
+      values.unshift({
+        y: y200,
+        value: ema200Val,
+        color: EMA_200_COLOR,
+        index: 3,
       });
     }
+
+    values.forEach(({ y, value, color, index }) => {
+      if (chart.isDatasetVisible(index)) {
+        const text = value.toString();
+        const textW = ctx.measureText(text).width;
+        const textH = LABEL_FONT_SIZE;
+
+        ctx.textAlign = "left";
+
+        // Fixed left position for background rectangle and text
+        const leftPos = chartArea.right + X_OFFSET;
+
+        // Draw background rectangle
+        ctx.fillStyle = color;
+        ctx.fillRect(
+          leftPos - BOX_PADDING / 2,
+          y - textH / 2 - BOX_PADDING / 2,
+          textW + BOX_PADDING,
+          textH + BOX_PADDING
+        );
+
+        // Draw text
+        ctx.fillStyle = FILL_COLOR;
+        ctx.fillText(text, leftPos, y);
+      }
+    });
 
     ctx.restore();
   },
