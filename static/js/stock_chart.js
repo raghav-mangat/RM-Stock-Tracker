@@ -143,7 +143,7 @@ const hoverPlugin = {
     ctx.font = `${LABEL_FONT_SIZE}px ${LABEL_FONT_STYLE}`;
     ctx.textBaseline = "middle";
 
-    if (tooltip._active && tooltip._active.length) {
+    if (tooltip && tooltip._active && tooltip._active.length) {
       const active = tooltip._active[0];
       const x = active.element.x;
       const y = active.element.y;
@@ -599,9 +599,14 @@ function resetChart(button, preloadedData = null) {
   if (preloadedData) {
     handleChartData(preloadedData);
   } else {
-    stockChartSpinnerTimeout = setTimeout(showStockChartSpinner, CHART_SPINNER_DELAY);
+    stockChartSpinnerTimeout = setTimeout(
+      showStockChartSpinner,
+      CHART_SPINNER_DELAY
+    );
     fetch(
-      `/chart-data?ticker=${encodeURIComponent(ticker)}&timeframe=${encodeURIComponent(timeframe)}`
+      `/chart-data?ticker=${encodeURIComponent(
+        ticker
+      )}&timeframe=${encodeURIComponent(timeframe)}`
     )
       .then((response) => response.json())
       .then((data) => {

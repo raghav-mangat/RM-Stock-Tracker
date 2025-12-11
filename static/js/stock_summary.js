@@ -81,7 +81,10 @@ function createSummaryChart(ctx, labels, data, backgroundColor) {
           borderRadius: DATA_LABEL_BORDER_RADIUS,
           padding: DATA_LABEL_PADDING,
           formatter: function (value) {
-            return `$${value.toFixed(DECIMAL_PRECISION)}`;
+            if (value) {
+              value = `$${value.toFixed(DECIMAL_PRECISION)}`;
+            }
+            return value;
           },
           font: {
             weight: "bold",

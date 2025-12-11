@@ -64,7 +64,10 @@ def get_chart_data(ticker, timeframe):
 
     change_perc = 0
     if len(close_price_data) > 1:
-        change_perc = round(((close_price_data[-1] - close_price_data[0]) * 100 / close_price_data[0]), 2)
+        try:
+            change_perc = round(((close_price_data[-1] - close_price_data[0]) * 100 / close_price_data[0]), 2)
+        except ZeroDivisionError:
+            change_perc = 0
 
     result = {
         "date_data": date_data,

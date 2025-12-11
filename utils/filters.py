@@ -8,7 +8,9 @@ def dma_200_perc_diff_color(perc_diff):
     :param perc_diff
     :return: colour - In hex value
     """
-    if perc_diff >= 10: # More than 10% above
+    if perc_diff is None: # Does not exist
+        color = "#D3D3D3" # Light Gray
+    elif perc_diff >= 10: # More than 10% above
         color = "#66ff66" # Dark Green
     elif perc_diff <= -10: # More than 10% below
         color = "#FF6666" # Dark Red
