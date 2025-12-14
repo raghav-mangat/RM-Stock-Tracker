@@ -12,7 +12,7 @@ Started On: June 07, 2025
 """
 
 import os
-from flask import Flask, render_template, request, session, redirect, url_for, flash
+from flask import Flask, render_template, request, session, redirect, url_for, flash, jsonify
 from dotenv import load_dotenv
 from flask_login import LoginManager, current_user
 from flask_mail import Mail
@@ -28,7 +28,7 @@ from utils.breadcrumbs import generate_breadcrumbs
 from utils.populate_db_info import db_last_updated
 from utils.db_queries.all_indices import get_all_indices
 from utils.db_queries.show_index import get_index_data
-from utils.db_queries.all_stocks import get_ticker_tape_stocks, get_top_stocks
+from utils.db_queries.all_stocks import get_ticker_tape_stocks, get_top_stocks_categories, db_get_top_stocks_data
 from utils.db_queries.query_stocks import get_query_stocks
 from utils.db_queries.show_stock import get_stock_data, get_chart_data, get_timeframe_options
 from utils.db_queries.user_data import get_user_by_id
@@ -186,14 +186,38 @@ def all_stocks():
 
     ticker_tape_stocks = get_ticker_tape_stocks()
 
-    top_stocks = get_top_stocks()
+    top_stocks_categories = get_top_stocks_categories()
 
     return render_template(
         "all_stocks.html",
         last_updated=last_updated,
         ticker_tape_stocks=ticker_tape_stocks,
-        top_stocks=top_stocks
+        top_stocks_categories=top_stocks_categories
     )
+
+@app.route("/get-top-stocks-data/<string:category>")
+def get_top_stocks_data(category):
+    gainers = render_template(
+        "top_stocks_table_data.html",
+        stocks_type="gainers",
+        stocks=db_get_top_stocks_data(category, "gainers")
+    )
+    losers = render_template(
+        "top_stocks_table_data.html",
+        stocks_type="losers",
+        stocks=db_get_top_stocks_data(category, "losers")
+    )
+    top_traded = render_template(
+        "top_stocks_table_data.html",
+        stocks_type="top_traded",
+        stocks=db_get_top_stocks_data(category, "top_traded")
+    )
+    html = {
+        "gainers": gainers,
+        "losers": losers,
+        "top_traded": top_traded
+    }
+    return jsonify({"html": html})
 
 @app.route("/query-stocks")
 def query_stocks():

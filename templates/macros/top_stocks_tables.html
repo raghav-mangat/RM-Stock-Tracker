@@ -1,15 +1,53 @@
 {% from "macros/stock_attributes.html" import stock_todays_change, stock_volume %}
 
+{% macro placeholder_cell() %}
+  <td class="placeholder-glow">
+    <span class="placeholder bg-dark-subtle d-block w-100 h-100 py-1"></span>
+  </td>
+{% endmacro %}
+
+{% macro top_stocks_data(stocks, stocks_type=None) %}
+
+  {% if stocks %}
+    {% for stock in stocks %}
+      <tr>
+        <th scope="row">{{ loop.index }}</th>
+        <td>{{ stock.ticker }}</td>
+        <td style="max-width: 250px;">
+          <a href="{{ url_for('show_stock', ticker=stock.ticker) }}" class="fw-semibold text-primary">
+            {{ stock.name | display }}
+          </a>
+        </td>
+        <td>{{ stock.day_close | currency }}</td>
+        {% if stocks_type == 'gainers' or stocks_type == 'losers' %}
+          <td>{{ stock_todays_change(stock) }}</td>
+        {% else  %}
+          <td>{{ stock_volume(stock) }}</td>
+        {% endif %}
+      </tr>
+    {% endfor %}
+  {% else %}
+    {% for _ in range(50) %}
+      <tr>
+        {% for _ in range(5) %}
+          {{ placeholder_cell() }}
+        {% endfor %}
+      </tr>
+    {% endfor %}
+  {% endif %}
+
+{% endmacro %}
+
 {#
   A generic macro for rendering a table of top stocks.
   Parameters:
-    - stocks: List of stock records to display
+    - tab_id: ID of the category (e.g., "overall", "sp500")
+    - type: Type of table (e.g., "gainers", "losers")
     - heading: Table title
     - name: Name of the current tab (e.g., "Overall Market", "S&P 500 index")
     - col_title: Header for the last column (e.g., "Volume" or "Today's Change")
-    - render_cell: Jinja macro to render the value for the last column
 #}
-{% macro top_stocks_table(stocks, heading, name, col_title, render_cell) %}
+{% macro top_stocks_table(tab_id, type, heading, name, col_title) %}
   <h3 class="h4 mb-3">{{ heading }} in {{ name }}</h3>
   <div class="table-responsive">
     <table class="table table-bordered table-hover align-middle">
@@ -22,20 +60,8 @@
           <th scope="col">{{ col_title }}</th>
         </tr>
       </thead>
-      <tbody>
-        {% for stock in stocks %}
-          <tr>
-            <th scope="row">{{ loop.index }}</th>
-            <td>{{ stock.ticker }}</td>
-            <td style="max-width: 250px;">
-              <a href="{{ url_for('show_stock', ticker=stock.ticker) }}" class="fw-semibold text-primary">
-                {{ stock.name | display }}
-              </a>
-            </td>
-            <td>{{ stock.day_close | currency }}</td>
-            <td>{{ render_cell(stock) }}</td>
-          </tr>
-        {% endfor %}
+      <tbody id="table-{{ tab_id }}-{{ type }}">
+        {{ top_stocks_data(None) }}
       </tbody>
     </table>
   </div>
@@ -47,9 +73,8 @@
   Parameters:
     - tab_id: Unique ID for the tab
     - tab_name: Display name for the tab (e.g., "S&P 500")
-    - gainers, losers, top_traded: Lists of stock records for each category
 #}
-{% macro top_stocks_tab_content(tab_id, tab_name, gainers, losers, top_traded) %}
+{% macro top_stocks_tab_content(tab_id, tab_name) %}
   <div class="tab-pane fade {% if tab_id == 'overall' %}show active{% endif %}" id="{{ tab_id }}" role="tabpanel" aria-labelledby="{{ tab_id }}-tab">
     <ul class="nav nav-tabs mb-4" id="{{ tab_id }}-subtabs" role="tablist">
       <li class="nav-item" role="presentation">
@@ -64,13 +89,13 @@
     </ul>
     <div class="tab-content">
       <div class="tab-pane fade show active" id="{{ tab_id }}-gainers" role="tabpanel" aria-labelledby="{{ tab_id }}-gainers-tab">
-        {{ top_stocks_table(gainers, "Top Gaining Stocks Today", tab_name, "Today's Change", stock_todays_change) }}
+        {{ top_stocks_table(tab_id, "gainers", "Top Gaining Stocks Today", tab_name, "Today's Change") }}
       </div>
       <div class="tab-pane fade" id="{{ tab_id }}-losers" role="tabpanel" aria-labelledby="{{ tab_id }}-losers-tab">
-        {{ top_stocks_table(losers, "Top Losing Stocks Today", tab_name, "Today's Change", stock_todays_change) }}
+        {{ top_stocks_table(tab_id, "losers", "Top Losing Stocks Today", tab_name, "Today's Change") }}
       </div>
       <div class="tab-pane fade" id="{{ tab_id }}-volume" role="tabpanel" aria-labelledby="{{ tab_id }}-volume-tab">
-        {{ top_stocks_table(top_traded, "Most Actively Traded Stocks Today", tab_name, "Volume", stock_volume) }}
+        {{ top_stocks_table(tab_id, "volume", "Most Actively Traded Stocks Today", tab_name, "Volume") }}
       </div>
     </div>
   </div>
