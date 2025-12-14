@@ -1,4 +1,5 @@
-{%- from "macros/email/email_content.txt" import greeting -%}
+{%- from "macros/email/base_content.txt" import greeting -%}
+
 {%- extends "email/base_email.txt" -%}
 
 {% block content %}

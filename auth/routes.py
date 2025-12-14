@@ -31,7 +31,7 @@ def signup():
             password=form.password.data,
             signup_source=SignupSource.EMAIL
         )
-        AuthEmail.send_verify_user_email(user)
+        AuthEmail.verify_email(user)
         flash("Account created, we sent a verification email. Please click the link in your inbox (check spam).", "success")
         return redirect(url_for('auth.login'))
 
@@ -45,7 +45,7 @@ def login():
     if form.validate_on_submit():
         user = get_user_by_email(form.email.data)
         if not user.is_verified:
-            AuthEmail.send_verify_user_email(user)
+            AuthEmail.verify_email(user)
             flash("Account not verified. We have sent a verification email, please check your inbox (and spam).",
                   "warning")
             return redirect(url_for('auth.login'))
@@ -124,7 +124,7 @@ def verify_email(token):
         return redirect(url_for("auth.login"))
 
     verify_user(user)
-    AuthEmail.send_user_verification_success_email(user)
+    AuthEmail.user_verification_success(user)
     flash("Your email is verified! Now you can log in.", "success")
     return redirect(url_for("auth.login"))
 
@@ -137,7 +137,7 @@ def reset_password_request():
     if form.validate_on_submit():
         user = get_user_by_email(form.email.data)
         if user:
-            AuthEmail.send_password_reset_email(user)
+            AuthEmail.reset_password(user)
         flash("Check your email for the instructions to reset your password.", "success")
         return redirect(url_for("auth.login"))
     return render_template("reset_password_request.html", form=form)
@@ -185,7 +185,7 @@ def settings_set_password():
             session.pop("reauth_verified_at", None)
 
             change_user_password(current_user, form.password.data)
-            AuthEmail.send_settings_password_set_success_email(current_user)
+            AuthEmail.settings_password_set_success(current_user)
 
             flash("Your password has been set. Please log in again.", "success")
             return redirect(url_for("auth.logout"))
@@ -205,7 +205,7 @@ def settings_reset_password_request():
     if form.validate_on_submit():
         user = get_user_by_email(form.email.data)
         if user:
-            AuthEmail.send_settings_password_reset_email(user)
+            AuthEmail.settings_reset_password(user)
         flash("Check your email for the instructions to reset your password.", "success")
     return redirect(url_for("auth.settings"))
 
@@ -224,7 +224,7 @@ def settings_remove_password():
         flash("Incorrect password.", "warning")
     else:
         remove_user_password(current_user)
-        AuthEmail.send_settings_password_removed_success_email(current_user)
+        AuthEmail.settings_password_removed_success(current_user)
         flash("Your password has been removed. Please log in again.", "success")
         return redirect(url_for("auth.logout"))
     return redirect(url_for("auth.settings"))
@@ -245,7 +245,7 @@ def reset_password(token):
     form = ResetPasswordForm()
     if form.validate_on_submit():
         change_user_password(user, form.password.data)
-        AuthEmail.send_password_reset_success_email(user)
+        AuthEmail.password_reset_success(user)
         flash("Your password has been reset. Please log in again.", "success")
         return redirect(url_for("auth.logout"))
 
@@ -272,7 +272,7 @@ def delete_account_request():
             return redirect(url_for("auth.settings"))
 
     # If no password exists, skip password check
-    AuthEmail.send_delete_account_email(current_user)
+    AuthEmail.delete_account(current_user)
     flash("Check your email for the instructions to delete your account.", "success")
     return redirect(url_for("auth.settings"))
 
@@ -288,7 +288,7 @@ def delete_account(token):
     if form.validate_on_submit():
         if user.email == form.email.data:
             delete_user_account(user)
-            AuthEmail.send_account_delete_success_email(user)
+            AuthEmail.account_delete_success(user)
             flash("Your account has been deleted.", "success")
             return redirect(url_for("auth.logout"))
         else:
@@ -372,7 +372,7 @@ def google_signin_callback():
                 return redirect(url_for("auth.login"))
             else:
                 add_user_google_id(user, google_id)
-                AuthEmail.send_google_account_linked_success_email(user)
+                AuthEmail.google_account_linked_success(user)
                 flash("Signed in with Google. Linked Google account successfully.", "success")
     else:
         user = add_new_user(
@@ -385,7 +385,7 @@ def google_signin_callback():
             is_verified=True,
             signup_source=SignupSource.GOOGLE
         )
-        AuthEmail.send_google_signin_success_email(user)
+        AuthEmail.google_signin_success(user)
         flash("Signed in with Google. Account created successfully.", "success")
 
     login_user(user)
@@ -465,7 +465,7 @@ def google_link_callback():
         return redirect(url_for("auth.settings"))
 
     add_user_google_id(current_user, google_id)
-    AuthEmail.send_google_account_linked_success_email(current_user)
+    AuthEmail.google_account_linked_success(current_user)
     flash("Google account linked successfully. Please log in again.", "success")
     return redirect(url_for("auth.logout"))
 
@@ -482,7 +482,7 @@ def google_unlink():
         flash("Incorrect password.", "warning")
     else:
         remove_user_google_id(current_user)
-        AuthEmail.send_google_account_unlinked_success_email(current_user)
+        AuthEmail.google_account_unlinked_success(current_user)
         flash("Your Google account has been unlinked. Please log in again.", "success")
         return redirect(url_for("auth.logout"))
     return redirect(url_for("auth.settings"))

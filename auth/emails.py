@@ -4,7 +4,7 @@ from utils.email_service import EmailService
 class AuthEmail(EmailService):
 
     @classmethod
-    def send_verify_user_email(cls, user):
+    def verify_email(cls, user):
         token = user.get_token(token_type="verify_email")
         cls.send_email(
             subject="Verify Your Email - RM Stock Tracker",
@@ -22,7 +22,7 @@ class AuthEmail(EmailService):
         )
 
     @classmethod
-    def send_password_reset_email(cls, user):
+    def reset_password(cls, user):
         expires_in = 1800 # 30 minutes
         token = user.get_token(token_type="reset_password", expires_in=expires_in)
         cls.send_email(
@@ -43,7 +43,7 @@ class AuthEmail(EmailService):
         )
 
     @classmethod
-    def send_settings_password_reset_email(cls, user):
+    def settings_reset_password(cls, user):
         expires_in = 1800 # 30 minutes
         token = user.get_token(token_type="settings_reset_password", expires_in=expires_in)
         cls.send_email(
@@ -64,7 +64,7 @@ class AuthEmail(EmailService):
         )
 
     @classmethod
-    def send_delete_account_email(cls, user):
+    def delete_account(cls, user):
         expires_in = 1200 # 20 minutes
         token = user.get_token(token_type="delete_account", expires_in=expires_in)
         cls.send_email(
@@ -85,7 +85,7 @@ class AuthEmail(EmailService):
         )
 
     @classmethod
-    def send_user_verification_success_email(cls, user):
+    def user_verification_success(cls, user):
         cls.send_email(
             subject="Your Email Has Been Verified - RM Stock Tracker",
             recipients=[user.email],
@@ -100,7 +100,7 @@ class AuthEmail(EmailService):
         )
 
     @classmethod
-    def send_google_signin_success_email(cls, user):
+    def google_signin_success(cls, user):
         cls.send_email(
             subject="You have Signed In With Google - RM Stock Tracker",
             recipients=[user.email],
@@ -115,7 +115,7 @@ class AuthEmail(EmailService):
         )
 
     @classmethod
-    def send_settings_password_set_success_email(cls, user):
+    def settings_password_set_success(cls, user):
         cls.send_email(
             subject="Password Created for Your Account - RM Stock Tracker",
             recipients=[user.email],
@@ -130,7 +130,7 @@ class AuthEmail(EmailService):
         )
 
     @classmethod
-    def send_settings_password_removed_success_email(cls, user):
+    def settings_password_removed_success(cls, user):
         cls.send_email(
             subject="Password Removed from Your Account - RM Stock Tracker",
             recipients=[user.email],
@@ -145,7 +145,7 @@ class AuthEmail(EmailService):
         )
 
     @classmethod
-    def send_google_account_linked_success_email(cls, user):
+    def google_account_linked_success(cls, user):
         cls.send_email(
             subject="Google Account Linked Successfully - RM Stock Tracker",
             recipients=[user.email],
@@ -160,7 +160,7 @@ class AuthEmail(EmailService):
         )
 
     @classmethod
-    def send_google_account_unlinked_success_email(cls, user):
+    def google_account_unlinked_success(cls, user):
         cls.send_email(
             subject="Google Account Unlinked - RM Stock Tracker",
             recipients=[user.email],
@@ -175,7 +175,7 @@ class AuthEmail(EmailService):
         )
 
     @classmethod
-    def send_password_reset_success_email(cls, user):
+    def password_reset_success(cls, user):
         cls.send_email(
             subject="Your Password Has Been Changed - RM Stock Tracker",
             recipients=[user.email],
@@ -190,7 +190,7 @@ class AuthEmail(EmailService):
         )
 
     @classmethod
-    def send_account_delete_success_email(cls, user):
+    def account_delete_success(cls, user):
         cls.send_email(
             subject="Your Account Has Been Deleted - RM Stock Tracker",
             recipients=[user.email],

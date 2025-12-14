@@ -1,0 +1,5 @@
+{%- macro greeting(user) -%}
+
+Hi {{ user | display_name }},
+
+{%- endmacro -%}
