@@ -97,6 +97,18 @@ class AlertAttribute(str, Enum):
             AlertAttribute.LOW_52W_PERC_DIFF: "52w-Low Percentage Difference",
         }[self]
 
+    @property
+    def type(self):
+        return {
+            AlertAttribute.DAY_CLOSE: "currency",
+            AlertAttribute.TODAYS_CHANGE_PERC: None,
+            AlertAttribute.DMA_200_PERC_DIFF: None,
+            AlertAttribute.DMA_50_PERC_DIFF: "percent",
+            AlertAttribute.DMA_30_PERC_DIFF: "percent",
+            AlertAttribute.HIGH_52W_PERC_DIFF: "percent",
+            AlertAttribute.LOW_52W_PERC_DIFF: "percent",
+        }[self]
+
 class OrderBy(str, Enum):
     ASC = "asc"
     DESC = "desc"
