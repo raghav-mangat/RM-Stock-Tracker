@@ -12,7 +12,7 @@ Started On: June 07, 2025
 """
 
 import os
-from flask import Flask, render_template, request, session, redirect, url_for, flash, jsonify
+from flask import Flask, render_template, request, session, redirect, url_for, flash, jsonify, has_request_context
 from dotenv import load_dotenv
 from flask_login import LoginManager, current_user
 from flask_mail import Mail
@@ -42,6 +42,11 @@ app = Flask(__name__)
 
 # Configure the Flask App Secret Key
 app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
+
+# Required for generating absolute URLs (url_for with _external=True)
+# outside request context (e.g. emails, cron jobs)
+app.config["SERVER_NAME"] = os.getenv("SERVER_NAME")
+app.config["PREFERRED_URL_SCHEME"] = os.getenv("PREFERRED_URL_SCHEME")
 
 # Configure the database
 app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URI")
@@ -105,6 +110,9 @@ register_error_handlers(app)
 # Make breadcrumbs available to all templates
 @app.context_processor
 def inject_breadcrumbs():
+    # Breadcrumbs are only available during an active HTTP request
+    if not has_request_context():
+        return {}
     return {'breadcrumbs': generate_breadcrumbs()}
 
 # Make current year available to all templates

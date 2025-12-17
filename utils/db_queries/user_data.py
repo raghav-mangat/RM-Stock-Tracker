@@ -1,9 +1,9 @@
 import re
 import unicodedata
 from time import time
-from datetime import datetime, UTC
+from datetime import datetime, timedelta, UTC
 from models.database import db, User
-from utils.constants import USERNAME_ALLOWED_CHARS_REGEX, MIN_USERNAME_LEN, MAX_USERNAME_LEN
+from utils.constants import USERNAME_ALLOWED_CHARS_REGEX, MIN_USERNAME_LEN, MAX_USERNAME_LEN, USER_INACTIVE_DAYS_LIMIT
 
 def add_new_user(signup_source, email, first_name="", last_name="", username=None, password=None, google_id=None, is_verified=False):
     if not username:
@@ -82,6 +82,26 @@ def get_user_by_email(email):
 
 def get_user_by_google_id(google_id):
     return db.session.execute(db.select(User).where(User.google_id == google_id)).scalar()
+
+def get_all_users():
+    return db.session.execute(db.select(User)).scalars().all()
+
+def is_user_active(user):
+    # Database stores TZ naive timestamp, so convert it to TZ aware,
+    # since we know it is a UTC timestamp
+    user_last_login = user.last_login_at.replace(tzinfo=UTC)
+
+    # Time beyond which we consider the user as being inactive
+    cutoff = datetime.now(UTC) - timedelta(days=USER_INACTIVE_DAYS_LIMIT)
+
+    return user_last_login >= cutoff
+
+def is_user_email_alert_on(user):
+    return user.email_alerts_on
+
+def user_has_watchlist_alerts(user):
+    # Check if the user has any watchlist alerts
+    return bool(user.watchlist_alerts)
 
 def create_username_from_email(email):
     base = email.split("@")[0].lower()

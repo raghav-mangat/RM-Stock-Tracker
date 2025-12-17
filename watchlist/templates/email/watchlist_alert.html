@@ -1,0 +1,103 @@
+{% from "macros/email/base_content.html" import greeting %}
+
+{% extends "email/base_email.html" %}
+
+{% block style %}
+
+.folder-summary {
+  margin-bottom: 16px;
+}
+
+.folder-title {
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.summary-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.summary-metric {
+  font-size: 14px;
+  color: #212529;
+  padding: 4px 0;
+}
+
+.summary-divider {
+  border: none;
+  border-top: 1px solid #eaeaea;
+  margin: 16px 0;
+}
+
+.summary-note {
+  font-size: 14px;
+  color: #585f66;
+  margin-top: 16px;
+}
+
+@media (max-width: 600px) {
+  .summary-metric {
+    display: block;
+    width: 100%;
+  }
+}
+
+{% endblock %}
+
+{% block content %}
+
+{{ greeting(user) }}
+
+<p>
+  Your watchlist has been updated based on the latest market data.
+</p>
+
+<div class="text-center my-3">
+  <a href="{{ url_for('watchlist.alerts') }}" class="btn">
+    View Full Watchlist Alerts
+  </a>
+</div>
+
+<hr class="summary-divider" />
+
+<h3 class="fw-semibold">Daily Summary</h3>
+
+{% for folder in email_data %}
+  <div class="folder-summary">
+    <div class="folder-title">
+      {{ folder.folder_order }}) {{ folder.folder_name }}
+    </div>
+
+    <table class="summary-table" role="presentation">
+      <tr>
+        <td class="summary-metric">
+          - Folder alerts:
+          <strong>{{ folder.folder_alert_count }}</strong>
+        </td>
+        <td class="summary-metric">
+          - Stocks matching all folder alerts:
+          <strong>{{ folder.stocks_matching_all_folder_alerts }}</strong>
+        </td>
+      </tr>
+      <tr>
+        <td class="summary-metric">
+          - Stocks with alerts:
+          <strong>{{ folder.stocks_with_item_alerts }}</strong>
+        </td>
+        <td class="summary-metric">
+          - Stocks triggered today:
+          <strong>{{ folder.stocks_with_triggered_item_alerts }}</strong>
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  <hr class="summary-divider" />
+{% endfor %}
+
+<p class="summary-note">
+  Visit your watchlist to see more details.
+</p>
+
+{% endblock %}

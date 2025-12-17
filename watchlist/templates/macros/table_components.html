@@ -1,14 +1,12 @@
 {% from "macros/popovers.html" import dma_200_diff_popover %}
+{% from "macros/stock_attributes.html" import stock_todays_change, stock_dma_200_perc_diff %}
 
-{% macro folder_table_header(folder_id, label, attribute_data, folder_sort_by_attribute, folder_sort_by_order) %}
+{% macro watchlist_folder_table_header(folder_id, attribute_data, folder_sort_by_attribute, folder_sort_by_order) %}
 
 <th scope="col" class="align-middle">
   <div class="d-flex align-items-center justify-content-between">
     <span class="fw-semibold">
-      {{ label }}
-      {% if attribute_data.attribute.value == FolderAttribute.DMA_200_PERC_DIFF %}
-        {{ dma_200_diff_popover() }}
-      {% endif %}
+      {{ table_header_label(attribute_data.attribute, FolderAttribute) }}
     </span>
     {% if attribute_data.attribute.value != FolderAttribute.NAME %}
       <!-- Filter Button -->
@@ -60,4 +58,41 @@
   </div>
 </th>
 
+{% endmacro %}
+
+{% macro table_header(text) %}
+  <th scope="col" class="align-middle fw-semibold">
+    {{ text }}
+  </th>
+{% endmacro %}
+
+{% macro table_header_label(attribute, AttributeType) %}
+  {{ attribute.label }}
+  {% if attribute.value == AttributeType.DMA_200_PERC_DIFF %}
+    {{ dma_200_diff_popover() }}
+  {% endif %}
+{% endmacro %}
+
+{% macro table_data(attribute, stock, AttributeType) %}
+  {% if attribute.value == AttributeType.TODAYS_CHANGE_PERC %}
+      <td>
+        {{ stock_todays_change(stock) }}
+      </td>
+  {% elif attribute.value == AttributeType.DMA_200_PERC_DIFF %}
+      {{ stock_dma_200_perc_diff(stock) }}
+  {% else %}
+      {% if attribute.type == "currency" %}
+          <td>{{ stock[attribute.value] | currency }}</td>
+      {% elif attribute.type == "percent" %}
+          <td>{{ stock[attribute.value] | percent }}</td>
+      {% else %}
+          <td>{{ stock[attribute.value] | display }}</td>
+      {% endif %}
+  {% endif %}
+{% endmacro %}
+
+{% macro table_data_row_number(index) %}
+  <th scope="row" class="fw-semibold">
+    {{ index }}
+  </th>
 {% endmacro %}

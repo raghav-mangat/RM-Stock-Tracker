@@ -62,15 +62,21 @@
 
             <a class="nav-link {% if request.endpoint == 'all_stocks' or request.endpoint == 'show_stock' %}active{% endif %}"
                href="{{ url_for('all_stocks') }}"
-               {% if request.endpoint == 'all_stocks' or request.endpoint == 'show_stock' %}aria-current="page"{% endif %}>Stocks</a>
+               {% if request.endpoint == 'all_stocks' or request.endpoint == 'show_stock' %}aria-current="page"{% endif %}>
+              Stocks
+            </a>
 
             <a class="nav-link {% if request.endpoint == 'all_indices' or request.endpoint == 'show_index' %}active{% endif %}"
                href="{{ url_for('all_indices') }}"
-               {% if request.endpoint == 'all_indices' or request.endpoint == 'show_index' %}aria-current="page"{% endif %}>Indices</a>
+               {% if request.endpoint == 'all_indices' or request.endpoint == 'show_index' %}aria-current="page"{% endif %}>
+              Indices
+            </a>
 
-            <a class="nav-link {% if request.endpoint == 'watchlist.index' %}active{% endif %}"
+            <a class="nav-link {% if request.endpoint == 'watchlist.index' or request.endpoint == 'watchlist.alerts' %}active{% endif %}"
                href="{{ url_for('watchlist.index') }}"
-               {% if request.endpoint == 'watchlist.index' %}aria-current="page"{% endif %}>Watchlist</a>
+               {% if request.endpoint == 'watchlist.index' or request.endpoint == 'watchlist.alerts' %}aria-current="page"{% endif %}>
+              Watchlist
+            </a>
           </div>
 
           <!-- Right side auth buttons -->

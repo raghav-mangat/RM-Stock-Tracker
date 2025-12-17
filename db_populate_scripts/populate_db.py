@@ -10,9 +10,10 @@ from models.database import db, Stock, Index, IndexHolding, StockMaster, StockMi
 from data_collectors.index_data import all_indices, get_index_info, fetch_index_data
 from data_collectors.stock_data import fetch_all_stocks_data, fetch_stock_data, fetch_chart_data, DB_TIMEFRAMES
 from utils.datetime_utils import get_current_et, format_et_datetime, format_date
-from utils.db_queries.all_stocks import get_top_stocks
+from utils.db_queries.all_stocks import get_top_stocks_categories, db_get_top_stocks_data
 from pathlib import Path
 import json
+from email_scripts.send_watchlist_alerts import send_watchlist_alert_emails
 
 # -------- Stage all new data --------
 stocks_cache = {}  # ticker -> Stock object
@@ -145,19 +146,19 @@ def populate_db():
             raise
 
         print("Fetching Top Stocks data for updated database...")
-        top_stocks = get_top_stocks()
 
         # Clearing the collected data to collect data for top stocks
         new_stocks.clear()
         for data_list in new_chart_data.values():
             data_list.clear()
 
-        for top_stocks_category in top_stocks.values():
-            for category_stocks in top_stocks_category.get("category").values():
-                for stock in category_stocks:
+        for category in get_top_stocks_categories().keys():
+            for stocks_type in ["gainers", "losers", "top_traded"]:
+                for stock in db_get_top_stocks_data(category, stocks_type):
                     ticker = stock.ticker
                     if ticker:
                         get_or_fetch_stock(ticker, now_date)
+
         print("Fetched Top Stocks data for updated database!")
 
         # Insert Top Stocks and their chart data
@@ -170,7 +171,7 @@ def populate_db():
         print("Stored Top Stocks data in the database!")
 
         db.session.close()
-        print("\nDatabase Population Completed!")
+        print("\nDatabase Population Completed!\n")
 
 def save_populate_db_info(now):
     # Define file path
@@ -209,6 +210,9 @@ def main():
         else:
             print(f"Market status was {market_status} - proceeding with DB population...")
             populate_db()
+
+            # Send watchlist alert emails to users after DB is populated
+            send_watchlist_alert_emails()
     else:
         print("Market status file missing - cannot determine whether to proceed with DB population!")
 
