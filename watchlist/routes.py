@@ -6,7 +6,7 @@ from .services import Validators, get_alerts
 from utils.populate_db_info import db_last_updated
 from utils.db_queries.watchlist import *
 
-@watchlist_bp.route('/', methods=["GET"])
+@watchlist_bp.route('', methods=["GET"])
 def index():
     # Load last updated timestamp of populate db
     last_updated = db_last_updated()
@@ -22,6 +22,21 @@ def index():
         FolderAttribute=FolderAttribute,
         AlertAttribute=AlertAttribute,
         OrderBy=OrderBy,
+        last_updated=last_updated
+    )
+
+@watchlist_bp.route("/alerts", methods=["GET"])
+@login_required
+def alerts():
+    # Load last updated timestamp of populate db
+    last_updated = db_last_updated()
+
+    watchlist_alert_data = db_get_watchlist_alert_data(current_user)
+
+    return render_template(
+        "watchlist_alerts.html",
+        watchlist_alert_data=watchlist_alert_data,
+        AlertAttribute=AlertAttribute,
         last_updated=last_updated
     )
 
@@ -147,14 +162,14 @@ def remove_item(folder_id, ticker):
 def update_folder_alerts(folder_id):
     folder_name = request.form.get("folder_name")
 
-    alerts = get_alerts(request)
-    message = Validators.validate_alerts(alerts)
+    request_alerts = get_alerts(request)
+    message = Validators.validate_alerts(request_alerts)
 
     if message:
         flash(message, "warning")
     else:
         try:
-            db_update_folder_alerts(folder_id, alerts, current_user)
+            db_update_folder_alerts(folder_id, request_alerts, current_user)
         except NotFoundError:
             flash("Folder not found.", "danger")
         except ForbiddenError:
@@ -170,14 +185,14 @@ def update_item_alerts(item_id):
     ticker = request.form.get("ticker")
     folder_name = request.form.get("folder_name")
 
-    alerts = get_alerts(request)
-    message = Validators.validate_alerts(alerts)
+    request_alerts = get_alerts(request)
+    message = Validators.validate_alerts(request_alerts)
 
     if message:
         flash(message, "warning")
     else:
         try:
-            db_update_item_alerts(item_id, alerts, current_user)
+            db_update_item_alerts(item_id, request_alerts, current_user)
         except NotFoundError:
             flash("Stock not found.", "danger")
         except ForbiddenError:

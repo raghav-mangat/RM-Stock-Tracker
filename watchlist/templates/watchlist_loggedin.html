@@ -1,9 +1,10 @@
 {% from "macros/jumbotron.html" import jumbotron %}
-{% from "macros/stock_attributes.html" import stock_todays_change, stock_dma_200_perc_diff %}
 {% from "macros/search_bar.html" import search_bar %}
 {% from "macros/watchlist_forms.html" import add_folder_form %}
 {% from "macros/alert_offcanvas.html" import alert_offcanvas %}
-{% from "macros/folder_table_header.html" import folder_table_header with context %}
+{% from "macros/watchlist_components.html" import ticker_link, no_data_message_big %}
+{% from "macros/table_components.html" import watchlist_folder_table_header with context %}
+{% from "macros/table_components.html" import table_header, table_data, table_data_row_number %}
 
 {% extends "base.html" %}
 
@@ -22,8 +23,18 @@
 {% set heading = "Your Watchlist, " ~ current_user | display_name %}
 {% set description = "Here’s where you keep track of your favourite stocks. Group them into folders, and quickly check their performance whenever you log in." %}
 {% set last_updated = last_updated | display %}
-{{ jumbotron(heading, description, last_updated) }}
 
+{% set watchlist_alerts_button %}
+    <a href="{{ url_for('watchlist.alerts') }}"
+       class="btn btn-outline-primary">
+        <span class="d-flex align-items-center gap-2">
+            <i class="bi bi-bell"></i>
+            Watchlist Alerts
+        </span>
+    </a>
+{% endset %}
+
+{{ jumbotron(heading, description, last_updated, watchlist_alerts_button) }}
 
 <section class="container my-4">
 
@@ -200,48 +211,31 @@
               <table class="table table-bordered table-hover align-middle">
                 <thead class="table-light">
                   <tr>
-                    <th scope="col" class="align-middle">#</th>
-                    <th scope="col" class="align-middle">Ticker</th>
+                    {{ table_header("#") }}
+                    {{ table_header("Ticker") }}
 
                     {% for attribute_data in folder_data.folder_attributes_data %}
-                        {{ folder_table_header(
+                        {{ watchlist_folder_table_header(
                             folder_id = folder_id,
-                            label = attribute_data.attribute.label,
                             attribute_data = attribute_data,
                             folder_sort_by_attribute = folder_data.folder_sort_by_attribute,
                             folder_sort_by_order = folder_data.folder_sort_by_order,
                         ) }}
                     {% endfor %}
 
-                    <th scope="col" class="align-middle">Actions</th>
+                    {{ table_header("Actions") }}
                   </tr>
                 </thead>
                 <tbody>
                   {% for item_id, item_data in folder_data.folder_items.items() %}
                       {% set stock = item_data["stock_data"] %}
                       <tr>
-                          <th scope="row">{{ loop.index }}</th>
+                          {{ table_data_row_number(loop.index) }}
                           <td>
-                              <a href="{{ url_for('show_stock', ticker=stock.ticker) }}" class="fw-semibold text-primary">
-                                  {{ stock.ticker | display }}
-                              </a>
+                            {{ ticker_link(stock) }}
                           </td>
                           {% for attribute in folder_data.folder_attributes_list %}
-                            {% if attribute.value == FolderAttribute.TODAYS_CHANGE_PERC %}
-                                <td>
-                                  {{ stock_todays_change(stock) }}
-                                </td>
-                            {% elif attribute.value == FolderAttribute.DMA_200_PERC_DIFF %}
-                                {{ stock_dma_200_perc_diff(stock) }}
-                            {% else %}
-                                {% if attribute.type == "currency" %}
-                                    <td>{{ stock[attribute.value] | currency }}</td>
-                                {% elif attribute.type == "percent" %}
-                                    <td>{{ stock[attribute.value] | percent }}</td>
-                                {% else %}
-                                    <td>{{ stock[attribute.value] | display }}</td>
-                                {% endif %}
-                            {% endif %}
+                            {{ table_data(attribute, stock, FolderAttribute) }}
                           {% endfor %}
                           <td>
                               <div class="d-flex gap-1 mx-1">
@@ -295,10 +289,12 @@
       </div>
     {% else %}
       <!-- Empty State when no folders -->
-      <div class="alert alert-info text-center shadow-sm py-4">
-        <h5 class="fw-bold mb-2">No folders created yet</h5>
-        <p class="mb-0">Start by creating a folder to organize your watchlist.</p>
-      </div>
+      {{
+        no_data_message_big(
+          heading="No folders created yet",
+          text="Start by creating a folder to organize your watchlist."
+        )
+      }}
     {% endfor %}
 
     <!-- Add Stock Modal -->
