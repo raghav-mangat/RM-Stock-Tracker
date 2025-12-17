@@ -4,6 +4,7 @@
 
 {% block style %}
 
+/* Summary */
 .folder-summary {
   margin-bottom: 16px;
 }
@@ -30,10 +31,21 @@
   margin: 16px 0;
 }
 
+/* Notes */
 .summary-note {
   font-size: 14px;
   color: #585f66;
-  margin-top: 16px;
+  margin-top: 12px;
+}
+
+.summary-link {
+  color: #0d6efd;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.summary-link:hover {
+  text-decoration: underline;
 }
 
 @media (max-width: 600px) {
@@ -54,7 +66,7 @@
 </p>
 
 <div class="text-center my-3">
-  <a href="{{ url_for('watchlist.alerts') }}" class="btn">
+  <a href="{{ url_for('watchlist.alerts', _external=True) }}" class="btn">
     View Full Watchlist Alerts
   </a>
 </div>
@@ -72,21 +84,21 @@
     <table class="summary-table" role="presentation">
       <tr>
         <td class="summary-metric">
-          - Folder alerts:
+          Folder alerts:
           <strong>{{ folder.folder_alert_count }}</strong>
         </td>
         <td class="summary-metric">
-          - Stocks matching all folder alerts:
+          Stocks matching all folder alerts:
           <strong>{{ folder.stocks_matching_all_folder_alerts }}</strong>
         </td>
       </tr>
       <tr>
         <td class="summary-metric">
-          - Stocks with alerts:
+          Stocks with alerts:
           <strong>{{ folder.stocks_with_item_alerts }}</strong>
         </td>
         <td class="summary-metric">
-          - Stocks triggered today:
+          Stocks triggered today:
           <strong>{{ folder.stocks_with_triggered_item_alerts }}</strong>
         </td>
       </tr>
@@ -97,7 +109,15 @@
 {% endfor %}
 
 <p class="summary-note">
-  Visit your watchlist to see more details.
+  Visit your watchlist to explore detailed alerts and individual stock breakdowns.
+</p>
+
+<p class="summary-note">
+  You are receiving this email because watchlist email alerts are enabled.
+  <br />
+  <a href="{{ url_for('auth.settings', _external=True) }}" class="summary-link">
+    Manage email preferences
+  </a>
 </p>
 
 {% endblock %}

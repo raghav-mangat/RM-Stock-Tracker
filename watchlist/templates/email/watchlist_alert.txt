@@ -9,7 +9,7 @@
 Your watchlist has been updated based on the latest market data.
 
 View Full Watchlist Alerts:
-{{ url_for('watchlist.index') }}
+{{ url_for('watchlist.alerts', _external=True) }}
 
 -----------------------------------
 
@@ -27,6 +27,10 @@ Daily Summary
 
 -----------------------------------
 
-Visit your watchlist to see more details.
-{% endblock %}
+Visit your watchlist to explore detailed alerts and individual stock breakdowns.
 
+You are receiving this email because watchlist email alerts are enabled.
+Manage email preferences:
+{{ url_for('auth.settings', _external=True) }}
+
+{% endblock %}
