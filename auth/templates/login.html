@@ -15,7 +15,9 @@
 {{ google_btn() }}
 <p class="my-3 text-center text-muted">or</p>
 
-<form method="POST" novalidate>
+<form method="POST"
+      action="{{ url_for('auth.login', next=request.args.get('next')) }}"
+      novalidate>
   {{ form.hidden_tag() }}
 
   {{ form_field(field=form.email, placeholder="Enter your email") }}

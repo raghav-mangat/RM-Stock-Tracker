@@ -6,6 +6,7 @@ import secrets
 import time
 from models.database import User, SignupSource
 from .emails import AuthEmail
+from .services import RedirectService
 from .forms import (
     LoginForm, SignupForm, ResetPasswordRequestForm, ResetPasswordForm, ProfileSettingsForm,
     DeleteAccountRequestForm, DeleteAccountForm, SettingsResetPasswordRequestForm, UnlinkGoogleAccountForm,
@@ -41,19 +42,25 @@ def signup():
 def login():
     if current_user.is_authenticated:
         return redirect(url_for("watchlist.index"))
+
     form = LoginForm()
+
     if form.validate_on_submit():
         user = get_user_by_email(form.email.data)
+
         if not user.is_verified:
             AuthEmail.verify_email(user)
             flash("Account not verified. We have sent a verification email, please check your inbox (and spam).",
                   "warning")
             return redirect(url_for('auth.login'))
+
         login_user(user)
         update_user_last_login_at(user)
         session["security_timestamp"] = user.security_timestamp
+
         flash("Logged in successfully!", "success")
-        return redirect(url_for('watchlist.index'))
+
+        return redirect(RedirectService.get_post_login_redirect())
 
     return render_template("login.html", form=form)
 
@@ -310,6 +317,11 @@ def google_signin():
     session["oauth_state"] = state
     session["oauth_nonce"] = nonce
 
+    # Persist next url
+    next_url = request.args.get("next")
+    if next_url and RedirectService.is_safe_redirect_url(next_url):
+        session["oauth_next"] = next_url
+
     redirect_uri = url_for("auth.google_signin_callback", _external=True)
     return oauth.google.authorize_redirect(redirect_uri, state=state, nonce=nonce)
 
@@ -387,10 +399,17 @@ def google_signin_callback():
         )
         AuthEmail.google_signin_success(user)
         flash("Signed in with Google. Account created successfully.", "success")
+        return redirect(url_for("watchlist.index"))
 
     login_user(user)
     update_user_last_login_at(user)
     session["security_timestamp"] = user.security_timestamp
+
+    # Restore next url safely
+    next_url = session.pop("oauth_next", None)
+    if next_url and RedirectService.is_safe_redirect_url(next_url):
+        return redirect(next_url)
+
     return redirect(url_for("watchlist.index"))
 
 @auth_bp.route("/google/link")
