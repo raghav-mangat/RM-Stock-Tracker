@@ -49,9 +49,17 @@ def login():
         user = get_user_by_email(form.email.data)
 
         if not user.is_verified:
-            AuthEmail.verify_email(user)
-            flash("Account not verified. We have sent a verification email, please check your inbox (and spam).",
-                  "warning")
+            email_sent = AuthEmail.send_rate_limited_email(
+                user=user,
+                email_func=AuthEmail.verify_email
+            )
+            if email_sent:
+                flash("Account not verified. We have sent a verification email, please check your inbox (and spam).",
+                      "warning")
+            else:
+                flash("Account not verified. Please check your inbox (and spam) for an account verification email.",
+                      "warning")
+
             return redirect(url_for('auth.login'))
 
         login_user(user)
@@ -150,7 +158,14 @@ def reset_password_request():
     if form.validate_on_submit():
         user = get_user_by_email(form.email.data)
         if user:
-            AuthEmail.reset_password(user)
+            email_sent = AuthEmail.send_rate_limited_email(
+                    user=user,
+                    email_func=AuthEmail.reset_password
+            )
+            if not email_sent:
+                flash("Please wait before requesting another password reset email.", "warning")
+                return redirect(url_for("auth.login"))
+
         flash("Check your email for the instructions to reset your password.", "success")
         return redirect(url_for("auth.login"))
     return render_template("reset_password_request.html", form=form)
@@ -218,7 +233,14 @@ def settings_reset_password_request():
     if form.validate_on_submit():
         user = get_user_by_email(form.email.data)
         if user:
-            AuthEmail.settings_reset_password(user)
+            email_sent = AuthEmail.send_rate_limited_email(
+                    user=user,
+                    email_func=AuthEmail.settings_reset_password
+            )
+            if not email_sent:
+                flash("Please wait before requesting another password reset email.", "warning")
+                return redirect(url_for("auth.settings_account"))
+
         flash("Check your email for the instructions to reset your password.", "success")
     return redirect(url_for("auth.settings_account"))
 
@@ -285,8 +307,15 @@ def delete_account_request():
             return redirect(url_for("auth.settings_account"))
 
     # If no password exists, skip password check
-    AuthEmail.delete_account(current_user)
-    flash("Check your email for the instructions to delete your account.", "success")
+    email_sent = AuthEmail.send_rate_limited_email(
+        user=current_user,
+        email_func=AuthEmail.delete_account
+    )
+    if email_sent:
+        flash("Check your email for the instructions to delete your account.", "success")
+    else:
+        flash("Please wait before requesting another account deletion email.", "warning")
+
     return redirect(url_for("auth.settings_account"))
 
 @auth_bp.route("/delete_account/<string:token>", methods=["GET", "POST"])

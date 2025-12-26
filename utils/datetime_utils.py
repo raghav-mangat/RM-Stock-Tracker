@@ -1,5 +1,5 @@
 import pytz
-from datetime import datetime
+from datetime import datetime, UTC
 
 DATETIME_FORMAT = "%m-%d %I:%M %p"
 DATE_FORMAT = "%Y-%m-%d"
@@ -33,6 +33,13 @@ def polygon_timestamp_et(timestamp, timestamp_type):
 def get_current_et():
     eastern = pytz.timezone("US/Eastern")
     return datetime.now(eastern)
+
+def convert_to_utc_tz_aware(utc_dt):
+    """
+    Database stores TZ naive timestamp, so convert it to TZ aware,
+    since we know it is a UTC timestamp
+    """
+    return utc_dt.replace(tzinfo=UTC)
 
 def format_et_datetime(et_datetime):
     """

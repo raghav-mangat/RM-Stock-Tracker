@@ -3,7 +3,8 @@ import unicodedata
 from time import time
 from datetime import datetime, timedelta, UTC
 from models.database import db, User
-from utils.constants import USERNAME_ALLOWED_CHARS_REGEX, MIN_USERNAME_LEN, MAX_USERNAME_LEN, USER_INACTIVE_DAYS_LIMIT
+from utils.datetime_utils import convert_to_utc_tz_aware
+from utils.constants import USERNAME_ALLOWED_CHARS_REGEX, MIN_USERNAME_LEN, MAX_USERNAME_LEN, USER_INACTIVE_DAYS_LIMIT, USER_EMAIL_COOLDOWN_SECONDS
 
 def add_new_user(signup_source, email, first_name="", last_name="", username=None, password=None, google_id=None, is_verified=False):
     if not username:
@@ -87,9 +88,7 @@ def get_all_users():
     return db.session.execute(db.select(User)).scalars().all()
 
 def is_user_active(user):
-    # Database stores TZ naive timestamp, so convert it to TZ aware,
-    # since we know it is a UTC timestamp
-    user_last_login = user.last_login_at.replace(tzinfo=UTC)
+    user_last_login = convert_to_utc_tz_aware(user.last_login_at)
 
     # Time beyond which we consider the user as being inactive
     cutoff = datetime.now(UTC) - timedelta(days=USER_INACTIVE_DAYS_LIMIT)
@@ -102,6 +101,17 @@ def is_user_email_alert_on(user):
 def user_has_watchlist_alerts(user):
     # Check if the user has any watchlist alerts
     return bool(user.watchlist_alerts)
+
+def can_send_user_email(user):
+    result = True
+    if user.last_email_sent_at:
+        last_email_sent_at = convert_to_utc_tz_aware(user.last_email_sent_at)
+        result = datetime.now(UTC) - last_email_sent_at > timedelta(seconds=USER_EMAIL_COOLDOWN_SECONDS)
+    return result
+
+def update_user_last_email_sent_at(user):
+    user.last_email_sent_at = datetime.now(UTC)
+    db.session.commit()
 
 def create_username_from_email(email):
     base = email.split("@")[0].lower()
