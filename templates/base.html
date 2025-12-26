@@ -82,7 +82,7 @@
           <!-- Right side auth buttons -->
           <div class="ms-auto d-flex">
             {% if current_user.is_authenticated %}
-              <a class="btn btn-outline-primary ms-0" href="{{ url_for('auth.settings') }}" role="button">Settings</a>
+              <a class="btn btn-outline-primary ms-0" href="{{ url_for('auth.settings_profile') }}" role="button">Settings</a>
               <button type="button" class="btn btn-primary ms-2" data-bs-toggle="modal" data-bs-target="#logOutModal">
                 Log Out
               </button>

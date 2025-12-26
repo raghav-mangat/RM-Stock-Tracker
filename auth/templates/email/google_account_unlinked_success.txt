@@ -11,6 +11,6 @@ Your Google account has been unlinked from your RM Stock Tracker account.
 You will now need to log in using your email and password.
 
 If you did not make this change, please secure your account immediately:
-{{ url_for('auth.reset_password_request', _external=True) }}
+{{ url_for('auth.settings_account', _external=True) }}
 
 {% endblock %}

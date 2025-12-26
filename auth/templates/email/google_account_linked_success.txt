@@ -11,6 +11,6 @@ Your Google account has been successfully linked to your RM Stock Tracker accoun
 You can now sign in using either Google or your email and password.
 
 If you did not perform this action, we recommend reviewing your account security:
-{{ url_for('auth.settings', _external=True) }}
+{{ url_for('auth.settings_account', _external=True) }}
 
 {% endblock %}

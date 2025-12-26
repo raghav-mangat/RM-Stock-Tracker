@@ -74,22 +74,15 @@ def logout():
 
     return redirect(url_for('home'))
 
-@auth_bp.route("/settings", methods=["GET", "POST"])
+@auth_bp.route("/settings")
 @login_required
 def settings():
+    return redirect(url_for("auth.settings_profile"))
+
+@auth_bp.route("/settings/profile", methods=["GET", "POST"])
+@login_required
+def settings_profile():
     profile_settings_form = ProfileSettingsForm(obj=current_user)
-
-    settings_toggle_email_alerts_form = SettingsToggleEmailAlertsForm()
-
-    unlink_google_account_form = UnlinkGoogleAccountForm()
-
-    settings_reset_password_request_form = SettingsResetPasswordRequestForm()
-    settings_reset_password_request_form.email.data = current_user.email
-
-    settings_remove_password_form = SettingsRemovePasswordForm()
-
-    delete_account_request_form = DeleteAccountRequestForm()
-    delete_account_request_form.email.data = current_user.email
 
     if profile_settings_form.validate_on_submit():
         update_user_profile(
@@ -99,7 +92,7 @@ def settings():
             username=profile_settings_form.username.data
         )
         flash("Profile updated successfully.", "success")
-        return redirect(url_for("auth.settings"))
+        return redirect(url_for("auth.settings_profile"))
     elif request.method == "POST":
         flash(
             "Could not update your profile. Please review the highlighted fields and try again.",
@@ -107,13 +100,26 @@ def settings():
         )
 
     return render_template(
-        "settings.html",
+        "settings/profile.html",
+        active_tab="profile",
         profile_settings_form=profile_settings_form,
-        settings_toggle_email_alerts_form=settings_toggle_email_alerts_form,
-        unlink_google_account_form=unlink_google_account_form,
-        settings_reset_password_request_form=settings_reset_password_request_form,
-        settings_remove_password_form=settings_remove_password_form,
-        delete_account_request_form=delete_account_request_form
+    )
+
+@auth_bp.route("/settings/account", methods=["GET"])
+@login_required
+def settings_account():
+    return render_template(
+        "settings/account.html",
+        active_tab="account",
+        settings_toggle_email_alerts_form=SettingsToggleEmailAlertsForm(),
+        unlink_google_account_form=UnlinkGoogleAccountForm(),
+        settings_reset_password_request_form=SettingsResetPasswordRequestForm(
+            email=current_user.email
+        ),
+        settings_remove_password_form=SettingsRemovePasswordForm(),
+        delete_account_request_form=DeleteAccountRequestForm(
+            email=current_user.email
+        ),
     )
 
 @auth_bp.route("/verify_email/<string:token>", methods=["GET"])
@@ -163,7 +169,7 @@ def settings_toggle_email_alerts():
     else:
         flash("Invalid request.", "danger")
 
-    return redirect(url_for("auth.settings"))
+    return redirect(url_for("auth.settings_account"))
 
 @auth_bp.route("/settings/set_password", methods=["GET", "POST"])
 @login_required
@@ -171,7 +177,7 @@ def settings_set_password():
     # Only for users who do not already have a password
     if current_user.password_hash:
         flash("You already have a password. Use Reset Password instead.", "warning")
-        return redirect(url_for("auth.settings"))
+        return redirect(url_for("auth.settings_account"))
 
     reauth_verified = session.get("reauth_verified")
     reauth_time = session.get("reauth_verified_at", 0)
@@ -185,7 +191,7 @@ def settings_set_password():
     if request.method == "POST":
         if reauth_expired:
             flash("Your verification expired. Please try again.", "warning")
-            return redirect(url_for("auth.settings"))
+            return redirect(url_for("auth.settings_account"))
         if form.validate_on_submit():
             # Consume reauth proof
             session.pop("reauth_verified", None)
@@ -214,7 +220,7 @@ def settings_reset_password_request():
         if user:
             AuthEmail.settings_reset_password(user)
         flash("Check your email for the instructions to reset your password.", "success")
-    return redirect(url_for("auth.settings"))
+    return redirect(url_for("auth.settings_account"))
 
 @auth_bp.route("/settings_remove_password", methods=["POST"])
 @login_required
@@ -234,7 +240,7 @@ def settings_remove_password():
         AuthEmail.settings_password_removed_success(current_user)
         flash("Your password has been removed. Please log in again.", "success")
         return redirect(url_for("auth.logout"))
-    return redirect(url_for("auth.settings"))
+    return redirect(url_for("auth.settings_account"))
 
 @auth_bp.route("/reset_password/<string:token>", methods=["GET", "POST"])
 def reset_password(token):
@@ -266,22 +272,22 @@ def delete_account_request():
     email = form.email.data
     if not email or email != current_user.email:
         flash("Incorrect email.", "danger")
-        return redirect(url_for("auth.settings"))
+        return redirect(url_for("auth.settings_account"))
 
     if current_user.password_hash:
         # User must enter password
         if not form.validate_on_submit():
             flash("Please enter your password.", "warning")
-            return redirect(url_for("auth.settings"))
+            return redirect(url_for("auth.settings_account"))
 
         if not current_user.verify_password(form.password.data):
             flash("Incorrect password.", "warning")
-            return redirect(url_for("auth.settings"))
+            return redirect(url_for("auth.settings_account"))
 
     # If no password exists, skip password check
     AuthEmail.delete_account(current_user)
     flash("Check your email for the instructions to delete your account.", "success")
-    return redirect(url_for("auth.settings"))
+    return redirect(url_for("auth.settings_account"))
 
 @auth_bp.route("/delete_account/<string:token>", methods=["GET", "POST"])
 def delete_account(token):
@@ -440,14 +446,14 @@ def google_link_callback():
     state_returned = request.args.get("state")
     if not state_in_session or not state_returned or state_in_session != state_returned:
         flash("Something went wrong while linking your Google account. Please try again.", "danger")
-        return redirect(url_for("auth.settings"))
+        return redirect(url_for("auth.settings_account"))
 
     try:
         # Exchanges code for tokens
         token = oauth.google.authorize_access_token()
     except OAuthError:
         flash("Authentication failed. Try again.", "danger")
-        return redirect(url_for("auth.settings"))
+        return redirect(url_for("auth.settings_account"))
 
     # Parse and verify id_token (Authlib will validate the token)
     try:
@@ -457,7 +463,7 @@ def google_link_callback():
         )
     except Exception:
         flash("Failed to fetch account information from Google.", "danger")
-        return redirect(url_for("auth.settings"))
+        return redirect(url_for("auth.settings_account"))
 
     # Extract important claims
     google_id = userinfo.get("sub")
@@ -466,22 +472,22 @@ def google_link_callback():
 
     if not email or not google_id:
         flash("Google did not return required information", "danger")
-        return redirect(url_for("auth.settings"))
+        return redirect(url_for("auth.settings_account"))
 
     # Emails must match
     if email != current_user.email:
         flash("The Google account email must match your account email.", "warning")
-        return redirect(url_for("auth.settings"))
+        return redirect(url_for("auth.settings_account"))
 
     # Email must be verified
     if not email_verified:
         flash("Please verify your Google email before linking your account.", "warning")
-        return redirect(url_for("auth.settings"))
+        return redirect(url_for("auth.settings_account"))
 
     existing = get_user_by_google_id(google_id)
     if existing and existing.id != current_user.id:
         flash("This Google account is already linked to another user.", "danger")
-        return redirect(url_for("auth.settings"))
+        return redirect(url_for("auth.settings_account"))
 
     add_user_google_id(current_user, google_id)
     AuthEmail.google_account_linked_success(current_user)
@@ -504,7 +510,7 @@ def google_unlink():
         AuthEmail.google_account_unlinked_success(current_user)
         flash("Your Google account has been unlinked. Please log in again.", "success")
         return redirect(url_for("auth.logout"))
-    return redirect(url_for("auth.settings"))
+    return redirect(url_for("auth.settings_account"))
 
 @auth_bp.route("/google/reauth")
 @login_required
@@ -536,14 +542,14 @@ def google_reauth_callback():
     state_returned = request.args.get("state")
     if not state_in_session or not state_returned or state_in_session != state_returned:
         flash("Re-authentication failed. Please try again.", "danger")
-        return redirect(url_for("auth.settings"))
+        return redirect(url_for("auth.settings_account"))
 
     try:
         # Exchange code for tokens
         token = oauth.google.authorize_access_token()
     except OAuthError:
         flash("Authentication failed. Please try again.", "danger")
-        return redirect(url_for("auth.settings"))
+        return redirect(url_for("auth.settings_account"))
 
     # Parse and verify id_token (Authlib will validate the token)
     try:
@@ -553,7 +559,7 @@ def google_reauth_callback():
         )
     except Exception:
         flash("Failed to fetch account information from Google.", "danger")
-        return redirect(url_for("auth.settings"))
+        return redirect(url_for("auth.settings_account"))
 
     # Extract important claims
     google_id = userinfo.get("sub")
@@ -562,22 +568,22 @@ def google_reauth_callback():
 
     if not email or not google_id:
         flash("Google did not return required information", "danger")
-        return redirect(url_for("auth.settings"))
+        return redirect(url_for("auth.settings_account"))
 
     # Emails must match
     if email != current_user.email:
         flash("The Google account email must match your account email.", "warning")
-        return redirect(url_for("auth.settings"))
+        return redirect(url_for("auth.settings_account"))
 
     # Email must be verified
     if not email_verified:
         flash("Please verify your Google email before re-authenticating.", "warning")
-        return redirect(url_for("auth.settings"))
+        return redirect(url_for("auth.settings_account"))
 
     existing = get_user_by_google_id(google_id)
     if existing and existing.id != current_user.id:
         flash("This Google account is linked to another user.", "danger")
-        return redirect(url_for("auth.settings"))
+        return redirect(url_for("auth.settings_account"))
 
     # Redirect to the requested next
     next_url = session.pop("reauth_next", None)
@@ -589,4 +595,4 @@ def google_reauth_callback():
         return redirect(next_url)
     else:
         flash("Authentication failed. Please try again.", "danger")
-        return redirect(url_for("auth.settings"))
+        return redirect(url_for("auth.settings_account"))

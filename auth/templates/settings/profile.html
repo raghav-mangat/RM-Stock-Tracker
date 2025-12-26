@@ -1,0 +1,57 @@
+{% extends "settings/settings_base.html" %}
+
+{% block title %}
+  Profile Settings
+{% endblock %}
+
+{% block settings_content %}
+<div class="container">
+  <h2>
+    Profile Settings
+  </h2>
+
+  <div class="my-4 border-top"></div>
+
+  <form method="POST" id="profile-settings-form" novalidate>
+    {{ profile_settings_form.hidden_tag() }}
+
+    {{ settings_field(field=profile_settings_form.first_name, placeholder="Update your first name") }}
+    {{ settings_field(field=profile_settings_form.last_name, placeholder="Update your last name") }}
+    {{ settings_field(field=profile_settings_form.username, placeholder="Update your username") }}
+
+    <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#profileSettingsConfirmModal">
+      Update Profile
+    </button>
+  </form>
+</div>
+{% endblock %}
+
+
+{% block settings_modal %}
+<!-- Profile Settings Confirmation Modal -->
+<div class="modal fade" id="profileSettingsConfirmModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="profileSettingsConfirmModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Confirm Profile Update</h5>
+        <button type="button" class="btn-close modal-close-btn" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <div class="modal-body">
+        <p class="my-2">
+          Please confirm that you want to update your profile details.
+        </p>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          Cancel
+        </button>
+        <button type="button" id="profileSettingsConfirmModalBtn" class="btn btn-success">
+          Confirm
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

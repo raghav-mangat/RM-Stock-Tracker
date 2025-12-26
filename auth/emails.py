@@ -65,7 +65,7 @@ class AuthEmail(EmailService):
 
     @classmethod
     def delete_account(cls, user):
-        expires_in = 1200 # 20 minutes
+        expires_in = 1800 # 30 minutes
         token = user.get_token(token_type="delete_account", expires_in=expires_in)
         cls.send_email(
             subject="Delete Your Account - RM Stock Tracker",

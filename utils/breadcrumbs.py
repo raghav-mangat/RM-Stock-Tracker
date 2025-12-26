@@ -39,8 +39,13 @@ def generate_breadcrumbs():
     elif endpoint == "auth.login":
         breadcrumbs.append({'label': 'Log In', 'url': url_for(endpoint)})
 
-    elif endpoint == "auth.settings":
-        breadcrumbs.append({'label': 'Settings', 'url': url_for(endpoint)})
+    elif endpoint == "auth.settings_profile":
+        breadcrumbs.append({'label': 'Settings', 'url': url_for("auth.settings")})
+        breadcrumbs.append({'label': 'Profile', 'url': url_for(endpoint)})
+
+    elif endpoint == "auth.settings_account":
+        breadcrumbs.append({'label': 'Settings', 'url': url_for("auth.settings")})
+        breadcrumbs.append({'label': 'Account', 'url': url_for(endpoint)})
 
     elif endpoint == "auth.settings_set_password":
         breadcrumbs.append({'label': 'Settings', 'url': url_for("auth.settings")})
