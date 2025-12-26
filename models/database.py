@@ -371,6 +371,10 @@ class User(UserMixin, db.Model):
     last_login_at: Mapped[DateTime] = db.Column(
         db.DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
     )
+    last_email_sent_at: Mapped[Optional[DateTime]] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True
+    )
 
     # Session validation
     security_timestamp: Mapped[int] = mapped_column(
