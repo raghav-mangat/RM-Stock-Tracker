@@ -1,5 +1,5 @@
 from flask import render_template
-from utils.email_service import EmailService
+from utils.emails.email_service import EmailService
 
 class WatchlistEmail(EmailService):
 

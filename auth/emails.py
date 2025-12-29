@@ -1,19 +1,24 @@
 from flask import render_template
-from utils.email_service import EmailService
-from utils.db_queries.user_data import can_send_user_email, update_user_last_email_sent_at
+from utils.emails.email_service import EmailService
+from utils.emails.email_rate_limiter import EmailRateLimiter
 
 class AuthEmail(EmailService):
 
     @classmethod
-    def send_rate_limited_email(cls, user, email_func):
-        """
-        Sends an auth-related email with rate limiting.
-        """
-        result = can_send_user_email(user)
-        if result:
-            email_func(user)
-            update_user_last_email_sent_at(user)
-        return result
+    def send_rate_limited_email(cls, user, email_func, email_type):
+        allowed, ttl = EmailRateLimiter.can_send_email(user.id, email_type)
+
+        if not allowed:
+            return False, ttl
+
+        email_func(user)
+        EmailRateLimiter.mark_email_sent(
+            user.id,
+            email_type,
+            email_type.rate_limit
+        )
+
+        return True, 0
 
     @classmethod
     def verify_email(cls, user):

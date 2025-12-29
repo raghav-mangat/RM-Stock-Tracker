@@ -13,7 +13,7 @@ def send_email_task(
     app = get_app()
 
     with app.app_context():
-        from utils.email_service import EmailService
+        from utils.emails.email_service import EmailService
 
         EmailService.send_email(
             subject=subject,

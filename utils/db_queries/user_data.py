@@ -102,17 +102,6 @@ def user_has_watchlist_alerts(user):
     # Check if the user has any watchlist alerts
     return bool(user.watchlist_alerts)
 
-def can_send_user_email(user):
-    result = True
-    if user.last_email_sent_at:
-        last_email_sent_at = convert_to_utc_tz_aware(user.last_email_sent_at)
-        result = datetime.now(UTC) - last_email_sent_at > timedelta(seconds=USER_EMAIL_COOLDOWN_SECONDS)
-    return result
-
-def update_user_last_email_sent_at(user):
-    user.last_email_sent_at = datetime.now(UTC)
-    db.session.commit()
-
 def create_username_from_email(email):
     base = email.split("@")[0].lower()
 

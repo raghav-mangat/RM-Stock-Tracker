@@ -103,6 +103,7 @@ app.config["OAUTH"] = oauth
 redis_conn = Redis.from_url(os.getenv("REDIS_CONNECTION_URL"))
 email_high_queue = Queue("emails_high", connection=redis_conn) # High priority
 email_low_queue = Queue("emails_low", connection=redis_conn) # Low priority
+app.config["REDIS"] = redis_conn
 
 # Access Flask App
 def get_app():
