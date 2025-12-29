@@ -18,7 +18,7 @@ class AuthEmail(EmailService):
     @classmethod
     def verify_email(cls, user):
         token = user.get_token(token_type="verify_email")
-        cls.send_email(
+        EmailService.enqueue_auth_email(
             subject="Verify Your Email - RM Stock Tracker",
             recipients=[user.email],
             text_body=render_template(
@@ -37,7 +37,7 @@ class AuthEmail(EmailService):
     def reset_password(cls, user):
         expires_in = 1800 # 30 minutes
         token = user.get_token(token_type="reset_password", expires_in=expires_in)
-        cls.send_email(
+        EmailService.enqueue_auth_email(
             subject="Reset Your Password - RM Stock Tracker",
             recipients=[user.email],
             text_body=render_template(
@@ -58,7 +58,7 @@ class AuthEmail(EmailService):
     def settings_reset_password(cls, user):
         expires_in = 1800 # 30 minutes
         token = user.get_token(token_type="settings_reset_password", expires_in=expires_in)
-        cls.send_email(
+        EmailService.enqueue_auth_email(
             subject="Reset Your Password - RM Stock Tracker",
             recipients=[user.email],
             text_body=render_template(
@@ -79,7 +79,7 @@ class AuthEmail(EmailService):
     def delete_account(cls, user):
         expires_in = 1800 # 30 minutes
         token = user.get_token(token_type="delete_account", expires_in=expires_in)
-        cls.send_email(
+        EmailService.enqueue_auth_email(
             subject="Delete Your Account - RM Stock Tracker",
             recipients=[user.email],
             text_body=render_template(
@@ -98,7 +98,7 @@ class AuthEmail(EmailService):
 
     @classmethod
     def user_verification_success(cls, user):
-        cls.send_email(
+        EmailService.enqueue_auth_email(
             subject="Your Email Has Been Verified - RM Stock Tracker",
             recipients=[user.email],
             text_body=render_template(
@@ -113,7 +113,7 @@ class AuthEmail(EmailService):
 
     @classmethod
     def google_signin_success(cls, user):
-        cls.send_email(
+        EmailService.enqueue_auth_email(
             subject="You have Signed In With Google - RM Stock Tracker",
             recipients=[user.email],
             text_body=render_template(
@@ -128,7 +128,7 @@ class AuthEmail(EmailService):
 
     @classmethod
     def settings_password_set_success(cls, user):
-        cls.send_email(
+        EmailService.enqueue_auth_email(
             subject="Password Created for Your Account - RM Stock Tracker",
             recipients=[user.email],
             text_body=render_template(
@@ -143,7 +143,7 @@ class AuthEmail(EmailService):
 
     @classmethod
     def settings_password_removed_success(cls, user):
-        cls.send_email(
+        EmailService.enqueue_auth_email(
             subject="Password Removed from Your Account - RM Stock Tracker",
             recipients=[user.email],
             text_body=render_template(
@@ -158,7 +158,7 @@ class AuthEmail(EmailService):
 
     @classmethod
     def google_account_linked_success(cls, user):
-        cls.send_email(
+        EmailService.enqueue_auth_email(
             subject="Google Account Linked Successfully - RM Stock Tracker",
             recipients=[user.email],
             text_body=render_template(
@@ -173,7 +173,7 @@ class AuthEmail(EmailService):
 
     @classmethod
     def google_account_unlinked_success(cls, user):
-        cls.send_email(
+        EmailService.enqueue_auth_email(
             subject="Google Account Unlinked - RM Stock Tracker",
             recipients=[user.email],
             text_body=render_template(
@@ -188,7 +188,7 @@ class AuthEmail(EmailService):
 
     @classmethod
     def password_reset_success(cls, user):
-        cls.send_email(
+        EmailService.enqueue_auth_email(
             subject="Your Password Has Been Changed - RM Stock Tracker",
             recipients=[user.email],
             text_body=render_template(
@@ -203,7 +203,7 @@ class AuthEmail(EmailService):
 
     @classmethod
     def account_delete_success(cls, user):
-        cls.send_email(
+        EmailService.enqueue_auth_email(
             subject="Your Account Has Been Deleted - RM Stock Tracker",
             recipients=[user.email],
             text_body=render_template(

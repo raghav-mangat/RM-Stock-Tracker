@@ -5,7 +5,7 @@ class WatchlistEmail(EmailService):
 
     @classmethod
     def watchlist_alert(cls, user, email_data):
-        cls.send_email(
+        EmailService.enqueue_watchlist_email(
             subject="Watchlist Alert - RM Stock Tracker",
             recipients=[user.email],
             text_body=render_template(

@@ -19,6 +19,8 @@ from flask_mail import Mail
 from flask_wtf.csrf import CSRFProtect
 from authlib.integrations.flask_client import OAuth
 from datetime import datetime
+from redis import Redis
+from rq import Queue
 from models.database import db
 from auth import auth_bp
 from watchlist import watchlist_bp
@@ -96,6 +98,15 @@ oauth.register(
     client_kwargs={"scope": "openid email profile"}
 )
 app.config["OAUTH"] = oauth
+
+# Redis Connection and Email Queues
+redis_conn = Redis.from_url(os.getenv("REDIS_CONNECTION_URL"))
+email_high_queue = Queue("emails_high", connection=redis_conn) # High priority
+email_low_queue = Queue("emails_low", connection=redis_conn) # Low priority
+
+# Access Flask App
+def get_app():
+    return app
 
 # Register the Flask Blueprints
 app.register_blueprint(auth_bp, url_prefix="/auth")
