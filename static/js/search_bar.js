@@ -1,13 +1,28 @@
+/* ============================
+   DOM REFERENCES
+============================ */
 const allStocksSearchBar = document.getElementById("all-stocks-search-bar");
 const watchlistSearchBar = document.getElementById("watchlist-search-bar");
 
 const searchBar = document.getElementById("search-bar");
 const suggestionsBox = document.getElementById("suggestions");
+
+/* ============================
+   STATE
+============================ */
 const minSuggestionLen = 1;
 let activeIndex = -1;
-
 let currentFolderId = null;
 
+/* ============================
+   DEBOUNCE CONFIG
+============================ */
+let debounceTimer = null;
+const DEBOUNCE_DELAY = 500; // ms
+
+/* ============================
+   WATCHLIST MODAL LOGIC
+============================ */
 if (watchlistSearchBar) {
   const modalEl = document.getElementById("addStockModal");
   // Capture folder ID when modal is opened
@@ -23,7 +38,11 @@ if (watchlistSearchBar) {
   });
 }
 
-// Reset suggestions UI
+/* ============================
+   UI HELPERS
+============================ */
+
+// Clear and hide suggestions
 function resetSuggestions() {
   suggestionsBox.innerHTML = "";
   suggestionsBox.classList.add("d-none");
@@ -31,7 +50,7 @@ function resetSuggestions() {
   activeIndex = -1;
 }
 
-// Update which suggestion is highlighted
+// Highlight active suggestion
 function updateActiveSuggestion(index) {
   const items = suggestionsBox.querySelectorAll(".suggestion-item");
   items.forEach((el, i) => {
@@ -44,83 +63,119 @@ function updateActiveSuggestion(index) {
   });
 }
 
-// Fetch suggestions as user types
-searchBar.addEventListener("input", function () {
-  const query = this.value.trim();
+// Show empty-state message
+function showNoResults(message) {
+  suggestionsBox.innerHTML = `
+    <div class="list-group-item text-muted text-center py-4">
+      ${message}
+    </div>
+  `;
+  suggestionsBox.classList.remove("d-none");
+  searchBar.setAttribute("aria-expanded", "true");
+}
 
-  suggestionsBox.scrollTop = 0; // Reset scroll position
+// Header for trending stocks
+function showTrendingHeader() {
+  const header = document.createElement("div");
+  header.className = "list-group-item fw-semibold text-muted small";
+  header.innerText = "Trending Stocks";
+  suggestionsBox.appendChild(header);
+}
 
-  if (query.length < minSuggestionLen) {
+/* ============================
+   FETCH + RENDER
+============================ */
+function fetchSuggestions(query) {
+  // Guard: too short but not empty
+  if (query.length < minSuggestionLen && query !== "") {
     resetSuggestions();
     return;
   }
 
   fetch(`/query-stocks?q=${encodeURIComponent(query)}`)
-    .then((response) => response.json())
+    .then((res) => res.json())
     .then((data) => {
       resetSuggestions();
-      if (data.length === 0) return;
+
+      if (data.length === 0) {
+        showNoResults(
+          query ? "No matching stocks found" : "No trending stocks available"
+        );
+        return;
+      }
 
       suggestionsBox.classList.remove("d-none");
       searchBar.setAttribute("aria-expanded", "true");
 
-      // Create each suggestion as a Bootstrap list-group item
-      data.forEach((item, idx) => {
-        let anchor = undefined;
-        if (allStocksSearchBar) {
-          anchor = document.createElement("a");
-          anchor.href = `/stocks/${item.ticker}`;
-          anchor.innerHTML = `<span><strong>${item.ticker}</strong> - ${item.name}</span>`;
-          anchor.classList.add(
-            "suggestion-item",
-            "list-group-item",
-            "list-group-item-action"
-          );
-          anchor.setAttribute("role", "option");
-          anchor.setAttribute("tabindex", "-1");
-        } else if (watchlistSearchBar) {
-          anchor = document.createElement("button");
-          anchor.type = "button";
-          anchor.innerHTML = `<span><strong>${item.ticker}</strong> - ${item.name}</span>`;
-          anchor.classList.add(
-            "suggestion-item",
-            "list-group-item",
-            "list-group-item-action"
-          );
-          anchor.setAttribute("role", "option");
+      // If query is empty, show trending stocks
+      if (!query) {
+        showTrendingHeader();
+      }
 
-          // Clicking a suggestion submits to watchlist.add_item
-          anchor.addEventListener("click", () => {
-            const form = document.getElementById("addStockForm");
+      data.forEach((item, idx) => {
+        let el;
+
+        if (allStocksSearchBar) {
+          el = document.createElement("a");
+          el.href = `/stocks/${item.ticker}`;
+        } else {
+          el = document.createElement("button");
+          el.type = "button";
+          el.addEventListener("click", () => {
             document.getElementById("hidden-folder-id").value = currentFolderId;
             document.getElementById("hidden-ticker").value = item.ticker;
-            form.submit();
+            document.getElementById("addStockForm").submit();
           });
         }
 
-        // Mouse Hover styling will use updateActiveSuggestion
-        anchor.addEventListener("mouseover", () => updateActiveSuggestion(idx));
+        el.innerHTML = `<strong>${item.ticker}</strong> - ${item.name}`;
+        el.classList.add(
+          "suggestion-item",
+          "list-group-item",
+          "list-group-item-action"
+        );
+        el.setAttribute("role", "option");
 
-        suggestionsBox.appendChild(anchor);
+        el.addEventListener("mouseover", () => updateActiveSuggestion(idx));
 
-        // Auto-select the first suggestion
-        activeIndex = 0;
-        updateActiveSuggestion(activeIndex);
+        suggestionsBox.appendChild(el);
       });
+
+      suggestionsBox.scrollTop = 0;
+
+      activeIndex = 0;
+      updateActiveSuggestion(activeIndex);
     });
+}
+
+/* ============================
+   INPUT HANDLER (DEBOUNCED)
+============================ */
+searchBar.addEventListener("input", function () {
+  const query = this.value.trim();
+  suggestionsBox.scrollTop = 0;
+
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(() => {
+    fetchSuggestions(query);
+  }, DEBOUNCE_DELAY);
 });
 
-// Handle focus event to show suggestions again
+/* ============================
+   FOCUS HANDLER
+============================ */
 searchBar.addEventListener("focus", function () {
   const query = this.value.trim();
-  if (query.length >= minSuggestionLen) {
-    // Manually trigger input event logic
-    const inputEvent = new Event("input");
-    this.dispatchEvent(inputEvent);
-  }
+
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(() => {
+    fetchSuggestions(query);
+  }, DEBOUNCE_DELAY);
 });
 
-// Handle up/down/enter keyboard navigation
+/* ============================
+   KEYBOARD NAVIGATION
+============================ */
 searchBar.addEventListener("keydown", function (e) {
   const items = suggestionsBox.querySelectorAll(".suggestion-item");
   if (items.length === 0) return;
@@ -140,27 +195,32 @@ searchBar.addEventListener("keydown", function (e) {
   }
 });
 
-// Prevent page from scrolling when mouse is over suggestions box
+/* ============================
+   SCROLL BEHAVIOR
+============================ */
 suggestionsBox.addEventListener(
   "wheel",
   function (e) {
     const isScrollable =
       suggestionsBox.scrollHeight > suggestionsBox.clientHeight;
-    if (isScrollable) {
-      const atTop = suggestionsBox.scrollTop === 0;
-      const atBottom =
-        suggestionsBox.scrollTop + suggestionsBox.clientHeight >=
-        suggestionsBox.scrollHeight;
 
-      if ((e.deltaY < 0 && atTop) || (e.deltaY > 0 && atBottom)) {
-        e.preventDefault(); // Prevent scrolling the page
-      }
+    if (!isScrollable) return;
+
+    const atTop = suggestionsBox.scrollTop === 0;
+    const atBottom =
+      suggestionsBox.scrollTop + suggestionsBox.clientHeight >=
+      suggestionsBox.scrollHeight;
+
+    if ((e.deltaY < 0 && atTop) || (e.deltaY > 0 && atBottom)) {
+      e.preventDefault();
     }
   },
   { passive: false }
 );
 
-// Hide suggestions when clicking outside
+/* ============================
+   CLICK OUTSIDE TO CLOSE
+============================ */
 document.addEventListener("click", function (e) {
   if (!searchBar.contains(e.target) && !suggestionsBox.contains(e.target)) {
     resetSuggestions();

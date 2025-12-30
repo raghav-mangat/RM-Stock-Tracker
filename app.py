@@ -242,8 +242,7 @@ def get_top_stocks_data(category):
 @app.route("/query-stocks")
 def query_stocks():
     query = request.args.get("q", "").strip()
-    result = get_query_stocks(query)
-    return result
+    return get_query_stocks(query)
 
 @app.route("/stocks/<string:ticker>")
 def show_stock(ticker):

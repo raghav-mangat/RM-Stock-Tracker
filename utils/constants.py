@@ -10,3 +10,6 @@ USER_INACTIVE_DAYS_LIMIT = 90
 
 # Number of seconds after which we can send the user a subsequent email
 USER_EMAIL_COOLDOWN_SECONDS = 60
+
+# Number of suggestions we show in the stock search bar
+NUM_SUGGESTIONS = 10
