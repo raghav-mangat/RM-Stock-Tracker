@@ -42,7 +42,7 @@
           <img src="{{ url_for('static', filename='assets/android-chrome-192x192.png') }}"
                alt="RM Stock Tracker Logo"
                id="navbar-logo"
-               class="border border-dark me-1">
+               class="me-1">
           <span>RM Stock Tracker</span>
         </a>
 
@@ -82,9 +82,13 @@
           <!-- Right side auth buttons -->
           <div class="ms-auto d-flex">
             {% if current_user.is_authenticated %}
-              <a class="btn btn-outline-primary ms-0" href="{{ url_for('auth.settings_profile') }}" role="button">Settings</a>
+              <a class="btn btn-outline-primary ms-0" href="{{ url_for('auth.settings_profile') }}" role="button">
+                <i class="bi bi-gear"></i>
+                <span>Settings</span>
+              </a>
               <button type="button" class="btn btn-primary ms-2" data-bs-toggle="modal" data-bs-target="#logOutModal">
-                Log Out
+                <i class="bi bi-box-arrow-right"></i>
+                <span>Log Out</span>
               </button>
             {% else %}
               <a class="btn btn-outline-primary ms-0" href="{{ url_for('auth.login') }}" role="button">Log In</a>
@@ -102,9 +106,9 @@
         <nav class="col-8" aria-label="breadcrumb" style="--bs-breadcrumb-divider: '/';">
           <ol class="breadcrumb mb-0">
             {% for item in breadcrumbs %}
-              {% if not loop.last %}
+              {% if not loop.last or breadcrumbs|length == 1 %}
                 <li class="breadcrumb-item">
-                    <a href="{{ item.url }}" class="fw-semibold text-primary">{{ item.label }}</a>
+                  <a href="{{ item.url }}" class="fw-semibold text-primary">{{ item.label }}</a>
                 </li>
               {% else %}
                 <li class="breadcrumb-item active" aria-current="page">{{ item.label }}</li>
@@ -140,10 +144,10 @@
             <!-- Center Links -->
             <ul class="nav col-md-4 justify-content-center">
                 <li class="nav-item">
-                    <a href="{{ url_for('privacy') }}" class="nav-link px-2 text-body-secondary">Privacy</a>
+                    <a href="{{ url_for('privacy') }}" class="footer-link nav-link px-2 text-body-secondary">Privacy</a>
                 </li>
                 <li class="nav-item">
-                    <a href="{{ url_for('terms') }}" class="nav-link px-2 text-body-secondary">Terms</a>
+                    <a href="{{ url_for('terms') }}" class="footer-link nav-link px-2 text-body-secondary">Terms</a>
                 </li>
             </ul>
 
@@ -208,7 +212,10 @@
 
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-            <a href="{{ url_for('auth.logout') }}" class="btn btn-primary">Log Out</a>
+            <a href="{{ url_for('auth.logout') }}" class="btn btn-primary">
+              <i class="bi bi-box-arrow-right"></i>
+              <span>Log Out</span>
+            </a>
           </div>
 
         </div>

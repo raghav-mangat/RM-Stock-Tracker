@@ -31,6 +31,6 @@ Visit your watchlist to explore detailed alerts and individual stock breakdowns.
 
 You are receiving this email because watchlist email alerts are enabled.
 Manage email preferences:
-{{ url_for('auth.settings', _external=True) }}
+{{ url_for('auth.settings_account', _external=True) }}
 
 {% endblock %}

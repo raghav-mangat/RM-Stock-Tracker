@@ -1,10 +1,14 @@
 RM Stock Tracker
+({{ url_for('home', _external=True) }})
 -----------------------------------
 
 {% block content %}{% endblock %}
 
 -----------------------------------
 This email was sent by RM Stock Tracker.
+
+Privacy: {{ url_for('privacy', _external=True) }}
+Terms: {{ url_for('terms', _external=True) }}
 
 Follow Us:
 Instagram: https://www.instagram.com/raghav_mangat04/

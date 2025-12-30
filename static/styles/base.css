@@ -11,6 +11,10 @@
   width: 24px;
 }
 
+.footer-link:hover {
+  text-decoration: underline;
+}
+
 .social-link {
   font-size: 1.2rem;
 }
