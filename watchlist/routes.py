@@ -40,7 +40,7 @@ def alerts():
         last_updated=last_updated
     )
 
-@watchlist_bp.route("/add_folder", methods=["POST"])
+@watchlist_bp.route("/add-folder", methods=["POST"])
 @login_required
 def add_folder():
     # Redirect to 'next' if provided, else fallback
@@ -63,7 +63,7 @@ def add_folder():
 
     return redirect(url)
 
-@watchlist_bp.route("/rename_folder/<int:folder_id>", methods=["POST"])
+@watchlist_bp.route("/rename-folder/<int:folder_id>", methods=["POST"])
 @login_required
 def rename_folder(folder_id):
     new_folder_name = request.form.get("new_folder_name")
@@ -83,7 +83,7 @@ def rename_folder(folder_id):
         flash(folder_name_result["message"], "warning")
     return redirect(url_for("watchlist.index"))
 
-@watchlist_bp.route("/remove_folder/<int:folder_id>", methods=["POST"])
+@watchlist_bp.route("/remove-folder/<int:folder_id>", methods=["POST"])
 @login_required
 def remove_folder(folder_id):
     try:
@@ -98,7 +98,7 @@ def remove_folder(folder_id):
         flash("Folder deleted successfully.", "success")
     return redirect(url_for("watchlist.index"))
 
-@watchlist_bp.route("/update_order/<int:folder_id>", methods=["POST"])
+@watchlist_bp.route("/update-order/<int:folder_id>", methods=["POST"])
 @login_required
 def update_order(folder_id):
     new_order = int(request.form.get("order"))
@@ -114,7 +114,7 @@ def update_order(folder_id):
         flash("Folder reordered successfully!", "success")
     return redirect(url_for("watchlist.index"))
 
-@watchlist_bp.route("/add-item/", methods=["POST"])
+@watchlist_bp.route("/add-item", methods=["POST"])
 @login_required
 def add_item():
     # Redirect to 'next' if provided, else fallback
@@ -143,7 +143,7 @@ def add_item():
         flash(f"Please search for a valid stock.", "warning")
     return redirect(url)
 
-@watchlist_bp.route("/remove_item/<int:folder_id>/<string:ticker>", methods=["POST"])
+@watchlist_bp.route("/remove-item/<int:folder_id>/<string:ticker>", methods=["POST"])
 @login_required
 def remove_item(folder_id, ticker):
     try:
@@ -158,7 +158,8 @@ def remove_item(folder_id, ticker):
         flash(f"Removed stock '{ticker}'.", "success")
     return redirect(url_for("watchlist.index"))
 
-@watchlist_bp.route("/update_folder_alerts/<int:folder_id>", methods=["POST"])
+@watchlist_bp.route("/update-folder-alerts/<int:folder_id>", methods=["POST"])
+@login_required
 def update_folder_alerts(folder_id):
     folder_name = request.form.get("folder_name")
 
@@ -180,7 +181,8 @@ def update_folder_alerts(folder_id):
             flash(f"Updated email alerts for folder '{folder_name}'.", "success")
     return redirect(url_for("watchlist.index"))
 
-@watchlist_bp.route("/update_item_alerts/<int:item_id>", methods=["POST"])
+@watchlist_bp.route("/update-item-alerts/<int:item_id>", methods=["POST"])
+@login_required
 def update_item_alerts(item_id):
     ticker = request.form.get("ticker")
     folder_name = request.form.get("folder_name")
@@ -203,7 +205,8 @@ def update_item_alerts(item_id):
             flash(f"Updated email alerts for stock '{ticker}' in folder '{folder_name}'.", "success")
     return redirect(url_for("watchlist.index"))
 
-@watchlist_bp.route("/update_folder_attributes/<int:folder_id>", methods=["POST"])
+@watchlist_bp.route("/update-folder-attributes/<int:folder_id>", methods=["POST"])
+@login_required
 def update_folder_attributes(folder_id):
     folder_name = request.form.get("folder_name")
     action = request.form.get("action")
@@ -241,7 +244,8 @@ def update_folder_attributes(folder_id):
         flash(f"Updated attributes for folder '{folder_name}'.", "success")
     return redirect(url_for("watchlist.index"))
 
-@watchlist_bp.route("/update_folder_sort_by/<int:folder_id>", methods=["POST"])
+@watchlist_bp.route("/update-folder-sort-by/<int:folder_id>", methods=["POST"])
+@login_required
 def update_folder_sort_by(folder_id):
     sort_by_attribute = request.form.get("sort_by_attribute")
     sort_by_order = request.form.get("sort_by_order")
@@ -257,7 +261,8 @@ def update_folder_sort_by(folder_id):
             flash("An error occurred while updating the sorting for this folder.", "danger")
     return redirect(url_for("watchlist.index"))
 
-@watchlist_bp.route("/update_attribute_filters", methods=["POST"])
+@watchlist_bp.route("/update-attribute-filters", methods=["POST"])
+@login_required
 def update_attribute_filters():
     attribute_id = request.form.get("attribute_id", type=int)
     action = request.form.get("action")

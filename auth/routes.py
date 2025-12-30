@@ -137,7 +137,7 @@ def settings_account():
         ),
     )
 
-@auth_bp.route("/verify_email/<string:token>", methods=["GET"])
+@auth_bp.route("/verify-email/<string:token>", methods=["GET"])
 def verify_email(token):
     if current_user.is_authenticated:
         return redirect(url_for("watchlist.index"))
@@ -156,7 +156,7 @@ def verify_email(token):
     flash("Your email is verified! Now you can log in.", "success")
     return redirect(url_for("auth.login"))
 
-@auth_bp.route("/reset_password_request", methods=["GET", "POST"])
+@auth_bp.route("/reset-password-request", methods=["GET", "POST"])
 def reset_password_request():
     if current_user.is_authenticated:
         return redirect(url_for("watchlist.index"))
@@ -179,7 +179,7 @@ def reset_password_request():
         return redirect(url_for("auth.login"))
     return render_template("reset_password_request.html", form=form)
 
-@auth_bp.route("/settings_toggle_email_alerts", methods=["POST"])
+@auth_bp.route("/settings-toggle-email-alerts", methods=["POST"])
 @login_required
 def settings_toggle_email_alerts():
     form = SettingsToggleEmailAlertsForm()
@@ -195,7 +195,7 @@ def settings_toggle_email_alerts():
 
     return redirect(url_for("auth.settings_account"))
 
-@auth_bp.route("/settings/set_password", methods=["GET", "POST"])
+@auth_bp.route("/settings/set-password", methods=["GET", "POST"])
 @login_required
 def settings_set_password():
     # Only for users who do not already have a password
@@ -235,7 +235,7 @@ def settings_set_password():
 
     return render_template("settings_set_password.html", form=form)
 
-@auth_bp.route("/settings_reset_password_request", methods=["POST"])
+@auth_bp.route("/settings-reset-password-request", methods=["POST"])
 @login_required
 def settings_reset_password_request():
     form = SettingsResetPasswordRequestForm()
@@ -255,7 +255,7 @@ def settings_reset_password_request():
         flash("Check your email for the instructions to reset your password.", "success")
     return redirect(url_for("auth.settings_account"))
 
-@auth_bp.route("/settings_remove_password", methods=["POST"])
+@auth_bp.route("/settings-remove-password", methods=["POST"])
 @login_required
 def settings_remove_password():
     form = SettingsRemovePasswordForm()
@@ -275,7 +275,7 @@ def settings_remove_password():
         return redirect(url_for("auth.logout"))
     return redirect(url_for("auth.settings_account"))
 
-@auth_bp.route("/reset_password/<string:token>", methods=["GET", "POST"])
+@auth_bp.route("/reset-password/<string:token>", methods=["GET", "POST"])
 def reset_password(token):
     # Check both types
     for token_type in ("reset_password", "settings_reset_password"):
@@ -297,7 +297,7 @@ def reset_password(token):
 
     return render_template("reset_password.html", form=form)
 
-@auth_bp.route("/delete_account_request", methods=["POST"])
+@auth_bp.route("/delete-account-request", methods=["POST"])
 @login_required
 def delete_account_request():
     form = DeleteAccountRequestForm()
@@ -331,7 +331,7 @@ def delete_account_request():
 
     return redirect(url_for("auth.settings_account"))
 
-@auth_bp.route("/delete_account/<string:token>", methods=["GET", "POST"])
+@auth_bp.route("/delete-account/<string:token>", methods=["GET", "POST"])
 def delete_account(token):
     user = User.verify_token(token, token_type="delete_account")
     if not user:
