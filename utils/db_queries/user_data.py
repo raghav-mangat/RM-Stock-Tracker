@@ -1,15 +1,10 @@
-import re
-import unicodedata
 from time import time
 from datetime import datetime, timedelta, UTC
 from models.database import db, User
 from utils.datetime_utils import convert_to_utc_tz_aware
-from utils.constants import USERNAME_ALLOWED_CHARS_REGEX, MIN_USERNAME_LEN, MAX_USERNAME_LEN, USER_INACTIVE_DAYS_LIMIT, USER_EMAIL_COOLDOWN_SECONDS
+from utils.constants import USER_INACTIVE_DAYS_LIMIT
 
-def add_new_user(signup_source, email, first_name="", last_name="", username=None, password=None, google_id=None, is_verified=False):
-    if not username:
-        username = create_username_from_email(email)
-
+def add_new_user(signup_source, email, username, first_name="", last_name="", password=None, google_id=None, is_verified=False):
     new_user = User(
         email=email,
         username=username,
@@ -101,39 +96,3 @@ def is_user_email_alert_on(user):
 def user_has_watchlist_alerts(user):
     # Check if the user has any watchlist alerts
     return bool(user.watchlist_alerts)
-
-def create_username_from_email(email):
-    base = email.split("@")[0].lower()
-
-    # Normalize unicode (remove accents)
-    base = unicodedata.normalize("NFKD", base).encode("ascii", "ignore").decode()
-
-    # Replace invalid characters with underscore
-    pattern = r"[^" + USERNAME_ALLOWED_CHARS_REGEX[1:-1] + r"]"
-    base = re.sub(pattern, "_", base)
-
-    # Must start with a letter, prepend "user_" if needed, ensure min length
-    if not base:
-        base = "user"
-    elif not base[0].isalpha() or len(base) < MIN_USERNAME_LEN:
-        base = f"user_{base}"
-
-    # Collapse multiple underscores
-    base = re.sub(r"_+", "_", base)
-
-    # Remove trailing underscore
-    base = base.strip("_")
-
-    # Clamp max length
-    base = base[:MAX_USERNAME_LEN]
-
-    # Enforce uniqueness
-    username = base
-    i = 1
-    while get_user_by_username(username):
-        suffix = f"_{i}"
-        allowed_length = MAX_USERNAME_LEN - len(suffix)
-        username = base[:allowed_length] + suffix
-        i += 1
-
-    return username

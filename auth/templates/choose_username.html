@@ -1,0 +1,25 @@
+{% from "macros/auth_form_components.html" import form_heading, form_submit %}
+{% from "macros/auth_fields.html" import form_field %}
+
+{% extends "auth_form_base.html" %}
+
+{% block auth_form_title %}
+    Choose Username
+{% endblock %}
+
+{% block auth_form_content %}
+
+{{ form_heading(text="Choose Username") }}
+
+<p class="text-muted text-center my-4 small">
+  You recently authenticated with Google. Choose a username to create your account.
+</p>
+<form method="POST" novalidate>
+  {{ form.hidden_tag() }}
+
+  {{ form_field(field=form.username, placeholder="Choose username") }}
+
+  {{ form_submit(form=form, class="btn btn-success btn-lg") }}
+</form>
+
+{% endblock %}

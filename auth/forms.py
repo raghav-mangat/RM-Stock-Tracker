@@ -140,6 +140,13 @@ class SignupForm(FlaskForm):
     def validate_username(self, field):
         validate_username_field(field)
 
+class ChooseUsernameForm(FlaskForm):
+    username = get_username_field()
+    submit = SubmitField("Sign Up")
+
+    def validate_username(self, field):
+        validate_username_field(field)
+
 class ResetPasswordRequestForm(FlaskForm):
     email = get_email_field()
     submit = SubmitField("Request Password Reset")

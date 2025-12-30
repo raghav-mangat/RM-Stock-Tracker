@@ -8,7 +8,7 @@ from models.database import User, SignupSource
 from .emails import AuthEmail
 from .services import RedirectService
 from .forms import (
-    LoginForm, SignupForm, ResetPasswordRequestForm, ResetPasswordForm, ProfileSettingsForm,
+    LoginForm, SignupForm, ChooseUsernameForm, ResetPasswordRequestForm, ResetPasswordForm, ProfileSettingsForm,
     DeleteAccountRequestForm, DeleteAccountForm, SettingsResetPasswordRequestForm, UnlinkGoogleAccountForm,
     SettingsSetPasswordForm, SettingsRemovePasswordForm, SettingsToggleEmailAlertsForm
 )
@@ -26,12 +26,14 @@ def signup():
     form = SignupForm()
     if form.validate_on_submit():
         user = add_new_user(
-            first_name=form.first_name.data,
-            last_name=form.last_name.data,
+            signup_source=SignupSource.EMAIL,
             email=form.email.data,
             username=form.username.data,
+            first_name=form.first_name.data,
+            last_name=form.last_name.data,
             password=form.password.data,
-            signup_source=SignupSource.EMAIL
+            google_id=None,
+            is_verified=False
         )
         AuthEmail.verify_email(user)
         flash("Account created, we sent a verification email. Please click the link in your inbox (check spam).", "success")
@@ -435,19 +437,14 @@ def google_signin_callback():
                 AuthEmail.google_account_linked_success(user)
                 flash("Signed in with Google. Linked Google account successfully.", "success")
     else:
-        user = add_new_user(
-            first_name=first_name,
-            last_name=last_name,
-            email=email,
-            username=None,
-            password=None,
-            google_id=google_id,
-            is_verified=True,
-            signup_source=SignupSource.GOOGLE
-        )
-        AuthEmail.google_signin_success(user)
-        flash("Signed in with Google. Account created successfully.", "success")
-        return redirect(url_for("watchlist.index"))
+        session["pending_google_signup"] = {
+            "google_id": google_id,
+            "email": email,
+            "first_name": first_name,
+            "last_name": last_name,
+            "created_at": time.time()
+        }
+        return redirect(url_for("auth.choose_username"))
 
     login_user(user)
     update_user_last_login_at(user)
@@ -459,6 +456,52 @@ def google_signin_callback():
         return redirect(next_url)
 
     return redirect(url_for("watchlist.index"))
+
+@auth_bp.route("/choose-username", methods=["GET", "POST"])
+def choose_username():
+    pending = session.get("pending_google_signup")
+
+    # User tries to access manually or session expired
+    if not pending:
+        flash("Your sign-in session expired. Please continue by signing in with Google again.","warning")
+        return redirect(url_for("auth.login"))
+
+    # Prevent stale sessions
+    stale_session_delta = 15 * 60 # 15 minutes
+    if time.time() - pending["created_at"] > stale_session_delta:
+        session.pop("pending_google_signup", None)
+        flash("Signup session expired. Please sign in again.", "warning")
+        return redirect(url_for("auth.login"))
+
+    form = ChooseUsernameForm()
+
+    if form.validate_on_submit():
+        user = add_new_user(
+            signup_source=SignupSource.GOOGLE,
+            email=pending["email"],
+            username=form.username.data,
+            first_name=pending["first_name"],
+            last_name=pending["last_name"],
+            password=None,
+            google_id=pending["google_id"],
+            is_verified=True,
+        )
+        session.pop("pending_google_signup", None)
+        AuthEmail.google_signin_success(user)
+
+        login_user(user)
+        update_user_last_login_at(user)
+        session["security_timestamp"] = user.security_timestamp
+        flash("Signed in with Google. Account created successfully.", "success")
+
+        # Restore next url safely
+        next_url = session.pop("oauth_next", None)
+        if next_url and RedirectService.is_safe_redirect_url(next_url):
+            return redirect(next_url)
+
+        return redirect(url_for("watchlist.index"))
+
+    return render_template("choose_username.html", form=form)
 
 @auth_bp.route("/google/link")
 @login_required
