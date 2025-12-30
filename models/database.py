@@ -585,6 +585,7 @@ class WatchlistFolderAttribute(db.Model):
     attribute: Mapped["FolderAttribute"] = mapped_column(db.Enum(FolderAttribute), nullable=False)
 
     # Values for filters
+    use_abs: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     min_value: Mapped[float] = mapped_column(nullable=True)
     max_value: Mapped[float] = mapped_column(nullable=True)
 
@@ -612,6 +613,7 @@ class WatchlistAlert(db.Model):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
 
     attribute: Mapped["AlertAttribute"] = mapped_column(db.Enum(AlertAttribute), nullable=False)
+    use_abs: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     min_value: Mapped[float] = mapped_column(nullable=True)
     max_value: Mapped[float] = mapped_column(nullable=True)
 
