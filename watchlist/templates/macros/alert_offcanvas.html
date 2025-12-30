@@ -1,3 +1,5 @@
+{% from "macros/watchlist_components.html" import use_abs_label_button %}
+
 {% macro alert_offcanvas(offcanvas_target_id, form_action, db_id, folder_name, alert_data, attributes, ticker=None) %}
     <div class="offcanvas offcanvas-end mt-5"
          data-bs-scroll="true" data-bs-backdrop="false" tabindex="-1"
@@ -52,6 +54,16 @@
                                name="max-value-{{ loop.index }}" aria-label="max-value-{{ loop.index }}"
                                placeholder="Max"
                                value="{% if alert.max_value is not none %}{{ alert.max_value }}{% endif %}">
+
+                        <!-- Use Abs Checkbox Button -->
+                        <div>
+                          <input type="checkbox" class="btn-check" autocomplete="off"
+                                 id="use-abs-{{ loop.index }}-{{ db_id }}"
+                                 name="use-abs-{{ loop.index }}"
+                                 aria-describedby="Use absolute value function button"
+                                 {% if alert.use_abs %} checked {% endif %}>
+                          {{ use_abs_label_button(label_for="use-abs-" ~ loop.index ~ "-" ~ db_id) }}
+                        </div>
                       </div>
                       <!-- Delete Alert Checkbox Button -->
                       <div>
@@ -89,10 +101,19 @@
                   <input id="max-value-new-{{ db_id }}" class="form-control" type="text"
                          name="max-value-new" aria-label="max-value-new"
                          placeholder="Max">
+
+                  <!-- Use Abs Checkbox Button -->
+                  <div>
+                      <input type="checkbox" class="btn-check" autocomplete="off"
+                             id="use-abs-new-{{ db_id }}"
+                             name="use-abs-new"
+                             aria-describedby="Use absolute value function button">
+                      {{ use_abs_label_button(label_for="use-abs-new-" ~ db_id) }}
+                  </div>
               </div>
               <!-- Alert Form Offcanvas Submit Button -->
               <div class="text-center mt-4">
-                  <button type="submit" class="btn btn-primary">Save Changes</button>
+                  <button type="submit" class="btn btn-success">Save Changes</button>
               </div>
           </form>
       </div>

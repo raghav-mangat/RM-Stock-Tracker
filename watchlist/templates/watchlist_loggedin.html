@@ -2,7 +2,7 @@
 {% from "macros/search_bar.html" import search_bar %}
 {% from "macros/watchlist_forms.html" import add_folder_form %}
 {% from "macros/alert_offcanvas.html" import alert_offcanvas %}
-{% from "macros/watchlist_components.html" import ticker_link, no_data_message_big %}
+{% from "macros/watchlist_components.html" import ticker_link, use_abs_label_button, no_data_message_big %}
 {% from "macros/table_components.html" import watchlist_folder_table_header with context %}
 {% from "macros/table_components.html" import table_header, table_data, table_data_row_number %}
 
@@ -353,12 +353,20 @@
                 <input id="modal-max-value"
                        class="form-control text-center"
                        type="text" name="max-value" placeholder="Max">
+                <div>
+                  <input type="checkbox" class="btn-check" autocomplete="off"
+                         id="modal-use-abs"
+                         name="use-abs"
+                         aria-describedby="Use absolute value function button">
+                  {{ use_abs_label_button(label_for="modal-use-abs") }}
+                </div>
+
               </div>
             </div>
 
             <div class="modal-footer">
               <button type="submit" name="action" value="clear" class="btn btn-secondary">Clear</button>
-              <button type="submit" name="action" value="apply" class="btn btn-primary">Apply</button>
+              <button type="submit" name="action" value="apply" class="btn btn-success">Apply</button>
             </div>
 
           </form>

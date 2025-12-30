@@ -164,13 +164,13 @@ def update_folder_alerts(folder_id):
     folder_name = request.form.get("folder_name")
 
     request_alerts = get_alerts(request)
-    message = Validators.validate_alerts(request_alerts)
+    message, validated_alerts = Validators.validate_alerts(request_alerts)
 
     if message:
         flash(message, "warning")
     else:
         try:
-            db_update_folder_alerts(folder_id, request_alerts, current_user)
+            db_update_folder_alerts(folder_id, validated_alerts, current_user)
         except NotFoundError:
             flash("Folder not found.", "danger")
         except ForbiddenError:
@@ -188,13 +188,13 @@ def update_item_alerts(item_id):
     folder_name = request.form.get("folder_name")
 
     request_alerts = get_alerts(request)
-    message = Validators.validate_alerts(request_alerts)
+    message, validated_alerts = Validators.validate_alerts(request_alerts)
 
     if message:
         flash(message, "warning")
     else:
         try:
-            db_update_item_alerts(item_id, request_alerts, current_user)
+            db_update_item_alerts(item_id, validated_alerts, current_user)
         except NotFoundError:
             flash("Stock not found.", "danger")
         except ForbiddenError:
@@ -270,19 +270,21 @@ def update_attribute_filters():
     if not attribute_id or action not in ["apply", "clear"]:
         return redirect(url_for("watchlist.index"))
 
+    use_abs = False
     (min_value, max_value, message) = (None, None, None)
 
     if action == "apply":
+        use_abs = bool(request.form.get("use-abs"))
         min_value = request.form.get("min-value")
         max_value = request.form.get("max-value")
 
-        (min_value, max_value, message) = Validators.validate_values(min_value, max_value)
+        (min_value, max_value, message) = Validators.validate_values(use_abs, min_value, max_value)
 
     if message:
         flash(message, "warning")
     else:
         try:
-            db_update_attribute_filters(attribute_id, min_value, max_value, current_user)
+            db_update_attribute_filters(attribute_id, use_abs, min_value, max_value, current_user)
         except NotFoundError:
             flash("Attribute not found.", "danger")
         except ForbiddenError:

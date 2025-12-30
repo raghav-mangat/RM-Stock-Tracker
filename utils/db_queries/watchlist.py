@@ -28,12 +28,16 @@ def db_get_all_watchlist_data(user):
         # Filter the items data if filters are applied to the folder
         for attribute_data in folder_attributes_data:
             if attribute_data.attribute.value != FolderAttribute.NAME:
+                use_abs = attribute_data.use_abs
                 min_value = attribute_data.min_value
                 max_value = attribute_data.max_value
 
                 def all_items_data_filter(data):
                     filter_result = False
                     attribute_value = data[1]["stock_data"].get(attribute_data.attribute.value)
+                    if use_abs:
+                        attribute_value = abs(attribute_value)
+
                     if (min_value is not None) and (max_value is not None):
                         filter_result = min_value < attribute_value <= max_value
                     elif min_value is not None:
@@ -182,6 +186,7 @@ def db_update_folder_alerts(folder_id, alerts, user):
         if not alert["delete"]:
             new_alert = WatchlistAlert(
                 attribute=alert["attribute"],
+                use_abs=alert["use_abs"],
                 min_value=alert["min_value"],
                 max_value=alert["max_value"],
                 user=user
@@ -204,6 +209,7 @@ def db_update_item_alerts(item_id, alerts, user):
         if not alert["delete"]:
             new_alert = WatchlistAlert(
                 attribute=alert["attribute"],
+                use_abs=alert["use_abs"],
                 min_value=alert["min_value"],
                 max_value=alert["max_value"],
                 user=user
@@ -251,8 +257,9 @@ def db_update_folder_sort_by(folder_id, sort_by_attribute, sort_by_order, user):
         folder.sort_by_order = sort_by_order
     db.session.commit()
 
-def db_update_attribute_filters(attribute_id, min_value, max_value, user):
+def db_update_attribute_filters(attribute_id, use_abs, min_value, max_value, user):
     attribute = get_folder_attribute_or_404(attribute_id, user)
+    attribute.use_abs = use_abs
     attribute.min_value = min_value
     attribute.max_value = max_value
     db.session.commit()
@@ -467,9 +474,13 @@ def stock_data_filter(stock_data, alerts):
     filter_result = False
     for alert in alerts:
         attribute = alert.attribute
+        use_abs = alert.use_abs
         min_value = alert.min_value
         max_value = alert.max_value
         attribute_value = stock_data.get(attribute.value)
+
+        if use_abs:
+            attribute_value = abs(attribute_value)
 
         if (min_value is not None) and (max_value is not None):
             filter_result = min_value < attribute_value <= max_value

@@ -1,19 +1,33 @@
 {% macro display_alert(alert) %}
   <span class="fw-semibold">
     {% if (alert.min_value is not none) and (alert.max_value is not none) %}
-      {{ alert.attribute.label }}: {{ alert.min_value }} - {{ alert.max_value }}
+      {{ display_use_abs(alert) }}: {{ alert.min_value }} - {{ alert.max_value }}
     {% elif alert.min_value is not none %}
-      {{ alert.attribute.label }} &gt; {{ alert.min_value }}
+      {{ display_use_abs(alert) }} &gt; {{ alert.min_value }}
     {% elif alert.max_value is not none %}
-      {{ alert.attribute.label }} &lt;= {{ alert.max_value }}
+      {{ display_use_abs(alert) }} &lt;= {{ alert.max_value }}
     {% endif %}
   </span>
+{% endmacro %}
+
+{% macro display_use_abs(alert) %}
+  {% if alert.use_abs %}
+    |{{ alert.attribute.label }}|
+  {% else %}
+    {{ alert.attribute.label }}
+  {% endif %}
 {% endmacro %}
 
 {% macro ticker_link(stock) %}
   <a href="{{ url_for('show_stock', ticker=stock.ticker) }}" class="fw-semibold text-primary">
     {{ stock.ticker | display }}
   </a>
+{% endmacro %}
+
+{% macro use_abs_label_button(label_for) %}
+  <label class="btn btn-sm btn-outline-primary fw-semibold" for="{{ label_for }}">
+    |x|
+  </label>
 {% endmacro %}
 
 {% macro no_data_message_big(heading, text) %}

@@ -47,7 +47,7 @@ class Validators:
                     break
                 selected_attributes.add(attribute)
 
-                (min_value, max_value, message) = Validators.validate_values(alert["min_value"], alert["max_value"])
+                (min_value, max_value, message) = Validators.validate_values(alert["use_abs"], alert["min_value"], alert["max_value"])
 
                 if message:
                     break
@@ -55,10 +55,10 @@ class Validators:
                     alert["min_value"] = min_value
                     alert["max_value"] = max_value
 
-        return message
+        return message, alerts
 
     @staticmethod
-    def validate_values(min_value, max_value):
+    def validate_values(use_abs, min_value, max_value):
         message = None
         min_value_allowed = -1_000_000
         max_value_allowed = 1_000_000
@@ -71,18 +71,24 @@ class Validators:
             try:
                 if min_value:
                     min_value = round(float(min_value), 2)
-                    if min_value < min_value_allowed:
-                        message = f"Minimum value allowed is {min_value_allowed:,}"
-                    elif min_value > max_value_allowed:
-                        message = f"Maximum value allowed is {max_value_allowed:,}"
+                    if use_abs and min_value < 0:
+                        message = "Value cannot be negative if absolute value function is applied."
+                    else:
+                        if min_value < min_value_allowed:
+                            message = f"Minimum value allowed is {min_value_allowed:,}"
+                        elif min_value > max_value_allowed:
+                            message = f"Maximum value allowed is {max_value_allowed:,}"
                 else:
                     min_value = None
                 if max_value:
                     max_value = round(float(max_value), 2)
-                    if max_value < min_value_allowed:
-                        message = f"Minimum value allowed is {min_value_allowed:,}"
-                    elif max_value > max_value_allowed:
-                        message = f"Maximum value allowed is {max_value_allowed:,}"
+                    if use_abs and max_value < 0:
+                        message = "Value cannot be negative if absolute value function is applied."
+                    else:
+                        if max_value < min_value_allowed:
+                            message = f"Minimum value allowed is {min_value_allowed:,}"
+                        elif max_value > max_value_allowed:
+                            message = f"Maximum value allowed is {max_value_allowed:,}"
                 else:
                     max_value = None
 
@@ -103,12 +109,14 @@ def get_alerts(update_alert_request):
     for i in range(1, num_alerts + 1):
         alerts.append({
             "attribute": update_alert_request.form.get(f"attribute-{i}"),
+            "use_abs": bool(update_alert_request.form.get(f"use-abs-{i}")),
             "min_value": update_alert_request.form.get(f"min-value-{i}"),
             "max_value": update_alert_request.form.get(f"max-value-{i}"),
             "delete": update_alert_request.form.get(f"delete-{i}")
         })
     new_alert = {
         "attribute": update_alert_request.form.get("attribute-new"),
+        "use_abs": bool(update_alert_request.form.get("use-abs-new")),
         "min_value": update_alert_request.form.get(f"min-value-new"),
         "max_value": update_alert_request.form.get(f"max-value-new"),
         "delete": None
