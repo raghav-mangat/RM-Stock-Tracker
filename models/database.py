@@ -253,8 +253,7 @@ class StockMaster(db.Model):
 
     # Adding Index for faster performance
     __table_args__ = (
-        DBIndex("ix_stock_master_ticker", "ticker"),
-        DBIndex("ix_stock_master_name", "name"),
+        DBIndex("ix_stock_master_ticker_name", "ticker", "name"),
     )
 
     # Returns a list of all the attributes in the table except for the excluded ones
