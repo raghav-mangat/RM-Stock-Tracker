@@ -1,10 +1,8 @@
 {% from "macros/jumbotron.html" import jumbotron %}
-{% from "macros/search_bar.html" import search_bar %}
 {% from "macros/watchlist_forms.html" import add_folder_form %}
-{% from "macros/alert_offcanvas.html" import alert_offcanvas %}
-{% from "macros/watchlist_components.html" import ticker_link, use_abs_label_button, no_data_message_big %}
-{% from "macros/table_components.html" import watchlist_folder_table_header with context %}
-{% from "macros/table_components.html" import table_header, table_data, table_data_row_number %}
+{% from "macros/folder_content.html" import folder_content %}
+{% from "macros/watchlist_components.html" import use_abs_label_button, no_data_message_big %}
+{% from "macros/search_bar.html" import search_bar %}
 
 {% extends "base.html" %}
 
@@ -44,249 +42,7 @@
   <!-- Accordion for Watchlist -->
   <div class="accordion accordion-flush" id="watchlistAccordion">
     {% for folder_id, folder_data in watchlist_data.items() %}
-      <div class="accordion-item border border-1 border-dark shadow-sm mb-3">
-        <h2 class="accordion-header" id="heading-{{ loop.index }}">
-          <button
-            class="accordion-button fw-semibold {% if loop.index != 1 %} collapsed {% endif %}"
-            type="button"
-            data-bs-toggle="collapse"
-            data-bs-target="#collapse-{{ loop.index }}"
-            aria-expanded="{% if loop.index == 1 %}true{% else %}false{% endif %}"
-            aria-controls="collapse-{{ loop.index }}"
-          >
-            <span class="d-flex align-middle">
-              {{ folder_data.folder_order }})
-              {{ folder_data.folder_name }}
-              <span class="badge bg-secondary rounded-pill ms-2">
-                {{ folder_data.folder_items|length }}
-              </span>
-            </span>
-          </button>
-        </h2>
-
-        <div id="collapse-{{ loop.index }}" class="accordion-collapse collapse {% if loop.index == 1 %} show {% endif %}"
-             aria-labelledby="heading-{{ loop.index }}">
-          <div class="accordion-body">
-
-            <!-- Folder Actions -->
-            <div class="row g-2 align-items-center mb-3">
-              <!-- Left Column: Order Selector + Add Stock + Folder Attributes + Folder Email Alert -->
-              <div class="col-12 col-md-6 d-flex flex-wrap align-items-center gap-2">
-                <!-- Order Selector -->
-                <form method="POST"
-                      action="{{ url_for('watchlist.update_order', folder_id=folder_id) }}"
-                      class="d-flex align-items-center"
-                      novalidate>
-                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                  <label for="order-{{ folder_id }}" class="me-2 mb-0 small text-muted">Order:</label>
-                  <select name="order" id="order-{{ folder_id }}"
-                          class="form-select form-select-sm"
-                          onchange="this.form.submit()">
-                    {% for i in range(1, watchlist_data|length + 1) %}
-                      <option value="{{ i }}" {% if folder_data.folder_order == i %}selected{% endif %}>{{ i }}</option>
-                    {% endfor %}
-                  </select>
-                </form>
-
-                <div class="d-flex flex-wrap align-items-center gap-2">
-                    <!-- Add Stock Button -->
-                    <button class="btn btn-sm btn-success"
-                            data-bs-toggle="modal"
-                            data-bs-target="#addStockModal"
-                            data-folder-id="{{ folder_id }}">
-                      + Add Stock
-                    </button>
-
-                    <!-- Folder Edit Attributes Button -->
-                    <div class="dropdown-center">
-                        <!-- Dropdown toggle button -->
-                        <button class="btn btn-sm btn-outline-primary d-flex align-items-center"
-                                type="button"
-                                data-bs-toggle="dropdown"
-                                data-bs-auto-close="outside"
-                                aria-expanded="false">
-                          <i class="bi bi-pencil-square me-1"></i>
-                          Edit
-                        </button>
-                      <form method="POST"
-                            action="{{ url_for('watchlist.update_folder_attributes', folder_id=folder_id) }}"
-                            novalidate>
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        <input type="hidden" name="folder_name" value="{{ folder_data.folder_name }}">
-
-                        <!-- Dropdown menu -->
-                        <ul class="dropdown-menu p-3 shadow rounded-3" style="min-width: 260px;">
-                          <li class="mb-2 text-center fw-semibold border-bottom pb-2">
-                            Select Attributes
-                          </li>
-
-                          <!-- Attribute checkboxes -->
-                          {% for folder_attribute in FolderAttribute|list %}
-                              <li class="form-check mb-1">
-                                <input class="form-check-input"
-                                       type="checkbox"
-                                       value="{{ folder_attribute.value }}"
-                                       name="folder-attribute-{{ loop.index }}"
-                                       id="folder-attribute-{{ loop.index }}-{{ folder_id }}"
-                                       {% if folder_attribute.value in folder_data.folder_attributes_list %} checked {% endif %}>
-                                <label class="form-check-label" for="folder-attribute-{{ loop.index }}-{{ folder_id }}">
-                                  {{ folder_attribute.label }}
-                                </label>
-                              </li>
-                          {% endfor %}
-
-                          <!-- Divider -->
-                          <li><hr class="dropdown-divider my-3"></li>
-
-                          <!-- Buttons -->
-                          <li class="d-flex justify-content-between">
-                            <button type="submit" class="btn btn-sm btn-outline-secondary flex-fill me-1" name="action" value="restore">
-                              Restore
-                            </button>
-                            <button type="submit" class="btn btn-sm btn-secondary flex-fill ms-1" name="action" value="save">
-                              Save
-                            </button>
-                          </li>
-                        </ul>
-                      </form>
-                    </div>
-
-                    <!-- Folder Email Alert Button -->
-                    <button class="btn btn-sm btn-outline-primary position-relative" type="button"
-                            data-bs-toggle="offcanvas"
-                            data-bs-target="#offcanvas-folder-{{ folder_id }}" aria-controls="#offcanvas-folder-{{ folder_id }}">
-                        <i class="bi bi-bell"></i>
-                        Alerts
-                        {% if folder_data.folder_alerts | length > 0 %}
-                          <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-secondary">
-                            {{ folder_data.folder_alerts | length }}
-                            <span class="visually-hidden">folder alerts</span>
-                          </span>
-                        {% endif %}
-                    </button>
-                    {{ alert_offcanvas(
-                        offcanvas_target_id="offcanvas-folder-" + folder_id|string,
-                        form_action=url_for('watchlist.update_folder_alerts', folder_id=folder_id),
-                        db_id=folder_id,
-                        folder_name=folder_data.folder_name,
-                        alert_data=folder_data.folder_alerts,
-                        attributes=AlertAttribute|list,
-                        ticker=None,
-                    ) }}
-                </div>
-              </div>
-
-              <!-- Right Column: Rename + Delete -->
-              <div class="col-12 col-md-6 d-flex flex-wrap justify-content-md-end gap-2">
-                <!-- Rename Folder Form -->
-                <form method="POST"
-                      action="{{ url_for('watchlist.rename_folder', folder_id=folder_id) }}"
-                      class="d-flex align-items-center gap-2"
-                      novalidate>
-                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                  <div class="input-group">
-                    <input type="text"
-                           name="new_folder_name"
-                           class="form-control form-control-sm text-uppercase"
-                           placeholder="Rename Folder">
-                    <button type="submit" class="btn btn-sm btn-outline-primary">Rename</button>
-                  </div>
-                </form>
-
-                <!-- Delete Folder Form -->
-                <form method="POST"
-                      action="{{ url_for('watchlist.remove_folder', folder_id=folder_id) }}"
-                      novalidate>
-                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                  <button type="submit" class="btn btn-sm btn-outline-danger">
-                      <i class="bi bi-trash"></i>
-                      Delete
-                  </button>
-                </form>
-              </div>
-            </div>
-
-            <!-- Table -->
-            <div class="table-responsive">
-              <table class="table table-bordered table-hover align-middle">
-                <thead class="table-light">
-                  <tr>
-                    {{ table_header("#") }}
-                    {{ table_header("Ticker") }}
-
-                    {% for attribute_data in folder_data.folder_attributes_data %}
-                        {{ watchlist_folder_table_header(
-                            folder_id = folder_id,
-                            attribute_data = attribute_data,
-                            folder_sort_by_attribute = folder_data.folder_sort_by_attribute,
-                            folder_sort_by_order = folder_data.folder_sort_by_order,
-                        ) }}
-                    {% endfor %}
-
-                    {{ table_header("Actions") }}
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for item_id, item_data in folder_data.folder_items.items() %}
-                      {% set stock = item_data["stock_data"] %}
-                      <tr>
-                          {{ table_data_row_number(loop.index) }}
-                          <td>
-                            {{ ticker_link(stock) }}
-                          </td>
-                          {% for attribute in folder_data.folder_attributes_list %}
-                            {{ table_data(attribute, stock, FolderAttribute) }}
-                          {% endfor %}
-                          <td>
-                              <div class="d-flex gap-1 mx-1">
-                                  <!-- Item Email Alert Button -->
-                                  <button class="btn btn-sm btn-outline-primary position-relative" type="button"
-                                          data-bs-toggle="offcanvas"
-                                          data-bs-target="#offcanvas-item-{{ item_id }}" aria-controls="#offcanvas-item-{{ item_id }}">
-                                    <i class="bi bi-bell"></i>
-                                    {% if item_data["item_alerts"] | length > 0 %}
-                                      <span class="position-absolute top-0 start-0 translate-middle badge rounded-pill bg-secondary">
-                                        {{ item_data["item_alerts"] | length }}
-                                        <span class="visually-hidden">stock alerts</span>
-                                      </span>
-                                    {% endif %}
-                                  </button>
-                                  {{ alert_offcanvas(
-                                      offcanvas_target_id="offcanvas-item-" + item_id|string,
-                                      form_action=url_for('watchlist.update_item_alerts', item_id=item_id),
-                                      db_id=item_id,
-                                      folder_name=folder_data.folder_name,
-                                      alert_data=item_data["item_alerts"],
-                                      attributes=AlertAttribute|list,
-                                      ticker=stock.ticker,
-                                  ) }}
-
-                                  <!-- Remove Item Button -->
-                                  <form method="POST"
-                                        action="{{ url_for('watchlist.remove_item', folder_id=folder_id, ticker=stock.ticker) }}"
-                                        novalidate>
-                                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                      <button type="submit" class="btn btn-sm btn-outline-danger">
-                                          <i class="bi bi-trash"></i>
-                                      </button>
-                                  </form>
-                              </div>
-                          </td>
-                      </tr>
-                  {% else %}
-                      <tr>
-                        <td colspan="{{ folder_data.folder_attributes_list|length + 3 }}" class="text-center text-muted py-4">
-                          <em>No stocks to show in this folder.</em>
-                        </td>
-                      </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-            </div>
-
-          </div>
-        </div>
-      </div>
+      {{ folder_content(folder_id, folder_data, num_folders, FolderAttribute, AlertAttribute, OrderBy) }}
     {% else %}
       <!-- Empty State when no folders -->
       {{
@@ -296,85 +52,93 @@
         )
       }}
     {% endfor %}
-
-    <!-- Add Stock Modal -->
-    <div class="modal fade" id="addStockModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="addStockModalLabel" aria-hidden="true">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <form method="POST"
-                action="{{ url_for('watchlist.add_item') }}"
-                id="addStockForm"
-                novalidate>
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <div class="modal-header">
-              <h5 class="modal-title">Add Stock to Folder</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-              <!-- Hidden fields for folder_id and ticker -->
-              <input type="hidden" name="folder_id" id="hidden-folder-id">
-              <input type="hidden" name="ticker" id="hidden-ticker">
-              {{ search_bar(id="watchlist-search-bar") }}
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
-
-    <!-- Filter Folder Modal -->
-    <div class="modal fade" id="filterFolderModal" tabindex="-1" aria-labelledby="filterFolderModalLabel" aria-hidden="true">
-      <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-          <form method="POST" action="{{ url_for('watchlist.update_attribute_filters') }}" novalidate>
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <input type="hidden" name="attribute_id" id="hidden-attribute-id">
-
-            <div class="modal-header">
-              <h5 class="modal-title">
-                <i class="bi bi-funnel me-1"></i>
-                Filter
-              </h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-
-            <div class="modal-body">
-              <div class="d-flex align-items-center gap-2 justify-content-center">
-                <input id="modal-min-value"
-                       class="form-control text-center"
-                       type="text" name="min-value" placeholder="Min">
-
-                <span class="fw-semibold">&lt;</span>
-                <span class="fw-semibold w-50 text-center" id="filter-attribute-label"></span>
-                <span class="fw-semibold">&lt;=</span>
-
-                <input id="modal-max-value"
-                       class="form-control text-center"
-                       type="text" name="max-value" placeholder="Max">
-                <div>
-                  <input type="checkbox" class="btn-check" autocomplete="off"
-                         id="modal-use-abs"
-                         name="use-abs"
-                         aria-describedby="Use absolute value function button">
-                  {{ use_abs_label_button(label_for="modal-use-abs") }}
-                </div>
-
-              </div>
-            </div>
-
-            <div class="modal-footer">
-              <button type="submit" name="action" value="clear" class="btn btn-secondary">Clear</button>
-              <button type="submit" name="action" value="apply" class="btn btn-success">Apply</button>
-            </div>
-
-          </form>
-        </div>
-      </div>
-    </div>
-
   </div>
+
+  <!-- Add Stock Modal -->
+  <div class="modal fade" id="addStockModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="addStockModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+      <form method="POST"
+            action="{{ url_for('watchlist.add_item') }}"
+            class="folder-action-form"
+            data-folder-id=""
+            data-action="add-item"
+            id="addStockForm"
+            novalidate>
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="modal-header">
+            <h5 class="modal-title">Add Stock to Folder</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <!-- Hidden fields for folder_id and ticker -->
+            <input type="hidden" name="folder_id" id="hidden-folder-id">
+            <input type="hidden" name="ticker" id="hidden-ticker">
+            {{ search_bar(id="watchlist-search-bar") }}
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter Folder Modal -->
+  <div class="modal fade" id="filterFolderModal" tabindex="-1" aria-labelledby="filterFolderModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <form method="POST"
+              action="{{ url_for('watchlist.update_attribute_filters') }}"
+              class="folder-action-form"
+              data-folder-id=""
+              data-action="filter"
+              novalidate>
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="attribute_id" id="hidden-attribute-id">
+
+          <div class="modal-header">
+            <h5 class="modal-title">
+              <i class="bi bi-funnel me-1"></i>
+              Filter
+            </h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+
+          <div class="modal-body">
+            <div class="d-flex align-items-center gap-2 justify-content-center">
+              <input id="modal-min-value"
+                     class="form-control text-center"
+                     type="text" name="min-value" placeholder="Min">
+
+              <span class="fw-semibold">&lt;</span>
+              <span class="fw-semibold w-50 text-center" id="filter-attribute-label"></span>
+              <span class="fw-semibold">&lt;=</span>
+
+              <input id="modal-max-value"
+                     class="form-control text-center"
+                     type="text" name="max-value" placeholder="Max">
+              <div>
+                <input type="checkbox" class="btn-check" autocomplete="off"
+                       id="modal-use-abs"
+                       name="use-abs"
+                       aria-describedby="Use absolute value function button">
+                {{ use_abs_label_button(label_for="modal-use-abs") }}
+              </div>
+
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button type="submit" name="filter_action" value="clear" class="btn btn-secondary">Clear</button>
+            <button type="submit" name="filter_action" value="apply" class="btn btn-success">Apply</button>
+          </div>
+
+        </form>
+      </div>
+    </div>
+  </div>
+
 </section>
 
 {% endblock %}
@@ -382,4 +146,5 @@
 {% block script %}
     <script src="{{ url_for('static', filename='js/search_bar.js') }}" type="text/javascript" defer></script>
     <script src="{{ url_for('watchlist.static', filename='js/watchlist.js') }}" type="text/javascript" defer></script>
+    <script src="{{ url_for('watchlist.static', filename='js/folder_actions.js') }}" type="text/javascript" defer></script>
 {% endblock %}

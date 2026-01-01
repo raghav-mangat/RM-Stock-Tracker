@@ -18,7 +18,7 @@ let currentFolderId = null;
    DEBOUNCE CONFIG
 ============================ */
 let debounceTimer = null;
-const DEBOUNCE_DELAY = 500; // ms
+const DEBOUNCE_DELAY = 300; // ms
 
 /* ============================
    WATCHLIST MODAL LOGIC
@@ -124,7 +124,12 @@ function fetchSuggestions(query) {
           el.addEventListener("click", () => {
             document.getElementById("hidden-folder-id").value = currentFolderId;
             document.getElementById("hidden-ticker").value = item.ticker;
-            document.getElementById("addStockForm").submit();
+            addStockForm = document.getElementById("addStockForm");
+            if (addStockForm) {
+              // Set the data-folder-id attribute
+              addStockForm.dataset.folderId = currentFolderId;
+              addStockForm.requestSubmit();
+            }
           });
         }
 

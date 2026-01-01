@@ -1,0 +1,281 @@
+{% from "macros/spinners.html" import loading_spinner %}
+{% from "macros/alert_offcanvas.html" import alert_offcanvas %}
+{% from "macros/watchlist_components.html" import ticker_link %}
+{% from "macros/table_components.html" import watchlist_folder_table_header, table_header, table_data, table_data_row_number %}
+
+{% macro folder_content(folder_id, folder_data, num_folders, FolderAttribute, AlertAttribute, OrderBy) %}
+<div class="accordion-item border border-1 border-dark shadow-sm mb-3"
+     id="accordion-item-{{ folder_id }}">
+    <h2 class="accordion-header">
+      <button
+        class="accordion-button fw-semibold collapsed"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#collapse-{{ folder_id }}"
+        aria-expanded="false"
+        aria-controls="collapse-{{ folder_id }}"
+      >
+        <span id="accordion-header-{{ folder_id }}"
+              class="folder-fade">
+          {{ folder_header(folder_id, folder_data) }}
+        </span>
+      </button>
+    </h2>
+
+    <div id="collapse-{{ folder_id }}" class="accordion-collapse collapse"
+         aria-labelledby="accordion-item-{{ folder_id }}">
+        <div class="accordion-body position-relative">
+            <div id="accordion-body-{{ folder_id }}"
+                 class="folder-fade">
+                {{ folder_body(folder_id, folder_data, num_folders, FolderAttribute, AlertAttribute, OrderBy) }}
+            </div>
+        </div>
+    </div>
+</div>
+{% endmacro %}
+
+{% macro folder_header(folder_id, folder_data) %}
+<span class="d-flex align-middle">
+  {{ folder_data.folder_order }})
+  {{ folder_data.folder_name }}
+  <span class="badge bg-secondary rounded-pill ms-2">
+    {{ folder_data.folder_items|length }}
+  </span>
+</span>
+{% endmacro %}
+
+{% macro folder_body(folder_id, folder_data, num_folders, FolderAttribute, AlertAttribute, OrderBy) %}
+<div>
+    <!-- Folder Loading Spinner Overlay -->
+    {{ loading_spinner("folder-loading-spinner-" ~ folder_id, "Folder Loading...", "absolute") }}
+
+    <!-- Folder Actions -->
+    <div class="row g-2 align-items-center mb-3">
+      <!-- Left Column: Order Selector + Add Stock + Folder Attributes + Folder Alert -->
+      <div class="col-12 col-md-6 d-flex flex-wrap align-items-center gap-2">
+        <!-- Order Selector -->
+        <form method="POST"
+              action="{{ url_for('watchlist.update_order', folder_id=folder_id) }}"
+              class="d-flex align-items-center"
+              novalidate>
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <label for="order-{{ folder_id }}" class="me-2 mb-0 small text-muted">Order:</label>
+          <select name="order" id="order-{{ folder_id }}"
+                  class="form-select form-select-sm"
+                  onchange="this.form.submit()">
+            {% for i in range(1, num_folders + 1) %}
+              <option value="{{ i }}" {% if folder_data.folder_order == i %}selected{% endif %}>{{ i }}</option>
+            {% endfor %}
+          </select>
+        </form>
+
+        <div class="d-flex flex-wrap align-items-center gap-2">
+            <!-- Add Stock Button -->
+            <button class="btn btn-sm btn-success"
+                    data-bs-toggle="modal"
+                    data-bs-target="#addStockModal"
+                    data-folder-id="{{ folder_id }}">
+              + Add Stock
+            </button>
+
+            <!-- Folder Edit Attributes Button -->
+            <div class="dropdown-center">
+                <!-- Dropdown toggle button -->
+                <button class="btn btn-sm btn-outline-primary d-flex align-items-center"
+                        id="edit-folder-attributes-button-{{ folder_id }}"
+                        type="button"
+                        data-bs-toggle="dropdown"
+                        data-bs-auto-close="outside"
+                        aria-expanded="false">
+                  <i class="bi bi-pencil-square me-1"></i>
+                  Edit
+                </button>
+              <form method="POST"
+                    action="{{ url_for('watchlist.update_folder_attributes', folder_id=folder_id) }}"
+                    class="folder-action-form"
+                    data-folder-id="{{ folder_id }}"
+                    data-action="edit-attributes"
+                    novalidate>
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="folder_name" value="{{ folder_data.folder_name }}">
+
+                <!-- Dropdown menu -->
+                <ul class="dropdown-menu p-3 shadow rounded-3" style="min-width: 260px;">
+                  <li class="mb-2 text-center fw-semibold border-bottom pb-2">
+                    Select Attributes
+                  </li>
+
+                  <!-- Attribute checkboxes -->
+                  {% for folder_attribute in FolderAttribute|list %}
+                      <li class="form-check mb-1">
+                        <input class="form-check-input"
+                               type="checkbox"
+                               value="{{ folder_attribute.value }}"
+                               name="folder-attribute-{{ loop.index }}"
+                               id="folder-attribute-{{ loop.index }}-{{ folder_id }}"
+                               {% if folder_attribute.value in folder_data.folder_attributes_list %} checked {% endif %}>
+                        <label class="form-check-label" for="folder-attribute-{{ loop.index }}-{{ folder_id }}">
+                          {{ folder_attribute.label }}
+                        </label>
+                      </li>
+                  {% endfor %}
+
+                  <!-- Divider -->
+                  <li><hr class="dropdown-divider my-3"></li>
+
+                  <!-- Buttons -->
+                  <li class="d-flex justify-content-between">
+                    <button type="submit" class="btn btn-sm btn-outline-secondary flex-fill me-1" name="edit_action" value="restore">
+                      Restore
+                    </button>
+                    <button type="submit" class="btn btn-sm btn-secondary flex-fill ms-1" name="edit_action" value="save">
+                      Save
+                    </button>
+                  </li>
+                </ul>
+              </form>
+            </div>
+
+            <!-- Folder Alert Button -->
+            <button class="btn btn-sm btn-outline-primary position-relative" type="button"
+                    data-bs-toggle="offcanvas"
+                    data-bs-target="#offcanvas-folder-{{ folder_id }}" aria-controls="#offcanvas-folder-{{ folder_id }}">
+                <i class="bi bi-bell"></i>
+                Alerts
+                {% if folder_data.folder_alerts | length > 0 %}
+                  <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-secondary">
+                    {{ folder_data.folder_alerts | length }}
+                    <span class="visually-hidden">folder alerts</span>
+                  </span>
+                {% endif %}
+            </button>
+            {{ alert_offcanvas(
+                offcanvas_target_id="offcanvas-folder-" + folder_id|string,
+                form_action=url_for('watchlist.update_folder_alerts', folder_id=folder_id),
+                folder_id=folder_id,
+                db_id=folder_id,
+                folder_name=folder_data.folder_name,
+                alert_data=folder_data.folder_alerts,
+                attributes=AlertAttribute|list,
+                ticker=None,
+            ) }}
+        </div>
+      </div>
+
+      <!-- Right Column: Rename + Delete -->
+      <div class="col-12 col-md-6 d-flex flex-wrap justify-content-md-end gap-2">
+        <!-- Rename Folder Form -->
+        <form method="POST"
+              action="{{ url_for('watchlist.rename_folder', folder_id=folder_id) }}"
+              class="folder-action-form d-flex align-items-center gap-2"
+              data-folder-id="{{ folder_id }}"
+              data-action="rename"
+              novalidate>
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="input-group">
+            <input type="text"
+                   name="new_folder_name"
+                   class="form-control form-control-sm text-uppercase"
+                   placeholder="Rename Folder">
+            <button type="submit" class="btn btn-sm btn-outline-primary">Rename</button>
+          </div>
+        </form>
+
+        <!-- Delete Folder Form -->
+        <form method="POST"
+              action="{{ url_for('watchlist.remove_folder', folder_id=folder_id) }}"
+              novalidate>
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn btn-sm btn-outline-danger">
+              <i class="bi bi-trash"></i>
+              Delete
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="table-responsive">
+      <table class="table table-bordered table-hover align-middle">
+        <thead class="table-light">
+          <tr>
+            {{ table_header("#") }}
+            {{ table_header("Ticker") }}
+
+            {% for attribute_data in folder_data.folder_attributes_data %}
+                {{ watchlist_folder_table_header(
+                    folder_id = folder_id,
+                    attribute_data = attribute_data,
+                    folder_sort_by_attribute = folder_data.folder_sort_by_attribute,
+                    folder_sort_by_order = folder_data.folder_sort_by_order,
+                    FolderAttribute = FolderAttribute,
+                    OrderBy = OrderBy
+                ) }}
+            {% endfor %}
+
+            {{ table_header("Actions") }}
+          </tr>
+        </thead>
+        <tbody>
+          {% for item_id, item_data in folder_data.folder_items.items() %}
+              {% set stock = item_data["stock_data"] %}
+              <tr>
+                  {{ table_data_row_number(loop.index) }}
+                  <td>
+                    {{ ticker_link(stock) }}
+                  </td>
+                  {% for attribute in folder_data.folder_attributes_list %}
+                    {{ table_data(attribute, stock, FolderAttribute) }}
+                  {% endfor %}
+                  <td>
+                      <div class="d-flex gap-1 mx-1">
+                          <!-- Item Alert Button -->
+                          <button class="btn btn-sm btn-outline-primary position-relative" type="button"
+                                  data-bs-toggle="offcanvas"
+                                  data-bs-target="#offcanvas-item-{{ item_id }}" aria-controls="#offcanvas-item-{{ item_id }}">
+                            <i class="bi bi-bell"></i>
+                            {% if item_data["item_alerts"] | length > 0 %}
+                              <span class="position-absolute top-0 start-0 translate-middle badge rounded-pill bg-secondary">
+                                {{ item_data["item_alerts"] | length }}
+                                <span class="visually-hidden">stock alerts</span>
+                              </span>
+                            {% endif %}
+                          </button>
+                          {{ alert_offcanvas(
+                              offcanvas_target_id="offcanvas-item-" + item_id|string,
+                              form_action=url_for('watchlist.update_item_alerts', item_id=item_id),
+                              folder_id=folder_id,
+                              db_id=item_id,
+                              folder_name=folder_data.folder_name,
+                              alert_data=item_data["item_alerts"],
+                              attributes=AlertAttribute|list,
+                              ticker=stock.ticker,
+                          ) }}
+
+                          <!-- Remove Item Button -->
+                          <form method="POST"
+                                action="{{ url_for('watchlist.remove_item', folder_id=folder_id, ticker=stock.ticker) }}"
+                                class="folder-action-form"
+                                data-folder-id="{{ folder_id }}"
+                                data-action="remove-item"
+                                novalidate>
+                              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                              <button type="submit" class="btn btn-sm btn-outline-danger">
+                                  <i class="bi bi-trash"></i>
+                              </button>
+                          </form>
+                      </div>
+                  </td>
+              </tr>
+          {% else %}
+              <tr>
+                <td colspan="{{ folder_data.folder_attributes_list|length + 3 }}" class="text-center text-muted py-4">
+                  <em>No stocks to show in this folder.</em>
+                </td>
+              </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+</div>
+{% endmacro %}

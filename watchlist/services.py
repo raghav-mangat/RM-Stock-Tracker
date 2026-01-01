@@ -1,5 +1,52 @@
+from flask import request, abort, jsonify
 from models.database import AlertAttribute
 from utils.db_queries.watchlist import check_duplicate_folder
+
+class AjaxService:
+    """
+    Centralized helpers for AJAX-only routes and JSON responses.
+    """
+
+    @staticmethod
+    def is_ajax():
+        """
+        Tells if the request is made via AJAX.
+        """
+        return request.headers.get("X-Requested-With") == "XMLHttpRequest"
+
+    @staticmethod
+    def require_ajax():
+        """
+        Ensures the request is made via AJAX.
+        """
+        if request.headers.get("X-Requested-With") != "XMLHttpRequest":
+            abort(400)
+
+    @staticmethod
+    def success(message: str, **extra):
+        """
+        Standard success response.
+        """
+        payload = {
+            "status": "success",
+            "category": "success",
+            "message": message,
+        }
+        payload.update(extra)
+        return jsonify(payload), 200
+
+    @staticmethod
+    def error(message: str, category="danger", status_code=400, **extra):
+        """
+        Standard error response.
+        """
+        payload = {
+            "status": "error",
+            "category": category,
+            "message": message,
+        }
+        payload.update(extra)
+        return jsonify(payload), status_code
 
 class Validators:
     @staticmethod

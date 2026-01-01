@@ -8,3 +8,13 @@
     transform: scale(1.1);
     transition: all 0.15s ease;
 }
+
+/* Smooth fade transition animation for folder content refresh */
+/* Transition duration must be the same as defined in JS */
+.folder-fade {
+  opacity: 1;
+  transition: opacity 150ms ease-in-out;
+}
+.folder-fade.is-fading-out {
+  opacity: 0;
+}

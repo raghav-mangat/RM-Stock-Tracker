@@ -31,6 +31,7 @@ document.addEventListener("DOMContentLoaded", () => {
   modalEl.addEventListener("show.bs.modal", (event) => {
     const button = event.relatedTarget;
 
+    const folderId = button.getAttribute("data-folder-id");
     const attributeId = button.getAttribute("data-attribute-id");
     const label = button.getAttribute("data-attribute-label");
     const useAbs = button.getAttribute("data-use-abs");
@@ -43,5 +44,11 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("modal-use-abs").checked = useAbs ? true : false;
     document.getElementById("modal-min-value").value = minValue ?? "";
     document.getElementById("modal-max-value").value = maxValue ?? "";
+
+    const filterForm = modalEl.querySelector('form[data-action="filter"]');
+    if (filterForm) {
+      // Set the data-folder-id attribute
+      filterForm.dataset.folderId = folderId;
+    }
   });
 });

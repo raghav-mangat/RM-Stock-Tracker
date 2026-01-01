@@ -1,7 +1,7 @@
 {% from "macros/popovers.html" import dma_200_diff_popover %}
 {% from "macros/stock_attributes.html" import stock_todays_change, stock_dma_200_perc_diff %}
 
-{% macro watchlist_folder_table_header(folder_id, attribute_data, folder_sort_by_attribute, folder_sort_by_order) %}
+{% macro watchlist_folder_table_header(folder_id, attribute_data, folder_sort_by_attribute, folder_sort_by_order, FolderAttribute, OrderBy) %}
 
 <th scope="col" class="align-middle">
   <div class="d-flex align-items-center justify-content-between">
@@ -19,6 +19,7 @@
          {% endif %}"
         data-bs-toggle="modal"
         data-bs-target="#filterFolderModal"
+        data-folder-id="{{ folder_id }}"
         data-attribute-id="{{ attribute_data.id }}"
         data-attribute-label="{{ attribute_data.attribute.label }}"
         data-use-abs="{{ attribute_data.use_abs if attribute_data.use_abs else '' }}"
@@ -34,6 +35,9 @@
       <!-- Ascending Sort -->
       <form method="POST"
             action="{{ url_for('watchlist.update_folder_sort_by', folder_id=folder_id) }}"
+            class="folder-action-form"
+            data-folder-id="{{ folder_id }}"
+            data-action="sort"
             novalidate>
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <input type="hidden" name="sort_by_attribute" value="{{ attribute_data.attribute.value }}">
@@ -46,6 +50,9 @@
       <!-- Descending Sort -->
       <form method="POST"
             action="{{ url_for('watchlist.update_folder_sort_by', folder_id=folder_id) }}"
+            class="folder-action-form"
+            data-folder-id="{{ folder_id }}"
+            data-action="sort"
             novalidate>
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <input type="hidden" name="sort_by_attribute" value="{{ attribute_data.attribute.value }}">
@@ -81,6 +88,8 @@
       </td>
   {% elif attribute.value == AttributeType.DMA_200_PERC_DIFF %}
       {{ stock_dma_200_perc_diff(stock) }}
+  {% elif attribute.value == AttributeType.DAY_CLOSE %}
+      <td class="bg-info-subtle fw-semibold">{{ stock[attribute.value] | currency }}</td>
   {% else %}
       {% if attribute.type == "currency" %}
           <td>{{ stock[attribute.value] | currency }}</td>
