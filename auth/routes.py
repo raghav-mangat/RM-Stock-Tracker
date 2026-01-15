@@ -13,7 +13,7 @@ from .forms import (
     SettingsSetPasswordForm, SettingsRemovePasswordForm, SettingsToggleEmailAlertsForm
 )
 from utils.db_queries.user_data import (
-    add_new_user, update_user_profile, change_user_password, verify_user,
+    AuthError, add_new_user, update_user_profile, change_user_password, verify_user,
     get_user_by_email, get_user_by_google_id, delete_user_account, add_user_google_id, remove_user_google_id,
     remove_user_password, update_user_last_login_at, toggle_user_email_alerts_on
 )
@@ -25,18 +25,30 @@ def signup():
         return redirect(url_for("watchlist.index"))
     form = SignupForm()
     if form.validate_on_submit():
-        user = add_new_user(
-            signup_source=SignupSource.EMAIL,
-            email=form.email.data,
-            username=form.username.data,
-            first_name=form.first_name.data,
-            last_name=form.last_name.data,
-            password=form.password.data,
-            google_id=None,
-            is_verified=False
-        )
-        AuthEmail.verify_email(user)
-        flash("Account created, we sent a verification email. Please click the link in your inbox (check spam).", "success")
+        try:
+            user = add_new_user(
+                signup_source=SignupSource.EMAIL,
+                email=form.email.data,
+                username=form.username.data,
+                first_name=form.first_name.data,
+                last_name=form.last_name.data,
+                password=form.password.data,
+                google_id=None,
+                is_verified=False
+            )
+        except AuthError as e:
+            flash(str(e), "danger")
+            return redirect(url_for('auth.login'))
+
+        try:
+            AuthEmail.verify_email(user)
+            flash("Account created, we sent a verification email. Please click the link in your inbox (check spam).",
+                  "success")
+        except Exception:
+            flash(
+                "Account created, but we couldn't send the verification email. Please try logging in to resend it.",
+                "danger"
+            )
         return redirect(url_for('auth.login'))
 
     return render_template("signup.html", form=form)
@@ -102,13 +114,16 @@ def settings_profile():
     profile_settings_form = ProfileSettingsForm(obj=current_user)
 
     if profile_settings_form.validate_on_submit():
-        update_user_profile(
-            user=current_user,
-            first_name=profile_settings_form.first_name.data,
-            last_name=profile_settings_form.last_name.data,
-            username=profile_settings_form.username.data
-        )
-        flash("Profile updated successfully.", "success")
+        try:
+            update_user_profile(
+                user=current_user,
+                first_name=profile_settings_form.first_name.data,
+                last_name=profile_settings_form.last_name.data,
+                username=profile_settings_form.username.data
+            )
+            flash("Profile updated successfully.", "success")
+        except AuthError as e:
+            flash(str(e), "danger")
         return redirect(url_for("auth.settings_profile"))
     elif request.method == "POST":
         flash(
@@ -153,9 +168,13 @@ def verify_email(token):
         flash("Your email is already verified. Please log in.", "info")
         return redirect(url_for("auth.login"))
 
-    verify_user(user)
-    AuthEmail.user_verification_success(user)
-    flash("Your email is verified! Now you can log in.", "success")
+    try:
+        verify_user(user)
+        AuthEmail.user_verification_success(user)
+        flash("Your email is verified! Now you can log in.", "success")
+    except AuthError as e:
+        flash(str(e), "danger")
+
     return redirect(url_for("auth.login"))
 
 @auth_bp.route("/reset-password-request", methods=["GET", "POST"])
@@ -187,11 +206,14 @@ def settings_toggle_email_alerts():
     form = SettingsToggleEmailAlertsForm()
 
     if form.validate_on_submit():
-        toggle_user_email_alerts_on(current_user)
-        if current_user.email_alerts_on:
-            flash("Email alerts have been turned ON.", "success")
-        else:
-            flash("Email alerts have been turned OFF.","success")
+        try:
+            toggle_user_email_alerts_on(current_user)
+            if current_user.email_alerts_on:
+                flash("Email alerts have been turned ON.", "success")
+            else:
+                flash("Email alerts have been turned OFF.","success")
+        except AuthError as e:
+            flash(str(e), "danger")
     else:
         flash("Invalid request.", "danger")
 
@@ -223,10 +245,13 @@ def settings_set_password():
             session.pop("reauth_verified", None)
             session.pop("reauth_verified_at", None)
 
-            change_user_password(current_user, form.password.data)
-            AuthEmail.settings_password_set_success(current_user)
+            try:
+                change_user_password(current_user, form.password.data)
+                AuthEmail.settings_password_set_success(current_user)
+                flash("Your password has been set. Please log in again.", "success")
+            except AuthError as e:
+                flash(str(e), "danger")
 
-            flash("Your password has been set. Please log in again.", "success")
             return redirect(url_for("auth.logout"))
 
     if reauth_expired:
@@ -271,9 +296,12 @@ def settings_remove_password():
     elif not current_user.verify_password(form.password.data):
         flash("Incorrect password.", "warning")
     else:
-        remove_user_password(current_user)
-        AuthEmail.settings_password_removed_success(current_user)
-        flash("Your password has been removed. Please log in again.", "success")
+        try:
+            remove_user_password(current_user)
+            AuthEmail.settings_password_removed_success(current_user)
+            flash("Your password has been removed. Please log in again.", "success")
+        except AuthError as e:
+            flash(str(e), "danger")
         return redirect(url_for("auth.logout"))
     return redirect(url_for("auth.settings_account"))
 
@@ -292,9 +320,12 @@ def reset_password(token):
 
     form = ResetPasswordForm()
     if form.validate_on_submit():
-        change_user_password(user, form.password.data)
-        AuthEmail.password_reset_success(user)
-        flash("Your password has been reset. Please log in again.", "success")
+        try:
+            change_user_password(user, form.password.data)
+            AuthEmail.password_reset_success(user)
+            flash("Your password has been reset. Please log in again.", "success")
+        except AuthError as e:
+            flash(str(e), "danger")
         return redirect(url_for("auth.logout"))
 
     return render_template("reset_password.html", form=form)
@@ -344,9 +375,12 @@ def delete_account(token):
     form = DeleteAccountForm()
     if form.validate_on_submit():
         if user.email == form.email.data:
-            delete_user_account(user)
-            AuthEmail.account_delete_success(user)
-            flash("Your account has been deleted.", "success")
+            try:
+                delete_user_account(user)
+                AuthEmail.account_delete_success(user)
+                flash("Your account has been deleted.", "success")
+            except AuthError as e:
+                flash(str(e), "danger")
             return redirect(url_for("auth.logout"))
         else:
             flash("Incorrect email to delete account.", "warning")
@@ -418,7 +452,6 @@ def google_signin_callback():
         flash("Please verify your Google email before signing in.", "warning")
         return redirect(url_for("auth.login"))
 
-    # Find or create user (linking if same email exists)
     user = get_user_by_email(email)
     if user:
         if user.google_id:
@@ -433,9 +466,13 @@ def google_signin_callback():
                 flash("This Google account is already linked to another user.", "danger")
                 return redirect(url_for("auth.login"))
             else:
-                add_user_google_id(user, google_id)
-                AuthEmail.google_account_linked_success(user)
-                flash("Signed in with Google. Linked Google account successfully.", "success")
+                try:
+                    add_user_google_id(user, google_id)
+                    AuthEmail.google_account_linked_success(user)
+                    flash("Signed in with Google. Linked Google account successfully.", "success")
+                except AuthError as e:
+                    flash(f"Unable to signin with Google. {str(e)}", "danger")
+                    return redirect(url_for("auth.login"))
     else:
         session["pending_google_signup"] = {
             "google_id": google_id,
@@ -476,30 +513,39 @@ def choose_username():
     form = ChooseUsernameForm()
 
     if form.validate_on_submit():
-        user = add_new_user(
-            signup_source=SignupSource.GOOGLE,
-            email=pending["email"],
-            username=form.username.data,
-            first_name=pending["first_name"],
-            last_name=pending["last_name"],
-            password=None,
-            google_id=pending["google_id"],
-            is_verified=True,
-        )
-        session.pop("pending_google_signup", None)
-        AuthEmail.google_signin_success(user)
+        try:
+            user = add_new_user(
+                signup_source=SignupSource.GOOGLE,
+                email=pending["email"],
+                username=form.username.data,
+                first_name=pending["first_name"],
+                last_name=pending["last_name"],
+                password=None,
+                google_id=pending["google_id"],
+                is_verified=True,
+            )
+            session.pop("pending_google_signup", None)
+            AuthEmail.google_signin_success(user)
 
-        login_user(user)
-        update_user_last_login_at(user)
-        session["security_timestamp"] = user.security_timestamp
-        flash("Signed in with Google. Account created successfully.", "success")
+            login_user(user)
+            update_user_last_login_at(user)
+            session["security_timestamp"] = user.security_timestamp
+            flash("Signed in with Google. Account created successfully.", "success")
 
-        # Restore next url safely
-        next_url = session.pop("oauth_next", None)
-        if next_url and RedirectService.is_safe_redirect_url(next_url):
-            return redirect(next_url)
+            # Restore next url safely
+            next_url = session.pop("oauth_next", None)
+            if next_url and RedirectService.is_safe_redirect_url(next_url):
+                return redirect(next_url)
 
-        return redirect(url_for("watchlist.index"))
+            return redirect(url_for("watchlist.index"))
+
+        except AuthError as e:
+            flash(str(e), "danger")
+            return redirect(url_for("auth.signup"))
+        finally:
+            # Clean up the session
+            session.pop("pending_google_signup", None)
+            session.pop("oauth_next", None)
 
     return render_template("choose_username.html", form=form)
 
@@ -574,9 +620,13 @@ def google_link_callback():
         flash("This Google account is already linked to another user.", "danger")
         return redirect(url_for("auth.settings_account"))
 
-    add_user_google_id(current_user, google_id)
-    AuthEmail.google_account_linked_success(current_user)
-    flash("Google account linked successfully. Please log in again.", "success")
+    try:
+        add_user_google_id(current_user, google_id)
+        AuthEmail.google_account_linked_success(current_user)
+        flash("Google account linked successfully. Please log in again.", "success")
+    except AuthError as e:
+        flash(str(e), "danger")
+
     return redirect(url_for("auth.logout"))
 
 @auth_bp.route("/google/unlink", methods=["POST"])
@@ -591,9 +641,12 @@ def google_unlink():
     elif not current_user.verify_password(form.password.data):
         flash("Incorrect password.", "warning")
     else:
-        remove_user_google_id(current_user)
-        AuthEmail.google_account_unlinked_success(current_user)
-        flash("Your Google account has been unlinked. Please log in again.", "success")
+        try:
+            remove_user_google_id(current_user)
+            AuthEmail.google_account_unlinked_success(current_user)
+            flash("Your Google account has been unlinked. Please log in again.", "success")
+        except AuthError as e:
+            flash(str(e), "danger")
         return redirect(url_for("auth.logout"))
     return redirect(url_for("auth.settings_account"))
 
