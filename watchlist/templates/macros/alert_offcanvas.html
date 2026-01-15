@@ -23,10 +23,6 @@
                 novalidate>
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <input type="hidden" name="num_alerts" value="{{ alert_data|length }}">
-              <input type="hidden" name="folder_name" value="{{ folder_name }}">
-              {% if ticker %}
-                <input type="hidden" name="ticker" value="{{ ticker }}">
-              {% endif %}
 
               {% for alert in alert_data %}
                   <div class="d-flex my-3 gap-1 align-items-center">

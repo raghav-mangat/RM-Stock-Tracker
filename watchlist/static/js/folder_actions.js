@@ -21,6 +21,9 @@ const TOAST_DISMISS_DELAY = 5000;
 /* Form Submission Handler                                                    */
 /* -------------------------------------------------------------------------- */
 
+// To ensure only a single request is made per folder by using locks
+const folderLocks = new Map();
+
 document.addEventListener("submit", async (event) => {
   const form = event.target;
 
@@ -30,6 +33,14 @@ document.addEventListener("submit", async (event) => {
   event.preventDefault();
 
   const folderId = form.dataset.folderId;
+
+  // If there is an existing request for the folder, abort safely
+  if (folderLocks.get(folderId)) {
+    return;
+  }
+
+  // Keep track of the new request started for this folder, lock the folder
+  folderLocks.set(folderId, true);
 
   // Get DOM references for the affected folder
   const headerContainer = document.getElementById(
@@ -66,28 +77,6 @@ document.addEventListener("submit", async (event) => {
     }
 
     /* ------------------------------------------------------------------ */
-    /* POST request                                                       */
-    /* ------------------------------------------------------------------ */
-
-    // Execute folder action (add, remove, update, etc.)
-    const actionResponse = await fetch(form.action, {
-      method: "POST",
-      headers: { "X-Requested-With": "XMLHttpRequest" },
-      body: formData,
-    });
-
-    const actionData = await actionResponse.json();
-
-    // Stop early if server-side validation or logic failed
-    if (!actionResponse.ok) {
-      showToast(
-        actionData.message || "Action failed",
-        actionData.category || "danger"
-      );
-      return;
-    }
-
-    /* ------------------------------------------------------------------ */
     /* Close interaction UI immediately                                   */
     /* ------------------------------------------------------------------ */
 
@@ -107,6 +96,28 @@ document.addEventListener("submit", async (event) => {
     ]);
 
     /* ------------------------------------------------------------------ */
+    /* POST request                                                       */
+    /* ------------------------------------------------------------------ */
+
+    // Execute folder action (add, remove, update, etc.)
+    const actionResponse = await fetch(form.action, {
+      method: "POST",
+      headers: { "X-Requested-With": "XMLHttpRequest" },
+      body: formData,
+    });
+
+    const actionData = await actionResponse.json();
+
+    // Stop early if server-side logic failed
+    if (!actionResponse.ok && actionData.requires_refresh) {
+      refreshPage(
+        (message = actionData.message),
+        (category = actionData.category)
+      );
+      return;
+    }
+
+    /* ------------------------------------------------------------------ */
     /* Fetch updated folder partial                                       */
     /* ------------------------------------------------------------------ */
 
@@ -119,10 +130,10 @@ document.addEventListener("submit", async (event) => {
     const partialData = await partialResponse.json();
 
     // Handle partial-render failure separately from POST success
-    if (!partialResponse.ok) {
-      showToast(
-        partialData.message || "Failed to refresh folder",
-        partialData.category || "danger"
+    if (!partialResponse.ok && partialData.requires_refresh) {
+      refreshPage(
+        (message = partialData.message),
+        (category = partialData.category)
       );
       return;
     }
@@ -144,19 +155,35 @@ document.addEventListener("submit", async (event) => {
       headerContainer.classList.remove("is-fading-out");
       bodyContainer.classList.remove("is-fading-out");
 
-      // Show success feedback after UI is fully updated
+      // Show feedback after UI is fully updated
       showToast(actionData.message, actionData.category);
     }, FOLDER_FADE_TRANSITION_DURATION);
   } catch {
     // Catch network or unexpected runtime errors
     showToast("Unexpected error occurred", "danger");
   } finally {
+    // Request for this folder was completed, free the lock for next request
+    folderLocks.delete(folderId);
+
     // Always clean up spinner and restore interaction state
     clearTimeout(overlayTimeoutId);
     overlay.classList.add("d-none");
     bodyContainer.classList.remove("pe-none");
   }
 });
+
+/* -------------------------------------------------------------------------- */
+/* Refresh Page Utility                                                       */
+/* -------------------------------------------------------------------------- */
+
+function refreshPage(message, category) {
+  // Encode the message and category so it can be passed safely in a URL parameter
+  const encodedMessage = encodeURIComponent(message);
+  const encodedCategory = encodeURIComponent(category);
+
+  // Redirect to the refresh watchlist route
+  window.location.href = `/watchlist/refresh?message=${encodedMessage}&category=${encodedCategory}`;
+}
 
 /* -------------------------------------------------------------------------- */
 /* Bootstrap Utilities                                                        */

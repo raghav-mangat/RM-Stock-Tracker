@@ -1,16 +1,20 @@
+from sqlalchemy.exc import IntegrityError
+from dataclasses import dataclass
 from models.database import (db, WatchlistFolder, WatchlistItem, WatchlistFolderAttribute,
                              WatchlistAlert, WatchlistFolderAlert, WatchlistItemAlert,
                              StockMaster, Stock, FolderAttribute, OrderBy)
-
 from data_collectors.stock_data import fetch_stock_data
+
+@dataclass
+class MutationResult:
+    ok: bool
+    message: str
+    status_code: int | None = None
 
 class NotFoundError(Exception):
     pass
 
 class ForbiddenError(Exception):
-    pass
-
-class DuplicateError(Exception):
     pass
 
 def db_get_all_watchlist_data(user):
@@ -84,193 +88,322 @@ def db_get_num_folders(user):
     return len(user.watchlist_folders)
 
 def db_add_folder(folder_name, user):
-    folders = user.watchlist_folders
-    order = len(folders) + 1
-    new_folder = WatchlistFolder(name=folder_name, order=order, user=user)
-    db.session.add(new_folder)
-    db.session.flush()
+    try:
+        folders = user.watchlist_folders
+        order = len(folders) + 1
+        new_folder = WatchlistFolder(name=folder_name, order=order, user=user)
+        db.session.add(new_folder)
+        db.session.flush()
 
-    # Add default folder attributes
-    add_default_folder_attributes(new_folder)
+        # Add default folder attributes
+        add_default_folder_attributes(new_folder)
+
+        db.session.commit()
+
+        return MutationResult(
+            ok=True,
+            message=f"Folder '{folder_name}' added successfully.",
+        )
+
+    except IntegrityError:
+        db.session.rollback()
+        return MutationResult(
+            ok=False,
+            message=f"Folder '{folder_name}' already exists.",
+            status_code=409,
+        )
+    except Exception as e:
+        db.session.rollback()
+        raise e
 
 def db_rename_folder(new_folder_name, folder_id, user):
-    folder = check_and_get_user_folder(folder_id, user)
-    # Rename folder
-    folder.name = new_folder_name
-    db.session.commit()
+    try:
+        folder = check_and_get_user_folder(folder_id, user)
+        # Rename folder
+        folder.name = new_folder_name
+        db.session.commit()
+
+        return MutationResult(
+            ok=True,
+            message=f"Folder renamed to '{new_folder_name}'.",
+        )
+    except IntegrityError:
+        db.session.rollback()
+        return MutationResult(
+            ok=False,
+            message=f"Folder '{new_folder_name}' already exists.",
+            status_code=409,
+        )
+    except Exception as e:
+        db.session.rollback()
+        raise e
 
 def db_remove_folder(folder_id, user):
-    folder = check_and_get_user_folder(folder_id, user)
+    try:
+        folder = check_and_get_user_folder(folder_id, user)
 
-    # Delete the alerts for the folder
-    delete_folder_alerts(folder, user)
+        # Delete the alerts for the folder
+        delete_folder_alerts(folder, user)
 
-    # Delete all the items in the folder
-    for item in folder.items:
-        delete_watchlist_item(item, user)
+        # Delete all the items in the folder
+        for item in folder.items:
+            delete_watchlist_item(item, user)
 
-    # Delete Folder
-    db.session.delete(folder)
-    db.session.flush()
+        # Delete Folder
+        db.session.delete(folder)
+        db.session.flush()
 
-    # Reorder all folders for the user after deletion
-    folders = get_all_user_folders(user)
-    for i in range(len(folders)):
-        folders[i].order = i + 1
+        # Reorder all folders for the user after deletion
+        folders = get_all_user_folders(user)
+        for i in range(len(folders)):
+            folders[i].order = i + 1
 
-    db.session.commit()
+        db.session.commit()
+
+        return MutationResult(
+            ok=True,
+            message=f"Folder '{folder.name}' removed successfully.",
+        )
+    except Exception as e:
+        db.session.rollback()
+        raise e
 
 def db_update_order(folder_id, new_order, user):
-    # The folder we need to update
-    update_folder = check_and_get_user_folder(folder_id, user)
+    try:
+        # The folder we need to update
+        update_folder = check_and_get_user_folder(folder_id, user)
 
-    # Get all the user's folders
-    folders = get_all_user_folders(user)
+        # Get all the user's folders
+        folders = get_all_user_folders(user)
 
-    # Check if the new_order is valid
-    if new_order not in range(1, len(folders) + 1):
-        raise Exception(f"New order '{new_order}' not in range ({1}, {len(folders + 1)})")
+        # Check if the new_order is valid
+        if new_order not in range(1, len(folders) + 1):
+            raise Exception(f"New order '{new_order}' not in range ({1}, {len(folders + 1)})")
 
-    # Old order of the folder
-    old_order = update_folder.order
+        # Old order of the folder
+        old_order = update_folder.order
 
-    # Direction of shift for reordering of the folders
-    if new_order < old_order:
-        order_shift = 1
-    else:
-        order_shift = -1
+        # Direction of shift for reordering of the folders
+        if new_order < old_order:
+            order_shift = 1
+        else:
+            order_shift = -1
 
-    # Reorder the folders between new order and old order
-    for i in range(new_order, old_order, order_shift):
-        # Get the current folder
-        curr_folder = folders[i-1]
-        # Shift the folder
-        curr_folder.order = curr_folder.order + order_shift
-    # Update the order of the given folder
-    update_folder.order = new_order
+        # Reorder the folders between new order and old order
+        for i in range(new_order, old_order, order_shift):
+            # Get the current folder
+            curr_folder = folders[i-1]
+            # Shift the folder
+            curr_folder.order = curr_folder.order + order_shift
+        # Update the order of the given folder
+        update_folder.order = new_order
 
-    # Commit the reordering of the user's folders
-    db.session.commit()
+        # Commit the reordering of the user's folders
+        db.session.commit()
+
+        return MutationResult(
+            ok=True,
+            message=f"Folder '{update_folder.name}' reordered successfully!",
+        )
+
+    except Exception as e:
+        db.session.rollback()
+        raise e
 
 def db_add_watchlist_item(folder_id, stock, user):
-    folder = check_and_get_user_folder(folder_id, user)
+    try:
+        folder = check_and_get_user_folder(folder_id, user)
 
-    existing_watchlist_item = get_watchlist_item(folder=folder, stock=stock)
-    if existing_watchlist_item:
-        raise DuplicateError(f"The ticker {stock.ticker} is already in the folder with id {folder.id}.")
+        watchlist_item = WatchlistItem(folder=folder, stock=stock)
+        db.session.add(watchlist_item)
+        db.session.commit()
 
-    watchlist_item = WatchlistItem(folder=folder, stock=stock)
-    db.session.add(watchlist_item)
-    db.session.commit()
+        return MutationResult(
+            ok=True,
+            message=f"Added stock '{stock.ticker}'.",
+        )
+
+    except IntegrityError:
+        db.session.rollback()
+        return MutationResult(
+            ok=False,
+            message="This stock is already in the selected folder.",
+            status_code=409,
+        )
+    except Exception as e:
+        db.session.rollback()
+        raise e
 
 def db_remove_watchlist_item(folder_id, ticker, user):
-    # Check if stock exists
-    stock_id = db.session.execute(
-        db.select(StockMaster.id).where(
-            StockMaster.ticker == ticker)
-    ).scalar()
-    if not stock_id:
-        raise NotFoundError(f"Stock with id {stock_id} not found.")
+    try:
+        # Check if stock exists
+        stock_id = db.session.execute(
+            db.select(StockMaster.id).where(
+                StockMaster.ticker == ticker)
+        ).scalar()
+        if not stock_id:
+            raise NotFoundError(f"Stock with id {stock_id} not found.")
 
-    # Check if watchlist item exists
-    watchlist_item = db.session.execute(
-        db.select(WatchlistItem).where(
-            WatchlistItem.folder_id==folder_id, WatchlistItem.stock_id==stock_id
+        # Check if watchlist item exists
+        watchlist_item = db.session.execute(
+            db.select(WatchlistItem).where(
+                WatchlistItem.folder_id==folder_id, WatchlistItem.stock_id==stock_id
+            )
+        ).scalar()
+        if not watchlist_item:
+            folder = check_and_get_user_folder(folder_id, user)
+            if folder:
+                raise NotFoundError(f"Folder with id {folder_id} does not have stock with id {stock_id}")
+
+        delete_watchlist_item(watchlist_item, user)
+        db.session.commit()
+
+        return MutationResult(
+            ok=True,
+            message=f"Removed stock '{ticker}'.",
         )
-    ).scalar()
-    if not watchlist_item:
-        folder = check_and_get_user_folder(folder_id, user)
-        if folder:
-            raise NotFoundError(f"Folder with id {folder_id} does not have stock with id {stock_id}")
-
-    delete_watchlist_item(watchlist_item, user)
+    except Exception as e:
+        db.session.rollback()
+        raise e
 
 def db_update_folder_alerts(folder_id, alerts, user):
-    folder = check_and_get_user_folder(folder_id, user)
+    try:
+        folder = check_and_get_user_folder(folder_id, user)
 
-    delete_folder_alerts(folder, user)
-
-    for alert in alerts:
-        if not alert["delete"]:
-            new_alert = WatchlistAlert(
-                attribute=alert["attribute"],
-                use_abs=alert["use_abs"],
-                min_value=alert["min_value"],
-                max_value=alert["max_value"],
-                user=user
-            )
-            db.session.add(new_alert)
-            db.session.flush()
-            db.session.add(WatchlistFolderAlert(
-                folder=folder,
-                alert=new_alert
-            ))
+        delete_folder_alerts(folder, user)
         db.session.flush()
-    db.session.commit()
+
+        for alert in alerts:
+            if not alert["delete"]:
+                new_alert = WatchlistAlert(
+                    attribute=alert["attribute"],
+                    use_abs=alert["use_abs"],
+                    min_value=alert["min_value"],
+                    max_value=alert["max_value"],
+                    user=user
+                )
+                db.session.add(new_alert)
+                db.session.flush()
+                db.session.add(WatchlistFolderAlert(
+                    folder=folder,
+                    alert=new_alert
+                ))
+            db.session.flush()
+        db.session.commit()
+
+        return MutationResult(
+            ok=True,
+            message=f"Updated email alerts for folder '{folder.name}'.",
+        )
+
+    except Exception as e:
+        db.session.rollback()
+        raise e
 
 def db_update_item_alerts(item_id, alerts, user):
-    item = check_and_get_user_item(item_id, user)
+    try:
+        item = check_and_get_user_item(item_id, user)
 
-    delete_item_alerts(item, user)
-
-    for alert in alerts:
-        if not alert["delete"]:
-            new_alert = WatchlistAlert(
-                attribute=alert["attribute"],
-                use_abs=alert["use_abs"],
-                min_value=alert["min_value"],
-                max_value=alert["max_value"],
-                user=user
-            )
-            db.session.add(new_alert)
-            db.session.flush()
-            db.session.add(WatchlistItemAlert(
-                item=item,
-                alert=new_alert
-            ))
+        delete_item_alerts(item, user)
         db.session.flush()
-    db.session.commit()
+
+        for alert in alerts:
+            if not alert["delete"]:
+                new_alert = WatchlistAlert(
+                    attribute=alert["attribute"],
+                    use_abs=alert["use_abs"],
+                    min_value=alert["min_value"],
+                    max_value=alert["max_value"],
+                    user=user
+                )
+                db.session.add(new_alert)
+                db.session.flush()
+                db.session.add(WatchlistItemAlert(
+                    item=item,
+                    alert=new_alert
+                ))
+            db.session.flush()
+        db.session.commit()
+
+        return MutationResult(
+            ok=True,
+            message=f"Updated email alerts for stock '{item.stock.ticker}' in folder '{item.folder.name}'.",
+        )
+
+    except Exception as e:
+        db.session.rollback()
+        raise e
 
 def db_update_folder_attributes(folder_id, action, attributes, user):
-    folder = check_and_get_user_folder(folder_id, user)
+    try:
+        folder = check_and_get_user_folder(folder_id, user)
 
-    for attribute in folder.folder_attributes:
-        db.session.delete(attribute)
-    db.session.flush()
+        for attribute in folder.folder_attributes:
+            db.session.delete(attribute)
+        db.session.flush()
 
-    if action == "save":
-        for attribute in attributes:
-            db.session.add(WatchlistFolderAttribute(
-                attribute=attribute,
-                folder=folder
-            ))
-        db.session.commit()
-    elif action == "restore":
-        add_default_folder_attributes(folder)
-    else:
-        raise Exception(f"Form action '{action}' does not exist.")
+        if action == "save":
+            for attribute in attributes:
+                db.session.add(WatchlistFolderAttribute(
+                    attribute=attribute,
+                    folder=folder
+                ))
+            db.session.flush()
+        elif action == "restore":
+            add_default_folder_attributes(folder)
+        else:
+            raise Exception(f"Form action '{action}' does not exist.")
 
-    # Reset folder sorting
-    folder.sort_by_attribute = None
-    folder.sort_by_order = None
-    db.session.commit()
-
-def db_update_folder_sort_by(folder_id, sort_by_attribute, sort_by_order, user):
-    folder = check_and_get_user_folder(folder_id, user)
-    if folder.sort_by_attribute == sort_by_attribute and folder.sort_by_order == sort_by_order:
+        # Reset folder sorting
         folder.sort_by_attribute = None
         folder.sort_by_order = None
-    else:
-        folder.sort_by_attribute = sort_by_attribute
-        folder.sort_by_order = sort_by_order
-    db.session.commit()
+        db.session.commit()
+
+        return MutationResult(
+            ok=True,
+            message=f"Updated attributes for folder '{folder.name}'.",
+        )
+
+    except Exception as e:
+        db.session.rollback()
+        raise e
+
+def db_update_folder_sort_by(folder_id, sort_by_attribute, sort_by_order, user):
+    try:
+        folder = check_and_get_user_folder(folder_id, user)
+        if folder.sort_by_attribute == sort_by_attribute and folder.sort_by_order == sort_by_order:
+            folder.sort_by_attribute = None
+            folder.sort_by_order = None
+        else:
+            folder.sort_by_attribute = sort_by_attribute
+            folder.sort_by_order = sort_by_order
+        db.session.commit()
+
+        return MutationResult(
+            ok=True,
+            message=f"Updated sorting for folder '{folder.name}'.",
+        )
+
+    except Exception as e:
+        db.session.rollback()
+        raise e
 
 def db_update_attribute_filters(attribute_id, use_abs, min_value, max_value, user):
-    attribute = check_and_get_folder_attribute(attribute_id, user)
-    attribute.use_abs = use_abs
-    attribute.min_value = min_value
-    attribute.max_value = max_value
-    db.session.commit()
+    try:
+        attribute = check_and_get_folder_attribute(attribute_id, user)
+        attribute.use_abs = use_abs
+        attribute.min_value = min_value
+        attribute.max_value = max_value
+        db.session.commit()
+
+        return MutationResult(
+            ok=True,
+            message=f"Updated filters for folder '{attribute.folder.name}'.",
+        )
+
+    except Exception as e:
+        db.session.rollback()
+        raise e
 
 def check_and_get_user_folder(folder_id, user):
     folder = get_folder_by_id(folder_id)
@@ -326,7 +459,7 @@ def add_default_folder_attributes(folder):
         attribute=FolderAttribute.HIGH_52W,
         folder=folder
     ))
-    db.session.commit()
+    db.session.flush()
 
 def delete_watchlist_item(item, user):
     # Delete the alerts for the item
@@ -334,7 +467,7 @@ def delete_watchlist_item(item, user):
 
     # Delete Watchlist item
     db.session.delete(item)
-    db.session.commit()
+    db.session.flush()
 
 def delete_folder_alerts(folder, user):
     folder_alerts = db.session.execute(
@@ -352,7 +485,7 @@ def delete_folder_alerts(folder, user):
             raise ForbiddenError(f"Alert with id {alert.id} does not belong to the user with id {user.id}")
         db.session.delete(alert)
         db.session.flush()
-    db.session.commit()
+    db.session.flush()
 
 def delete_item_alerts(item, user):
     item_alerts = db.session.execute(
@@ -370,16 +503,7 @@ def delete_item_alerts(item, user):
             raise ForbiddenError(f"Alert with id {alert.id} does not belong to the user with id {user.id}")
         db.session.delete(alert)
         db.session.flush()
-    db.session.commit()
-
-def check_duplicate_folder(folder_name, user):
-    exists = db.session.execute(
-        db.select(WatchlistFolder).where(
-            WatchlistFolder.user_id == user.id,
-            WatchlistFolder.name == folder_name
-        )
-    ).first()
-    return bool(exists)
+    db.session.flush()
 
 def get_folder_by_id(folder_id):
     folder = db.session.execute(db.select(WatchlistFolder).where(WatchlistFolder.id == folder_id)).scalar()

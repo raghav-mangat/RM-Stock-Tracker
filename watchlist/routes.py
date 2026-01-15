@@ -2,9 +2,38 @@ from . import watchlist_bp
 from flask import render_template, request, flash, redirect, url_for, jsonify
 from flask_login import current_user, login_required
 from models.database import AlertAttribute
-from .services import AjaxService, Validators, get_alerts
+from .services import AjaxService, Validators, ActionContext, ExceptionService, MutationHandler
 from utils.populate_db_info import db_last_updated
 from utils.db_queries.watchlist import *
+
+"""
+Watchlist Routes - Architectural Overview
+
+These routes follow a thin-controller pattern:
+
+1. Routes are responsible only for:
+   - Reading request data
+   - Detecting AJAX vs non-AJAX requests
+   - Orchestrating validation, mutation (updating the DB), and response handling
+
+2. Input validation is performed via Validators, which raise ValidationError
+   for user-correctable issues.
+
+3. Database mutations are executed in db_queries util functions, which:
+   - Return MutationResult for expected business conflicts (e.g. duplicates)
+   - Raise domain exceptions (NotFoundError, ForbiddenError) for invalid state
+
+4. MutationHandler centralizes success/warning responses for both
+   AJAX (JSON) and non-AJAX (flash + redirect) flows.
+
+5. ExceptionService centralizes error-to-response mapping, ensuring:
+   - Consistent user messaging
+   - Correct HTTP status codes
+   - Appropriate UI behavior (e.g. refresh hints)
+
+This structure keeps routes small, predictable, and consistent across
+all watchlist actions.
+"""
 
 @watchlist_bp.route('', methods=["GET"])
 def index():
@@ -49,18 +78,14 @@ def add_folder():
     next_url = request.form.get("next") or url_for("watchlist.index")
 
     folder_name = request.form.get("folder_name")
-    folder_name_result = Validators.validate_folder_name(folder_name, current_user)
-    if folder_name_result["valid"]:
-        try:
-            db_add_folder(folder_name_result["folder_name"], current_user)
-        except Exception:
-            flash("An error occurred while adding the folder.", "danger")
-        else:
-            flash(f"Folder '{folder_name_result["folder_name"]}' added successfully.", "success")
-    else:
-        flash(folder_name_result["message"], "warning")
 
-    return redirect(next_url)
+    try:
+        folder_name = Validators.validate_folder_name(folder_name)
+        result = db_add_folder(folder_name, current_user)
+        return MutationHandler.response(result, is_ajax=False, next_url=next_url)
+    except Exception as exc:
+        ctx = ActionContext("add", "folder")
+        return ExceptionService.handle_action_exception(exc, ctx, is_ajax=False, next_url=next_url)
 
 @watchlist_bp.route("/rename-folder/<int:folder_id>", methods=["POST"])
 @login_required
@@ -69,69 +94,35 @@ def rename_folder(folder_id):
 
     new_folder_name = request.form.get("new_folder_name")
 
-    result = Validators.validate_folder_name(new_folder_name, current_user)
-    if not result["valid"]:
-        return AjaxService.error(
-            message=result["message"],
-            category="warning",
-            status_code=400,
-        )
-
     try:
-        db_rename_folder(result["folder_name"], folder_id, current_user)
+        folder_name = Validators.validate_folder_name(new_folder_name)
+        result = db_rename_folder(folder_name, folder_id, current_user)
+        return MutationHandler.response(result, is_ajax=True)
 
-    except NotFoundError:
-        return AjaxService.error(
-            message="Folder not found.",
-            status_code=404,
-        )
-
-    except ForbiddenError:
-        return AjaxService.error(
-            message="Not authorized to rename this folder.",
-            status_code=403,
-        )
-
-    except Exception:
-        return AjaxService.error(
-            message="An error occurred while renaming the folder.",
-            status_code=500,
-        )
-
-    return AjaxService.success(
-        f"Folder renamed to '{result['folder_name']}'."
-    )
+    except Exception as exc:
+        ctx = ActionContext("rename", "folder")
+        return ExceptionService.handle_action_exception(exc, ctx, is_ajax=True)
 
 @watchlist_bp.route("/remove-folder/<int:folder_id>", methods=["POST"])
 @login_required
 def remove_folder(folder_id):
     try:
-        db_remove_folder(folder_id=folder_id, user=current_user)
-    except NotFoundError:
-        flash("Folder not found.", "danger")
-    except ForbiddenError:
-        flash("Not authorized to delete this folder", "danger")
-    except Exception:
-        flash("An error occurred while deleting the folder.", "danger")
-    else:
-        flash("Folder deleted successfully.", "success")
-    return redirect(url_for("watchlist.index"))
+        result = db_remove_folder(folder_id=folder_id, user=current_user)
+        return MutationHandler.response(result)
+    except Exception as exc:
+        ctx = ActionContext("remove", "folder")
+        return ExceptionService.handle_action_exception(exc, ctx)
 
 @watchlist_bp.route("/update-order/<int:folder_id>", methods=["POST"])
 @login_required
 def update_order(folder_id):
     new_order = int(request.form.get("order"))
     try:
-        db_update_order(folder_id, new_order, current_user)
-    except NotFoundError:
-        flash("Folder not found.", "danger")
-    except ForbiddenError:
-        flash("Not authorized to reorder this folder", "danger")
-    except Exception:
-        flash("An error occurred while reordering the folder.", "danger")
-    else:
-        flash("Folder reordered successfully!", "success")
-    return redirect(url_for("watchlist.index"))
+        result = db_update_order(folder_id, new_order, current_user)
+        return MutationHandler.response(result)
+    except Exception as exc:
+        ctx = ActionContext("reorder", "folder")
+        return ExceptionService.handle_action_exception(exc, ctx)
 
 @watchlist_bp.route("/add-item", methods=["POST"])
 @login_required
@@ -143,57 +134,17 @@ def add_item():
     next_url = request.form.get("next") or url_for("watchlist.index")
 
     ticker = request.form.get("ticker")
-    stock = get_stock_master_by_ticker(ticker)
-
-    if not stock:
-        message = f"Please search for a valid stock."
-        category = "warning"
-        if is_ajax:
-            return AjaxService.error(message=message, category=category, status_code=400)
-
-        flash(message, category)
-        return redirect(next_url)
-
     folder_id = request.form.get("folder_id")
 
     try:
-        db_add_watchlist_item(folder_id=folder_id, stock=stock, user=current_user)
+        stock = Validators.validate_ticker(ticker)
+        result = db_add_watchlist_item(folder_id=folder_id, stock=stock, user=current_user)
 
-    except NotFoundError:
-        message = "Folder not found."
-        category = "danger"
-        status_code = 404
+        return MutationHandler.response(result, is_ajax=is_ajax, next_url=next_url)
 
-    except ForbiddenError:
-        message = "Not authorized to add stock to this folder."
-        category = "danger"
-        status_code = 403
-
-    except DuplicateError:
-        message = "This stock is already in the selected folder."
-        category = "warning"
-        status_code = 400
-
-    except Exception:
-        message = "An error occurred while adding stock to this folder."
-        category = "danger"
-        status_code = 500
-
-    else:
-        message = f"Added stock '{ticker}'."
-
-        if is_ajax:
-            return AjaxService.success(message)
-
-        flash(message, "success")
-        return redirect(next_url)
-
-    # Error fallback
-    if is_ajax:
-        return AjaxService.error(message=message, category=category, status_code=status_code)
-
-    flash(message, category)
-    return redirect(next_url)
+    except Exception as exc:
+        ctx = ActionContext("add", "stock")
+        return ExceptionService.handle_action_exception(exc, ctx, is_ajax=is_ajax, next_url=next_url)
 
 @watchlist_bp.route("/remove-item/<int:folder_id>/<string:ticker>", methods=["POST"])
 @login_required
@@ -201,183 +152,54 @@ def remove_item(folder_id, ticker):
     AjaxService.require_ajax()
 
     try:
-        db_remove_watchlist_item(folder_id=folder_id, ticker=ticker, user=current_user)
+        result = db_remove_watchlist_item(folder_id=folder_id, ticker=ticker, user=current_user)
+        return MutationHandler.response(result, is_ajax=True)
 
-    except NotFoundError:
-        return AjaxService.error(
-            message="Folder or stock not found.",
-            status_code=404,
-        )
-
-    except ForbiddenError:
-        return AjaxService.error(
-            message="Not authorized to remove stock from this folder.",
-            status_code=403,
-        )
-
-    except Exception:
-        return AjaxService.error(
-            message="An error occurred while removing stock from this folder.",
-            status_code=500,
-        )
-
-    return AjaxService.success(
-        f"Removed stock '{ticker}'."
-    )
+    except Exception as exc:
+        ctx = ActionContext("remove", "stock")
+        return ExceptionService.handle_action_exception(exc, ctx, is_ajax=True)
 
 @watchlist_bp.route("/update-folder-alerts/<int:folder_id>", methods=["POST"])
 @login_required
 def update_folder_alerts(folder_id):
     AjaxService.require_ajax()
 
-    folder_name = request.form.get("folder_name")
-
-    request_alerts = get_alerts(request)
-    message, validated_alerts = Validators.validate_alerts(request_alerts)
-
-    if message:
-        return AjaxService.error(
-            message=message,
-            category="warning",
-            status_code=400,
-        )
-
     try:
-        db_update_folder_alerts(folder_id, validated_alerts, current_user)
+        validated_alerts = Validators.validate_alerts(request)
+        result = db_update_folder_alerts(folder_id, validated_alerts, current_user)
+        return MutationHandler.response(result, is_ajax=True)
 
-    except NotFoundError:
-        return AjaxService.error(
-            message="Folder not found.",
-            status_code=404,
-        )
-
-    except ForbiddenError:
-        return AjaxService.error(
-            message="Not authorized to update alerts for this folder.",
-            status_code=403,
-        )
-
-    except Exception:
-        return AjaxService.error(
-            message="An error occurred while updating the alerts for this folder.",
-            status_code=500,
-        )
-
-    return AjaxService.success(
-        f"Updated email alerts for folder '{folder_name}'."
-    )
+    except Exception as exc:
+        ctx = ActionContext("update", "folder email alert")
+        return ExceptionService.handle_action_exception(exc, ctx, is_ajax=True)
 
 @watchlist_bp.route("/update-item-alerts/<int:item_id>", methods=["POST"])
 @login_required
 def update_item_alerts(item_id):
     AjaxService.require_ajax()
 
-    ticker = request.form.get("ticker")
-    folder_name = request.form.get("folder_name")
-
-    request_alerts = get_alerts(request)
-    message, validated_alerts = Validators.validate_alerts(request_alerts)
-
-    if message:
-        return AjaxService.error(
-            message=message,
-            category="warning",
-            status_code=400,
-        )
-
     try:
-        db_update_item_alerts(item_id, validated_alerts, current_user)
+        validated_alerts = Validators.validate_alerts(request)
+        result = db_update_item_alerts(item_id, validated_alerts, current_user)
+        return MutationHandler.response(result, is_ajax=True)
 
-    except NotFoundError:
-        return AjaxService.error(
-            message="Stock not found.",
-            status_code=404,
-        )
-
-    except ForbiddenError:
-        return AjaxService.error(
-            message="Not authorized to update alerts for this stock.",
-            status_code=403,
-        )
-
-    except Exception:
-        return AjaxService.error(
-            message="An error occurred while updating the alerts for this stock.",
-            status_code=500,
-        )
-
-    return AjaxService.success(
-        f"Updated email alerts for stock '{ticker}' in folder '{folder_name}'."
-    )
+    except Exception as exc:
+        ctx = ActionContext("update", "stock email alert")
+        return ExceptionService.handle_action_exception(exc, ctx, is_ajax=True)
 
 @watchlist_bp.route("/update-folder-attributes/<int:folder_id>", methods=["POST"])
 @login_required
 def update_folder_attributes(folder_id):
     AjaxService.require_ajax()
 
-    folder_name = request.form.get("folder_name")
-    action = request.form.get("edit_action")
-
-    if not folder_name or action not in {"save", "restore"}:
-        return AjaxService.error(
-            message="Invalid form action.",
-            status_code=400,
-        )
-
-    selected_attributes = []
-
-    if action == "save":
-        all_folder_attributes = {attr.value for attr in FolderAttribute}
-        for i in range(1, len(all_folder_attributes) + 1):
-            attribute = request.form.get(f"folder-attribute-{i}")
-            if attribute:
-                if attribute in all_folder_attributes:
-                    selected_attributes.append(attribute)
-                else:
-                    return AjaxService.error(
-                        message="Invalid folder attribute selected.",
-                        status_code=400,
-                    )
-
-        min_selections = 2
-        max_selections = 8
-        if len(selected_attributes) < min_selections:
-            return AjaxService.error(
-                message=f"Select at least {min_selections} attributes",
-                category="warning",
-                status_code=400,
-            )
-        if len(selected_attributes) > max_selections:
-            return AjaxService.error(
-                message=f"Cannot select more than {max_selections} attributes",
-                category="warning",
-                status_code=400,
-            )
-
     try:
-        db_update_folder_attributes(folder_id, action, selected_attributes, current_user)
+        action, selected_attributes = Validators.validate_attributes(request)
+        result = db_update_folder_attributes(folder_id, action, selected_attributes, current_user)
+        return MutationHandler.response(result, is_ajax=True)
 
-    except NotFoundError:
-        return AjaxService.error(
-            message="Folder not found.",
-            status_code=404,
-        )
-
-    except ForbiddenError:
-        return AjaxService.error(
-            message="Not authorized to update attributes for this folder.",
-            status_code=403,
-        )
-
-    except Exception:
-        return AjaxService.error(
-            message="An error occurred while updating the attributes for this folder.",
-            status_code=500,
-        )
-
-    return AjaxService.success(
-        f"Updated attributes for folder '{folder_name}'."
-    )
+    except Exception as exc:
+        ctx = ActionContext("update attributes for", "folder")
+        return ExceptionService.handle_action_exception(exc, ctx, is_ajax=True)
 
 @watchlist_bp.route("/update-folder-sort-by/<int:folder_id>", methods=["POST"])
 @login_required
@@ -387,93 +209,28 @@ def update_folder_sort_by(folder_id):
     sort_by_attribute = request.form.get("sort_by_attribute")
     sort_by_order = request.form.get("sort_by_order")
 
-    if ((sort_by_attribute not in {attr.value for attr in FolderAttribute}) or
-        (sort_by_order not in {attr.value for attr in OrderBy})):
-        return AjaxService.error(
-            message="Invalid sort by action.",
-            status_code=400,
-        )
-
     try:
-        db_update_folder_sort_by(folder_id, sort_by_attribute, sort_by_order, current_user)
+        Validators.validate_sort_by(sort_by_attribute, sort_by_order)
+        result = db_update_folder_sort_by(folder_id, sort_by_attribute, sort_by_order, current_user)
+        return MutationHandler.response(result, is_ajax=True)
 
-    except NotFoundError:
-        return AjaxService.error(
-            message="Folder not found.",
-            status_code=404,
-        )
-
-    except ForbiddenError:
-        return AjaxService.error(
-            message="Not authorized to update sorting for this folder.",
-            status_code=403,
-        )
-
-    except Exception:
-        return AjaxService.error(
-            message="An error occurred while updating the sorting for this folder.",
-            status_code=500,
-        )
-
-    return AjaxService.success(
-        "Updated sorting for folder."
-    )
+    except Exception as exc:
+        ctx = ActionContext("update sorting for", "folder")
+        return ExceptionService.handle_action_exception(exc, ctx, is_ajax=True)
 
 @watchlist_bp.route("/update-attribute-filters", methods=["POST"])
 @login_required
 def update_attribute_filters():
     AjaxService.require_ajax()
 
-    attribute_id = request.form.get("attribute_id", type=int)
-    action = request.form.get("filter_action")
-
-    if not attribute_id or action not in {"apply", "clear"}:
-        return AjaxService.error(
-            message="Invalid form action.",
-            status_code=400,
-        )
-
-    use_abs = False
-    (min_value, max_value, message) = (None, None, None)
-
-    if action == "apply":
-        use_abs = bool(request.form.get("use-abs"))
-        min_value = request.form.get("min-value")
-        max_value = request.form.get("max-value")
-
-        (min_value, max_value, message) = Validators.validate_values(use_abs, min_value, max_value)
-
-    if message:
-        return AjaxService.error(
-            message=message,
-            category="warning",
-            status_code=400,
-        )
-
     try:
-        db_update_attribute_filters(attribute_id, use_abs, min_value, max_value, current_user)
+        attribute_id, use_abs, min_value, max_value = Validators.validate_attribute_filters(request)
+        result = db_update_attribute_filters(attribute_id, use_abs, min_value, max_value, current_user)
+        return MutationHandler.response(result, is_ajax=True)
 
-    except NotFoundError:
-        return AjaxService.error(
-            message="Attribute not found.",
-            status_code=404,
-        )
-
-    except ForbiddenError:
-        return AjaxService.error(
-            message="Not authorized to update filters for this attribute.",
-            status_code=403,
-        )
-
-    except Exception:
-        return AjaxService.error(
-            message="An error occurred while updating the filters for this attribute.",
-            status_code=500,
-        )
-
-    return AjaxService.success(
-        "Updated filters for folder."
-    )
+    except Exception as exc:
+        ctx = ActionContext("update filters for", "folder")
+        return ExceptionService.handle_action_exception(exc, ctx, is_ajax=True)
 
 @watchlist_bp.route("/folder/<int:folder_id>/partial", methods=["GET"])
 @login_required
@@ -508,20 +265,19 @@ def folder_partial(folder_id):
             }
         })
 
-    except NotFoundError:
-        return AjaxService.error(
-            message="Folder not found.",
-            status_code=404,
-        )
+    except Exception as exc:
+        ctx = ActionContext("access", "folder")
+        return ExceptionService.handle_action_exception(exc, ctx, is_ajax=True)
 
-    except ForbiddenError:
-        return AjaxService.error(
-            message="Not authorized to access this folder.",
-            status_code=403,
-        )
+@watchlist_bp.route("/refresh", methods=["GET"])
+@login_required
+def refresh():
+    # Get the message and category from the query parameter
+    message = request.args.get('message', 'Action Failed.')
+    category = request.args.get('category', 'danger')
 
-    except Exception:
-        return AjaxService.error(
-            message="An error occurred while accessing the folder.",
-            status_code=500,
-        )
+    # Flash the message
+    flash(message, category)
+
+    # Redirect to watchlist
+    return redirect(url_for('watchlist.index'))
