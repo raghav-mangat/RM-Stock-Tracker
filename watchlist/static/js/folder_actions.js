@@ -151,6 +151,10 @@ document.addEventListener("submit", async (event) => {
       headerContainer.innerHTML = partialData.html.folder_header;
       bodyContainer.innerHTML = partialData.html.folder_body;
 
+      // Add the required event-listeners to the new HTML content
+      attachAbsBtnToggleBehavior(bodyContainer, ".alert-container");
+      attachAlertDeleteBtnBehavior(bodyContainer, ".alert-container");
+
       // Fade content back in
       headerContainer.classList.remove("is-fading-out");
       bodyContainer.classList.remove("is-fading-out");

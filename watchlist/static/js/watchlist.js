@@ -1,33 +1,13 @@
 document.addEventListener("DOMContentLoaded", () => {
-  document.querySelectorAll(".btn-delete-alert").forEach((btn) => {
-    btn.addEventListener("click", function () {
-      btn_id_split = btn.id.split("-");
-      loop_index = btn_id_split[1];
-      db_id = btn_id_split[2];
-
-      alertRow = document.getElementById(`alert-row-${loop_index}-${db_id}`);
-      attribute = document.getElementById(`attribute-${loop_index}-${db_id}`);
-      useAbs = document.getElementById(`use-abs-${loop_index}-${db_id}`);
-      minValue = document.getElementById(`min-value-${loop_index}-${db_id}`);
-      maxValue = document.getElementById(`max-value-${loop_index}-${db_id}`);
-
-      if (btn.checked) {
-        alertRow.style.opacity = 0.4;
-        attribute.disabled = true;
-        useAbs.disabled = true;
-        minValue.disabled = true;
-        maxValue.disabled = true;
-      } else {
-        alertRow.style.opacity = 1;
-        attribute.disabled = false;
-        useAbs.disabled = false;
-        minValue.disabled = false;
-        maxValue.disabled = false;
-      }
-    });
-  });
+  watchlistAccordion = document.getElementById("watchlistAccordion");
+  if (watchlistAccordion) {
+    attachAbsBtnToggleBehavior(watchlistAccordion, ".alert-container");
+    attachAlertDeleteBtnBehavior(watchlistAccordion, ".alert-container");
+  }
 
   const modalEl = document.getElementById("filterFolderModal");
+  if (!modalEl) return;
+
   modalEl.addEventListener("show.bs.modal", (event) => {
     const button = event.relatedTarget;
 
@@ -45,6 +25,8 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("modal-min-value").value = minValue ?? "";
     document.getElementById("modal-max-value").value = maxValue ?? "";
 
+    attachAbsBtnToggleBehavior(modalEl, ".filter-container");
+
     const filterForm = modalEl.querySelector('form[data-action="filter"]');
     if (filterForm) {
       // Set the data-folder-id attribute
@@ -52,3 +34,61 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 });
+
+function attachAbsBtnToggleBehavior(content, containerRef) {
+  // ABS toggle visual
+  content.querySelectorAll(".use-abs-toggle").forEach((checkbox) => {
+    const container = checkbox.closest(containerRef);
+    if (!container) return;
+
+    const absSymbols = container.querySelectorAll(".abs-symbol");
+
+    function updateAbsUI() {
+      absSymbols.forEach((symbol) =>
+        symbol.classList.toggle("d-none", !checkbox.checked)
+      );
+    }
+
+    updateAbsUI();
+
+    if (!checkbox.dataset.absInitialized) {
+      checkbox.addEventListener("change", updateAbsUI);
+      checkbox.dataset.absInitialized = "true";
+    }
+  });
+}
+
+function attachAlertDeleteBtnBehavior(content, containerRef) {
+  // Delete alert behavior
+  content.querySelectorAll(".btn-delete-alert").forEach((btn) => {
+    if (btn.dataset.deleteInitialized) return;
+    btn.dataset.deleteInitialized = "true";
+
+    btn.addEventListener("change", () => {
+      const container = btn.closest(containerRef);
+      if (!container) return;
+
+      const heading = container.querySelector(".alert-heading");
+      const body = container.querySelector(".alert-body");
+      const absToggle = container.querySelector(".use-abs-toggle");
+
+      if (!(heading && body && absToggle)) return;
+
+      if (btn.checked) {
+        heading.style.opacity = "0.4";
+        body.style.opacity = "0.4";
+        body
+          .querySelectorAll("input, select")
+          .forEach((el) => (el.disabled = true));
+        absToggle.disabled = true;
+      } else {
+        heading.style.opacity = "1";
+        body.style.opacity = "1";
+        body
+          .querySelectorAll("input, select")
+          .forEach((el) => (el.disabled = false));
+        absToggle.disabled = false;
+      }
+    });
+  });
+}

@@ -105,21 +105,28 @@
             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
           </div>
 
-          <div class="modal-body">
+          <div class="modal-body filter-container">
             <div class="d-flex align-items-center gap-2 justify-content-center">
               <input id="modal-min-value"
                      class="form-control text-center"
                      type="text" name="min-value" placeholder="Min">
 
               <span class="fw-semibold">&lt;</span>
+
+              <span class="abs-symbol">|</span>
+
               <span class="fw-semibold w-50 text-center" id="filter-attribute-label"></span>
+
+              <span class="abs-symbol">|</span>
+
               <span class="fw-semibold">&lt;=</span>
 
               <input id="modal-max-value"
                      class="form-control text-center"
                      type="text" name="max-value" placeholder="Max">
+
               <div>
-                <input type="checkbox" class="btn-check" autocomplete="off"
+                <input type="checkbox" class="btn-check use-abs-toggle" autocomplete="off"
                        id="modal-use-abs"
                        name="use-abs"
                        aria-describedby="Use absolute value function button">

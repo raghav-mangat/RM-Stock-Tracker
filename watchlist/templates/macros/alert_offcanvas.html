@@ -1,120 +1,180 @@
 {% from "macros/watchlist_components.html" import use_abs_label_button %}
 
 {% macro alert_offcanvas(offcanvas_target_id, form_action, folder_id, db_id, folder_name, alert_data, attributes, ticker=None) %}
-    <div class="alert-offcanvas-in-folder-{{ folder_id }} offcanvas offcanvas-end mt-5"
-         data-bs-scroll="true" data-bs-backdrop="false" tabindex="-1"
-         id="{{ offcanvas_target_id }}" aria-labelledby="{{ offcanvas_target_id }}">
-      <div class="offcanvas-header border-bottom border-1 border-dark">
-        <h5 class="offcanvas-title">
-            {% if ticker %}
-                Email Alerts for Ticker "{{ ticker }}" in Folder "{{ folder_name }}"
-            {% else %}
-                Email Alerts for Folder "{{ folder_name }}"
-            {% endif %}
-        </h5>
-        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+<div class="alert-offcanvas-in-folder-{{ folder_id }} offcanvas offcanvas-end mt-5"
+     data-bs-scroll="true" data-bs-backdrop="false" tabindex="-1"
+     id="{{ offcanvas_target_id }}">
+
+  <div class="offcanvas-header border-bottom border-1 border-dark">
+    <h5 class="offcanvas-title">
+      {% if ticker %}
+        Email Alerts for Ticker "{{ ticker }}" in Folder "{{ folder_name }}"
+      {% else %}
+        Email Alerts for Folder "{{ folder_name }}"
+      {% endif %}
+    </h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+  </div>
+
+  <div class="offcanvas-body">
+    <form method="POST"
+          action="{{ form_action }}"
+          class="folder-action-form"
+          data-folder-id="{{ folder_id }}"
+          data-action="update-alert"
+          novalidate>
+
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="num_alerts" value="{{ alert_data|length }}">
+
+      {% for alert in alert_data %}
+      <div class="card mb-3 alert-container">
+        <div class="card-body">
+
+          <!-- HEADER -->
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <span class="fw-semibold alert-heading">Alert {{ loop.index }}</span>
+
+            <div class="d-flex gap-2">
+              <!-- ABS -->
+              <input type="checkbox"
+                     class="btn-check use-abs-toggle"
+                     id="use-abs-{{ loop.index }}-{{ db_id }}"
+                     name="use-abs-{{ loop.index }}"
+                     aria-describedby="Use absolute value function button"
+                     {% if alert.use_abs %}checked{% endif %}>
+              {{ use_abs_label_button(label_for="use-abs-" ~ loop.index ~ "-" ~ db_id) }}
+
+              <!-- DELETE -->
+              <input type="checkbox"
+                     class="btn-check btn-delete-alert"
+                     id="delete-{{ loop.index }}-{{ db_id }}"
+                     name="delete-{{ loop.index }}"
+                     aria-describedby="Delete alert button">
+              <label class="btn btn-sm btn-outline-danger"
+                     for="delete-{{ loop.index }}-{{ db_id }}">
+                <i class="bi bi-trash"></i>
+              </label>
+            </div>
+          </div>
+
+          <!-- BODY -->
+          <div class="alert-body">
+
+            <!-- MIN -->
+            <div class="d-flex align-items-center gap-1">
+              <label class="form-label small text-muted mb-0" for="min-value-{{ loop.index }}-{{ db_id }}">
+                  Min:
+              </label>
+              <input id="min-value-{{ loop.index }}-{{ db_id }}"
+                     class="form-control"
+                     type="text"
+                     name="min-value-{{ loop.index }}"
+                     value="{{ alert.min_value if alert.min_value is not none }}">
+            </div>
+
+            <!-- COMPARISON -->
+            <div class="text-center my-2 fw-semibold">
+              &lt;
+              <span class="abs-symbol">|</span>
+              <select id="attribute-{{ loop.index }}-{{ db_id }}"
+                      name="attribute-{{ loop.index }}"
+                      class="form-select d-inline-block w-75 mx-1 text-center">
+                {% for attribute in attributes %}
+                  <option value="{{ attribute.value }}"
+                          {% if attribute.value == alert.attribute %}selected{% endif %}>
+                    {{ attribute.label }}
+                  </option>
+                {% endfor %}
+              </select>
+              <span class="abs-symbol">|</span>
+              &le;
+            </div>
+
+            <!-- MAX -->
+            <div class="d-flex align-items-center gap-1">
+              <label class="form-label small text-muted mb-0" for="max-value-{{ loop.index }}-{{ db_id }}">
+                  Max:
+              </label>
+              <input id="max-value-{{ loop.index }}-{{ db_id }}"
+                     class="form-control"
+                     type="text"
+                     name="max-value-{{ loop.index }}"
+                     value="{{ alert.max_value if alert.max_value is not none }}">
+            </div>
+
+          </div>
+        </div>
       </div>
-      <div class="offcanvas-body">
-          <form method="POST"
-                action="{{ form_action }}"
-                class="folder-action-form"
-                data-folder-id="{{ folder_id }}"
-                data-action="update-alert"
-                novalidate>
-              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <input type="hidden" name="num_alerts" value="{{ alert_data|length }}">
+      {% endfor %}
 
-              {% for alert in alert_data %}
-                  <div class="d-flex my-3 gap-1 align-items-center">
-                      <div id="alert-row-{{ loop.index }}-{{ db_id }}" class="d-flex gap-1 align-items-center">
-                        <!-- Serial Number -->
-                        <span>{{ loop.index }})</span>
+      <!-- NEW ALERT -->
+      <p class="fw-semibold text-center mt-4">Create a New Alert</p>
 
-                        <!-- Min Value Input -->
-                        <input id="min-value-{{ loop.index }}-{{ db_id }}" class="form-control" type="text"
-                               name="min-value-{{ loop.index }}" aria-label="min-value-{{ loop.index }}"
-                               placeholder="Min"
-                               value="{% if alert.min_value is not none %}{{ alert.min_value }}{% endif %}">
-                        <span class="fw-semibold text-secondary text-nowrap"> &lt; </span>
+      <div class="card alert-container">
+        <div class="card-body">
 
-                        <!-- Attribute Selector -->
-                        <select id="attribute-{{ loop.index }}-{{ db_id }}" name="attribute-{{ loop.index }}"
-                                class="form-select" aria-label="attribute-{{ loop.index }}">
-                            {% for attribute in attributes %}
-                                <option value="{{ attribute.value }}" {% if attribute.value == alert.attribute %} selected {% endif %}>
-                                    {{ attribute.label }}
-                                </option>
-                            {% endfor %}
-                        </select>
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <span class="fw-semibold alert-heading">New Alert</span>
 
-                        <!-- Max Value Input -->
-                        <span class="fw-semibold text-secondary text-nowrap"> &lt;= </span>
-                        <input id="max-value-{{ loop.index }}-{{ db_id }}" class="form-control" type="text"
-                               name="max-value-{{ loop.index }}" aria-label="max-value-{{ loop.index }}"
-                               placeholder="Max"
-                               value="{% if alert.max_value is not none %}{{ alert.max_value }}{% endif %}">
+            <!-- ABS -->
+            <input type="checkbox"
+                   class="btn-check use-abs-toggle"
+                   id="use-abs-new-{{ db_id }}"
+                   name="use-abs-new"
+                   aria-describedby="Use absolute value function button">
+            {{ use_abs_label_button(label_for="use-abs-new-" ~ db_id) }}
+          </div>
 
-                        <!-- Use Abs Checkbox Button -->
-                        <div>
-                          <input type="checkbox" class="btn-check" autocomplete="off"
-                                 id="use-abs-{{ loop.index }}-{{ db_id }}"
-                                 name="use-abs-{{ loop.index }}"
-                                 aria-describedby="Use absolute value function button"
-                                 {% if alert.use_abs %} checked {% endif %}>
-                          {{ use_abs_label_button(label_for="use-abs-" ~ loop.index ~ "-" ~ db_id) }}
-                        </div>
-                      </div>
-                      <!-- Delete Alert Checkbox Button -->
-                      <div>
-                          <input type="checkbox" class="btn-check btn-delete-alert" autocomplete="off"
-                                 id="delete-{{ loop.index }}-{{ db_id }}"
-                                 name="delete-{{ loop.index }}"
-                                 aria-describedby="Delete alert button">
-                          <label class="btn btn-sm btn-outline-danger" for="delete-{{ loop.index }}-{{ db_id }}">
-                              <i class="bi bi-trash"></i>
-                          </label>
-                      </div>
-                  </div>
-              {% endfor %}
-              <p class="fw-semibold text-center">Create a New Alert</p>
-              <div class="d-flex my-3 gap-1 align-items-center">
-                  <!-- Min Value Input -->
-                  <input id="min-value-new-{{ db_id }}" class="form-control" type="text"
-                         name="min-value-new" aria-label="min-value-new"
-                         placeholder="Min">
-                  <span class="fw-semibold text-secondary text-nowrap"> &lt; </span>
+          <div class="alert-body">
 
-                  <!-- Attribute Selector -->
-                  <select id="attribute-new-{{ db_id }}" name="attribute-new"
-                          class="form-select" aria-label="attribute-new">
-                    <option value="" selected>Attribute</option>
-                    {% for attribute in attributes %}
-                        <option value="{{ attribute.value }}">
-                            {{ attribute.label }}
-                        </option>
-                    {% endfor %}
-                  </select>
+            <!-- MIN -->
+            <div class="d-flex align-items-center gap-1">
+              <label class="form-label small text-muted mb-0" for="min-value-new-{{ db_id }}">
+                  Min:
+              </label>
+              <input id="min-value-new-{{ db_id }}"
+                     class="form-control"
+                     type="text"
+                     name="min-value-new">
+            </div>
 
-                  <!-- Max Value Input -->
-                  <span class="fw-semibold text-secondary text-nowrap"> &lt;= </span>
-                  <input id="max-value-new-{{ db_id }}" class="form-control" type="text"
-                         name="max-value-new" aria-label="max-value-new"
-                         placeholder="Max">
+            <!-- COMPARISON -->
+            <div class="text-center my-2 fw-semibold">
+              &lt;
+              <span class="abs-symbol d-none">|</span>
+              <select id="attribute-new-{{ db_id }}"
+                      name="attribute-new"
+                      class="form-select d-inline-block w-75 mx-1 text-center">
+                <option value="" selected>Attribute</option>
+                {% for attribute in attributes %}
+                  <option value="{{ attribute.value }}">{{ attribute.label }}</option>
+                {% endfor %}
+              </select>
+              <span class="abs-symbol d-none">|</span>
+              &le;
+            </div>
 
-                  <!-- Use Abs Checkbox Button -->
-                  <div>
-                      <input type="checkbox" class="btn-check" autocomplete="off"
-                             id="use-abs-new-{{ db_id }}"
-                             name="use-abs-new"
-                             aria-describedby="Use absolute value function button">
-                      {{ use_abs_label_button(label_for="use-abs-new-" ~ db_id) }}
-                  </div>
-              </div>
-              <!-- Alert Form Offcanvas Submit Button -->
-              <div class="text-center mt-4">
-                  <button type="submit" class="btn btn-success">Save Changes</button>
-              </div>
-          </form>
+            <!-- MAX -->
+            <div class="d-flex align-items-center gap-1">
+              <label class="form-label small text-muted mb-0" for="max-value-new-{{ db_id }}">
+                  Max:
+              </label>
+              <input id="max-value-new-{{ db_id }}"
+                     class="form-control"
+                     type="text"
+                     name="max-value-new">
+            </div>
+
+          </div>
+        </div>
       </div>
-    </div>
+
+      <div class="text-center mt-4">
+        <button type="submit" class="btn btn-success">Save Changes</button>
+      </div>
+
+    </form>
+  </div>
+</div>
 {% endmacro %}
