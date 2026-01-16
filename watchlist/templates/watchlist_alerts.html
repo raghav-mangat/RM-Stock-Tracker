@@ -39,19 +39,22 @@
   <div class="accordion accordion-flush" id="watchlistAlertsAccordion">
 
     {% for folder in watchlist_alert_data %}
-      <div class="accordion-item border border-1 border-dark shadow-sm mb-3">
+      <div class="accordion-item border border-1 border-dark shadow-sm mb-3"
+           id="accordion-item-{{ folder.folder_id }}">
         <h2 class="accordion-header">
-          <button class="accordion-button fw-semibold {% if loop.index != 1 %}collapsed{% endif %}"
+          <button class="accordion-button fw-semibold collapsed"
                   type="button"
                   data-bs-toggle="collapse"
-                  data-bs-target="#folder-{{ folder.folder_order }}"
-                  aria-expanded="{{ 'true' if loop.index == 1 else 'false' }}">
+                  data-bs-target="#collapse-{{ folder.folder_id }}"
+                  aria-expanded="false"
+                  aria-controls="collapse-{{ folder.folder_id }}">
             {{ folder.folder_order }}) {{ folder.folder_name }}
           </button>
         </h2>
 
-        <div id="folder-{{ folder.folder_order }}"
-             class="accordion-collapse collapse {% if loop.index == 1 %}show{% endif %}">
+        <div id="collapse-{{ folder.folder_id }}"
+             class="accordion-collapse collapse"
+             aria-labelledby="accordion-item-{{ folder.folder_id }}">
           <div class="accordion-body">
 
             <!-- Folder Alerts -->
@@ -329,4 +332,8 @@
   </div>
 </section>
 
+{% endblock %}
+
+{% block script %}
+  <script src="{{ url_for('watchlist.static', filename='js/accordion_state.js') }}" type="text/javascript" defer></script>
 {% endblock %}

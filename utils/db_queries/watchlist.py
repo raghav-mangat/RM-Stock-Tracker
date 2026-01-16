@@ -632,6 +632,7 @@ def db_get_watchlist_alert_data(user):
 
     watchlist_alert_data = [
         {
+            "folder_id": None,
             "folder_order": None,
             "folder_name": None,
             "num_items": None,
@@ -679,6 +680,7 @@ def db_get_watchlist_alert_data(user):
     for folder in folders:
         # Collect folder data
         folder_data = {
+            "folder_id": folder.id,
             "folder_order": folder.order,
             "folder_name": folder.name
         }
