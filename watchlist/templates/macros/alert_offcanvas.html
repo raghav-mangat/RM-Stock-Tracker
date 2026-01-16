@@ -8,9 +8,11 @@
   <div class="offcanvas-header border-bottom border-1 border-dark">
     <h5 class="offcanvas-title">
       {% if ticker %}
-        Email Alerts for Ticker "{{ ticker }}" in Folder "{{ folder_name }}"
+        Alerts For Ticker: {{ ticker }}
+        <br>
+        In Folder: {{ folder_name }}
       {% else %}
-        Email Alerts for Folder "{{ folder_name }}"
+        Alerts For Folder: {{ folder_name }}
       {% endif %}
     </h5>
     <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>

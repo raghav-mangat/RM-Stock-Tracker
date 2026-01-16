@@ -103,9 +103,11 @@ def rename_folder(folder_id):
         ctx = ActionContext("rename", "folder")
         return ExceptionService.handle_action_exception(exc, ctx, is_ajax=True)
 
-@watchlist_bp.route("/remove-folder/<int:folder_id>", methods=["POST"])
+@watchlist_bp.route("/remove-folder", methods=["POST"])
 @login_required
-def remove_folder(folder_id):
+def remove_folder():
+    folder_id = request.form.get("folder_id")
+
     try:
         result = db_remove_folder(folder_id=folder_id, user=current_user)
         return MutationHandler.response(result)

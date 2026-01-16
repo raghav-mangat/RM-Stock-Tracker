@@ -1,15 +1,18 @@
 document.addEventListener("DOMContentLoaded", () => {
+  // Setup the watchlist accordion
   watchlistAccordion = document.getElementById("watchlistAccordion");
   if (watchlistAccordion) {
     attachAbsBtnToggleBehavior(watchlistAccordion, ".alert-container");
     attachAlertDeleteBtnBehavior(watchlistAccordion, ".alert-container");
   }
 
-  const modalEl = document.getElementById("filterFolderModal");
-  if (!modalEl) return;
+  // Setup the filter folder modal
+  const filterFolderModalEl = document.getElementById("filterFolderModal");
+  if (!filterFolderModalEl) return;
 
-  modalEl.addEventListener("show.bs.modal", (event) => {
+  filterFolderModalEl.addEventListener("show.bs.modal", (event) => {
     const button = event.relatedTarget;
+    if (!button) return;
 
     const folderId = button.getAttribute("data-folder-id");
     const attributeId = button.getAttribute("data-attribute-id");
@@ -25,13 +28,35 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("modal-min-value").value = minValue ?? "";
     document.getElementById("modal-max-value").value = maxValue ?? "";
 
-    attachAbsBtnToggleBehavior(modalEl, ".filter-container");
+    attachAbsBtnToggleBehavior(filterFolderModalEl, ".filter-container");
 
-    const filterForm = modalEl.querySelector('form[data-action="filter"]');
+    const filterForm = filterFolderModalEl.querySelector(
+      'form[data-action="filter"]'
+    );
     if (filterForm) {
       // Set the data-folder-id attribute
       filterForm.dataset.folderId = folderId;
     }
+  });
+
+  // Setup the delete folder confirm modal
+  const deleteFolderConfirmModalEl = document.getElementById(
+    "deleteFolderConfirmModal"
+  );
+  if (!deleteFolderConfirmModalEl) return;
+
+  deleteFolderConfirmModalEl.addEventListener("show.bs.modal", (event) => {
+    const button = event.relatedTarget;
+    if (!button) return;
+
+    const folderId = button.getAttribute("data-folder-id");
+    const folderName = button.getAttribute("data-folder-name");
+
+    deleteFolderConfirmModalEl.querySelector("#delete-folder-id").value =
+      folderId;
+    deleteFolderConfirmModalEl.querySelector(
+      "#delete-folder-name"
+    ).textContent = folderName;
   });
 });
 

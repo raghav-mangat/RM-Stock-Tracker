@@ -137,10 +137,47 @@
           </div>
 
           <div class="modal-footer">
+            <!-- Default Enter Submit -->
+            <input type="submit" name="filter_action" value="apply" hidden>
+
             <button type="submit" name="filter_action" value="clear" class="btn btn-secondary">Clear</button>
             <button type="submit" name="filter_action" value="apply" class="btn btn-success">Apply</button>
           </div>
 
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Folder Confirm Modal -->
+  <div class="modal fade" id="deleteFolderConfirmModal" tabindex="-1" aria-labelledby="deleteFolderConfirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <form method="POST"
+              action="{{ url_for('watchlist.remove_folder') }}"
+              novalidate>
+
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <!-- Hidden field for folder_id -->
+          <input type="hidden" name="folder_id" id="delete-folder-id">
+
+          <div class="modal-header">
+            <h5 class="modal-title">Delete Folder</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <p>
+              This action will permanently delete the folder
+              <strong id="delete-folder-name"></strong>.
+            </p>
+            <p class="text-danger mb-0">
+              This action cannot be undone.
+            </p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-danger">Delete Folder</button>
+          </div>
         </form>
       </div>
     </div>

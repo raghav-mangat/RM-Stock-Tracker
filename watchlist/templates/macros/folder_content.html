@@ -180,16 +180,18 @@
           </div>
         </form>
 
-        <!-- Delete Folder Form -->
-        <form method="POST"
-              action="{{ url_for('watchlist.remove_folder', folder_id=folder_id) }}"
-              novalidate>
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <button type="submit" class="btn btn-sm btn-outline-danger">
-              <i class="bi bi-trash"></i>
+        <!-- Delete Folder Button -->
+        <button
+            class="btn btn-sm btn-outline-danger"
+            data-bs-toggle="modal"
+            data-bs-target="#deleteFolderConfirmModal"
+            data-folder-id="{{ folder_id }}"
+            data-folder-name="{{ folder_data.folder_name }}"
+        >
+            <i class="bi bi-trash"></i>
               Delete
-          </button>
-        </form>
+        </button>
+
       </div>
     </div>
 
