@@ -1,23 +1,59 @@
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-from sqlalchemy import String, Integer, BigInteger, Text, Boolean, ForeignKey, Date, DateTime, UniqueConstraint
+from sqlalchemy import (String, Integer, Numeric, BigInteger, Text, Boolean, ForeignKey,
+                        Date, DateTime, UniqueConstraint, TypeDecorator, CheckConstraint)
 from sqlalchemy import Index as DBIndex
+from sqlalchemy import Enum as SQLEnum
 from flask_login import UserMixin
 from flask import current_app
 from enum import Enum
 from werkzeug.security import generate_password_hash,check_password_hash
 from typing import Optional
+from decimal import Decimal
 import jwt
 from jwt import ExpiredSignatureError, InvalidTokenError
 from datetime import datetime, date, UTC
 from time import time
-from utils.datetime_utils import DATE_FORMAT
+from utils.datetime_utils import DATE_FORMAT, get_current_utc
+from utils.constants import MAX_USERNAME_LEN, MAX_NAME_LEN, MAX_FOLDER_NAME_LEN
+
+"""
+Notes:
+
+- Initializing unique=True or having UniqueConstraint for attributes automatically 
+    adds an index in MySQL.
+- Composite indexes must still be explicitly defined using Index().
+- Store the timestamps using BigInt.
+"""
+
+"""
+Timezone Policy:
+
+- All datetime fields in the database are stored in UTC.
+- MySQL does not store timezone metadata.
+- All datetimes retrieved from the database must be treated as UTC.
+- Conversion to ET happens only at the presentation layer.
+"""
 
 # Create a base class for SQLAlchemy
 class Base(DeclarativeBase):
     pass
 
 db = SQLAlchemy(model_class=Base)
+
+# --- Constants ---
+
+LARGE_NUMERIC_PRECISION = 20
+NUMERIC_PRECISION = 12
+DECIMAL_PRECISION = 2
+
+TICKER_LEN = 10
+STOCK_NAME_LEN = 300
+STOCK_INFO_LEN = 100
+
+INDEX_NAME_LEN = 100
+
+USER_INFO_LEN = 255
 
 # --- Enums ---
 
@@ -113,56 +149,84 @@ class OrderBy(str, Enum):
     ASC = "asc"
     DESC = "desc"
 
+# --- Custom SQLAlchemy Data Types ---
+
+class UTCDateTime(TypeDecorator):
+    impl = DateTime
+    cache_ok = True
+
+    def process_result_value(self, value, dialect):
+        if value is not None:
+            return value.replace(tzinfo=UTC)
+        return value
+
 # --- Models ---
 
 class Stock(db.Model):
     __tablename__ = "stocks"
 
-    id: Mapped[int] = mapped_column(primary_key=True)
-    ticker: Mapped[str] = mapped_column(String(10), unique=True, nullable=False)
-    name: Mapped[str] = mapped_column(String(300), nullable=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    ticker: Mapped[str] = mapped_column(String(TICKER_LEN), unique=True, nullable=False)
+    name: Mapped[Optional[str]] = mapped_column(String(STOCK_NAME_LEN), nullable=True)
 
     # Company Info
-    description: Mapped[str] = mapped_column(Text, nullable=True)
-    homepage_url: Mapped[str] = mapped_column(Text, nullable=True)
-    list_date: Mapped[Date] = mapped_column(db.Date, nullable=True)
-    industry: Mapped[str] = mapped_column(String(100), nullable=True)
-    type: Mapped[str] = mapped_column(String(50), nullable=True)
-    total_employees: Mapped[int] = mapped_column(nullable=True)
-    market_cap: Mapped[float] = mapped_column(nullable=True)
+    description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    homepage_url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    list_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
+    industry: Mapped[Optional[str]] = mapped_column(String(STOCK_INFO_LEN), nullable=True)
+    stock_type: Mapped[Optional[str]] = mapped_column(String(STOCK_INFO_LEN), nullable=True)
+    total_employees: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    market_cap: Mapped[Optional[Decimal]] = mapped_column(Numeric(LARGE_NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
 
     # Branding
-    icon_url: Mapped[str] = mapped_column(Text, nullable=True)
+    icon_url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
     # Snapshot Data
-    last_updated: Mapped[DateTime] = db.Column(db.DateTime(timezone=True), nullable=True)
-    day_close: Mapped[float] = mapped_column(nullable=True)
-    day_open: Mapped[float] = mapped_column(nullable=True)
-    day_high: Mapped[float] = mapped_column(nullable=True)
-    day_low: Mapped[float] = mapped_column(nullable=True)
-    volume: Mapped[int] = mapped_column(BigInteger, nullable=True)
-    todays_change: Mapped[float] = mapped_column(nullable=True)
-    todays_change_perc: Mapped[float] = mapped_column(nullable=True)
+    last_updated: Mapped[Optional[datetime]] = mapped_column(UTCDateTime, nullable=True)
+    day_close: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
+    day_open: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
+    day_high: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
+    day_low: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
+    volume: Mapped[Optional[int]] = mapped_column(BigInteger, nullable=True)
+    todays_change: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
+    todays_change_perc: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
 
     # Daily Moving Averages
-    dma_30: Mapped[float] = mapped_column(nullable=True)
-    dma_30_perc_diff: Mapped[float] = mapped_column(nullable=True)
-    dma_50: Mapped[float] = mapped_column(nullable=True)
-    dma_50_perc_diff: Mapped[float] = mapped_column(nullable=True)
-    dma_200: Mapped[float] = mapped_column(nullable=True)
-    dma_200_perc_diff: Mapped[float] = mapped_column(nullable=True)
+    dma_30: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
+    dma_30_perc_diff: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
+    dma_50: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
+    dma_50_perc_diff: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
+    dma_200: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
+    dma_200_perc_diff: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
 
     # 52-Week High/Low
-    high_52w: Mapped[float] = mapped_column(nullable=True)
-    high_52w_perc_diff: Mapped[float] = mapped_column(nullable=True)
-    low_52w: Mapped[float] = mapped_column(nullable=True)
-    low_52w_perc_diff: Mapped[float] = mapped_column(nullable=True)
+    high_52w: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
+    high_52w_perc_diff: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
+    low_52w: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
+    low_52w_perc_diff: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
 
     # Related Companies (comma-separated string)
-    related_companies: Mapped[str] = mapped_column(Text, nullable=True)
+    related_companies: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
+    # Stock Master Relationship
+    stock_master_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("stocks_master.id", ondelete="CASCADE"),
+        nullable=False,
+        unique=True
+    )
+
+    stock_master: Mapped["StockMaster"] = relationship(
+        "StockMaster",
+        back_populates="stock",
+        uselist=False
+    )
 
     # Index Relationship
-    index_holdings: Mapped[list["IndexHolding"]] = relationship(back_populates="stock")
+    index_holdings: Mapped[list["IndexHolding"]] = relationship(
+        back_populates="stock",
+        cascade="all, delete-orphan"
+    )
 
     # Chart Data Relationships
     minute_data: Mapped[list["StockMinute"]] = relationship(
@@ -176,11 +240,6 @@ class Stock(db.Model):
     )
     week_data: Mapped[list["StockWeek"]] = relationship(
         back_populates="stock", cascade="all, delete-orphan"
-    )
-
-    # Adding Index for faster performance
-    __table_args__ = (
-        DBIndex("ix_stock_ticker", "ticker"),
     )
 
     # Returns a dict of all the stock attributes and their respective values
@@ -197,56 +256,77 @@ class Stock(db.Model):
 
         return stock_dict
 
+    def __repr__(self) -> str:
+        return (f"<Stock id={self.id} ticker={self.ticker} name={self.name} "
+                f"day_close={self.day_close}>")
+
 
 class Index(db.Model):
     __tablename__ = "indices"
 
-    id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
-    slug: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
-    url: Mapped[str] = mapped_column(String(255), nullable=True)
-    last_updated: Mapped[DateTime] = db.Column(db.DateTime(timezone=True), nullable=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    slug: Mapped[str] = mapped_column(String(INDEX_NAME_LEN), unique=True, nullable=False)
+    name: Mapped[str] = mapped_column(String(INDEX_NAME_LEN), unique=True, nullable=False)
+    url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    last_updated: Mapped[Optional[datetime]] = mapped_column(UTCDateTime, nullable=True)
 
-    holdings: Mapped[list["IndexHolding"]] = relationship(back_populates="index")
+    holdings: Mapped[list["IndexHolding"]] = relationship(
+        back_populates="index",
+        cascade="all, delete-orphan"
+    )
+
+    def __repr__(self) -> str:
+        return f"<Index id={self.id } slug={self.slug} name={self.name}>"
 
 
 class IndexHolding(db.Model):
     __tablename__ = "index_holdings"
 
-    id: Mapped[int] = mapped_column(primary_key=True)
-    index_id: Mapped[int] = mapped_column(ForeignKey("indices.id"), nullable=False)
-    stock_id: Mapped[int] = mapped_column(ForeignKey("stocks.id"), nullable=False)
-    weight: Mapped[float] = mapped_column(nullable=True)
-
-    index: Mapped[Index] = relationship(back_populates="holdings")
-    stock: Mapped[Stock] = relationship(back_populates="index_holdings")
-
-    # Adding Index for faster performance
-    __table_args__ = (
-        DBIndex("ix_indexholding_indexid_stockid", "index_id", "stock_id"),
+    # Composite Primary Key (index_id, stock_id)
+    index_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("indices.id", ondelete="CASCADE"),
+        primary_key=True
     )
+    stock_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("stocks.id", ondelete="CASCADE"),
+        primary_key=True
+    )
+    weight: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
+
+    index: Mapped["Index"] = relationship(back_populates="holdings")
+    stock: Mapped["Stock"] = relationship(back_populates="index_holdings")
 
 
 class StockMaster(db.Model):
     __tablename__ = "stocks_master"
 
-    id: Mapped[int] = mapped_column(primary_key=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
 
     # All tickers data
-    ticker: Mapped[str] = mapped_column(String(10), unique=True, nullable=False)
-    name: Mapped[str] = mapped_column(String(300), nullable=True)
-    type: Mapped[str] = mapped_column(String(100), nullable=True)
-    primary_exchange: Mapped[str] = mapped_column(String(10), nullable=True)
+    ticker: Mapped[str] = mapped_column(String(TICKER_LEN), unique=True, nullable=False)
+    name: Mapped[Optional[str]] = mapped_column(String(STOCK_NAME_LEN), nullable=True)
+    stock_type: Mapped[Optional[str]] = mapped_column(String(STOCK_INFO_LEN), nullable=True)
+    primary_exchange: Mapped[Optional[str]] = mapped_column(String(STOCK_INFO_LEN), nullable=True)
 
     # Full Market Snapshot Data
-    last_updated: Mapped[DateTime] = db.Column(db.DateTime(timezone=True), nullable=True)
-    day_close: Mapped[float] = mapped_column(nullable=True)
-    day_open: Mapped[float] = mapped_column(nullable=True)
-    day_high: Mapped[float] = mapped_column(nullable=True)
-    day_low: Mapped[float] = mapped_column(nullable=True)
-    volume: Mapped[int] = mapped_column(BigInteger, nullable=True)
-    todays_change: Mapped[float] = mapped_column(nullable=True)
-    todays_change_perc: Mapped[float] = mapped_column(nullable=True)
+    last_updated: Mapped[Optional[datetime]] = mapped_column(UTCDateTime, nullable=True)
+    day_close: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
+    day_open: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
+    day_high: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
+    day_low: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
+    volume: Mapped[Optional[int]] = mapped_column(BigInteger, nullable=True)
+    todays_change: Mapped[Optional[Decimal]] = mapped_column(nullable=True)
+    todays_change_perc: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
+
+    # Stock Relationship
+    stock: Mapped[Optional["Stock"]] = relationship(
+        "Stock",
+        back_populates="stock_master",
+        uselist=False,
+        cascade="all, delete-orphan"
+    )
 
     # Backref from watchlist items
     watchlist_items: Mapped[list["WatchlistItem"]] = relationship("WatchlistItem", back_populates="stock")
@@ -267,113 +347,129 @@ class StockMaster(db.Model):
         ]
         return attributes
 
+    def __repr__(self) -> str:
+        return (f"<StockMaster id={self.id} ticker={self.ticker} name={self.name} "
+                f"day_close={self.day_close}>")
+
 
 class StockMinute(db.Model):
     __tablename__ = "stock_minute_data"
 
-    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    stock_id: Mapped[int] = mapped_column(ForeignKey("stocks.id", ondelete="CASCADE"), nullable=False)
-    date: Mapped[DateTime] = db.Column(db.DateTime(timezone=True), nullable=False)
-    close_price: Mapped[float] = mapped_column(nullable=True)
-    ema_30: Mapped[float] = mapped_column(nullable=True)
-    ema_50: Mapped[float] = mapped_column(nullable=True)
-    ema_200: Mapped[float] = mapped_column(nullable=True)
-    volume: Mapped[int] = mapped_column(BigInteger, nullable=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
 
+    date: Mapped[datetime] = mapped_column(UTCDateTime, nullable=False)
+    close_price: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
+    ema_30: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
+    ema_50: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
+    ema_200: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
+    volume: Mapped[Optional[int]] = mapped_column(BigInteger, nullable=True)
+
+    stock_id: Mapped[int] = mapped_column(
+        ForeignKey("stocks.id", ondelete="CASCADE"),
+        nullable=False
+    )
     stock: Mapped["Stock"] = relationship(back_populates="minute_data")
 
     __table_args__ = (
         UniqueConstraint("stock_id", "date", name="uq_stockminute_stockid_date"),
-        # Adding Index for faster performance
-        DBIndex("ix_stockminute_stockid_date", "stock_id", "date"),
     )
 
 
 class StockHour(db.Model):
     __tablename__ = "stock_hour_data"
 
-    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    stock_id: Mapped[int] = mapped_column(ForeignKey("stocks.id", ondelete="CASCADE"), nullable=False)
-    date: Mapped[DateTime] = db.Column(db.DateTime(timezone=True), nullable=False)
-    close_price: Mapped[float] = mapped_column(nullable=True)
-    ema_30: Mapped[float] = mapped_column(nullable=True)
-    ema_50: Mapped[float] = mapped_column(nullable=True)
-    ema_200: Mapped[float] = mapped_column(nullable=True)
-    volume: Mapped[int] = mapped_column(BigInteger, nullable=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
 
+    date: Mapped[datetime] = mapped_column(UTCDateTime, nullable=False)
+    close_price: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
+    ema_30: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
+    ema_50: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
+    ema_200: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
+    volume: Mapped[Optional[int]] = mapped_column(BigInteger, nullable=True)
+
+    stock_id: Mapped[int] = mapped_column(
+        ForeignKey("stocks.id", ondelete="CASCADE"),
+        nullable=False
+    )
     stock: Mapped["Stock"] = relationship(back_populates="hour_data")
 
     __table_args__ = (
         UniqueConstraint("stock_id", "date", name="uq_stockhour_stockid_date"),
-        # Adding Index for faster performance
-        DBIndex("ix_stockhour_stockid_date", "stock_id", "date"),
     )
 
 
 class StockDay(db.Model):
     __tablename__ = "stock_day_data"
 
-    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    stock_id: Mapped[int] = mapped_column(ForeignKey("stocks.id", ondelete="CASCADE"), nullable=False)
-    date: Mapped[DateTime] = db.Column(db.DateTime(timezone=True), nullable=False)
-    close_price: Mapped[float] = mapped_column(nullable=True)
-    ema_30: Mapped[float] = mapped_column(nullable=True)
-    ema_50: Mapped[float] = mapped_column(nullable=True)
-    ema_200: Mapped[float] = mapped_column(nullable=True)
-    volume: Mapped[int] = mapped_column(BigInteger, nullable=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
 
+    date: Mapped[datetime] = mapped_column(UTCDateTime, nullable=False)
+    close_price: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
+    ema_30: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
+    ema_50: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
+    ema_200: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
+    volume: Mapped[Optional[int]] = mapped_column(BigInteger, nullable=True)
+
+    stock_id: Mapped[int] = mapped_column(
+        ForeignKey("stocks.id", ondelete="CASCADE"),
+        nullable=False
+    )
     stock: Mapped["Stock"] = relationship(back_populates="day_data")
 
     __table_args__ = (
         UniqueConstraint("stock_id", "date", name="uq_stockday_stockid_date"),
-        # Adding Index for faster performance
-        DBIndex("ix_stockday_stockid_date", "stock_id", "date"),
     )
 
 
 class StockWeek(db.Model):
     __tablename__ = "stock_week_data"
 
-    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    stock_id: Mapped[int] = mapped_column(ForeignKey("stocks.id", ondelete="CASCADE"), nullable=False)
-    date: Mapped[DateTime] = db.Column(db.DateTime(timezone=True), nullable=False)
-    close_price: Mapped[float] = mapped_column(nullable=True)
-    volume: Mapped[int] = mapped_column(BigInteger, nullable=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
 
+    date: Mapped[datetime] = mapped_column(UTCDateTime, nullable=False)
+    close_price: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
+    volume: Mapped[Optional[int]] = mapped_column(BigInteger, nullable=True)
+
+    stock_id: Mapped[int] = mapped_column(
+        ForeignKey("stocks.id", ondelete="CASCADE"),
+        nullable=False
+    )
     stock: Mapped["Stock"] = relationship(back_populates="week_data")
 
     __table_args__ = (
         UniqueConstraint("stock_id", "date", name="uq_stockweek_stockid_date"),
-        # Adding Index for faster performance
-        DBIndex("ix_stockweek_stockid_date", "stock_id", "date"),
     )
 
 
 class User(UserMixin, db.Model):
     __tablename__ = "users"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
-    username: Mapped[str] = mapped_column(String(30), unique=True, nullable=False)
-    first_name: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
-    last_name: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    email: Mapped[str] = mapped_column(String(USER_INFO_LEN), unique=True, nullable=False)
+    username: Mapped[str] = mapped_column(String(MAX_USERNAME_LEN), unique=True, nullable=False)
+    first_name: Mapped[Optional[str]] = mapped_column(String(MAX_NAME_LEN), nullable=True)
+    last_name: Mapped[Optional[str]] = mapped_column(String(MAX_NAME_LEN), nullable=True)
 
-    password_hash: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
-    google_id: Mapped[Optional[str]] = mapped_column(String(255), unique=True, nullable=True)
+    password_hash: Mapped[Optional[str]] = mapped_column(String(USER_INFO_LEN), nullable=True)
+    google_id: Mapped[Optional[str]] = mapped_column(String(USER_INFO_LEN), unique=True, nullable=True)
 
     is_verified: Mapped[bool] = mapped_column(Boolean, nullable=False)
 
     # Timestamps
-    created_at: Mapped[DateTime] = db.Column(
-        db.DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
+    created_at: Mapped[datetime] = mapped_column(
+        UTCDateTime,
+        nullable=False,
+        default=get_current_utc
     )
-    last_login_at: Mapped[DateTime] = db.Column(
-        db.DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
+    last_login_at: Mapped[datetime] = mapped_column(
+        UTCDateTime,
+        nullable=False,
+        default=get_current_utc
     )
 
     # Session validation
     security_timestamp: Mapped[int] = mapped_column(
-        Integer,
+        BigInteger,
         nullable=False,
         default=lambda: int(time())
     )
@@ -382,7 +478,10 @@ class User(UserMixin, db.Model):
     email_alerts_on: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
     # For analytics
-    signup_source: Mapped["SignupSource"] = mapped_column("SignupSource", nullable=False)
+    signup_source: Mapped["SignupSource"] = mapped_column(
+        SQLEnum(SignupSource, name="signup_source_enum"),
+        nullable=False
+    )
 
     @property
     def password(self):
@@ -390,11 +489,7 @@ class User(UserMixin, db.Model):
 
     @password.setter
     def password(self, raw_password):
-        self.password_hash = generate_password_hash(
-            raw_password,
-            method='pbkdf2:sha256',
-            salt_length=8
-        )
+        self.password_hash = generate_password_hash(raw_password)
 
     def remove_password(self):
         self.password_hash = None
@@ -418,11 +513,6 @@ class User(UserMixin, db.Model):
         back_populates="user",
         cascade="all, delete-orphan",
         passive_deletes=True
-    )
-
-    __table_args__ = (
-        DBIndex("ix_user_email", "email"),
-        DBIndex("ix_user_username", "username")
     )
 
     def get_token(self, token_type, expires_in=86400):
@@ -454,7 +544,8 @@ class User(UserMixin, db.Model):
             payload = jwt.decode(
                 token,
                 current_app.config["SECRET_KEY"],
-                algorithms=["HS256"]
+                algorithms=["HS256"],
+                options={"require": ["exp", "iat", "sub"]}
             )
         except ExpiredSignatureError:
             # Token expired
@@ -487,13 +578,19 @@ class User(UserMixin, db.Model):
 
 
 class WatchlistFolder(db.Model):
-    __tablename__ = "wl_folders"
+    __tablename__ = "watchlist_folders"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    name: Mapped[str] = mapped_column(String(100), nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(String(MAX_FOLDER_NAME_LEN), nullable=False)
     order: Mapped[int] = mapped_column(Integer, nullable=False)
-    sort_by_attribute: Mapped["FolderAttribute"] = mapped_column("FolderAttribute", nullable=True)
-    sort_by_order: Mapped["OrderBy"] = mapped_column("OrderBy", nullable=True)
+    sort_by_attribute: Mapped[Optional["FolderAttribute"]] = mapped_column(
+        SQLEnum(FolderAttribute, name="folder_attribute_enum"),
+        nullable=True
+    )
+    sort_by_order: Mapped[Optional["OrderBy"]] = mapped_column(
+        SQLEnum(OrderBy, name="order_by_enum"),
+        nullable=True
+    )
 
     user_id: Mapped[int] = mapped_column(
         Integer,
@@ -521,32 +618,35 @@ class WatchlistFolder(db.Model):
     )
 
     # Alerts for this folder
-    folder_alerts: Mapped[list["WatchlistFolderAlert"]] = relationship(
-        "WatchlistFolderAlert",
+    alerts: Mapped[list["WatchlistAlert"]] = relationship(
+        "WatchlistAlert",
         back_populates="folder",
         cascade="all, delete-orphan",
-        passive_deletes=True
+        passive_deletes=True,
     )
 
     __table_args__ = (
         # Make folder names unique per user: (user_id, name) must be unique
-        UniqueConstraint("user_id", "name", name="uq_wl_folder_user_name"),
-        DBIndex("ix_wl_folders_user_id", "user_id"),
+        UniqueConstraint("user_id", "name", name="uq_watchlist_folder_name_user"),
+        # Make folder order unique per user: (user_id, order) must be unique
+        UniqueConstraint("user_id", "order", name="uq_watchlist_folder_order_user"),
+
+        DBIndex("ix_watchlist_folders_user_id", "user_id"),
     )
 
     def __repr__(self) -> str:
-        return (f"<WatchlistFolder id={self.id} user_id={self.user_id} name={self.name} order={self.order} "
+        return (f"<WatchlistFolder id={self.id} user_id={self.user_id} order={self.order} name={self.name} "
                 f"sort_by_attribute={self.sort_by_attribute} sort_by_order={self.sort_by_order}>")
 
 
 class WatchlistItem(db.Model):
-    __tablename__ = "wl_items"
+    __tablename__ = "watchlist_items"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
 
     folder_id: Mapped[int] = mapped_column(
         Integer,
-        ForeignKey("wl_folders.id", ondelete="CASCADE"),
+        ForeignKey("watchlist_folders.id", ondelete="CASCADE"),
         nullable=False,
     )
     stock_id: Mapped[int] = mapped_column(
@@ -560,18 +660,19 @@ class WatchlistItem(db.Model):
     stock: Mapped["StockMaster"] = relationship("StockMaster", back_populates="watchlist_items")
 
     # Alerts for this item
-    item_alerts: Mapped[list["WatchlistItemAlert"]] = relationship(
-        "WatchlistItemAlert",
+    alerts: Mapped[list["WatchlistAlert"]] = relationship(
+        "WatchlistAlert",
         back_populates="item",
         cascade="all, delete-orphan",
         passive_deletes=True,
     )
 
     __table_args__ = (
-        # prevent duplicate (same stock in same folder)
-        UniqueConstraint("folder_id", "stock_id", name="uq_wl_items_folder_stock"),
-        DBIndex("ix_wl_items_folder_id", "folder_id"),
-        DBIndex("ix_wl_items_stock_id", "stock_id"),
+        # Prevent duplicate (same stock in same folder)
+        UniqueConstraint("folder_id", "stock_id", name="uq_watchlist_items_folder_stock"),
+
+        DBIndex("ix_watchlist_items_folder_id", "folder_id"),
+        DBIndex("ix_watchlist_items_stock_id", "stock_id"),
     )
 
     def __repr__(self) -> str:
@@ -579,19 +680,22 @@ class WatchlistItem(db.Model):
 
 
 class WatchlistFolderAttribute(db.Model):
-    __tablename__ = "wl_folder_attributes"
+    __tablename__ = "watchlist_folder_attributes"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    attribute: Mapped["FolderAttribute"] = mapped_column(db.Enum(FolderAttribute), nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    attribute: Mapped["FolderAttribute"] = mapped_column(
+        SQLEnum(FolderAttribute, name="folder_attribute_enum"),
+        nullable=False
+    )
 
     # Values for filters
     use_abs: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
-    min_value: Mapped[float] = mapped_column(nullable=True)
-    max_value: Mapped[float] = mapped_column(nullable=True)
+    min_value: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
+    max_value: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
 
     folder_id: Mapped[int] = mapped_column(
         Integer,
-        ForeignKey("wl_folders.id", ondelete="CASCADE"),
+        ForeignKey("watchlist_folders.id", ondelete="CASCADE"),
         nullable=False
     )
 
@@ -599,109 +703,89 @@ class WatchlistFolderAttribute(db.Model):
     folder: Mapped["WatchlistFolder"] = relationship("WatchlistFolder", back_populates="folder_attributes")
 
     __table_args__ = (
+        # Cannot have duplicate attributes in a folder
         UniqueConstraint("folder_id", "attribute", name="uq_folder_attribute"),
+        # min_value <= max_value
+        CheckConstraint(
+            "(min_value IS NULL OR max_value IS NULL OR min_value <= max_value)",
+            name="ck_folder_attribute_min_le_max",
+        ),
     )
 
     def __repr__(self) -> str:
         return (f"<WatchlistFolderAttribute id={self.id} folder_id={self.folder_id} attribute={self.attribute} "
-                f"min_value={self.min_value} max_value={self.max_value}>")
+                f"min_value={self.min_value} max_value={self.max_value} use_abs={self.use_abs}>")
 
 
 class WatchlistAlert(db.Model):
-    __tablename__ = "wl_alerts"
+    __tablename__ = "watchlist_alerts"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
 
-    attribute: Mapped["AlertAttribute"] = mapped_column(db.Enum(AlertAttribute), nullable=False)
-    use_abs: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
-    min_value: Mapped[float] = mapped_column(nullable=True)
-    max_value: Mapped[float] = mapped_column(nullable=True)
+    attribute: Mapped["AlertAttribute"] = mapped_column(
+        SQLEnum(AlertAttribute, name="alert_attribute_enum"),
+        nullable=False
+    )
+    use_abs: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    min_value: Mapped[Optional[Decimal]] = mapped_column(
+        Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True
+    )
+    max_value: Mapped[Optional[Decimal]] = mapped_column(
+        Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True
+    )
 
+    # Ownership
     user_id: Mapped[int] = mapped_column(
         Integer,
         ForeignKey("users.id", ondelete="CASCADE"),
-        nullable=False,
+        nullable=False
+    )
+
+    # EXACTLY ONE of these must be non-null
+    folder_id: Mapped[Optional[int]] = mapped_column(
+        Integer,
+        ForeignKey("watchlist_folders.id", ondelete="CASCADE"),
+        nullable=True,
+    )
+    item_id: Mapped[Optional[int]] = mapped_column(
+        Integer,
+        ForeignKey("watchlist_items.id", ondelete="CASCADE"),
+        nullable=True,
     )
 
     # Relationships
     user: Mapped["User"] = relationship("User", back_populates="watchlist_alerts")
-
-    # Folders for this Alert
-    alert_folders: Mapped[list["WatchlistFolderAlert"]] = relationship(
-        "WatchlistFolderAlert",
-        back_populates="alert",
-        cascade="all, delete-orphan",
-        passive_deletes=True,
+    folder: Mapped[Optional["WatchlistFolder"]] = relationship(
+        "WatchlistFolder", back_populates="alerts"
     )
-
-    # Items for this Alert
-    alert_items: Mapped[list["WatchlistItemAlert"]] = relationship(
-        "WatchlistItemAlert",
-        back_populates="alert",
-        cascade="all, delete-orphan",
-        passive_deletes=True,
+    item: Mapped[Optional["WatchlistItem"]] = relationship(
+        "WatchlistItem", back_populates="alerts"
     )
 
     __table_args__ = (
-        DBIndex("ix_wl_alerts_user_id", "user_id"),
+        # Enforce folder XOR item
+        CheckConstraint(
+            "(folder_id IS NOT NULL AND item_id IS NULL) OR "
+            "(folder_id IS NULL AND item_id IS NOT NULL)",
+            name="ck_alert_folder_xor_item",
+        ),
+        # Each folder/item can have only one alert for a given attribute
+        UniqueConstraint("folder_id", "attribute", name="uq_folder_attribute"),
+        UniqueConstraint("item_id", "attribute", name="uq_item_attribute"),
+        # min_value <= max_value
+        CheckConstraint(
+            "(min_value IS NULL OR max_value IS NULL OR min_value <= max_value)",
+            name="ck_alert_min_le_max",
+        ),
+
+        DBIndex("ix_watchlist_alerts_user_id", "user_id"),
+        DBIndex("ix_watchlist_alerts_folder_id", "folder_id"),
+        DBIndex("ix_watchlist_alerts_item_id", "item_id"),
     )
 
     def __repr__(self) -> str:
-        return (f"<WatchlistAlert id={self.id} user_id={self.user_id} attribute={self.attribute} "
-                f"min_value={self.min_value} max_value={self.max_value}>")
-
-
-class WatchlistFolderAlert(db.Model):
-    __tablename__ = "wl_folder_alerts"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-
-    folder_id: Mapped[int] = mapped_column(
-        Integer,
-        ForeignKey("wl_folders.id", ondelete="CASCADE"),
-        nullable=False
-    )
-    alert_id: Mapped[int] = mapped_column(
-        Integer,
-        ForeignKey("wl_alerts.id", ondelete="CASCADE"),
-        nullable=False
-    )
-
-    # Relationships
-    folder: Mapped["WatchlistFolder"] = relationship("WatchlistFolder", back_populates="folder_alerts")
-    alert: Mapped["WatchlistAlert"] = relationship("WatchlistAlert", back_populates="alert_folders")
-
-    __table_args__ = (
-        UniqueConstraint("folder_id", "alert_id", name="uq_folder_alert"),
-    )
-
-    def __repr__(self) -> str:
-        return f"<WatchlistFolderAlert id={self.id} folder_id={self.folder_id} alert_id={self.alert_id}>"
-
-
-class WatchlistItemAlert(db.Model):
-    __tablename__ = "wl_item_alerts"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-
-    item_id: Mapped[int] = mapped_column(
-        Integer,
-        ForeignKey("wl_items.id", ondelete="CASCADE"),
-        nullable=False
-    )
-    alert_id: Mapped[int] = mapped_column(
-        Integer,
-        ForeignKey("wl_alerts.id", ondelete="CASCADE"),
-        nullable=False
-    )
-
-    # Relationships
-    item: Mapped["WatchlistItem"] = relationship("WatchlistItem", back_populates="item_alerts")
-    alert: Mapped["WatchlistAlert"] = relationship("WatchlistAlert", back_populates="alert_items")
-
-    __table_args__ = (
-        UniqueConstraint("item_id", "alert_id", name="uq_item_alert"),
-    )
-
-    def __repr__(self) -> str:
-        return f"<WatchlistItemAlert id={self.id} item_id={self.item_id} alert_id={self.alert_id}>"
+        target = f"folder_id={self.folder_id}" if self.folder_id else f"item_id={self.item_id}"
+        return (
+            f"<WatchlistAlert id={self.id} user_id={self.user_id} "
+            f"attribute={self.attribute} {target}>"
+        )
