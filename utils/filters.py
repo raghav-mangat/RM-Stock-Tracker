@@ -1,5 +1,5 @@
 from flask import Flask
-from .datetime_utils import format_et_datetime as format_et_datetime_util
+from .datetime_utils import format_dt_et as format_dt_et_util
 
 def dma_200_perc_diff_color(perc_diff):
     """
@@ -58,11 +58,11 @@ def humanize_number(num, fallback="N/A", decimals=1):
         result = fallback
     return result
 
-def format_et_datetime(et_datetime):
+def format_dt_et(dt):
     """
-    Formats datetime in ET into string: 'Friday, Jun 21, 2025, at 08:00PM, ET.'
+    Formats datetime in UTC into string in ET: 'Friday, Jun 21, 2025 ET.'
     """
-    return format_et_datetime_util(et_datetime)
+    return format_dt_et_util(dt)
 
 def display(value, fallback="N/A"):
     """Simple fallback for None values"""
@@ -107,7 +107,7 @@ def register_custom_filters(app: Flask):
     app.jinja_env.filters['dma_200_perc_diff_color'] = dma_200_perc_diff_color
     app.jinja_env.filters['stock_change_color'] = stock_change_color
     app.jinja_env.filters['humanize_number'] = humanize_number
-    app.jinja_env.filters['format_et_datetime'] = format_et_datetime
+    app.jinja_env.filters['format_dt_et'] = format_dt_et
     app.jinja_env.filters['display'] = display
     app.jinja_env.filters['currency'] = format_currency
     app.jinja_env.filters['float'] = format_float

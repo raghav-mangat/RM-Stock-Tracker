@@ -82,7 +82,7 @@ function createSummaryChart(ctx, labels, data, backgroundColor) {
           padding: DATA_LABEL_PADDING,
           formatter: function (value) {
             if (value) {
-              value = `$${value.toFixed(DECIMAL_PRECISION)}`;
+              value = `$${parseFloat(value).toFixed(DECIMAL_PRECISION)}`;
             }
             return value;
           },
@@ -116,7 +116,7 @@ const ohlcChart = createSummaryChart(
   ohlcChartCtx,
   ohlcChartLabels,
   ohlcChartData,
-  ohlcChartBackgroundColors
+  ohlcChartBackgroundColors,
 );
 
 const dmaChartCtx = document.getElementById("dma-chart").getContext("2d");
@@ -137,7 +137,7 @@ const dmaChart = createSummaryChart(
   dmaChartCtx,
   dmaChartLabels,
   dmaChartData,
-  dmaChartBackgroundColors
+  dmaChartBackgroundColors,
 );
 
 const range52wChartCtx = document
@@ -158,5 +158,5 @@ const range52wChart = createSummaryChart(
   range52wChartCtx,
   range52wChartLabels,
   range52wChartData,
-  range52wChartBackgroundColors
+  range52wChartBackgroundColors,
 );

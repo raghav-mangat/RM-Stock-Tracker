@@ -2,8 +2,10 @@ from flask import request, abort, jsonify, flash, redirect, url_for
 from dataclasses import dataclass
 from models.database import AlertAttribute, FolderAttribute, OrderBy
 from utils.db_queries.watchlist import (
-    NotFoundError, ForbiddenError, MutationResult, get_stock_master_by_ticker
+    NotFoundError, ForbiddenError, MutationResult
 )
+from utils.db_queries.stock_master_data import get_stock_master_by_ticker
+from utils.constants import MAX_FOLDER_NAME_LEN
 
 class AjaxService:
     """
@@ -60,16 +62,14 @@ class ValidationError(Exception):
 class Validators:
     @staticmethod
     def validate_folder_name(folder_name: str) -> str:
-        max_folder_name_len = 50
-
         if not folder_name:
             raise ValidationError("Folder name cannot be empty.")
 
         folder_name = folder_name.strip().upper()
 
-        if len(folder_name) > max_folder_name_len:
+        if len(folder_name) > MAX_FOLDER_NAME_LEN:
             raise ValidationError(
-                f"Folder name must be at most {max_folder_name_len} characters."
+                f"Folder name must be at most {MAX_FOLDER_NAME_LEN} characters."
             )
 
         return folder_name

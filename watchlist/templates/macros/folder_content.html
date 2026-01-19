@@ -255,7 +255,7 @@
 
                           <!-- Remove Item Button -->
                           <form method="POST"
-                                action="{{ url_for('watchlist.remove_item', folder_id=folder_id, ticker=stock.ticker) }}"
+                                action="{{ url_for('watchlist.remove_item', item_id=item_id) }}"
                                 class="folder-action-form"
                                 data-folder-id="{{ folder_id }}"
                                 data-action="remove-item"

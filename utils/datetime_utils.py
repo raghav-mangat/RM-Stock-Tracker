@@ -4,13 +4,13 @@ from datetime import datetime, UTC
 DATETIME_FORMAT = "%m-%d %I:%M %p"
 DATE_FORMAT = "%Y-%m-%d"
 
-def polygon_timestamp_et(timestamp, timestamp_type):
+def polygon_timestamp_to_utc_dt(timestamp, timestamp_type):
     """
     Convert the given polygon timestamp to datetime
-    object in Eastern Time (ET).
+    object in UTC.
     :param timestamp:
     :param timestamp_type:
-    :return: Datetime object in ET
+    :return: Datetime object in UTC
     """
     factor = None
     if timestamp_type == "nanosecond":
@@ -20,19 +20,17 @@ def polygon_timestamp_et(timestamp, timestamp_type):
     elif timestamp_type == "millisecond":
         factor = 1_000
 
-    eastern_dt = None
+    utc_dt = None
     if factor:
         unix_seconds = timestamp / factor
 
-        # Convert to US/Eastern timezone
-        eastern_tz = pytz.timezone('US/Eastern')
-        eastern_dt = datetime.fromtimestamp(unix_seconds, tz=eastern_tz)
+        # Convert to UTC datetime
+        utc_dt = datetime.fromtimestamp(unix_seconds, tz=UTC)
 
-    return eastern_dt
+    return utc_dt
 
-def get_current_et():
-    eastern = pytz.timezone("US/Eastern")
-    return datetime.now(eastern)
+def get_current_utc():
+    return datetime.now(UTC)
 
 def convert_to_utc_tz_aware(utc_dt):
     """
@@ -41,17 +39,30 @@ def convert_to_utc_tz_aware(utc_dt):
     """
     return utc_dt.replace(tzinfo=UTC)
 
-def format_et_datetime(et_datetime):
+def format_dt_et(utc_dt):
     """
-    Formats datetime in ET into string: 'Saturday, Jun 21, 2025, ET.'
+    Formats datetime in UTC into string in ET: 'Saturday, Jun 21, 2025, ET.'
     """
-    return et_datetime.strftime('%A, %b %d, %Y, ET.')
+
+    et_dt = convert_to_et_dt(utc_dt)
+    return et_dt.strftime('%A, %b %d, %Y, ET.')
 
 def format_date(date):
     return date.strftime(DATE_FORMAT)
 
-def format_et_datetime_extended(et_datetime):
+def format_dt_et_extended(utc_dt):
     """
-    Formats datetime in ET into string: 'Saturday, Jun 21, 2025, at 08:00PM, ET.'
+    Formats datetime in UTC into string in ET: 'Saturday, Jun 21, 2025, at 08:00PM, ET.'
     """
-    return et_datetime.strftime('%A, %b %d, %Y, at %I:%M%p, ET.')
+
+    et_dt = convert_to_et_dt(utc_dt)
+    return et_dt.strftime('%A, %b %d, %Y, at %I:%M%p, ET.')
+
+def convert_to_et_dt(dt):
+    # Fetch the timezone information
+    et = pytz.timezone('US/Eastern')
+
+    # Convert to ET
+    et_dt = dt.astimezone(et)
+
+    return et_dt

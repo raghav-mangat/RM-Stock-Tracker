@@ -1,8 +1,8 @@
 from sqlalchemy.exc import IntegrityError
 from time import time
-from datetime import datetime, timedelta, UTC
+from datetime import timedelta
 from models.database import db, User
-from utils.datetime_utils import convert_to_utc_tz_aware
+from utils.datetime_utils import convert_to_utc_tz_aware, get_current_utc
 from utils.constants import USER_INACTIVE_DAYS_LIMIT
 
 class AuthError(Exception):
@@ -113,7 +113,7 @@ def toggle_user_email_alerts_on(user):
         raise AuthError("Unable to toggle email alerts.")
 
 def update_user_last_login_at(user):
-    user.last_login_at = datetime.now(UTC)
+    user.last_login_at = get_current_utc()
     db.session.commit()
 
 def delete_user_account(user):
@@ -146,7 +146,7 @@ def is_user_active(user):
     user_last_login = convert_to_utc_tz_aware(user.last_login_at)
 
     # Time beyond which we consider the user as being inactive
-    cutoff = datetime.now(UTC) - timedelta(days=USER_INACTIVE_DAYS_LIMIT)
+    cutoff = get_current_utc() - timedelta(days=USER_INACTIVE_DAYS_LIMIT)
 
     return user_last_login >= cutoff
 

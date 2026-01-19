@@ -18,7 +18,7 @@
   <!-- Hero Section -->
   {% set heading = stock.ticker ~ " - " ~ (stock.name | display) %}
   {% set description = "See full details about the selected stock, including daily and historical performance, volume, market cap, moving averages, today's price change, and much more, or interact with the historical stock chart. Also check out related companies in the same sector." %}
-  {% set last_updated = last_updated | format_et_datetime | display %}
+  {% set last_updated = last_updated | format_dt_et | display %}
 
   {% set add_to_watchlist_button %}
     {% if current_user.is_authenticated %}
@@ -320,7 +320,7 @@
                     </tr>
                     <tr><th>Industry</th><td>{{ stock.industry | display }}</td></tr>
                     <tr><th>List Date</th><td>{{ stock.list_date | display }}</td></tr>
-                    <tr><th>Type</th><td>{{ stock.type | display }}</td></tr>
+                    <tr><th>Type</th><td>{{ stock.stock_type | display }}</td></tr>
                     <tr><th>Total Employees</th><td>{{ stock.total_employees | int }}</td></tr>
                     <tr>
                       <th>Market Cap</th>

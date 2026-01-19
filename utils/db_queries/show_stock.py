@@ -3,7 +3,7 @@ from models.database import StockMaster, Stock
 from flask import abort
 from data_collectors.stock_data import fetch_stock_data, fetch_chart_data, TIMEFRAME_OPTIONS, SELECT_DB_TABLE, \
     DB_TIMEFRAMES
-from utils.datetime_utils import DATE_FORMAT
+from utils.datetime_utils import DATE_FORMAT, convert_to_et_dt
 from utils.populate_db_info import db_last_updated_date
 
 def get_stock_data(ticker):
@@ -54,18 +54,19 @@ def get_chart_data(ticker, timeframe):
     ema_200_data = []
     volume_data = []
     for data in chart_data:
-        date_data.append(data.date.strftime(date_format))
-        close_price_data.append(data.close_price)
+        date = convert_to_et_dt(data.date)
+        date_data.append(date.strftime(date_format))
+        close_price_data.append(float(data.close_price))
         volume_data.append(data.volume)
         if ema_data:
-            ema_30_data.append(data.ema_30)
-            ema_50_data.append(data.ema_50)
-            ema_200_data.append(data.ema_200)
+            ema_30_data.append(float(data.ema_30))
+            ema_50_data.append(float(data.ema_50))
+            ema_200_data.append(float(data.ema_200))
 
     change_perc = 0
     if len(close_price_data) > 1:
         try:
-            change_perc = round(((close_price_data[-1] - close_price_data[0]) * 100 / close_price_data[0]), 2)
+            change_perc = float(round(((close_price_data[-1] - close_price_data[0]) * 100 / close_price_data[0]), 2))
         except ZeroDivisionError:
             change_perc = 0
 

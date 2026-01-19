@@ -4,7 +4,7 @@ from wtforms.fields.simple import HiddenField
 from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError
 from flask_login import current_user
 import re
-from utils.constants import PASSWORD_SPECIAL_CHARS_REGEX, NAME_REGEX, USERNAME_REGEX, MIN_USERNAME_LEN, MAX_USERNAME_LEN
+from utils.constants import PASSWORD_SPECIAL_CHARS_REGEX, NAME_REGEX, USERNAME_REGEX, MIN_USERNAME_LEN, MAX_USERNAME_LEN, MAX_NAME_LEN
 from utils.db_queries.user_data import get_user_by_email, get_user_by_username
 
 def normalize_email(email):
@@ -48,14 +48,14 @@ def get_email_field():
 def get_first_name_field():
     first_name = StringField('First Name', filters=[normalize_name], validators=[
         DataRequired(message="First name is required"),
-        Length(max=50, message="First name must be at most 50 characters long")
+        Length(max=MAX_NAME_LEN, message=f"First name must be at most {MAX_NAME_LEN} characters long")
     ])
     return first_name
 
 def get_last_name_field():
     last_name = StringField('Last Name', filters=[normalize_name], validators=[
         DataRequired(message="Last name is required"),
-        Length(max=50, message="Last name must be at most 50 characters long")
+        Length(max=MAX_NAME_LEN, message=f"Last name must be at most {MAX_NAME_LEN} characters long")
     ])
     return last_name
 

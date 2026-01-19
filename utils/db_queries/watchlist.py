@@ -1,8 +1,7 @@
 from sqlalchemy.exc import IntegrityError
 from dataclasses import dataclass
 from models.database import (db, WatchlistFolder, WatchlistItem, WatchlistFolderAttribute,
-                             WatchlistAlert, WatchlistFolderAlert, WatchlistItemAlert,
-                             StockMaster, Stock, FolderAttribute, OrderBy)
+                             WatchlistAlert, StockMaster, Stock, FolderAttribute, OrderBy)
 from data_collectors.stock_data import fetch_stock_data
 
 @dataclass
@@ -29,7 +28,7 @@ def db_get_folder_data(folder):
     folder_attributes_data = folder.folder_attributes
     folder_attributes_list = [folder_attribute.attribute for folder_attribute in folder.folder_attributes]
 
-    folder_alerts = get_folder_alerts(folder.id)
+    folder_alerts = folder.alerts
 
     all_items_data = get_all_items_data(folder.id)
 
@@ -141,13 +140,7 @@ def db_rename_folder(new_folder_name, folder_id, user):
 def db_remove_folder(folder_id, user):
     try:
         folder = check_and_get_user_folder(folder_id, user)
-
-        # Delete the alerts for the folder
-        delete_folder_alerts(folder, user)
-
-        # Delete all the items in the folder
-        for item in folder.items:
-            delete_watchlist_item(item, user)
+        folder_name = folder.name
 
         # Delete Folder
         db.session.delete(folder)
@@ -162,7 +155,7 @@ def db_remove_folder(folder_id, user):
 
         return MutationResult(
             ok=True,
-            message=f"Folder '{folder.name}' removed successfully.",
+            message=f"Folder '{folder_name}' removed successfully.",
         )
     except Exception as e:
         db.session.rollback()
@@ -234,33 +227,19 @@ def db_add_watchlist_item(folder_id, stock, user):
         db.session.rollback()
         raise e
 
-def db_remove_watchlist_item(folder_id, ticker, user):
+def db_remove_watchlist_item(item_id, user):
     try:
-        # Check if stock exists
-        stock_id = db.session.execute(
-            db.select(StockMaster.id).where(
-                StockMaster.ticker == ticker)
-        ).scalar()
-        if not stock_id:
-            raise NotFoundError(f"Stock with id {stock_id} not found.")
+        item = check_and_get_user_item(item_id, user)
+        ticker = item.stock.ticker
+        folder_name = item.folder.name
 
-        # Check if watchlist item exists
-        watchlist_item = db.session.execute(
-            db.select(WatchlistItem).where(
-                WatchlistItem.folder_id==folder_id, WatchlistItem.stock_id==stock_id
-            )
-        ).scalar()
-        if not watchlist_item:
-            folder = check_and_get_user_folder(folder_id, user)
-            if folder:
-                raise NotFoundError(f"Folder with id {folder_id} does not have stock with id {stock_id}")
-
-        delete_watchlist_item(watchlist_item, user)
+        # Delete Watchlist item
+        db.session.delete(item)
         db.session.commit()
 
         return MutationResult(
             ok=True,
-            message=f"Removed stock '{ticker}'.",
+            message=f"Removed stock '{ticker}' from folder '{folder_name}'.",
         )
     except Exception as e:
         db.session.rollback()
@@ -275,20 +254,16 @@ def db_update_folder_alerts(folder_id, alerts, user):
 
         for alert in alerts:
             if not alert["delete"]:
-                new_alert = WatchlistAlert(
-                    attribute=alert["attribute"],
-                    use_abs=alert["use_abs"],
-                    min_value=alert["min_value"],
-                    max_value=alert["max_value"],
-                    user=user
+                db.session.add(
+                    WatchlistAlert(
+                        attribute=alert["attribute"],
+                        use_abs=alert["use_abs"],
+                        min_value=alert["min_value"],
+                        max_value=alert["max_value"],
+                        user=user,
+                        folder=folder,
+                    )
                 )
-                db.session.add(new_alert)
-                db.session.flush()
-                db.session.add(WatchlistFolderAlert(
-                    folder=folder,
-                    alert=new_alert
-                ))
-            db.session.flush()
         db.session.commit()
 
         return MutationResult(
@@ -309,20 +284,17 @@ def db_update_item_alerts(item_id, alerts, user):
 
         for alert in alerts:
             if not alert["delete"]:
-                new_alert = WatchlistAlert(
-                    attribute=alert["attribute"],
-                    use_abs=alert["use_abs"],
-                    min_value=alert["min_value"],
-                    max_value=alert["max_value"],
-                    user=user
+                db.session.add(
+                    WatchlistAlert(
+                        attribute=alert["attribute"],
+                        use_abs=alert["use_abs"],
+                        min_value=alert["min_value"],
+                        max_value=alert["max_value"],
+                        user=user,
+                        item=item,
+                    )
                 )
-                db.session.add(new_alert)
-                db.session.flush()
-                db.session.add(WatchlistItemAlert(
-                    item=item,
-                    alert=new_alert
-                ))
-            db.session.flush()
+
         db.session.commit()
 
         return MutationResult(
@@ -461,26 +433,8 @@ def add_default_folder_attributes(folder):
     ))
     db.session.flush()
 
-def delete_watchlist_item(item, user):
-    # Delete the alerts for the item
-    delete_item_alerts(item, user)
-
-    # Delete Watchlist item
-    db.session.delete(item)
-    db.session.flush()
-
 def delete_folder_alerts(folder, user):
-    folder_alerts = db.session.execute(
-        db.select(
-            WatchlistAlert
-        ).join(
-            WatchlistFolderAlert
-        ).where(
-            WatchlistFolderAlert.folder_id == folder.id
-        )
-    ).scalars().all()
-
-    for alert in folder_alerts:
+    for alert in folder.alerts:
         if alert.user != user:
             raise ForbiddenError(f"Alert with id {alert.id} does not belong to the user with id {user.id}")
         db.session.delete(alert)
@@ -488,17 +442,7 @@ def delete_folder_alerts(folder, user):
     db.session.flush()
 
 def delete_item_alerts(item, user):
-    item_alerts = db.session.execute(
-        db.select(
-            WatchlistAlert
-        ).join(
-            WatchlistItemAlert
-        ).where(
-            WatchlistItemAlert.item_id == item.id
-        )
-    ).scalars().all()
-
-    for alert in item_alerts:
+    for alert in item.alerts:
         if alert.user != user:
             raise ForbiddenError(f"Alert with id {alert.id} does not belong to the user with id {user.id}")
         db.session.delete(alert)
@@ -509,13 +453,9 @@ def get_folder_by_id(folder_id):
     folder = db.session.execute(db.select(WatchlistFolder).where(WatchlistFolder.id == folder_id)).scalar()
     return folder
 
-def get_stock_master_by_ticker(ticker):
-    stock = db.session.execute(db.select(StockMaster).where(StockMaster.ticker == ticker)).scalar()
-    return stock
-
-def get_watchlist_item(folder, stock):
-    watchlist_item = db.session.execute(db.select(WatchlistItem).where(WatchlistItem.folder_id==folder.id, WatchlistItem.stock_id==stock.id)).scalar()
-    return watchlist_item
+def get_item_by_id(item_id):
+    item = db.session.execute(db.select(WatchlistItem).where(WatchlistItem.id == item_id)).scalar()
+    return item
 
 def get_all_user_folders(user):
     """
@@ -533,18 +473,6 @@ def get_all_user_folders(user):
     ).scalars().all()
     return folders
 
-def get_folder_alerts(folder_id):
-    result = db.session.execute(
-        db.select(
-            WatchlistAlert
-        ).join(
-            WatchlistFolderAlert
-        ).where(
-            WatchlistFolderAlert.folder_id == folder_id
-        )
-    ).scalars().all()
-    return result
-
 def get_folder_items(folder_id):
     result = db.session.query(
         StockMaster.ticker,
@@ -556,18 +484,6 @@ def get_folder_items(folder_id):
     ).where(
         WatchlistFolder.id == folder_id
     ).all()
-    return result
-
-def get_item_alerts(item_id):
-    result = db.session.execute(
-        db.select(
-            WatchlistAlert
-        ).join(
-            WatchlistItemAlert
-        ).where(
-            WatchlistItemAlert.item_id == item_id
-        )
-    ).scalars().all()
     return result
 
 def get_ticker_stock_data(ticker):
@@ -594,12 +510,13 @@ def get_all_items_data(folder_id):
     for ticker, item_id in folder_items:
         stock_data = get_ticker_stock_data(ticker)
         if stock_data:
-            item_alerts = get_item_alerts(item_id)
+            item = get_item_by_id(item_id)
+            if item:
+                all_items_data[item_id] = {
+                    "stock_data": stock_data,
+                    "item_alerts": item.alerts
+                }
 
-            all_items_data[item_id] = {
-                "stock_data": stock_data,
-                "item_alerts": item_alerts
-            }
     return all_items_data
 
 def stock_data_filter(stock_data, alerts):
@@ -692,7 +609,7 @@ def db_get_watchlist_alert_data(user):
         folder_data["num_items"] = len(all_items_data.items())
 
         # Get all alerts for the folder
-        folder_alerts = get_folder_alerts(folder.id)
+        folder_alerts = folder.alerts
 
         # For each alert in the folder
         folder_data["folder_alerts"] = []

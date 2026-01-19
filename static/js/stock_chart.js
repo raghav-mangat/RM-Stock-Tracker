@@ -193,7 +193,7 @@ const hoverPlugin = {
       x - textW / 2 - BOX_PADDING / 2,
       chartArea.bottom + Y_OFFSET - textH / 2 - BOX_PADDING / 2,
       textW + BOX_PADDING,
-      textH + BOX_PADDING
+      textH + BOX_PADDING,
     );
 
     ctx.fillStyle = FILL_COLOR;
@@ -259,7 +259,7 @@ const hoverPlugin = {
           leftPos - BOX_PADDING / 2,
           y - textH / 2 - BOX_PADDING / 2,
           textW + BOX_PADDING,
-          textH + BOX_PADDING
+          textH + BOX_PADDING,
         );
 
         // Draw text
@@ -285,7 +285,7 @@ const htmlLegendPlugin = {
     // Only include EMA datasets
     const allowedLabels = [EMA_30_LABEL, EMA_50_LABEL, EMA_200_LABEL];
     const filteredItems = items.filter((item) =>
-      allowedLabels.includes(item.text)
+      allowedLabels.includes(item.text),
     );
 
     filteredItems.forEach((item) => {
@@ -294,7 +294,7 @@ const htmlLegendPlugin = {
         "d-flex",
         "align-items-center",
         "gap-2",
-        "cursor-pointer"
+        "cursor-pointer",
       );
 
       // Click to toggle dataset visibility
@@ -306,7 +306,7 @@ const htmlLegendPlugin = {
         } else {
           chart.setDatasetVisibility(
             item.datasetIndex,
-            !chart.isDatasetVisible(item.datasetIndex)
+            !chart.isDatasetVisible(item.datasetIndex),
           );
         }
         chart.update();
@@ -316,7 +316,7 @@ const htmlLegendPlugin = {
       colorBox.classList.add(
         "d-inline-block",
         "rounded-circle",
-        "flex-shrink-0"
+        "flex-shrink-0",
       );
       colorBox.style.backgroundColor = item.strokeStyle;
       colorBox.style.width = `${LEGEND_CIRCLE_SIZE}px`;
@@ -343,7 +343,7 @@ function handleTouch(event) {
     { clientX: touch.clientX, clientY: touch.clientY },
     CHART_INTERACTION_MODE,
     { intersect: CHART_INTERACTION_INTERSECT },
-    false
+    false,
   );
 
   stockChart.setActiveElements(point);
@@ -576,7 +576,7 @@ function resetChart(button, preloadedData = null) {
 
     const stockChartCanvas = document.getElementById("stock-chart");
     const missingDataOverlay = document.getElementById(
-      "stock-chart-missing-data"
+      "stock-chart-missing-data",
     );
     if (dateData.length != 0 && closePriceData.length != 0) {
       // Show chart, hide "missing data" text
@@ -605,12 +605,12 @@ function resetChart(button, preloadedData = null) {
   } else {
     stockChartSpinnerTimeout = setTimeout(
       showStockChartSpinner,
-      CHART_SPINNER_DELAY
+      CHART_SPINNER_DELAY,
     );
     fetch(
       `/chart-data?ticker=${encodeURIComponent(
-        ticker
-      )}&timeframe=${encodeURIComponent(timeframe)}`
+        ticker,
+      )}&timeframe=${encodeURIComponent(timeframe)}`,
     )
       .then((response) => response.json())
       .then((data) => {
@@ -626,7 +626,7 @@ function resetChart(button, preloadedData = null) {
 const ticker = document.getElementById("stock-chart").dataset.ticker;
 resetChart(
   document.querySelector(`.tf-btn[data-timeframe="${initialTimeframe}"]`),
-  initialStockChartData
+  initialStockChartData,
 );
 
 const timeframeBtns = document.querySelectorAll(".tf-btn");

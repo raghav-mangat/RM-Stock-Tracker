@@ -148,13 +148,13 @@ def add_item():
         ctx = ActionContext("add", "stock")
         return ExceptionService.handle_action_exception(exc, ctx, is_ajax=is_ajax, next_url=next_url)
 
-@watchlist_bp.route("/remove-item/<int:folder_id>/<string:ticker>", methods=["POST"])
+@watchlist_bp.route("/remove-item/<int:item_id>", methods=["POST"])
 @login_required
-def remove_item(folder_id, ticker):
+def remove_item(item_id):
     AjaxService.require_ajax()
 
     try:
-        result = db_remove_watchlist_item(folder_id=folder_id, ticker=ticker, user=current_user)
+        result = db_remove_watchlist_item(item_id=item_id, user=current_user)
         return MutationHandler.response(result, is_ajax=True)
 
     except Exception as exc:
