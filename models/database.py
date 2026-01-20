@@ -467,6 +467,9 @@ class User(UserMixin, db.Model):
         default=get_current_utc
     )
 
+    # Roles
+    is_admin: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+
     # Session validation
     security_timestamp: Mapped[int] = mapped_column(
         BigInteger,
