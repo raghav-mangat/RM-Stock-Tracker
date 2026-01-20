@@ -1,0 +1,28 @@
+{% macro stats_card(title, value, perc=None) %}
+<div class="col-6 col-md-3">
+  <div class="card shadow-sm h-100">
+    <div class="card-body">
+      <h6 class="text-muted">{{ title }}</h6>
+      <h3 class="fw-bold">
+        {{ value }}
+        {% if perc is not none %}
+          <span class="text-muted fs-6">({{ "%.2f" | format(perc) }}%)</span>
+        {% endif %}
+      </h3>
+    </div>
+  </div>
+</div>
+{% endmacro %}
+
+
+{% macro bool_badge(value, true_color="success", false_color="secondary") %}
+  {% if value %}
+    <span class="badge bg-{{ true_color }}">
+      <i class="bi bi-check-lg"></i>
+    </span>
+  {% else %}
+    <span class="badge bg-{{ false_color }}">
+      <i class="bi bi-x-lg"></i>
+    </span>
+  {% endif %}
+{% endmacro %}

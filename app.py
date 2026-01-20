@@ -22,6 +22,7 @@ from datetime import datetime
 from redis import Redis
 from rq import Queue
 from models.database import db
+from admin import admin_bp
 from auth import auth_bp
 from watchlist import watchlist_bp
 from utils.filters import register_custom_filters
@@ -110,6 +111,7 @@ def get_app():
     return app
 
 # Register the Flask Blueprints
+app.register_blueprint(admin_bp, url_prefix="/admin")
 app.register_blueprint(auth_bp, url_prefix="/auth")
 app.register_blueprint(watchlist_bp, url_prefix="/watchlist")
 

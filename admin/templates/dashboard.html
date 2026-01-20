@@ -1,0 +1,123 @@
+{% from "macros/dashboard_components.html" import stats_card, bool_badge %}
+
+{% extends "admin_base.html" %}
+
+{% block title %}
+  Admin Dashboard
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <!-- Page Header -->
+  <div class="mb-4">
+    <h2 class="fw-bold">Admin Dashboard</h2>
+    <p class="text-muted mb-0">Overview of user activity and registrations</p>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="row g-3 mb-4">
+    {{ stats_card("Total Users", stats.total_users) }}
+    {{ stats_card("Active Users", stats.active_users, stats.active_perc) }}
+    {{ stats_card("Google Signups", stats.google_users, stats.google_perc) }}
+    {{ stats_card("Email Signups", stats.email_users, stats.email_perc) }}
+
+    {{ stats_card("Verified Users", stats.verified_users, stats.verified_perc) }}
+    {{ stats_card("Users w/ Password", stats.password_users, stats.password_perc) }}
+    {{ stats_card("Users w/ Google ID", stats.google_id_users, stats.google_id_perc) }}
+    {{ stats_card("Email Alerts On", stats.email_alerts_users, stats.email_alerts_perc) }}
+  </div>
+
+  <!-- Users Table -->
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <h5 class="card-title mb-3">Users</h5>
+
+      <div class="table-responsive">
+        <table class="table table-striped table-bordered table-hover align-middle">
+          <thead class="table-light">
+            <tr class="align-middle">
+              <th>#</th>
+              <th>ID</th>
+              <th>Name</th>
+              <th>Username</th>
+              <th>Email</th>
+
+              <th>Verified</th>
+              <th>Password</th>
+              <th>Google ID</th>
+              <th>Email Alerts</th>
+
+              <th>Signup Source</th>
+              <th>Status</th>
+              <th>Last Login</th>
+              <th>Joined</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for user in users_data %}
+            <tr>
+              <td class="fw-bold">{{ loop.index }}</td>
+              <td>{{ user.account.id }}</td>
+
+              <td>
+                {{ user.account.first_name }} {{ user.account.last_name }}
+              </td>
+
+              <td>{{ user.account.username }}</td>
+              <td>{{ user.account.email }}</td>
+
+              <td class="text-center">
+                {{ bool_badge(user.account.is_verified, true_color="success", false_color="warning") }}
+              </td>
+
+              <td class="text-center">
+                {{ bool_badge(user.account.password_hash) }}
+              </td>
+
+              <td class="text-center">
+                {{ bool_badge(user.account.google_id) }}
+              </td>
+
+              <td class="text-center">
+                {{ bool_badge(user.account.email_alerts_on) }}
+              </td>
+
+              <td class="text-center">
+                {% if user.account.signup_source.name == "GOOGLE" %}
+                  <span class="badge bg-primary">Google</span>
+                {% else %}
+                  <span class="badge bg-info text-dark">Email</span>
+                {% endif %}
+              </td>
+
+              <td class="text-center">
+                {% if user.active %}
+                  <span class="badge bg-success">Active</span>
+                {% else %}
+                  <span class="badge bg-secondary">Inactive</span>
+                {% endif %}
+              </td>
+
+              <td>
+                {% if user.account.last_login_at %}
+                  {{ user.account.last_login_at.strftime("%b %d, %Y %I:%M %p") }}
+                {% else %}
+                  <span class="text-muted">Never</span>
+                {% endif %}
+              </td>
+
+              <td>
+                {{ user.account.created_at.strftime("%b %d, %Y") }}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+{% endblock %}
