@@ -17,6 +17,7 @@ from dotenv import load_dotenv
 from flask_login import LoginManager, current_user
 from flask_mail import Mail
 from flask_wtf.csrf import CSRFProtect
+from extensions import limiter
 from authlib.integrations.flask_client import OAuth
 from datetime import datetime
 from redis import Redis
@@ -80,6 +81,9 @@ app.config['MAIL_PASSWORD'] = os.getenv("MAIL_PASSWORD")
 app.config['MAIL_DEFAULT_SENDER'] = os.getenv("MAIL_DEFAULT_SENDER")
 
 mail = Mail(app)
+
+# Initialize Flask Limiter
+limiter.init_app(app)
 
 # Initialize Flask-WTF CSRF Protection
 csrf = CSRFProtect(app)

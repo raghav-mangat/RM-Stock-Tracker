@@ -4,6 +4,7 @@ from flask_login import current_user, login_user, login_required, logout_user
 from authlib.integrations.flask_client import OAuthError
 import secrets
 import time
+from extensions import limiter
 from models.database import User, SignupSource
 from .emails import AuthEmail
 from .services import RedirectService
@@ -17,9 +18,15 @@ from utils.db_queries.user_data import (
     get_user_by_email, get_user_by_google_id, delete_user_account, add_user_google_id, remove_user_google_id,
     remove_user_password, update_user_last_login_at, toggle_user_email_alerts_on
 )
+from utils.flask_rate_limits import ip_and_email
 from utils.emails.email_rate_limiter import EmailType
 
 @auth_bp.route("/signup", methods=["GET", "POST"])
+@limiter.limit(
+    "10 per minute",
+    key_func=ip_and_email,
+    methods=["POST"]
+)
 def signup():
     if current_user.is_authenticated:
         return redirect(url_for("watchlist.index"))
@@ -54,6 +61,11 @@ def signup():
     return render_template("signup.html", form=form)
 
 @auth_bp.route("/login", methods=["GET", "POST"])
+@limiter.limit(
+    "10 per minute",
+    key_func=ip_and_email,
+    methods=["POST"]
+)
 def login():
     if current_user.is_authenticated:
         return redirect(url_for("watchlist.index"))

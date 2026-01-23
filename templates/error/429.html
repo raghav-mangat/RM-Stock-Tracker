@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="pt-5 mt-5 text-center">
+  <h1 class="display-4">429</h1>
+
+  <p class="lead">
+    You're doing that a bit too fast.
+  </p>
+
+  <p class="text-muted">
+    For security reasons, we've temporarily limited how often this action can be performed.
+    Please wait a moment and try again.
+  </p>
+
+  <div class="d-flex justify-content-center mt-4 gap-3 flex-wrap">
+    <a href="{{ url_for('home') }}" class="btn btn-primary">
+      Go Back Home
+    </a>
+
+    <a href="#" onclick="location.reload();" class="btn btn-outline-secondary">
+      Try Again
+    </a>
+  </div>
+</div>
+{% endblock %}
