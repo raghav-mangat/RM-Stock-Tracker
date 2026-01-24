@@ -22,8 +22,7 @@ def get_stock_data(ticker):
 
     result = {
         "stock": stock.to_dict(),
-        "rel_companies": rel_companies,
-        "last_updated": stock.last_updated
+        "rel_companies": rel_companies
     }
     return result
 

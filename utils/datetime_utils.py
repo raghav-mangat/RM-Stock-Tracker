@@ -41,22 +41,14 @@ def convert_to_utc_tz_aware(utc_dt):
 
 def format_dt_et(utc_dt):
     """
-    Formats datetime in UTC into string in ET: 'Saturday, Jun 21, 2025, ET.'
+    Formats datetime in UTC into string in ET: 'Friday, Jan 16, 2026 · 10:34 AM, ET'
     """
 
     et_dt = convert_to_et_dt(utc_dt)
-    return et_dt.strftime('%A, %b %d, %Y, ET.')
+    return et_dt.strftime('%A, %b %d, %Y · %I:%M %p, ET')
 
 def format_date(date):
     return date.strftime(DATE_FORMAT)
-
-def format_dt_et_extended(utc_dt):
-    """
-    Formats datetime in UTC into string in ET: 'Saturday, Jun 21, 2025, at 08:00PM, ET.'
-    """
-
-    et_dt = convert_to_et_dt(utc_dt)
-    return et_dt.strftime('%A, %b %d, %Y, at %I:%M%p, ET.')
 
 def convert_to_et_dt(dt):
     # Fetch the timezone information

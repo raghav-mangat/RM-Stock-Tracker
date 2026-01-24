@@ -2,7 +2,7 @@ from sqlalchemy.exc import IntegrityError
 from time import time
 from datetime import timedelta
 from models.database import db, User
-from utils.datetime_utils import convert_to_utc_tz_aware, get_current_utc
+from utils.datetime_utils import get_current_utc
 from utils.constants import USER_INACTIVE_DAYS_LIMIT
 
 class AuthError(Exception):
@@ -143,12 +143,10 @@ def get_all_users():
     return db.session.execute(db.select(User)).scalars().all()
 
 def is_user_active(user):
-    user_last_login = convert_to_utc_tz_aware(user.last_login_at)
-
     # Time beyond which we consider the user as being inactive
     cutoff = get_current_utc() - timedelta(days=USER_INACTIVE_DAYS_LIMIT)
 
-    return user_last_login >= cutoff
+    return user.last_login_at >= cutoff
 
 def is_user_email_alert_on(user):
     return user.email_alerts_on

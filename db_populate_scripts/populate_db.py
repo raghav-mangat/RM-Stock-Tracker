@@ -90,6 +90,9 @@ def populate_db():
     """
     Populate the database by staging all data first, then replacing
     the main tables in a single atomic transaction.
+
+    - If we store something in the stocks_cache, it means we have already
+        inserted the required data for that stock in the database.
     """
     with app.app_context():
         print("Starting Database Population...\n")
@@ -217,7 +220,7 @@ def populate_db():
                 # -------- Transactional Replace --------
                 print("\nCommiting all the data to the database...")
                 # Data will be automatically committed to the database by db.session.begin()
-                print("Committed all the data to the database...")
+            print("Committed all the data to the database!")
 
             save_populate_db_info(now)
 
