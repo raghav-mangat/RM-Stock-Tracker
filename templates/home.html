@@ -1,42 +1,96 @@
-{% from "macros/cards.html" import home_card %}
+{% from "macros/home_components.html" import section_header, watchlist_card, explore_card %}
 
 {% extends "base.html" %}
 
 {% block title %}
-  RM Stock Tracker - Explore U.S. Stocks and Market Indices Seamlessly
+  RM Stock Tracker - Explore U.S. Stocks, Indices, and Watchlist
 {% endblock %}
 
 {% block content %}
 <div class="pt-5 mt-5">
 
-  <!-- Hero Section -->
-  <section class="py-5 mb-5">
+  {# ================= HERO ================= #}
+  <section class="py-5">
     <div class="container text-center">
-      <h1 class="display-4 fw-semibold text-body-emphasis">Welcome to RM Stock Tracker!</h1>
-      <p class="lead mt-3 col-lg-8 mx-auto">
-        RM Stock Tracker helps you keep track of U.S. stocks and major market indices in a clear and simple way. You can search for companies, check key stats, interact with historical stock charts, follow top movers, and explore detailed financial data - all in one place.
+      <h1 class="display-4 fw-semibold text-body-emphasis mb-3">
+        Welcome to RM Stock Tracker
+      </h1>
+      <p class="lead col-lg-9 mx-auto">
+        Explore U.S. stocks and market indices, analyze historical performance
+        with interactive charts, and organize everything into structured
+        watchlist with smart alerts
       </p>
     </div>
   </section>
 
-  <!-- Cards Row for Stocks and Indices -->
-  <section class="mb-5">
+  {# ================= WATCHLIST OVERVIEW ================= #}
+  <section class="py-5 bg-light">
     <div class="container">
+
+      {{ section_header(
+          heading="Organize with Watchlist",
+          text="Watchlist helps you group stocks, customize the data you track,
+            and monitor price movements efficiently."
+      ) }}
+
       <div class="row g-4">
-        <!-- Stocks Dashboard Card -->
+
+        {{ watchlist_card(
+          heading="Folder-Based Organization",
+          text="Create folders to group stocks by strategy, sector, or priority.
+            Each folder works independently."
+        ) }}
+
+        {{ watchlist_card(
+          heading="Custom Data Views",
+          text="Choose which stock attributes appear in each table.
+            Sort and filter data to quickly spot trends."
+        ) }}
+
+        {{ watchlist_card(
+          heading="Smart Alerts",
+          text="Set alert conditions on key metrics and receive daily email summaries
+            after the market closes."
+        ) }}
+
+      </div>
+
+      <div class="text-center mt-4">
+        <a href="{{ url_for('watchlist.index') }}"
+           class="btn btn-primary btn-lg px-4">
+          Go to Watchlist
+        </a>
+      </div>
+
+    </div>
+  </section>
+
+  {# ================= STOCKS & INDICES ================= #}
+  <section class="py-5">
+    <div class="container">
+
+      {{ section_header(
+          heading="Explore Market Data",
+          text="Dive into individual U.S. stocks or explore major market indices
+            with detailed metrics and interactive charts."
+      ) }}
+
+      <div class="row g-4">
+
         {% set heading = "Stocks Dashboard" %}
-        {% set description = "Search for any U.S. stock or follow top movers. See important stats like daily price change, volume, moving averages, and more. Use this to understand how a stock is doing at a glance." %}
+        {% set description = "Search for U.S. stocks, follow top movers, and view key metrics like daily change, volume, and moving averages." %}
         {% set button_text = "Explore Stocks" %}
         {% set url = url_for("all_stocks") %}
-        {{ home_card(heading, description, button_text, url) }}
+        {{ explore_card(heading, description, button_text, url) }}
 
-        <!-- Indices Dashboard Card -->
         {% set heading = "Indices Dashboard" %}
-        {% set description = "Explore popular U.S. market indices like S&P 500 or Nasdaq 100 and see the list of companies inside them. Check performance data, sort or filter the data and click on any stock to learn more." %}
+        {% set description = "Explore major indices like the S&P 500 or Nasdaq 100 and analyze their holdings and performance." %}
         {% set button_text = "Explore Indices" %}
         {% set url = url_for("all_indices") %}
-        {{ home_card(heading, description, button_text, url) }}
+        {{ explore_card(heading, description, button_text, url) }}
+
       </div>
+
     </div>
   </section>
 

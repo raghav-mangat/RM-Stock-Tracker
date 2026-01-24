@@ -19,20 +19,30 @@
 
 <!-- Hero Section -->
 {% set heading = "Your Watchlist, " ~ current_user | display_name %}
-{% set description = "Here’s where you keep track of your favourite stocks. Group them into folders, and quickly check their performance whenever you log in." %}
+{% set description = "Organize stocks into folders, customize the data you track, and set smart alerts to stay on top of market moves." %}
 {% set last_updated = last_updated | display %}
 
-{% set watchlist_alerts_button %}
+{% set watchlist_actions %}
+  <div class="d-flex flex-wrap gap-2">
     <a href="{{ url_for('watchlist.alerts') }}"
        class="btn btn-outline-primary">
-        <span class="d-flex align-items-center gap-2">
-            <i class="bi bi-bell"></i>
-            Watchlist Alerts
-        </span>
+      <span class="d-flex align-items-center gap-2">
+        <i class="bi bi-bell"></i>
+        Watchlist Alerts
+      </span>
     </a>
+
+    <a href="{{ url_for('watchlist.about') }}"
+       class="btn btn-outline-secondary">
+      <span class="d-flex align-items-center gap-2">
+        <i class="bi bi-info-circle"></i>
+        About Watchlist
+      </span>
+    </a>
+  </div>
 {% endset %}
 
-{{ jumbotron(heading, description, last_updated, watchlist_alerts_button) }}
+{{ jumbotron(heading, description, last_updated, watchlist_actions) }}
 
 <section class="container my-4">
 

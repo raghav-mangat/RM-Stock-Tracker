@@ -1,0 +1,107 @@
+{% from "macros/about_section_components.html" import section_header, feature_card, workflow_card %}
+
+{# ================= FEATURE OVERVIEW ================= #}
+<section class="py-5 bg-light">
+  <div class="container">
+
+    {{ section_header(
+        heading="Built for Structured Tracking",
+        text="The watchlist is designed to scale with your workflow, from simple tracking
+          to detailed alert monitoring."
+    ) }}
+
+    <div class="row g-4">
+
+      {{ feature_card(
+          heading="Folder-Based Organization",
+          text="Group stocks into folders and manage them independently.
+            Reorder, rename, and control each folder without affecting others.",
+          icon="bi-folder2-open"
+      ) }}
+
+      {{ feature_card(
+          heading="Custom Data Tables",
+          text="Choose which stock attributes appear in each folder.
+            Sort and filter by any metric to quickly analyze movement.",
+          icon="bi-table"
+      ) }}
+
+      {{ feature_card(
+          heading="Precision Alerts",
+          text="Define alert conditions using value ranges and absolute value function.
+            Apply alerts at the folder or individual stock level.",
+          icon="bi-bell"
+      ) }}
+
+    </div>
+
+  </div>
+</section>
+
+
+{# ================= WORKFLOW ================= #}
+<section class="py-5">
+  <div class="container">
+
+    {{ section_header(
+        heading="Simple Workflow, Powerful Control",
+        text="The system is designed to stay predictable, transparent, and easy to manage."
+    ) }}
+
+    <div class="row g-4">
+
+      {{ workflow_card(
+          heading="Create Folders",
+          text="Each folder acts as an independent watchlist.
+            The same stock can exist in multiple folders with different settings."
+      ) }}
+
+      {{ workflow_card(
+          heading="Add and Configure Stocks",
+          text="Control which attributes appear in tables and adjust sorting
+            to match your analysis style."
+      ) }}
+
+      {{ workflow_card(
+          heading="Define Alert Conditions",
+          text="Alerts are defined using minimum and maximum thresholds.
+            Only one alert per attribute ensures clarity and consistency."
+      ) }}
+
+      {{ workflow_card(
+          heading="Monitor Alert Status",
+          text="View detailed alert status on the Watchlist Alerts page
+            and receive daily summaries after market close."
+      ) }}
+
+    </div>
+
+  </div>
+</section>
+
+
+{# ================= EMAIL SECTION ================= #}
+<section class="py-5 bg-light">
+  <div class="container">
+    <div class="row align-items-center">
+
+      <div class="col-md-8">
+        <h3 class="fw-semibold">Daily Email Summaries</h3>
+        <p class="text-muted mt-2">
+          On trading days, the system sends a concise email summary showing
+          which folders and stocks met alert conditions.
+        </p>
+        <ul class="text-muted mb-0">
+          <li>Folder-level alert counts</li>
+          <li>Stocks matching folder conditions</li>
+          <li>Triggered stock-specific alerts</li>
+        </ul>
+      </div>
+
+      <div class="col-md-4 text-center">
+        <i class="bi bi-envelope fs-1 text-primary"></i>
+      </div>
+
+    </div>
+  </div>
+</section>

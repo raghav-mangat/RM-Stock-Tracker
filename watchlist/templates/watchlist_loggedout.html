@@ -7,14 +7,43 @@
 {% endblock %}
 
 {% block content %}
-    {% set heading = "Watchlist" %}
-    {% set description = "Create your own watchlist by signing up or logging in. Save your favourite stocks in folders and track them anytime." %}
-    {% set last_updated = last_updated | display %}
-    {{ jumbotron(heading, description, last_updated) }}
+
+{# ================= HERO ================= #}
+{% set heading = "Professional Stock Watchlist" %}
+{% set description = "Organize stocks, track the metrics that matter, and monitor alerts with precision." %}
+{% set last_updated = last_updated | display %}
+
+{{ jumbotron(heading, description, last_updated) }}
+
+{# ================= GETTING STARTED ================= #}
+<section class="container text-center mt-4 mb-5">
+  <a href="{{ url_for('auth.signup') }}" class="btn btn-lg btn-primary px-4 me-2">
+    Create Account
+  </a>
+  <a href="{{ url_for('auth.login') }}" class="btn btn-lg btn-outline-primary px-4">
+    Log In
+  </a>
+</section>
 
 
-    <section class="container text-center">
-        <a class="btn btn-lg btn-outline-primary mx-2" href="{{ url_for('auth.login') }}">Log In</a>
-        <a class="btn btn-lg btn-primary" href="{{ url_for('auth.signup') }}">Sign Up</a>
-    </section>
+{% include "partials/about_section.html" %}
+
+
+{# ================= FINAL CTA ================= #}
+<section class="py-5">
+  <div class="container text-center">
+    <h3 class="fw-semibold mb-3">Get Started with Watchlist</h3>
+    <p class="text-muted mb-4">
+      Create folders, track stocks, and monitor alerts with a clean, structured workflow.
+    </p>
+
+    <a href="{{ url_for('auth.signup') }}" class="btn btn-lg btn-primary px-4 me-2">
+      Sign Up
+    </a>
+    <a href="{{ url_for('auth.login') }}" class="btn btn-lg btn-outline-primary px-4">
+      Log In
+    </a>
+  </div>
+</section>
+
 {% endblock %}

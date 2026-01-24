@@ -71,6 +71,17 @@ def alerts():
         last_updated=last_updated
     )
 
+@watchlist_bp.route("/about", methods=["GET"])
+@login_required
+def about():
+    # Load last updated timestamp of populate db
+    last_updated = db_last_updated()
+
+    return render_template(
+        "watchlist_about.html",
+        last_updated=last_updated
+    )
+
 @watchlist_bp.route("/add-folder", methods=["POST"])
 @login_required
 def add_folder():
