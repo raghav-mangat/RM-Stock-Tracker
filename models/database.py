@@ -12,9 +12,9 @@ from typing import Optional
 from decimal import Decimal
 import jwt
 from jwt import ExpiredSignatureError, InvalidTokenError
-from datetime import datetime, date, UTC
+from datetime import datetime, date
 from time import time
-from utils.datetime_utils import DATE_FORMAT, get_current_utc
+from utils.datetime_utils import get_current_utc, format_dt_et, format_date, convert_to_utc_tz_aware
 from utils.constants import MAX_USERNAME_LEN, MAX_NAME_LEN, MAX_FOLDER_NAME_LEN
 
 """
@@ -24,6 +24,7 @@ Notes:
     adds an index in MySQL.
 - Composite indexes must still be explicitly defined using Index().
 - Store the timestamps using BigInt.
+- Using Numeric data type instead of Float for better accuracy.
 """
 
 """
@@ -47,11 +48,11 @@ LARGE_NUMERIC_PRECISION = 20
 NUMERIC_PRECISION = 12
 DECIMAL_PRECISION = 2
 
-TICKER_LEN = 10
-STOCK_NAME_LEN = 300
-STOCK_INFO_LEN = 100
+TICKER_LEN = 16
+STOCK_NAME_LEN = 500
+STOCK_INFO_LEN = 255
 
-INDEX_NAME_LEN = 100
+INDEX_NAME_LEN = 500
 
 USER_INFO_LEN = 255
 
@@ -157,8 +158,24 @@ class UTCDateTime(TypeDecorator):
 
     def process_result_value(self, value, dialect):
         if value is not None:
-            return value.replace(tzinfo=UTC)
+            return convert_to_utc_tz_aware(value)
         return value
+
+# --- Custom SQLAlchemy Mixins ---
+
+class TimestampMixin:
+    created_at: Mapped[datetime] = mapped_column(
+        UTCDateTime,
+        nullable=False,
+        default=get_current_utc
+    )
+
+    updated_at: Mapped[datetime] = mapped_column(
+        UTCDateTime,
+        nullable=False,
+        default=get_current_utc,
+        onupdate=get_current_utc
+    )
 
 # --- Models ---
 
@@ -245,8 +262,10 @@ class Stock(db.Model):
     # Returns a dict of all the stock attributes and their respective values
     def to_dict(self):
         def serialize(val):
-            if isinstance(val, (datetime, date)):
-                return val.strftime(DATE_FORMAT)
+            if isinstance(val, datetime):
+                return format_dt_et(val)
+            if isinstance(val, date):
+                return format_date(val)
             return val
 
         stock_dict =  {
@@ -299,7 +318,7 @@ class IndexHolding(db.Model):
     stock: Mapped["Stock"] = relationship(back_populates="index_holdings")
 
 
-class StockMaster(db.Model):
+class StockMaster(TimestampMixin, db.Model):
     __tablename__ = "stocks_master"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -441,7 +460,7 @@ class StockWeek(db.Model):
     )
 
 
-class User(UserMixin, db.Model):
+class User(UserMixin, TimestampMixin, db.Model):
     __tablename__ = "users"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -456,11 +475,6 @@ class User(UserMixin, db.Model):
     is_verified: Mapped[bool] = mapped_column(Boolean, nullable=False)
 
     # Timestamps
-    created_at: Mapped[datetime] = mapped_column(
-        UTCDateTime,
-        nullable=False,
-        default=get_current_utc
-    )
     last_login_at: Mapped[datetime] = mapped_column(
         UTCDateTime,
         nullable=False,
@@ -580,7 +594,7 @@ class User(UserMixin, db.Model):
                 f"first_name={self.first_name} last_name={self.last_name}>")
 
 
-class WatchlistFolder(db.Model):
+class WatchlistFolder(TimestampMixin, db.Model):
     __tablename__ = "watchlist_folders"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -642,7 +656,7 @@ class WatchlistFolder(db.Model):
                 f"sort_by_attribute={self.sort_by_attribute} sort_by_order={self.sort_by_order}>")
 
 
-class WatchlistItem(db.Model):
+class WatchlistItem(TimestampMixin, db.Model):
     __tablename__ = "watchlist_items"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -682,7 +696,7 @@ class WatchlistItem(db.Model):
         return f"<WatchlistItem id={self.id} folder_id={self.folder_id} stock_id={self.stock_id}>"
 
 
-class WatchlistFolderAttribute(db.Model):
+class WatchlistFolderAttribute(TimestampMixin, db.Model):
     __tablename__ = "watchlist_folder_attributes"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -720,7 +734,7 @@ class WatchlistFolderAttribute(db.Model):
                 f"min_value={self.min_value} max_value={self.max_value} use_abs={self.use_abs}>")
 
 
-class WatchlistAlert(db.Model):
+class WatchlistAlert(TimestampMixin, db.Model):
     __tablename__ = "watchlist_alerts"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
