@@ -325,8 +325,12 @@
                     <tr>
                       <th>Market Cap</th>
                       <td>
-                        {{ stock.market_cap | currency }}
-                        ({{ stock.market_cap | humanize_number(decimals=3) }})
+                        {% if stock.market_cap %}
+                          {{ stock.market_cap | currency }}
+                          ({{ stock.market_cap | humanize_number(decimals=2) }})
+                        {% else %}
+                          <span>N/A</span>
+                        {% endif %}
                       </td>
                     </tr>
                   </tbody>
@@ -354,7 +358,7 @@
 {% block script %}
   <script>
     // Passing the stock data to JS script
-    const stockData = {{ stock | tojson }}
+    const stockData = {{ stock | tojson }};
 
     // Initial stock chart to show on page load
     const initialStockChartData = {{ initial_stock_chart_data | tojson }};

@@ -1,16 +1,11 @@
-// Initialize Bootstrap Popovers
-const popoverTriggerList = [].slice.call(
-  document.querySelectorAll('[data-bs-toggle="popover"]')
-);
-popoverTriggerList.forEach(
-  (popoverTriggerEl) => new bootstrap.Popover(popoverTriggerEl)
-);
+// Initialize the Bootstrap Popovers for the entire document
+initializeBSPopovers(document);
 
 // To auto-show all toasts
 document.addEventListener("DOMContentLoaded", () => {
-    const toastElList = [].slice.call(document.querySelectorAll('.toast'))
-    toastElList.map(toastEl => new bootstrap.Toast(toastEl).show())
-})
+  const toastElList = [].slice.call(document.querySelectorAll(".toast"));
+  toastElList.map((toastEl) => new bootstrap.Toast(toastEl).show());
+});
 
 // Page Loading Spinner Overlay
 const pageSpinner = document.getElementById("page-loading-spinner");
@@ -35,3 +30,13 @@ window.addEventListener("beforeunload", startSpinnerTimer);
 
 // Clear page loading spinner when page is shown again
 window.addEventListener("pageshow", stopSpinnerTimer);
+
+function initializeBSPopovers(content) {
+  // Initialize Bootstrap Popovers
+  const popoverTriggerList = [].slice.call(
+    content.querySelectorAll('[data-bs-toggle="popover"]'),
+  );
+  popoverTriggerList.forEach(
+    (popoverTriggerEl) => new bootstrap.Popover(popoverTriggerEl),
+  );
+}

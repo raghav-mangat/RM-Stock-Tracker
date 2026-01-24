@@ -172,7 +172,7 @@ def update_folder_alerts(folder_id):
         return MutationHandler.response(result, is_ajax=True)
 
     except Exception as exc:
-        ctx = ActionContext("update", "folder email alert")
+        ctx = ActionContext("update", "folder alerts")
         return ExceptionService.handle_action_exception(exc, ctx, is_ajax=True)
 
 @watchlist_bp.route("/update-item-alerts/<int:item_id>", methods=["POST"])
@@ -186,7 +186,7 @@ def update_item_alerts(item_id):
         return MutationHandler.response(result, is_ajax=True)
 
     except Exception as exc:
-        ctx = ActionContext("update", "stock email alert")
+        ctx = ActionContext("update", "stock alerts")
         return ExceptionService.handle_action_exception(exc, ctx, is_ajax=True)
 
 @watchlist_bp.route("/update-folder-attributes/<int:folder_id>", methods=["POST"])

@@ -1,5 +1,13 @@
 # Users
-PASSWORD_SPECIAL_CHARS_REGEX = r"[!@#$%^&*()_\-+=|\\{}\[\]:;\"'<>,.?/~` ]"
+PASSWORD_POLICY = {
+    "min_length": 8,
+    "max_length": 255,
+    "require_upper": True,
+    "require_lower": True,
+    "require_number": True,
+    "require_special": True,
+    "special_chars_regex": r"[!@#$%^&*()_\-+=|\\{}\[\]:;\"'<>,.?/~` ]",
+}
 NAME_REGEX = r"^[A-Za-zÀ-ÖØ-öø-ÿ'’.-]+$"
 USERNAME_ALLOWED_CHARS_REGEX = r"[a-z0-9._-]"
 USERNAME_REGEX = r"^[a-z]" + USERNAME_ALLOWED_CHARS_REGEX + r"+$"

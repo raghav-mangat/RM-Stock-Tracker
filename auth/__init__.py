@@ -1,4 +1,5 @@
 from flask import Blueprint
+from utils.constants import PASSWORD_POLICY
 
 auth_bp = Blueprint(
     "auth",
@@ -8,3 +9,9 @@ auth_bp = Blueprint(
 )
 
 from . import routes
+
+@auth_bp.context_processor
+def inject_global_constants():
+    return {
+        "PASSWORD_POLICY": PASSWORD_POLICY
+    }

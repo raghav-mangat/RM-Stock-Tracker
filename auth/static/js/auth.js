@@ -10,6 +10,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
+  // Add the password field functionality if the field exists
   const passwordField = document.getElementById("password");
   if (passwordField) {
     passwordFieldFunctionality(passwordField);
@@ -18,46 +19,63 @@ document.addEventListener("DOMContentLoaded", () => {
 
 function passwordFieldFunctionality(passwordField) {
   const reqBox = document.getElementById("password-requirements");
-  if (reqBox) {
-    const reqList = {
-      "pw-length": (value) => value.length >= 8,
-      "pw-upper": (value) => /[A-Z]/.test(value),
-      "pw-lower": (value) => /[a-z]/.test(value),
-      "pw-number": (value) => /[0-9]/.test(value),
-      "pw-special": (value) =>
-        /[!@#$%^&*()_\-+=|\\{}\[\]:;\"'<>,.?/~` ]/.test(value),
-    };
+  if (!reqBox) return;
 
-    passwordField.addEventListener("input", () => {
-      const value = passwordField.value;
-      if (value.length > 0) {
-        reqBox.classList.remove("d-none");
-      } else {
-        reqBox.classList.add("d-none");
-      }
+  const specialCharRegex = PASSWORD_POLICY.require_special
+    ? new RegExp(PASSWORD_POLICY.special_chars_regex)
+    : null;
 
-      for (const id in reqList) {
-        const valid = reqList[id](value);
-        updateRequirement(id, valid);
-      }
-    });
+  const reqList = {
+    "pw-length": (value) =>
+      value.length >= PASSWORD_POLICY.min_length &&
+      value.length <= PASSWORD_POLICY.max_length,
 
-    function updateRequirement(id, condition) {
-      const li = document.getElementById(id);
-      const icon = li.querySelector("i");
+    "pw-upper": (value) =>
+      !PASSWORD_POLICY.require_upper || /[A-Z]/.test(value),
 
-      li.classList.toggle("text-success", condition);
-      li.classList.toggle("text-danger", !condition);
+    "pw-lower": (value) =>
+      !PASSWORD_POLICY.require_lower || /[a-z]/.test(value),
 
-      icon.classList.toggle("bi-check-circle-fill", condition);
-      icon.classList.toggle("bi-x-circle-fill", !condition);
+    "pw-number": (value) =>
+      !PASSWORD_POLICY.require_number || /[0-9]/.test(value),
+
+    "pw-special": (value) =>
+      !PASSWORD_POLICY.require_special || specialCharRegex.test(value),
+  };
+
+  passwordField.addEventListener("input", () => {
+    const value = passwordField.value;
+
+    if (value.length > 0) {
+      reqBox.classList.remove("d-none");
+    } else {
+      reqBox.classList.add("d-none");
     }
+
+    for (const id in reqList) {
+      const li = document.getElementById(id);
+      if (!li) continue;
+
+      const valid = reqList[id](value);
+      updateRequirement(li, valid);
+    }
+  });
+
+  function updateRequirement(li, condition) {
+    const icon = li.querySelector("i");
+
+    li.classList.toggle("text-success", condition);
+    li.classList.toggle("text-danger", !condition);
+
+    icon.classList.toggle("bi-check-circle-fill", condition);
+    icon.classList.toggle("bi-x-circle-fill", !condition);
   }
 
   // Password visibility toggle
   const toggleBtn = document.getElementById("toggle-password");
   if (toggleBtn) {
     const toggleIcon = toggleBtn.querySelector("i");
+
     toggleBtn.addEventListener("click", () => {
       const isHidden = passwordField.type === "password";
       passwordField.type = isHidden ? "text" : "password";

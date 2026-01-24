@@ -1,5 +1,5 @@
-{% from "macros/auth_form_components.html" import form_heading, form_submit %}
-{% from "macros/auth_fields.html" import form_field, password_field %}
+{% from "macros/auth_form_components.html" import form_heading, form_submit, form_separator %}
+{% from "macros/auth_fields.html" import form_field, password_field with context %}
 {% from "macros/google_btn.html" import google_btn %}
 
 {% extends "auth_form_base.html" %}
@@ -13,7 +13,8 @@
 {{ form_heading(text="Log In") }}
 
 {{ google_btn() }}
-<p class="my-3 text-center text-muted">or</p>
+
+{{ form_separator() }}
 
 <form method="POST"
       action="{{ url_for('auth.login', next=request.args.get('next')) }}"

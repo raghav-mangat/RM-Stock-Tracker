@@ -44,7 +44,7 @@ document.addEventListener("submit", async (event) => {
 
   // Get DOM references for the affected folder
   const headerContainer = document.getElementById(
-    `accordion-header-${folderId}`
+    `accordion-header-${folderId}`,
   );
   const bodyContainer = document.getElementById(`accordion-body-${folderId}`);
   const overlay = document.getElementById(`folder-loading-spinner-${folderId}`);
@@ -112,7 +112,7 @@ document.addEventListener("submit", async (event) => {
     if (!actionResponse.ok && actionData.requires_refresh) {
       refreshPage(
         (message = actionData.message),
-        (category = actionData.category)
+        (category = actionData.category),
       );
       return;
     }
@@ -124,7 +124,7 @@ document.addEventListener("submit", async (event) => {
     // Request refreshed HTML for the folder
     const partialResponse = await fetch(
       `/watchlist/folder/${encodeURIComponent(folderId)}/partial`,
-      { headers: { "X-Requested-With": "XMLHttpRequest" } }
+      { headers: { "X-Requested-With": "XMLHttpRequest" } },
     );
 
     const partialData = await partialResponse.json();
@@ -133,7 +133,7 @@ document.addEventListener("submit", async (event) => {
     if (!partialResponse.ok && partialData.requires_refresh) {
       refreshPage(
         (message = partialData.message),
-        (category = partialData.category)
+        (category = partialData.category),
       );
       return;
     }
@@ -154,6 +154,9 @@ document.addEventListener("submit", async (event) => {
       // Add the required event-listeners to the new HTML content
       attachAbsBtnToggleBehavior(bodyContainer, ".alert-container");
       attachAlertDeleteBtnBehavior(bodyContainer, ".alert-container");
+
+      // Initialize the Bootstrap Popovers for the new HTML content
+      initializeBSPopovers(bodyContainer);
 
       // Fade content back in
       headerContainer.classList.remove("is-fading-out");

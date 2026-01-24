@@ -26,36 +26,62 @@
 <div class="mb-3">
   <div class="input-group">
     <div class="form-floating">
-        {{ field(class="form-control", placeholder=placeholder, autocomplete="new-password") }}
-        {{ field.label() }}
+      {{ field(class="form-control", placeholder=placeholder, autocomplete="new-password") }}
+      {{ field.label() }}
     </div>
     <button id="toggle-password" type="button" class="btn btn-outline-secondary">
       <i class="bi bi-eye-slash fs-5"></i>
     </button>
   </div>
+
   {{ display_field_errors(field) }}
 
+  {# Sub-macro for a single requirement line #}
+  {% macro password_requirement(is_required, id, text) %}
+    {% if is_required %}
+      <li id="{{ id }}" class="text-danger">
+        <i class="bi bi-x-circle-fill"></i>
+        {{ text }}
+      </li>
+    {% endif %}
+  {% endmacro %}
+
   {% if check_requirements %}
-    <div id="password-requirements" class="small mt-2 text-start d-none">
-      <ul class="list-unstyled ms-1">
-        <li class="text-secondary">Password must include:</li>
-        <li id="pw-length" class="text-danger">
-          <i class="bi bi-x-circle-fill"></i> At least 8 characters
-        </li>
-        <li id="pw-upper" class="text-danger">
-          <i class="bi bi-x-circle-fill"></i> An uppercase letter
-        </li>
-        <li id="pw-lower" class="text-danger">
-          <i class="bi bi-x-circle-fill"></i> A lowercase letter
-        </li>
-        <li id="pw-number" class="text-danger">
-          <i class="bi bi-x-circle-fill"></i> A number
-        </li>
-        <li id="pw-special" class="text-danger">
-          <i class="bi bi-x-circle-fill"></i> A special character (e.g., !@#$...)
-        </li>
-      </ul>
-    </div>
+  <div id="password-requirements" class="small mt-2 text-start d-none">
+    <ul class="list-unstyled ms-1">
+      <li class="text-secondary">Password must include:</li>
+
+      {{ password_requirement(
+          True,
+          "pw-length",
+          "At least " ~ PASSWORD_POLICY.min_length ~ " characters"
+      ) }}
+
+      {{ password_requirement(
+          PASSWORD_POLICY.require_upper,
+          "pw-upper",
+          "An uppercase letter"
+      ) }}
+
+      {{ password_requirement(
+          PASSWORD_POLICY.require_lower,
+          "pw-lower",
+          "A lowercase letter"
+      ) }}
+
+      {{ password_requirement(
+          PASSWORD_POLICY.require_number,
+          "pw-number",
+          "A number"
+      ) }}
+
+      {{ password_requirement(
+          PASSWORD_POLICY.require_special,
+          "pw-special",
+          "A special character (e.g., !@#$...)"
+      ) }}
+    </ul>
+  </div>
   {% endif %}
 </div>
 {% endmacro %}

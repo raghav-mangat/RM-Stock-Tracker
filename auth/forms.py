@@ -4,7 +4,7 @@ from wtforms.fields.simple import HiddenField
 from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError
 from flask_login import current_user
 import re
-from utils.constants import PASSWORD_SPECIAL_CHARS_REGEX, NAME_REGEX, USERNAME_REGEX, MIN_USERNAME_LEN, MAX_USERNAME_LEN, MAX_NAME_LEN
+from utils.constants import PASSWORD_POLICY, NAME_REGEX, USERNAME_REGEX, MIN_USERNAME_LEN, MAX_USERNAME_LEN, MAX_NAME_LEN
 from utils.db_queries.user_data import get_user_by_email, get_user_by_username
 
 def normalize_email(email):
@@ -18,25 +18,33 @@ def normalize_username(username):
 
 def strong_password(form, field):
     password = field.data
+    policy = PASSWORD_POLICY
 
-    # Requirements checks
-    if len(password) < 8:
-        raise ValidationError("Password must be at least 8 characters long")
+    if len(password) < policy["min_length"]:
+        raise ValidationError(
+            f"Password must be at least {policy['min_length']} characters long"
+        )
 
-    if len(password) > 256:
-        raise ValidationError("Password must be at most 256 characters long")
+    if len(password) > policy["max_length"]:
+        raise ValidationError(
+            f"Password must be at most {policy['max_length']} characters long"
+        )
 
-    if not re.search(r"[A-Z]", password):
+    if policy["require_upper"] and not re.search(r"[A-Z]", password):
         raise ValidationError("Password must contain at least one uppercase letter")
 
-    if not re.search(r"[a-z]", password):
+    if policy["require_lower"] and not re.search(r"[a-z]", password):
         raise ValidationError("Password must contain at least one lowercase letter")
 
-    if not re.search(r"[0-9]", password):
+    if policy["require_number"] and not re.search(r"[0-9]", password):
         raise ValidationError("Password must contain at least one number")
 
-    if not re.search(PASSWORD_SPECIAL_CHARS_REGEX, password):
-        raise ValidationError("Password must contain at least one special character (e.g., !@#$...)")
+    if policy["require_special"] and not re.search(
+        policy["special_chars_regex"], password
+    ):
+        raise ValidationError(
+            "Password must contain at least one special character (e.g., !@#$...)"
+        )
 
 def get_email_field():
     email = StringField('Email', filters=[normalize_email], validators=[

@@ -118,7 +118,7 @@ class Validators:
                 if attribute not in list(AlertAttribute):
                     raise ValidationError("Invalid attribute selected.")
                 if attribute in selected_attributes:
-                    raise ValidationError(f"Duplicate alert for '{attribute}'. Each attribute can have only one alert.")
+                    raise ValidationError(f"Duplicate alert for '{AlertAttribute(attribute).label}'. Each attribute can have only one alert.")
                 selected_attributes.add(attribute)
 
                 (min_value, max_value) = Validators.validate_values(alert["use_abs"], alert["min_value"], alert["max_value"])

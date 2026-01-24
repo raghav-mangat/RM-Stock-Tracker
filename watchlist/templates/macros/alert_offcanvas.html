@@ -8,10 +8,12 @@
   <div class="offcanvas-header border-bottom border-1 border-dark">
     <h5 class="offcanvas-title">
       {% if ticker %}
+        {% set offcanvas_for = "item" %}
         Alerts For Ticker: {{ ticker }}
         <br>
         In Folder: {{ folder_name }}
       {% else %}
+        {% set offcanvas_for = "folder" %}
         Alerts For Folder: {{ folder_name }}
       {% endif %}
     </h5>
@@ -41,20 +43,22 @@
               <!-- ABS -->
               <input type="checkbox"
                      class="btn-check use-abs-toggle"
-                     id="use-abs-{{ loop.index }}-{{ db_id }}"
+                     id="use-abs-{{ offcanvas_for }}-{{ db_id }}-{{ loop.index }}"
                      name="use-abs-{{ loop.index }}"
                      aria-describedby="Use absolute value function button"
                      {% if alert.use_abs %}checked{% endif %}>
-              {{ use_abs_label_button(label_for="use-abs-" ~ loop.index ~ "-" ~ db_id) }}
+              {{ use_abs_label_button(
+                label_for="use-abs-" ~ offcanvas_for ~ "-" ~ db_id ~ "-" ~ loop.index
+              ) }}
 
               <!-- DELETE -->
               <input type="checkbox"
                      class="btn-check btn-delete-alert"
-                     id="delete-{{ loop.index }}-{{ db_id }}"
+                     id="delete-{{ offcanvas_for }}-{{ db_id }}-{{ loop.index }}"
                      name="delete-{{ loop.index }}"
                      aria-describedby="Delete alert button">
               <label class="btn btn-sm btn-outline-danger"
-                     for="delete-{{ loop.index }}-{{ db_id }}">
+                     for="delete-{{ offcanvas_for }}-{{ db_id }}-{{ loop.index }}">
                 <i class="bi bi-trash"></i>
               </label>
             </div>
@@ -122,10 +126,10 @@
             <!-- ABS -->
             <input type="checkbox"
                    class="btn-check use-abs-toggle"
-                   id="use-abs-new-{{ db_id }}"
+                   id="use-abs-{{ offcanvas_for }}-{{ db_id }}-new"
                    name="use-abs-new"
                    aria-describedby="Use absolute value function button">
-            {{ use_abs_label_button(label_for="use-abs-new-" ~ db_id) }}
+            {{ use_abs_label_button(label_for="use-abs-" ~ offcanvas_for ~ "-" ~ db_id ~ "-new") }}
           </div>
 
           <div class="alert-body">

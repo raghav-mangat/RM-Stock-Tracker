@@ -169,9 +169,12 @@ def db_update_order(folder_id, new_order, user):
         # Get all the user's folders
         folders = get_all_user_folders(user)
 
+        # Get the maximum order for user's folders
+        max_order = len(folders)
+
         # Check if the new_order is valid
-        if new_order not in range(1, len(folders) + 1):
-            raise Exception(f"New order '{new_order}' not in range ({1}, {len(folders + 1)})")
+        if not 1 <= new_order <= max_order:
+            raise Exception(f"New order '{new_order}' not in range ({1}, {max_order})")
 
         # Old order of the folder
         old_order = update_folder.order
@@ -182,12 +185,18 @@ def db_update_order(folder_id, new_order, user):
         else:
             order_shift = -1
 
+        # Move target folder out of the way (temporary value)
+        update_folder.order = max_order + 1
+        db.session.flush()
+
         # Reorder the folders between new order and old order
         for i in range(new_order, old_order, order_shift):
             # Get the current folder
             curr_folder = folders[i-1]
             # Shift the folder
             curr_folder.order = curr_folder.order + order_shift
+            db.session.flush()
+
         # Update the order of the given folder
         update_folder.order = new_order
 
@@ -196,7 +205,7 @@ def db_update_order(folder_id, new_order, user):
 
         return MutationResult(
             ok=True,
-            message=f"Folder '{update_folder.name}' reordered successfully!",
+            message=f"Folder '{update_folder.name}' reordered successfully.",
         )
 
     except Exception as e:

@@ -33,6 +33,11 @@
 {% endblock %}
 
 {% block script %}
+  <script>
+    // Passing the password policy to JS script
+    const PASSWORD_POLICY = {{ PASSWORD_POLICY | tojson }};
+  </script>
+
   <script src="{{ url_for('auth.static', filename='js/auth.js') }}" type="text/javascript" defer></script>
   <script src="{{ url_for('auth.static', filename='js/settings.js') }}" type="text/javascript" defer></script>
 {% endblock %}

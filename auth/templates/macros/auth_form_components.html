@@ -8,3 +8,11 @@
     {{ form.submit(class=class) }}
   </div>
 {% endmacro %}
+
+{% macro form_separator() %}
+  <div class="d-flex align-items-center my-3">
+    <div class="flex-grow-1 border-top"></div>
+    <span class="mx-3 text-muted small fw-semibold">OR</span>
+    <div class="flex-grow-1 border-top"></div>
+  </div>
+{% endmacro %}

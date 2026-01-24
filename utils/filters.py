@@ -1,5 +1,6 @@
 from flask import Flask
 from .datetime_utils import format_dt_et as format_dt_et_util
+from decimal import Decimal
 
 def dma_200_perc_diff_color(perc_diff):
     """
@@ -39,19 +40,22 @@ def stock_change_color(change):
 def humanize_number(num, fallback="N/A", decimals=1):
     """
     Removes the extra zeroes from the given number and returns
-    the number with one decimal point precision followed by
+    the number with given decimal point precision followed by
     T/B/M/K for Trillion, Billion, Million, or Thousand.
     :return: result - string with compact readable form of the num
     """
-    if num is not None and (isinstance(num, int) or isinstance(num, float)):
+    if (
+        num is not None and
+        (isinstance(num, int) or isinstance(num, float) or isinstance(num, Decimal))
+    ):
         if num >= 1_000_000_000_000:
-            result = f"{num/1_000_000_000_000:.{decimals}f}T"
+            result = f"{num/1_000_000_000_000:.{decimals}f} T"
         elif num >= 1_000_000_000:
-            result = f"{num/1_000_000_000:.{decimals}f}B"
+            result = f"{num/1_000_000_000:.{decimals}f} B"
         elif num >= 1_000_000:
-            result = f"{num/1_000_000:.{decimals}f}M"
+            result = f"{num/1_000_000:.{decimals}f} M"
         elif num >= 1_000:
-            result = f"{num/1_000:.{decimals}f}K"
+            result = f"{num/1_000:.{decimals}f} K"
         else:
             result = str(int(num))
     else:

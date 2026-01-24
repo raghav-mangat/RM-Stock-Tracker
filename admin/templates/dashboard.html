@@ -51,6 +51,7 @@
               <th>Signup Source</th>
               <th>Status</th>
               <th>Last Login</th>
+              <th>Last Update</th>
               <th>Joined</th>
             </tr>
           </thead>
@@ -101,10 +102,14 @@
 
               <td>
                 {% if user.account.last_login_at %}
-                  {{ user.account.last_login_at.strftime("%b %d, %Y %I:%M %p") }}
+                  {{ user.account.last_login_at.strftime("%b %d, %Y - %I:%M %p") }}
                 {% else %}
                   <span class="text-muted">Never</span>
                 {% endif %}
+              </td>
+
+              <td>
+                {{ user.account.updated_at.strftime("%b %d, %Y") }}
               </td>
 
               <td>
