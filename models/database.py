@@ -357,7 +357,7 @@ class StockMaster(TimestampMixin, db.Model):
 
     # Returns a list of all the attributes in the table except for the excluded ones
     def attribute_list(self):
-        exclude = ["id"]
+        exclude = ["id", "created_at", "updated_at"]
 
         attributes = [
             column.name
