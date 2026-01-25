@@ -25,6 +25,8 @@ Notes:
 - Composite indexes must still be explicitly defined using Index().
 - Store the timestamps using BigInt.
 - Using Numeric data type instead of Float for better accuracy.
+- The order of folder attributes and folder/item alerts shown depends on the
+    order of things initialized in the respective enums below.
 """
 
 """
@@ -72,10 +74,10 @@ class FolderAttribute(str, Enum):
     DMA_50_PERC_DIFF = "dma_50_perc_diff"
     DMA_30 = "dma_30"
     DMA_30_PERC_DIFF = "dma_30_perc_diff"
-    LOW_52W = "low_52w"
-    LOW_52W_PERC_DIFF = "low_52w_perc_diff"
     HIGH_52W = "high_52w"
     HIGH_52W_PERC_DIFF = "high_52w_perc_diff"
+    LOW_52W = "low_52w"
+    LOW_52W_PERC_DIFF = "low_52w_perc_diff"
 
     @property
     def label(self):
@@ -183,6 +185,7 @@ class Stock(db.Model):
     __tablename__ = "stocks"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
+
     ticker: Mapped[str] = mapped_column(String(TICKER_LEN), unique=True, nullable=False)
     name: Mapped[Optional[str]] = mapped_column(String(STOCK_NAME_LEN), nullable=True)
 
@@ -284,6 +287,7 @@ class Index(db.Model):
     __tablename__ = "indices"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
+
     slug: Mapped[str] = mapped_column(String(INDEX_NAME_LEN), unique=True, nullable=False)
     name: Mapped[str] = mapped_column(String(INDEX_NAME_LEN), unique=True, nullable=False)
     url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
@@ -464,6 +468,7 @@ class User(UserMixin, TimestampMixin, db.Model):
     __tablename__ = "users"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
+
     email: Mapped[str] = mapped_column(String(USER_INFO_LEN), unique=True, nullable=False)
     username: Mapped[str] = mapped_column(String(MAX_USERNAME_LEN), unique=True, nullable=False)
     first_name: Mapped[Optional[str]] = mapped_column(String(MAX_NAME_LEN), nullable=True)
@@ -598,6 +603,7 @@ class WatchlistFolder(TimestampMixin, db.Model):
     __tablename__ = "watchlist_folders"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
+
     name: Mapped[str] = mapped_column(String(MAX_FOLDER_NAME_LEN), nullable=False)
     order: Mapped[int] = mapped_column(Integer, nullable=False)
     sort_by_attribute: Mapped[Optional["FolderAttribute"]] = mapped_column(
@@ -661,6 +667,8 @@ class WatchlistItem(TimestampMixin, db.Model):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
 
+    order: Mapped[int] = mapped_column(Integer, nullable=False)
+
     folder_id: Mapped[int] = mapped_column(
         Integer,
         ForeignKey("watchlist_folders.id", ondelete="CASCADE"),
@@ -687,19 +695,23 @@ class WatchlistItem(TimestampMixin, db.Model):
     __table_args__ = (
         # Prevent duplicate (same stock in same folder)
         UniqueConstraint("folder_id", "stock_id", name="uq_watchlist_items_folder_stock"),
+        # Make item order unique per folder: (folder_id, order) must be unique
+        UniqueConstraint("folder_id", "order", name="uq_watchlist_item_order_folder"),
 
         DBIndex("ix_watchlist_items_folder_id", "folder_id"),
         DBIndex("ix_watchlist_items_stock_id", "stock_id"),
     )
 
     def __repr__(self) -> str:
-        return f"<WatchlistItem id={self.id} folder_id={self.folder_id} stock_id={self.stock_id}>"
+        return (f"<WatchlistItem id={self.id} folder_id={self.folder_id} stock_id={self.stock_id} "
+                f"order={self.order}>")
 
 
 class WatchlistFolderAttribute(TimestampMixin, db.Model):
     __tablename__ = "watchlist_folder_attributes"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
+
     attribute: Mapped["FolderAttribute"] = mapped_column(
         SQLEnum(FolderAttribute, name="folder_attribute_enum"),
         nullable=False
