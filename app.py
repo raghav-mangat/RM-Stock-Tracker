@@ -12,7 +12,10 @@ Started On: June 07, 2025
 """
 
 import os
-from flask import Flask, render_template, request, session, redirect, url_for, flash, jsonify, has_request_context
+from flask import (
+    Flask, render_template, request, session, redirect, url_for,
+    flash, jsonify, has_request_context, send_from_directory
+)
 from dotenv import load_dotenv
 from flask_login import LoginManager, current_user
 from flask_mail import Mail
@@ -286,6 +289,63 @@ def privacy():
 @app.route("/terms")
 def terms():
     return render_template("terms.html")
+
+@app.route("/robots.txt")
+def robots_txt():
+    return send_from_directory(
+        directory=app.static_folder,
+        path="assets/robots.txt",
+        mimetype="text/plain"
+    )
+
+@app.route("/sitemap.xml", methods=["GET"])
+def sitemap():
+    pages = [
+        {
+            "loc": url_for("home", _external=True),
+            "changefreq": "weekly",
+            "priority": "1.0",
+        },
+        {
+            "loc": url_for("all_stocks", _external=True),
+            "changefreq": "daily",
+            "priority": "0.9",
+        },
+        {
+            "loc": url_for("all_indices", _external=True),
+            "changefreq": "weekly",
+            "priority": "0.8",
+        },
+        {
+            "loc": url_for("watchlist.index", _external=True),
+            "changefreq": "daily",
+            "priority": "0.9",
+        },
+        {
+            "loc": url_for("auth.login", _external=True),
+            "changefreq": "monthly",
+            "priority": "0.5",
+        },
+        {
+            "loc": url_for("auth.signup", _external=True),
+            "changefreq": "monthly",
+            "priority": "0.5",
+        },
+        {
+            "loc": url_for("privacy", _external=True),
+            "changefreq": "yearly",
+            "priority": "0.2",
+        },
+        {
+            "loc": url_for("terms", _external=True),
+            "changefreq": "yearly",
+            "priority": "0.2",
+        }
+    ]
+
+    return render_template("xml/sitemap.xml", pages=pages), {
+        "Content-Type": "application/xml"
+    }
 
 
 if __name__ == "__main__":

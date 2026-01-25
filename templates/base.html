@@ -3,17 +3,46 @@
 <!doctype html>
 <html lang="en">
   <head>
-      <!-- Meta Tags -->
+      <!-- Core Meta Tags -->
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1">
       <meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
+
+      <!-- Open Graph (OG) Meta Tags -->
+      <meta property="og:site_name" content="RM Stock Tracker">
+      <meta property="og:type" content="website">
+      <meta property="og:title" content="{% block og_title %}RM Stock Tracker{% endblock %}">
+      <meta property="og:description" content="{% block og_description %}Track U.S. stocks, indices, watchlist & alerts seamlessly.{% endblock %}">
+      <meta property="og:url" content="{{ request.url }}">
+      <meta property="og:image" content="{{ url_for('static', filename='assets/og-image.png', _external=True) }}">
+
+      <!-- Twitter Meta Tags -->
+      <meta name="twitter:card" content="summary_large_image">
+      <meta name="twitter:title" content="{% block twitter_title %}RM Stock Tracker{% endblock %}">
+      <meta name="twitter:description" content="{% block twitter_description %}Track U.S. stocks, indices, watchlist & alerts seamlessly.{% endblock %}">
+      <meta name="twitter:image" content="{{ url_for('static', filename='assets/og-image.png', _external=True) }}">
+
       <!-- Contains Block meta_description -->
-      <meta name="description" content="{% block meta_description %}An informative and user-friendly web app to explore U.S. stocks and major market indices using real-time financial data.{% endblock %}">
+      <meta name="description"
+            content="{% block meta_description %}
+        Track U.S. stocks and market indices, organize watchlist, set smart alerts, and analyze real-time financial data with RM Stock Tracker.
+        {% endblock %}">
+
       <!-- Block meta_tag -->
       {% block meta_tag %} {% endblock %}
 
       <!-- Block Title -->
-      <title>{% block title %}RM Stock Tracker - Real-Time U.S. Stock Market Tracking App{% endblock %}</title>
+      <title>
+        {% block title %}
+          RM Stock Tracker | Track U.S. Stocks, Indices, Watchlist & Alerts
+        {% endblock %}
+      </title>
+
+      <!-- Canonical Link -->
+      <link
+        rel="canonical"
+        href="{{ request.url_root.rstrip('/') }}{{ request.path }}"
+      >
 
       <!-- Favicon & App Icons -->
       <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='assets/apple-touch-icon.png') }}">
