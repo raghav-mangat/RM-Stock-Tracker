@@ -11,7 +11,7 @@
 {# ================= HERO ================= #}
 {% set heading = "About the Watchlist" %}
 {% set description = "Learn how to organize stocks, configure alerts, and use the watchlist efficiently." %}
-{% set last_updated = last_updated | display %}
+{% set last_updated = None %}
 
 {% set back_button %}
   <a href="{{ url_for('watchlist.index') }}"
