@@ -10,7 +10,7 @@ from .emails import AuthEmail
 from .services import RedirectService
 from .forms import (
     LoginForm, SignupForm, ChooseUsernameForm, ResetPasswordRequestForm, ResetPasswordForm, ProfileSettingsForm,
-    DeleteAccountRequestForm, DeleteAccountForm, SettingsResetPasswordRequestForm, UnlinkGoogleAccountForm,
+    SettingsDeleteAccountRequestForm, DeleteAccountForm, SettingsResetPasswordRequestForm, SettingsUnlinkGoogleAccountForm,
     SettingsSetPasswordForm, SettingsRemovePasswordForm, SettingsToggleEmailAlertsForm
 )
 from utils.db_queries.user_data import (
@@ -23,7 +23,7 @@ from utils.emails.email_rate_limiter import EmailType
 
 @auth_bp.route("/signup", methods=["GET", "POST"])
 @limiter.limit(
-    "10 per minute",
+    "10 per minute; 50 per hour; 250 per day",
     key_func=ip_and_email,
     methods=["POST"]
 )
@@ -52,9 +52,11 @@ def signup():
             flash("Account created, we sent a verification email. Please click the link in your inbox (check spam).",
                   "success")
         except Exception:
+            # Log this later
             flash(
-                "Account created, but we couldn't send the verification email. Please try logging in to resend it.",
-                "danger"
+                "Account created, but we couldn't send the verification email. "
+                "You can resend it after logging in.",
+                "warning"
             )
         return redirect(url_for('auth.login'))
 
@@ -62,7 +64,7 @@ def signup():
 
 @auth_bp.route("/login", methods=["GET", "POST"])
 @limiter.limit(
-    "10 per minute",
+    "10 per minute; 50 per hour; 250 per day",
     key_func=ip_and_email,
     methods=["POST"]
 )
@@ -76,11 +78,20 @@ def login():
         user = get_user_by_email(form.email.data)
 
         if not user.is_verified:
-            email_sent, ttl = AuthEmail.send_rate_limited_email(
-                user=user,
-                email_func=AuthEmail.verify_email,
-                email_type=EmailType.VERIFY_EMAIL
-            )
+            try:
+                email_sent, ttl = AuthEmail.send_rate_limited_email(
+                    user=user,
+                    email_func=AuthEmail.verify_email,
+                    email_type=EmailType.VERIFY_EMAIL
+                )
+            except Exception:
+                # Log this later
+                flash(
+                    "Account not verified. We couldn't resend the verification email right now. "
+                    "Please try again later.",
+                    "warning"
+                )
+                return redirect(url_for('auth.login'))
 
             if email_sent:
                 flash(
@@ -156,13 +167,13 @@ def settings_account():
         "settings/account.html",
         active_tab="account",
         settings_toggle_email_alerts_form=SettingsToggleEmailAlertsForm(),
-        unlink_google_account_form=UnlinkGoogleAccountForm(),
+        settings_unlink_google_account_form=SettingsUnlinkGoogleAccountForm(),
         settings_reset_password_request_form=SettingsResetPasswordRequestForm(
-            email=current_user.email
+            reset_password_email=current_user.email
         ),
         settings_remove_password_form=SettingsRemovePasswordForm(),
-        delete_account_request_form=DeleteAccountRequestForm(
-            email=current_user.email
+        settings_delete_account_request_form=SettingsDeleteAccountRequestForm(
+            delete_account_email=current_user.email
         ),
     )
 
@@ -182,8 +193,15 @@ def verify_email(token):
 
     try:
         verify_user(user)
-        AuthEmail.user_verification_success(user)
+
+        try:
+            AuthEmail.user_verification_success(user)
+        except Exception:
+            # Log this later
+            pass
+
         flash("Your email is verified! Now you can log in.", "success")
+
     except AuthError as e:
         flash(str(e), "danger")
 
@@ -195,20 +213,27 @@ def reset_password_request():
         return redirect(url_for("watchlist.index"))
 
     form = ResetPasswordRequestForm()
+
     if form.validate_on_submit():
         user = get_user_by_email(form.email.data)
+
         if user:
-            email_sent, ttl = AuthEmail.send_rate_limited_email(
-                user=user,
-                email_func=AuthEmail.reset_password,
-                email_type=EmailType.RESET_PASSWORD
-            )
+            try:
+                AuthEmail.send_rate_limited_email(
+                    user=user,
+                    email_func=AuthEmail.reset_password,
+                    email_type=EmailType.RESET_PASSWORD
+                )
+            except Exception:
+                # Log this later
+                pass
 
-            if not email_sent:
-                flash(f"Please wait {ttl} seconds before requesting another password reset email.", "warning")
-                return redirect(url_for("auth.login"))
-
-        flash("Check your email for the instructions to reset your password, if you have an existing account.", "success")
+        # Always the same message
+        flash(
+            "If an account with that email exists, "
+            "you will receive instructions to reset your password.",
+            "success"
+        )
         return redirect(url_for("auth.login"))
     return render_template("reset_password_request.html", form=form)
 
@@ -258,9 +283,16 @@ def settings_set_password():
             session.pop("reauth_verified_at", None)
 
             try:
-                change_user_password(current_user, form.password.data)
-                AuthEmail.settings_password_set_success(current_user)
+                change_user_password(current_user, form.set_password.data)
+
+                try:
+                    AuthEmail.settings_password_set_success(current_user)
+                except Exception:
+                    # Log this later
+                    pass
+
                 flash("Your password has been set. Please log in again.", "success")
+
             except AuthError as e:
                 flash(str(e), "danger")
 
@@ -283,20 +315,36 @@ def settings_set_password():
 @login_required
 def settings_reset_password_request():
     form = SettingsResetPasswordRequestForm()
-    if form.validate_on_submit():
-        user = get_user_by_email(form.email.data)
-        if user:
+
+    if not form.validate_on_submit():
+        return redirect(url_for("auth.settings_account"))
+
+    email = form.reset_password_email.data
+    if not email or email != current_user.email:
+        flash("Incorrect email.", "danger")
+        return redirect(url_for("auth.settings_account"))
+
+    user = get_user_by_email(email)
+
+    if user:
+        try:
             email_sent, ttl = AuthEmail.send_rate_limited_email(
                 user=user,
                 email_func=AuthEmail.settings_reset_password,
                 email_type=EmailType.SETTINGS_RESET_PASSWORD
             )
+        except Exception:
+            # Log this later
+            flash("Could not send password reset email. Please try again later.", "danger")
+            return redirect(url_for("auth.settings_account"))
 
-            if not email_sent:
-                flash(f"Please wait {ttl} seconds before requesting another password reset email.", "warning")
-                return redirect(url_for("auth.settings_account"))
+        if email_sent:
+            flash("Check your email for the instructions to reset your password.", "success")
+        else:
+            flash(f"Please wait {ttl} seconds before requesting another password reset email.", "warning")
+    else:
+        flash("User does not exist.", "danger")
 
-        flash("Check your email for the instructions to reset your password.", "success")
     return redirect(url_for("auth.settings_account"))
 
 @auth_bp.route("/settings-remove-password", methods=["POST"])
@@ -310,13 +358,20 @@ def settings_remove_password():
         flash("You must link your Google account before removing your password.", "warning")
     elif not form.validate_on_submit():
         flash("Please enter your password.", "warning")
-    elif not current_user.verify_password(form.password.data):
+    elif not current_user.verify_password(form.remove_password.data):
         flash("Incorrect password.", "warning")
     else:
         try:
             remove_user_password(current_user)
-            AuthEmail.settings_password_removed_success(current_user)
+
+            try:
+                AuthEmail.settings_password_removed_success(current_user)
+            except Exception:
+                # Log this later
+                pass
+
             flash("Your password has been removed. Please log in again.", "success")
+
         except AuthError as e:
             flash(str(e), "danger")
         return redirect(url_for("auth.logout"))
@@ -339,8 +394,15 @@ def reset_password(token):
     if form.validate_on_submit():
         try:
             change_user_password(user, form.password.data)
-            AuthEmail.password_reset_success(user)
+
+            try:
+                AuthEmail.password_reset_success(user)
+            except Exception:
+                # Log this later
+                pass
+
             flash("Your password has been reset. Please log in again.", "success")
+
         except AuthError as e:
             flash(str(e), "danger")
         return redirect(url_for("auth.logout"))
@@ -350,29 +412,34 @@ def reset_password(token):
 @auth_bp.route("/delete-account-request", methods=["POST"])
 @login_required
 def delete_account_request():
-    form = DeleteAccountRequestForm()
+    form = SettingsDeleteAccountRequestForm()
 
-    email = form.email.data
-    if not email or email != current_user.email:
-        flash("Incorrect email.", "danger")
-        return redirect(url_for("auth.settings_account"))
-
+    # Check password only if the password exists
     if current_user.password_hash:
         # User must enter password
         if not form.validate_on_submit():
             flash("Please enter your password.", "warning")
             return redirect(url_for("auth.settings_account"))
 
-        if not current_user.verify_password(form.password.data):
+        if not current_user.verify_password(form.delete_account_password.data):
             flash("Incorrect password.", "warning")
             return redirect(url_for("auth.settings_account"))
 
-    # If no password exists, skip password check
-    email_sent, ttl = AuthEmail.send_rate_limited_email(
-        user=current_user,
-        email_func=AuthEmail.delete_account,
-        email_type=EmailType.DELETE_ACCOUNT
-    )
+    email = form.delete_account_email.data
+    if not email or email != current_user.email:
+        flash("Incorrect email.", "danger")
+        return redirect(url_for("auth.settings_account"))
+
+    try:
+        email_sent, ttl = AuthEmail.send_rate_limited_email(
+            user=current_user,
+            email_func=AuthEmail.delete_account,
+            email_type=EmailType.DELETE_ACCOUNT
+        )
+    except Exception:
+        # Log this later
+        flash("Could not send account deletion email. Please try again later.", "warning")
+        return redirect(url_for("auth.settings_account"))
 
     if email_sent:
         flash("Check your email for the instructions to delete your account.", "success")
@@ -394,8 +461,15 @@ def delete_account(token):
         if user.email == form.email.data:
             try:
                 delete_user_account(user)
-                AuthEmail.account_delete_success(user)
+
+                try:
+                    AuthEmail.account_delete_success(user)
+                except Exception:
+                    # Log this later
+                    pass
+
                 flash("Your account has been deleted.", "success")
+
             except AuthError as e:
                 flash(str(e), "danger")
             return redirect(url_for("auth.logout"))
@@ -485,8 +559,15 @@ def google_signin_callback():
             else:
                 try:
                     add_user_google_id(user, google_id)
-                    AuthEmail.google_account_auto_linked_success(user)
+
+                    try:
+                        AuthEmail.google_account_auto_linked_success(user)
+                    except Exception:
+                        # Log this later
+                        pass
+
                     flash("Signed in with Google. Auto-Linked Google account successfully.", "success")
+
                 except AuthError as e:
                     flash(f"Unable to signin with Google. {str(e)}", "danger")
                     return redirect(url_for("auth.login"))
@@ -542,7 +623,12 @@ def choose_username():
                 is_verified=True,
             )
             session.pop("pending_google_signup", None)
-            AuthEmail.google_signin_success(user)
+
+            try:
+                AuthEmail.google_signin_success(user)
+            except Exception:
+                # Log this later
+                pass
 
             login_user(user)
             update_user_last_login_at(user)
@@ -639,8 +725,15 @@ def google_link_callback():
 
     try:
         add_user_google_id(current_user, google_id)
-        AuthEmail.google_account_linked_success(current_user)
+
+        try:
+            AuthEmail.google_account_linked_success(current_user)
+        except Exception:
+            # Log this later
+            pass
+
         flash("Google account linked successfully. Please log in again.", "success")
+
     except AuthError as e:
         flash(str(e), "danger")
 
@@ -649,19 +742,26 @@ def google_link_callback():
 @auth_bp.route("/google/unlink", methods=["POST"])
 @login_required
 def google_unlink():
-    form = UnlinkGoogleAccountForm()
+    form = SettingsUnlinkGoogleAccountForm()
 
     if not current_user.password_hash:
         flash("You must set a password before unlinking your Google account.", "warning")
     elif not form.validate_on_submit():
         flash("Please enter your password.", "warning")
-    elif not current_user.verify_password(form.password.data):
+    elif not current_user.verify_password(form.unlink_google_password.data):
         flash("Incorrect password.", "warning")
     else:
         try:
             remove_user_google_id(current_user)
-            AuthEmail.google_account_unlinked_success(current_user)
+
+            try:
+                AuthEmail.google_account_unlinked_success(current_user)
+            except Exception:
+                # Log this later
+                pass
+
             flash("Your Google account has been unlinked. Please log in again.", "success")
+
         except AuthError as e:
             flash(str(e), "danger")
         return redirect(url_for("auth.logout"))

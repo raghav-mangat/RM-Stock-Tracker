@@ -167,7 +167,7 @@
           <button type="button" class="btn btn-secondary modal-close-btn" data-bs-dismiss="modal">
             Cancel
           </button>
-          {{ settings_toggle_email_alerts_form.submit(class="btn btn-primary fw-semibold px-3") }}
+          {{ settings_toggle_email_alerts_form.toggle_email_alerts_submit(class="btn btn-primary fw-semibold px-3") }}
         </div>
       </div>
     </form>
@@ -184,13 +184,13 @@
         </div>
         {% if current_user.password_hash %}
         <form method="POST" action="{{ url_for('auth.google_unlink') }}" novalidate>
-          {{ unlink_google_account_form.hidden_tag() }}
+          {{ settings_unlink_google_account_form.hidden_tag() }}
             <div class="modal-body">
               <p class="mb-3">
                 Confirm your password to unlink your Google account from this profile.
               </p>
               {{ password_field(
-                  field=unlink_google_account_form.password,
+                  field=settings_unlink_google_account_form.unlink_google_password,
                   placeholder="Enter your password to continue"
               ) }}
             </div>
@@ -198,7 +198,7 @@
               <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                 Cancel
               </button>
-                {{ unlink_google_account_form.submit(class="btn btn-danger") }}
+                {{ settings_unlink_google_account_form.unlink_google_submit(class="btn btn-danger") }}
             </div>
           </form>
         {% else %}
@@ -243,7 +243,7 @@
 
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-            {{ settings_reset_password_request_form.submit(class="btn btn-primary") }}
+            {{ settings_reset_password_request_form.reset_password_submit(class="btn btn-primary") }}
           </div>
         </form>
       </div>
@@ -265,7 +265,7 @@
                 Enter your password to remove password-based login from your account.
               </p>
               {{ password_field(
-                  field=settings_remove_password_form.password,
+                  field=settings_remove_password_form.remove_password,
                   placeholder="Enter your password to confirm"
               ) }}
             </div>
@@ -273,7 +273,7 @@
               <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                 Cancel
               </button>
-                {{ settings_remove_password_form.submit(class="btn btn-danger") }}
+                {{ settings_remove_password_form.remove_password_submit(class="btn btn-danger") }}
             </div>
           </form>
         {% else %}
@@ -329,7 +329,7 @@
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content shadow border-0">
       <form method="POST" action="{{ url_for('auth.delete_account_request') }}" novalidate>
-        {{ delete_account_request_form.hidden_tag() }}
+        {{ settings_delete_account_request_form.hidden_tag() }}
 
         <div class="modal-header bg-danger text-white">
           <h5 class="modal-title fw-semibold">
@@ -358,7 +358,7 @@
 
             <div class="mb-3">
               {{ password_field(
-                  field=delete_account_request_form.password,
+                  field=settings_delete_account_request_form.delete_account_password,
                   placeholder="Enter your password to continue"
               ) }}
             </div>
@@ -374,7 +374,7 @@
 
             <p class="mb-3"><strong>{{ current_user.email }}</strong></p>
 
-            {{ delete_account_request_form.password(value="", type="hidden") }}
+            {{ settings_delete_account_request_form.delete_account_password(value="", type="hidden") }}
           {% endif %}
         </div>
 
@@ -382,7 +382,7 @@
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
             Cancel
           </button>
-          {{ delete_account_request_form.submit(class="btn btn-danger fw-semibold px-3") }}
+          {{ settings_delete_account_request_form.delete_account_submit(class="btn btn-danger fw-semibold px-3") }}
         </div>
       </form>
     </div>

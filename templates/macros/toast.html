@@ -13,7 +13,7 @@
     {% set icon = "bi-exclamation-triangle-fill" %}
   {% elif toast_category == "danger" %}
     {% set delay = 30000 %}
-    {% set icon = "bi-x-circle-fill" %}
+    {% set icon = "bi-x-octagon-fill" %}
   {% else %}
     {% set delay = 15000 %}
     {% set icon = "bi-bell-fill" %}
@@ -29,7 +29,7 @@
 
       <div class="d-flex align-items-center justify-content-center
                   bg-{{ toast_category }} text-white px-3">
-        <i class="bi {{ icon }}"></i>
+        <i class="bi {{ icon }} fs-6"></i>
       </div>
 
       <div class="toast-body d-flex align-items-center">

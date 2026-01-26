@@ -1,88 +1,86 @@
 document.addEventListener("DOMContentLoaded", () => {
-  // Remove the error when the user starts typing on an input
-  allInputs = document.querySelectorAll(".form-control");
-  allInputs.forEach((input) => {
+  // Remove field error on input
+  document.querySelectorAll(".form-control").forEach((input) => {
     input.addEventListener("input", () => {
-      const inputError = document.getElementById(`error-${input.id}`);
-      if (inputError) {
-        inputError.remove();
-      }
+      const error = document.getElementById(`error-${input.id}`);
+      if (error) error.remove();
     });
   });
 
-  // Add the password field functionality if the field exists
-  const passwordField = document.getElementById("password");
-  if (passwordField) {
-    passwordFieldFunctionality(passwordField);
-  }
+  // Initialize all password groups
+  document.querySelectorAll(".password-field-group").forEach(initPasswordGroup);
 });
 
-function passwordFieldFunctionality(passwordField) {
-  // Password visibility toggle
-  const toggleBtn = document.getElementById("toggle-password");
-  if (toggleBtn) {
-    const toggleIcon = toggleBtn.querySelector("i");
+function initPasswordGroup(group) {
+  const passwordInput = group.querySelector(".password-input");
+  const toggleBtn = group.querySelector(".toggle-password");
+  const reqBox = group.querySelector(".password-requirements");
 
-    toggleBtn.addEventListener("click", () => {
-      const isHidden = passwordField.type === "password";
-      passwordField.type = isHidden ? "text" : "password";
-      toggleIcon.classList.toggle("bi-eye");
-      toggleIcon.classList.toggle("bi-eye-slash");
-      passwordField.focus();
-    });
-  }
+  if (!passwordInput || !toggleBtn) return;
 
-  // Password requirements functionality only if it exists
-  const reqBox = document.getElementById("password-requirements");
+  // Find confirm password next to this group
+  const confirmInput = findAdjacentConfirmPassword(group);
+
+  // Toggle visibility
+  toggleBtn.addEventListener("click", () => {
+    const isHidden = passwordInput.type === "password";
+    const newType = isHidden ? "text" : "password";
+
+    passwordInput.type = newType;
+    if (confirmInput) confirmInput.type = newType;
+
+    const icon = toggleBtn.querySelector("i");
+    icon.classList.toggle("bi-eye", isHidden);
+    icon.classList.toggle("bi-eye-slash", !isHidden);
+
+    passwordInput.focus();
+  });
+
+  // Requirements logic
   if (!reqBox) return;
 
-  const specialCharRegex = PASSWORD_POLICY.require_special
-    ? new RegExp(PASSWORD_POLICY.special_chars_regex)
-    : null;
-
-  const reqList = {
-    "pw-length": (value) =>
+  const requirements = {
+    length: (value) =>
       value.length >= PASSWORD_POLICY.min_length &&
       value.length <= PASSWORD_POLICY.max_length,
 
-    "pw-upper": (value) =>
-      !PASSWORD_POLICY.require_upper || /[A-Z]/.test(value),
+    upper: (value) => !PASSWORD_POLICY.require_upper || /[A-Z]/.test(value),
 
-    "pw-lower": (value) =>
-      !PASSWORD_POLICY.require_lower || /[a-z]/.test(value),
+    lower: (value) => !PASSWORD_POLICY.require_lower || /[a-z]/.test(value),
 
-    "pw-number": (value) =>
-      !PASSWORD_POLICY.require_number || /[0-9]/.test(value),
+    number: (value) => !PASSWORD_POLICY.require_number || /[0-9]/.test(value),
 
-    "pw-special": (value) =>
-      !PASSWORD_POLICY.require_special || specialCharRegex.test(value),
+    special: (value) =>
+      !PASSWORD_POLICY.require_special ||
+      new RegExp(PASSWORD_POLICY.special_chars_regex).test(value),
   };
 
-  passwordField.addEventListener("input", () => {
-    const value = passwordField.value;
+  passwordInput.addEventListener("input", () => {
+    const value = passwordInput.value;
+    reqBox.classList.toggle("d-none", value.length === 0);
 
-    if (value.length > 0) {
-      reqBox.classList.remove("d-none");
-    } else {
-      reqBox.classList.add("d-none");
-    }
-
-    for (const id in reqList) {
-      const li = document.getElementById(id);
-      if (!li) continue;
-
-      const valid = reqList[id](value);
+    reqBox.querySelectorAll("[data-requirement]").forEach((li) => {
+      const rule = li.dataset.requirement;
+      const valid = requirements[rule]?.(value);
       updateRequirement(li, valid);
-    }
+    });
   });
+}
 
-  function updateRequirement(li, condition) {
-    const icon = li.querySelector("i");
+function updateRequirement(li, valid) {
+  const icon = li.querySelector("i");
 
-    li.classList.toggle("text-success", condition);
-    li.classList.toggle("text-danger", !condition);
+  li.classList.toggle("text-success", valid);
+  li.classList.toggle("text-danger", !valid);
 
-    icon.classList.toggle("bi-check-circle-fill", condition);
-    icon.classList.toggle("bi-x-circle-fill", !condition);
-  }
+  icon.classList.toggle("bi-check-circle-fill", valid);
+  icon.classList.toggle("bi-x-circle-fill", !valid);
+}
+
+// Looks for confirm password field next to this password group
+function findAdjacentConfirmPassword(group) {
+  let el = group.nextElementSibling;
+  if (!el) return null;
+
+  return el.querySelector("input[type='password'], input[type='text']");
 }
