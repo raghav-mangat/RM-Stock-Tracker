@@ -1,6 +1,5 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField
-from wtforms.fields.simple import HiddenField
 from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError
 from flask_login import current_user
 import re
@@ -168,7 +167,6 @@ class SettingsSetPasswordForm(FlaskForm):
     set_password_submit = SubmitField("Set Password")
 
 class SettingsResetPasswordRequestForm(FlaskForm):
-    reset_password_email = HiddenField("Email")
     reset_password_submit = SubmitField("Send Reset Link")
 
 class SettingsRemovePasswordForm(FlaskForm):
@@ -202,7 +200,6 @@ class SettingsUnlinkGoogleAccountForm(FlaskForm):
 
 class SettingsDeleteAccountRequestForm(FlaskForm):
     delete_account_password = get_password_field()
-    delete_account_email = HiddenField("Email")
     delete_account_submit = SubmitField("Send Deletion Link")
 
 class DeleteAccountForm(FlaskForm):

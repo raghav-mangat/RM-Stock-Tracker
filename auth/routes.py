@@ -116,7 +116,7 @@ def login():
 
     return render_template("login.html", form=form)
 
-@auth_bp.route("/logout")
+@auth_bp.route("/logout", methods=["GET"])
 def logout():
     session.pop("security_timestamp", None)
     session.pop("reauth_verified", None)
@@ -168,13 +168,9 @@ def settings_account():
         active_tab="account",
         settings_toggle_email_alerts_form=SettingsToggleEmailAlertsForm(),
         settings_unlink_google_account_form=SettingsUnlinkGoogleAccountForm(),
-        settings_reset_password_request_form=SettingsResetPasswordRequestForm(
-            reset_password_email=current_user.email
-        ),
+        settings_reset_password_request_form=SettingsResetPasswordRequestForm(),
         settings_remove_password_form=SettingsRemovePasswordForm(),
-        settings_delete_account_request_form=SettingsDeleteAccountRequestForm(
-            delete_account_email=current_user.email
-        ),
+        settings_delete_account_request_form=SettingsDeleteAccountRequestForm(),
     )
 
 @auth_bp.route("/verify-email/<string:token>", methods=["GET"])
@@ -208,6 +204,11 @@ def verify_email(token):
     return redirect(url_for("auth.login"))
 
 @auth_bp.route("/reset-password-request", methods=["GET", "POST"])
+@limiter.limit(
+    "3 per minute; 10 per hour; 25 per day",
+    key_func=ip_and_email,
+    methods=["POST"]
+)
 def reset_password_request():
     if current_user.is_authenticated:
         return redirect(url_for("watchlist.index"))
@@ -217,24 +218,27 @@ def reset_password_request():
     if form.validate_on_submit():
         user = get_user_by_email(form.email.data)
 
-        if user:
-            try:
-                AuthEmail.send_rate_limited_email(
-                    user=user,
-                    email_func=AuthEmail.reset_password,
-                    email_type=EmailType.RESET_PASSWORD
-                )
-            except Exception:
-                # Log this later
-                pass
+        if not user:
+            flash("No account found with that email.", "warning")
+            return redirect(url_for("auth.login"))
 
-        # Always the same message
-        flash(
-            "If an account with that email exists, "
-            "you will receive instructions to reset your password.",
-            "success"
-        )
+        try:
+            email_sent, ttl = AuthEmail.send_rate_limited_email(
+                user=user,
+                email_func=AuthEmail.reset_password,
+                email_type=EmailType.RESET_PASSWORD
+            )
+        except Exception:
+            flash("Could not send password reset email. Please try again later.", "danger")
+            return redirect(url_for("auth.login"))
+
+        if email_sent:
+            flash("Check your inbox (and spam) for an email containing password reset instructions.", "success")
+        else:
+            flash(f"Please wait {ttl} seconds before requesting another password reset email.", "warning")
+
         return redirect(url_for("auth.login"))
+
     return render_template("reset_password_request.html", form=form)
 
 @auth_bp.route("/settings-toggle-email-alerts", methods=["POST"])
@@ -275,7 +279,7 @@ def settings_set_password():
 
     if request.method == "POST":
         if reauth_expired:
-            flash("Your verification expired. Please try again.", "warning")
+            flash("Your Google sign-in verification expired. Please try again.", "warning")
             return redirect(url_for("auth.settings_account"))
         if form.validate_on_submit():
             # Consume reauth proof
@@ -319,31 +323,21 @@ def settings_reset_password_request():
     if not form.validate_on_submit():
         return redirect(url_for("auth.settings_account"))
 
-    email = form.reset_password_email.data
-    if not email or email != current_user.email:
-        flash("Incorrect email.", "danger")
+    try:
+        email_sent, ttl = AuthEmail.send_rate_limited_email(
+            user=current_user,
+            email_func=AuthEmail.settings_reset_password,
+            email_type=EmailType.SETTINGS_RESET_PASSWORD
+        )
+    except Exception:
+        # Log this later
+        flash("Could not send password reset email. Please try again later.", "danger")
         return redirect(url_for("auth.settings_account"))
 
-    user = get_user_by_email(email)
-
-    if user:
-        try:
-            email_sent, ttl = AuthEmail.send_rate_limited_email(
-                user=user,
-                email_func=AuthEmail.settings_reset_password,
-                email_type=EmailType.SETTINGS_RESET_PASSWORD
-            )
-        except Exception:
-            # Log this later
-            flash("Could not send password reset email. Please try again later.", "danger")
-            return redirect(url_for("auth.settings_account"))
-
-        if email_sent:
-            flash("Check your email for the instructions to reset your password.", "success")
-        else:
-            flash(f"Please wait {ttl} seconds before requesting another password reset email.", "warning")
+    if email_sent:
+        flash("Check your email for the instructions to reset your password.", "success")
     else:
-        flash("User does not exist.", "danger")
+        flash(f"Please wait {ttl} seconds before requesting another password reset email.", "warning")
 
     return redirect(url_for("auth.settings_account"))
 
@@ -424,11 +418,6 @@ def delete_account_request():
         if not current_user.verify_password(form.delete_account_password.data):
             flash("Incorrect password.", "warning")
             return redirect(url_for("auth.settings_account"))
-
-    email = form.delete_account_email.data
-    if not email or email != current_user.email:
-        flash("Incorrect email.", "danger")
-        return redirect(url_for("auth.settings_account"))
 
     try:
         email_sent, ttl = AuthEmail.send_rate_limited_email(
