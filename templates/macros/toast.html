@@ -1,0 +1,47 @@
+{% macro render_toast(category, message) %}
+
+  {% set toast_category = category if category in ["success", "info", "warning", "danger"] else "secondary" %}
+
+  {% if toast_category == "success" %}
+    {% set delay = 10000 %}
+    {% set icon = "bi-check-circle-fill" %}
+  {% elif toast_category == "info" %}
+    {% set delay = 15000 %}
+    {% set icon = "bi-info-circle-fill" %}
+  {% elif toast_category == "warning" %}
+    {% set delay = 20000 %}
+    {% set icon = "bi-exclamation-triangle-fill" %}
+  {% elif toast_category == "danger" %}
+    {% set delay = 30000 %}
+    {% set icon = "bi-x-circle-fill" %}
+  {% else %}
+    {% set delay = 15000 %}
+    {% set icon = "bi-bell-fill" %}
+  {% endif %}
+
+  <div class="toast bg-light border border-2 border-{{ toast_category }} mb-2"
+       role="alert"
+       aria-live="assertive"
+       aria-atomic="true"
+       data-bs-delay="{{ delay }}">
+
+    <div class="d-flex align-items-stretch">
+
+      <div class="d-flex align-items-center justify-content-center
+                  bg-{{ toast_category }} text-white px-3">
+        <i class="bi {{ icon }}"></i>
+      </div>
+
+      <div class="toast-body d-flex align-items-center">
+        <span class="text-wrap text-break">{{ message }}</span>
+      </div>
+
+      <button type="button"
+              class="btn-close me-2 m-auto"
+              data-bs-dismiss="toast"
+              aria-label="Close"></button>
+
+    </div>
+  </div>
+
+{% endmacro %}

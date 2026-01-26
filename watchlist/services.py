@@ -1,4 +1,4 @@
-from flask import request, abort, jsonify, flash, redirect, url_for
+from flask import request, abort, jsonify, flash, redirect, url_for, render_template
 from dataclasses import dataclass
 from models.database import AlertAttribute, FolderAttribute, OrderBy
 from utils.db_queries.watchlist import (
@@ -32,10 +32,16 @@ class AjaxService:
         """
         Standard success response.
         """
+        category = "success"
         payload = {
             "status": "success",
-            "category": "success",
+            "category": category,
             "message": message,
+            "toast": render_template(
+                "partials/toast.html",
+                category=category,
+                message=message
+            ),
         }
         payload.update(extra)
         return jsonify(payload), 200
@@ -49,7 +55,12 @@ class AjaxService:
             "status": "error",
             "category": category,
             "message": message,
-            "requires_refresh": requires_refresh
+            "toast": render_template(
+                "partials/toast.html",
+                category=category,
+                message=message
+            ),
+            "requires_refresh": requires_refresh,
         }
         payload.update(extra)
         return jsonify(payload), status_code

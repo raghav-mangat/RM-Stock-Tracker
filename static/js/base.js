@@ -1,10 +1,15 @@
 // Initialize the Bootstrap Popovers for the entire document
-initializeBSPopovers(document);
+document.addEventListener("DOMContentLoaded", () => {
+  initializeBSPopovers(document);
+});
 
-// To auto-show all toasts
+// To auto-show and auto-remove all toasts
 document.addEventListener("DOMContentLoaded", () => {
   const toastElList = [].slice.call(document.querySelectorAll(".toast"));
   toastElList.map((toastEl) => new bootstrap.Toast(toastEl).show());
+  toastElList.map((toastEl) =>
+    toastEl.addEventListener("hidden.bs.toast", () => toastEl.remove()),
+  );
 });
 
 // Page Loading Spinner Overlay

@@ -163,7 +163,7 @@ document.addEventListener("submit", async (event) => {
       bodyContainer.classList.remove("is-fading-out");
 
       // Show feedback after UI is fully updated
-      showToast(actionData.message, actionData.category);
+      showToast(actionData.toast);
     }, FOLDER_FADE_TRANSITION_DURATION);
   } catch {
     // Catch network or unexpected runtime errors
@@ -236,36 +236,18 @@ function closeBootstrapComponents(components) {
 /* -------------------------------------------------------------------------- */
 /* Toast Utility                                                              */
 /* -------------------------------------------------------------------------- */
-
-function showToast(message, category = "secondary") {
+function showToast(toastHTML) {
   const container = document.getElementById("toast-container-div");
-  if (!container) return;
+  if (!container || !toastHTML) return;
 
-  // Ensure only one toast is visible at a time
-  container.querySelectorAll(".toast").forEach((toast) => toast.remove());
+  // Keep only one toast
+  container.querySelectorAll(".toast").forEach((t) => t.remove());
 
-  const toastEl = document.createElement("div");
-  toastEl.className = `toast align-items-center text-bg-${category} border-1 mb-2`;
-  toastEl.setAttribute("role", "alert");
-  toastEl.setAttribute("aria-live", "assertive");
-  toastEl.setAttribute("aria-atomic", "true");
-  toastEl.setAttribute("data-bs-delay", TOAST_DISMISS_DELAY.toString());
+  container.insertAdjacentHTML("beforeend", toastHTML);
 
-  toastEl.innerHTML = `
-    <div class="d-flex">
-      <div class="toast-body">${message}</div>
-      <button type="button"
-              class="btn-close btn-close-white me-2 m-auto"
-              data-bs-dismiss="toast"
-              aria-label="Close"></button>
-    </div>
-  `;
-
-  container.appendChild(toastEl);
-
+  const toastEl = container.querySelector(".toast:last-child");
   const toast = new bootstrap.Toast(toastEl);
   toast.show();
 
-  // Remove toast from DOM after it disappears
   toastEl.addEventListener("hidden.bs.toast", () => toastEl.remove());
 }
