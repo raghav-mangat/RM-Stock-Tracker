@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}
+  About | RM Stock Tracker
+{% endblock %}
+
+{% block content %}
+<section class="container py-4">
+  <h2 class="mb-3">About RM Stock Tracker</h2>
+  <p class="text-muted">
+    A simple and structured way to track the U.S. stock market
+  </p>
+
+  <p>
+    RM Stock Tracker is a web app built to help users explore U.S. stocks
+    and market indices in a clear and organized way.
+    The focus is on simplicity, structure, and useful insights.
+  </p>
+
+  <h4 class="mt-4">What You Can Do</h4>
+  <ul>
+    <li>Search and explore U.S. stocks and major market indices</li>
+    <li>View historical price data and key technical indicators</li>
+    <li>Use interactive charts to get useful insights about the stocks</li>
+    <li>Organize stocks into folders using a structured watchlist</li>
+    <li>Create alerts based on custom price or indicator conditions</li>
+  </ul>
+
+  <h4 class="mt-4">Market Data</h4>
+  <p>
+    RM Stock Tracker uses market data from trusted third-party providers,
+    including
+    <a href="https://massive.com/" target="_blank" class="fw-semibold text-primary">
+      Massive
+    </a>
+    (formerly known as Polygon).
+  </p>
+
+  <p>
+    While we aim to keep the data accurate and up to date,
+    market data may be delayed or incomplete and should not be considered
+    financial advice.
+  </p>
+
+  <h4 class="mt-4">Built With Care</h4>
+  <p>
+    The app is designed with performance, clarity, and usability in mind.
+    It follows modern web development best practices and is continuously
+    improved based on real usage.
+  </p>
+</section>
+{% endblock %}

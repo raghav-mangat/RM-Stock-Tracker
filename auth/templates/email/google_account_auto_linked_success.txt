@@ -6,8 +6,8 @@
 
 {{ greeting(user) }}
 
-Your Google account has been successfully linked to your RM Stock Tracker account
-from your account settings.
+Your Google account was automatically linked successfully to your RM Stock Tracker account
+when you signed in with Google.
 
 You can now sign in using either Google or your email and password.
 

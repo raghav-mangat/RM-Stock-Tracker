@@ -1,9 +1,12 @@
 {% macro google_btn() %}
-<div class="d-grid mt-4">
+{# Using the "Continue with Google" button from official Google assets #}
+<div class="d-flex justify-content-center mt-4">
   <a href="{{ url_for('auth.google_signin', next=request.args.get('next')) }}"
-     class="btn btn-light btn-lg border d-flex align-items-center justify-content-center gap-2 shadow-sm">
-    <i class="bi bi-google"></i>
-    <span class="fw-semibold">Continue with Google</span>
+     class="google-signin-link">
+    <img
+      src="{{ url_for('static', filename='assets/google_signin/google-button.svg') }}"
+      alt="Continue with Google"
+      class="google-signin-btn">
   </a>
 </div>
 {% endmacro %}

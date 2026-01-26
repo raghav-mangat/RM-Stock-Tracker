@@ -227,17 +227,17 @@ def all_stocks():
 @app.route("/get-top-stocks-data/<string:category>")
 def get_top_stocks_data(category):
     gainers = render_template(
-        "top_stocks_table_data.html",
+        "partials/top_stocks_table_data.html",
         stocks_type="gainers",
         stocks=db_get_top_stocks_data(category, "gainers")
     )
     losers = render_template(
-        "top_stocks_table_data.html",
+        "partials/top_stocks_table_data.html",
         stocks_type="losers",
         stocks=db_get_top_stocks_data(category, "losers")
     )
     top_traded = render_template(
-        "top_stocks_table_data.html",
+        "partials/top_stocks_table_data.html",
         stocks_type="top_traded",
         stocks=db_get_top_stocks_data(category, "top_traded")
     )
@@ -282,13 +282,17 @@ def chart_data():
     data = get_chart_data(ticker, timeframe)
     return data
 
+@app.route("/about")
+def about():
+    return render_template("legal/about.html")
+
 @app.route("/privacy")
 def privacy():
-    return render_template("privacy.html")
+    return render_template("legal/privacy.html")
 
 @app.route("/terms")
 def terms():
-    return render_template("terms.html")
+    return render_template("legal/terms.html")
 
 @app.route("/robots.txt")
 def robots_txt():
@@ -330,6 +334,11 @@ def sitemap():
             "loc": url_for("auth.signup", _external=True),
             "changefreq": "monthly",
             "priority": "0.5",
+        },
+        {
+            "loc": url_for("about", _external=True),
+            "changefreq": "monthly",
+            "priority": "0.2",
         },
         {
             "loc": url_for("privacy", _external=True),

@@ -271,6 +271,11 @@ def settings_set_password():
             "auth.settings_set_password", _external=True
         )
         return redirect(url_for("auth.google_reauth"))
+    else:
+        flash(
+            "Your Google sign-in was recently verified. You can now set your password.",
+            "info"
+        )
 
     return render_template("settings_set_password.html", form=form)
 
@@ -480,8 +485,8 @@ def google_signin_callback():
             else:
                 try:
                     add_user_google_id(user, google_id)
-                    AuthEmail.google_account_linked_success(user)
-                    flash("Signed in with Google. Linked Google account successfully.", "success")
+                    AuthEmail.google_account_auto_linked_success(user)
+                    flash("Signed in with Google. Auto-Linked Google account successfully.", "success")
                 except AuthError as e:
                     flash(f"Unable to signin with Google. {str(e)}", "danger")
                     return redirect(url_for("auth.login"))

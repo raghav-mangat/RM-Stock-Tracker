@@ -15,15 +15,24 @@
   text-decoration: underline;
 }
 
-.social-link {
-  font-size: 1.2rem;
+.social-icon {
+  display: inline-flex;
+  font-size: 1.5rem;
+  transition: transform 0s ease;
+}
+
+.social-icon:hover {
+  transform: scale(1.05);
+}
+
+.data-attribution-link {
+  text-decoration: none;
+}
+
+.data-attribution-link:hover {
+  text-decoration: underline;
 }
 
 #toast-container-div {
   z-index: 1100;
-}
-
-#auth-card {
-  max-width: 420px;
-  width: 100%;
 }

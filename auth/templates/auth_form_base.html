@@ -4,6 +4,10 @@
     {% block auth_form_title %} {% endblock %}
 {% endblock %}
 
+{% block style %}
+  <link rel="stylesheet" href="{{ url_for('auth.static', filename='styles/auth.css') }}">
+{% endblock %}
+
 {% block content %}
   <section class="container d-flex align-items-start justify-content-center pt-4 pb-4">
     <div id="auth-card" class="card shadow-sm rounded-3">

@@ -18,6 +18,21 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function passwordFieldFunctionality(passwordField) {
+  // Password visibility toggle
+  const toggleBtn = document.getElementById("toggle-password");
+  if (toggleBtn) {
+    const toggleIcon = toggleBtn.querySelector("i");
+
+    toggleBtn.addEventListener("click", () => {
+      const isHidden = passwordField.type === "password";
+      passwordField.type = isHidden ? "text" : "password";
+      toggleIcon.classList.toggle("bi-eye");
+      toggleIcon.classList.toggle("bi-eye-slash");
+      passwordField.focus();
+    });
+  }
+
+  // Password requirements functionality only if it exists
   const reqBox = document.getElementById("password-requirements");
   if (!reqBox) return;
 
@@ -69,19 +84,5 @@ function passwordFieldFunctionality(passwordField) {
 
     icon.classList.toggle("bi-check-circle-fill", condition);
     icon.classList.toggle("bi-x-circle-fill", !condition);
-  }
-
-  // Password visibility toggle
-  const toggleBtn = document.getElementById("toggle-password");
-  if (toggleBtn) {
-    const toggleIcon = toggleBtn.querySelector("i");
-
-    toggleBtn.addEventListener("click", () => {
-      const isHidden = passwordField.type === "password";
-      passwordField.type = isHidden ? "text" : "password";
-      toggleIcon.classList.toggle("bi-eye");
-      toggleIcon.classList.toggle("bi-eye-slash");
-      passwordField.focus();
-    });
   }
 }

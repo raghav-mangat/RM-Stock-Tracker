@@ -1,0 +1,19 @@
+#auth-card {
+  max-width: 420px;
+  width: 100%;
+}
+
+.google-signin-link {
+  display: inline-block;
+  width: 250px;
+}
+
+.google-signin-btn {
+  width: 100%;
+  height: auto;
+  transition: transform 0.25s ease;
+}
+
+.google-signin-btn:hover {
+  transform: scale(1.05);
+}

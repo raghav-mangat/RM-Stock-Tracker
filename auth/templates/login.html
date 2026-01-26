@@ -1,4 +1,4 @@
-{% from "macros/auth_form_components.html" import form_heading, form_submit, form_separator %}
+{% from "macros/auth_form_components.html" import form_heading, form_submit, form_separator, form_agreement %}
 {% from "macros/auth_fields.html" import form_field, password_field with context %}
 {% from "macros/google_btn.html" import google_btn %}
 
@@ -32,5 +32,7 @@
   <br>
   <small>Forgot Your Password? <a class="text-primary fw-semibold"  href="{{ url_for('auth.reset_password_request') }}">Reset Password</a></small>
 </div>
+
+{{ form_agreement() }}
 
 {% endblock %}

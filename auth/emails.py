@@ -177,6 +177,21 @@ class AuthEmail(EmailService):
         )
 
     @classmethod
+    def google_account_auto_linked_success(cls, user):
+        EmailService.enqueue_auth_email(
+            subject="Google Account Auto-Linked Successfully - RM Stock Tracker",
+            recipients=[user.email],
+            text_body=render_template(
+                "email/google_account_auto_linked_success.txt",
+                user=user,
+            ),
+            html_body=render_template(
+                "email/google_account_auto_linked_success.html",
+                user=user,
+            )
+        )
+
+    @classmethod
     def google_account_unlinked_success(cls, user):
         EmailService.enqueue_auth_email(
             subject="Google Account Unlinked - RM Stock Tracker",

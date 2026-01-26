@@ -1,4 +1,4 @@
-{% from "macros/auth_form_components.html" import form_heading, form_submit, form_separator %}
+{% from "macros/auth_form_components.html" import form_heading, form_submit, form_separator, form_agreement %}
 {% from "macros/auth_fields.html" import form_field, password_field with context %}
 {% from "macros/google_btn.html" import google_btn %}
 
@@ -37,5 +37,7 @@
 <div class="text-center">
   <small>Already have an account? <a class="text-primary fw-semibold" href="{{ url_for('auth.login') }}">Log In</a></small>
 </div>
+
+{{ form_agreement() }}
 
 {% endblock %}
