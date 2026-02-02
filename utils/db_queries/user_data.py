@@ -8,6 +8,9 @@ from utils.constants import USER_INACTIVE_DAYS_LIMIT
 class AuthError(Exception):
     """Base class for auth-related errors."""
 
+class AuthUnexpectedError(AuthError):
+    """Unexpected auth system failure"""
+
 def add_new_user(signup_source, email, username, first_name="", last_name="", password=None, google_id=None, is_verified=False):
     try:
         new_user = User(
@@ -39,7 +42,7 @@ def add_new_user(signup_source, email, username, first_name="", last_name="", pa
             raise AuthError("Unable to create account at this time.")
     except Exception:
         db.session.rollback()
-        raise AuthError("Unable to create account at this time.")
+        raise AuthUnexpectedError("Unable to create account at this time.")
 
 def add_user_google_id(user, google_id):
     try:
@@ -53,7 +56,7 @@ def add_user_google_id(user, google_id):
         )
     except Exception:
         db.session.rollback()
-        raise AuthError("Unable to link Google account.")
+        raise AuthUnexpectedError("Unable to link Google account.")
 
 def remove_user_google_id(user):
     try:
@@ -62,7 +65,7 @@ def remove_user_google_id(user):
         db.session.commit()
     except Exception:
         db.session.rollback()
-        raise AuthError("Unable to unlink Google account.")
+        raise AuthUnexpectedError("Unable to unlink Google account.")
 
 def remove_user_password(user):
     try:
@@ -71,7 +74,7 @@ def remove_user_password(user):
         db.session.commit()
     except Exception:
         db.session.rollback()
-        raise AuthError("Unable to remove password.")
+        raise AuthUnexpectedError("Unable to remove password.")
 
 def verify_user(user):
     try:
@@ -80,7 +83,7 @@ def verify_user(user):
         db.session.commit()
     except Exception:
         db.session.rollback()
-        raise AuthError("Unable to verify email.")
+        raise AuthUnexpectedError("Unable to verify email.")
 
 def change_user_password(user, password):
     try:
@@ -89,7 +92,7 @@ def change_user_password(user, password):
         db.session.commit()
     except Exception:
         db.session.rollback()
-        raise AuthError("Unable to update password.")
+        raise AuthUnexpectedError("Unable to update password.")
 
 def update_user_profile(user, first_name, last_name, username):
     try:
@@ -102,7 +105,7 @@ def update_user_profile(user, first_name, last_name, username):
         raise AuthError("This username is already taken.")
     except Exception:
         db.session.rollback()
-        raise AuthError("Unable to update profile.")
+        raise AuthUnexpectedError("Unable to update profile.")
 
 def toggle_user_email_alerts_on(user):
     try:
@@ -110,7 +113,7 @@ def toggle_user_email_alerts_on(user):
         db.session.commit()
     except Exception:
         db.session.rollback()
-        raise AuthError("Unable to toggle email alerts.")
+        raise AuthUnexpectedError("Unable to toggle email alerts.")
 
 def update_user_last_login_at(user):
     user.last_login_at = get_current_utc()
@@ -122,7 +125,7 @@ def delete_user_account(user):
         db.session.commit()
     except Exception:
         db.session.rollback()
-        raise AuthError("Unable to delete account.")
+        raise AuthUnexpectedError("Unable to delete account.")
 
 def update_security_timestamp(user):
     user.security_timestamp = int(time())

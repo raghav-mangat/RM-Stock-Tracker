@@ -14,14 +14,16 @@ Started On: June 07, 2025
 import os
 from flask import (
     Flask, render_template, request, session, redirect, url_for,
-    flash, jsonify, has_request_context, send_from_directory
+    flash, jsonify, has_request_context, send_from_directory, g
 )
 from dotenv import load_dotenv
 from flask_login import LoginManager, current_user
 from flask_mail import Mail
 from flask_wtf.csrf import CSRFProtect
 from extensions import limiter
+from logging_config import setup_logging
 from authlib.integrations.flask_client import OAuth
+import uuid
 from datetime import datetime
 from redis import Redis
 from rq import Queue
@@ -113,6 +115,15 @@ email_high_queue = Queue("emails_high", connection=redis_conn) # High priority
 email_low_queue = Queue("emails_low", connection=redis_conn) # Low priority
 app.config["REDIS"] = redis_conn
 
+# Initialize Custom Flask App Config depending on the ENV
+if os.getenv("FLASK_APP_ENV") == "dev":
+    app.config.from_object("config.DevConfig")
+else:
+    app.config.from_object("config.ProdConfig")
+
+# Setup Logging
+setup_logging(app)
+
 # Access Flask App
 def get_app():
     return app
@@ -171,6 +182,12 @@ def enforce_session_security():
         )
         return redirect(url_for("auth.logout"))
     return None
+
+# Make sure the request id is attached before every request
+@app.before_request
+def attach_request_id():
+    # Gives a unique id to each request
+    g.request_id = uuid.uuid4().hex[:12]
 
 
 @app.route("/")
