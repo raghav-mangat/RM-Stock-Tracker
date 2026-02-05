@@ -26,3 +26,6 @@ MAX_FOLDER_NAME_LEN = 100
 
 # Number of suggestions we show in the stock search bar
 NUM_SUGGESTIONS = 10
+
+# Time after which the metrics data is removed from redis
+REDIS_METRICS_TTL = 60 * 60 * 24 * 7  # 7 days

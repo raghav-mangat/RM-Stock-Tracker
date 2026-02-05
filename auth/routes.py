@@ -6,6 +6,8 @@ import secrets
 import time
 from extensions import limiter
 from models.database import User, SignupSource
+from metrics import metrics
+from metrics.registry import MetricName
 from .emails import AuthEmail
 from .services import RedirectService
 from .forms import (
@@ -650,6 +652,8 @@ def google_signin():
 
 @auth_bp.route("/google/signin/callback")
 def google_signin_callback():
+    metrics.increment(MetricName.GOOGLE_OAUTH_CALLBACKS)
+
     oauth = current_app.config["OAUTH"]
 
     # Check state
@@ -861,6 +865,8 @@ def google_link():
 @auth_bp.route("/google/link/callback")
 @login_required
 def google_link_callback():
+    metrics.increment(MetricName.GOOGLE_OAUTH_CALLBACKS)
+
     oauth = current_app.config["OAUTH"]
 
     state_in_session = session.pop("link_state", None)
@@ -997,6 +1003,8 @@ def google_reauth():
 @auth_bp.route("/google/reauth/callback")
 @login_required
 def google_reauth_callback():
+    metrics.increment(MetricName.GOOGLE_OAUTH_CALLBACKS)
+
     oauth = current_app.config["OAUTH"]
 
     # Validate state

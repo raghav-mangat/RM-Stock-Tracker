@@ -35,7 +35,7 @@ class ContextFilter(logging.Filter):
 
     # Shows the values of only these specified attributes in this
     # particular order
-    CONTEXT_KEYS = ("request_id", "ip", "route", "user_id", "email")
+    CONTEXT_KEYS = ("request_id", "ip", "route", "user_id", "email", "reason")
 
     def filter(self, record: logging.LogRecord) -> bool:
         if has_request_context():
@@ -101,6 +101,11 @@ class StripExceptionInfoFilter(logging.Filter):
 
 def setup_logging(app):
     log_level = getattr(logging, app.config.get("LOG_LEVEL", "INFO"))
+
+    # Set the log level for the Flask app and the existing handlers
+    app.logger.setLevel(log_level)
+    for handler in app.logger.handlers:
+        handler.setLevel(log_level)
 
     # Decide log directory
     if app.config["ENV"] == "dev":

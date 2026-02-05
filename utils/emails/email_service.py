@@ -1,4 +1,6 @@
 from rq import Retry
+from metrics import metrics
+from metrics.registry import MetricName
 
 class EmailService:
 
@@ -27,6 +29,8 @@ class EmailService:
             retry=Retry(max=3, interval=[10, 30, 60]),
         )
 
+        metrics.increment(MetricName.EMAILS_SENT)
+
     @staticmethod
     def enqueue_watchlist_email(
         subject: str,
@@ -51,6 +55,8 @@ class EmailService:
             job_timeout=300,
             retry=Retry(max=2, interval=[60, 300]),
         )
+
+        metrics.increment(MetricName.EMAILS_SENT)
 
     @staticmethod
     def send_email(

@@ -1,9 +1,12 @@
 from flask import render_template
+from metrics import metrics
+from metrics.registry import MetricName
 
 def register_error_handlers(app):
     @app.errorhandler(Exception)
     def handle_unexpected_error(e):
         app.logger.exception("Unhandled Exception")
+        metrics.increment(MetricName.UNCAUGHT_EXCEPTIONS)
         raise e  # Let Flask return its default error page
 
     @app.errorhandler(404)

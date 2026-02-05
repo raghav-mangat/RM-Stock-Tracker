@@ -22,6 +22,8 @@ from flask_mail import Mail
 from flask_wtf.csrf import CSRFProtect
 from extensions import limiter
 from logging_config import setup_logging
+from metrics import init_metrics
+from metrics.middleware import register_metrics_middleware
 from authlib.integrations.flask_client import OAuth
 import uuid
 from datetime import datetime
@@ -51,6 +53,12 @@ app = Flask(__name__)
 
 # Configure the Flask App Secret Key
 app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
+
+# Initialize Custom Flask App Config depending on the ENV
+if os.getenv("FLASK_APP_ENV") == "dev":
+    app.config.from_object("config.DevConfig")
+else:
+    app.config.from_object("config.ProdConfig")
 
 # Required for generating absolute URLs (url_for with _external=True)
 # outside request context (e.g. emails, cron jobs)
@@ -115,14 +123,12 @@ email_high_queue = Queue("emails_high", connection=redis_conn) # High priority
 email_low_queue = Queue("emails_low", connection=redis_conn) # Low priority
 app.config["REDIS"] = redis_conn
 
-# Initialize Custom Flask App Config depending on the ENV
-if os.getenv("FLASK_APP_ENV") == "dev":
-    app.config.from_object("config.DevConfig")
-else:
-    app.config.from_object("config.ProdConfig")
-
 # Setup Logging
 setup_logging(app)
+
+# Setup Metrics
+init_metrics(app)
+register_metrics_middleware(app)
 
 # Access Flask App
 def get_app():
@@ -375,4 +381,5 @@ def sitemap():
 
 
 if __name__ == "__main__":
+    app.logger.info("Starting Flask App")
     app.run()

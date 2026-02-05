@@ -2,6 +2,8 @@ from datetime import datetime, timedelta
 from polygon import RESTClient
 from dotenv import load_dotenv
 import os
+from metrics import metrics
+from metrics.registry import MetricName
 from models.database import Stock, StockMaster, StockMinute, StockHour, StockDay, StockWeek
 from utils.datetime_utils import polygon_timestamp_to_utc_dt, format_date, DATE_FORMAT, DATETIME_FORMAT
 from utils.populate_db_info import db_last_updated_date
@@ -116,6 +118,7 @@ def fetch_all_stocks_data():
         ticker_types = {
             t.code: t.description for t in client.get_ticker_types(asset_class="stocks", locale="us")
         }
+        metrics.increment(MetricName.API_CALLS)
     except Exception as e:
         print(f"Error fetching ticker types: {e}")
         ticker_types = {}
@@ -131,6 +134,7 @@ def fetch_all_stocks_data():
                 market="stocks", active="true", order="asc", limit="1000", sort="ticker"
             )
         }
+        metrics.increment(MetricName.API_CALLS)
     except Exception as e:
         print(f"Error fetching all tickers data: {e}")
         all_tickers_data = {}
@@ -138,6 +142,7 @@ def fetch_all_stocks_data():
     # Getting "full market snapshot" endpoint data from polygon API
     try:
         snapshot = client.get_snapshot_all("stocks")
+        metrics.increment(MetricName.API_CALLS)
     except Exception as e:
         print(f"Error fetching snapshot data: {e}")
         snapshot = []
@@ -181,6 +186,7 @@ def fetch_all_stocks_data():
 def get_ticker_type(ticker_type):
     try:
         types = client.get_ticker_types(asset_class="stocks", locale="us")
+        metrics.increment(MetricName.API_CALLS)
         for stock_type in types:
             if stock_type.code == ticker_type:
                 return stock_type.description
@@ -191,6 +197,7 @@ def get_ticker_type(ticker_type):
 def get_related_companies(ticker):
     try:
         related_companies = client.get_related_companies(ticker)
+        metrics.increment(MetricName.API_CALLS)
         return ",".join([company.ticker for company in related_companies])
     except:
         return None
@@ -204,6 +211,7 @@ def safe_getattr(obj, attr, default=None):
 def get_ticker_details(stock_data, ticker, now):
     try:
         details = client.get_ticker_details(ticker, date=now)
+        metrics.increment(MetricName.API_CALLS)
 
         stock_data["ticker"] = safe_getattr(details, "ticker", None)
         stock_data["icon_url"] = safe_getattr(details.branding, "icon_url", None)
@@ -254,6 +262,9 @@ def get_365_day_data(ticker, now):
         data["low"].append(round(day_data.low, DECIMAL_PRECISION))
         data["close"].append(round(day_data.close, DECIMAL_PRECISION))
         data["volume"].append(int(day_data.volume))
+
+    metrics.increment(MetricName.API_CALLS)
+
     return data
 
 def get_ticker_values(stock_data, stock_365_day_data):
@@ -399,6 +410,8 @@ def fetch_chart_data(stock, timeframe, now=None):
         close_price_data[timestamp] = round(stock_data.close, DECIMAL_PRECISION)
         volume_data[timestamp] = int(stock_data.volume)
 
+    metrics.increment(MetricName.API_CALLS)
+
     # EMA helper
     def get_ema_data(ema_window):
         ema_data_ = {}
@@ -412,6 +425,8 @@ def fetch_chart_data(stock, timeframe, now=None):
             order="asc",
             limit="1000",
         )
+        metrics.increment(MetricName.API_CALLS)
+
         for value in ema.values:
             timestamp_ = value.timestamp
             ema_data_[timestamp_] = round(value.value, DECIMAL_PRECISION)
