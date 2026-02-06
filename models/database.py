@@ -1,6 +1,6 @@
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-from sqlalchemy import (String, Integer, Numeric, BigInteger, Text, Boolean, ForeignKey,
+from sqlalchemy import (String, Integer, Float, Numeric, BigInteger, Text, Boolean, ForeignKey,
                         Date, DateTime, UniqueConstraint, TypeDecorator, CheckConstraint)
 from sqlalchemy import Index as DBIndex
 from sqlalchemy import Enum as SQLEnum
@@ -594,6 +594,14 @@ class User(UserMixin, TimestampMixin, db.Model):
 
         return user
 
+    __table_args__ = (
+        # Enforce password_hash OR google_id
+        CheckConstraint(
+            "(password_hash IS NOT NULL OR google_id IS NOT NULL)",
+            name="ck_user_password_hash_or_google_id",
+        ),
+    )
+
     def __repr__(self) -> str:
         return (f"<User id={self.id} email={self.email} username={self.username} "
                 f"first_name={self.first_name} last_name={self.last_name}>")
@@ -818,3 +826,54 @@ class WatchlistAlert(TimestampMixin, db.Model):
             f"<WatchlistAlert id={self.id} user_id={self.user_id} "
             f"attribute={self.attribute} {target}>"
         )
+
+
+class DailyAppStatus(TimestampMixin, db.Model):
+    __tablename__ = "daily_app_status"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+
+    # Identity
+    date: Mapped[date] = mapped_column(Date, nullable=False, unique=True)
+
+    # Core Usage Metrics
+    emails_sent: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    api_calls: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    google_oauth_callbacks: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+
+    # App Health
+    request_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    static_request_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+
+    responses_5xx: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    slow_requests: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    uncaught_exceptions: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+
+    avg_latency_ms: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    avg_static_latency_ms: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+
+    redis_flush_success: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    redis_flush_failure: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+
+    # Growth & Engagement (Total)
+    total_users: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    active_users: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    google_users: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    email_users: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    verified_users: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    password_users: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    google_id_users: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    password_and_google_id_users: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    email_alerts_users: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+
+    # Growth & Engagement (24 hours)
+    logged_in_users_24h: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    new_users_24h: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    deleted_users_24h: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+
+    # Market Status
+    market_open: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+
+    def __repr__(self) -> str:
+        return (f"<DailyAppStatus id={self.id} date={self.date} request_count={self.request_count} "
+                f"avg_latency_ms={self.avg_latency_ms} total_users={self.total_users}>")
