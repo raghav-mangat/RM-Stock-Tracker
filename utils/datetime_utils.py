@@ -32,6 +32,9 @@ def polygon_timestamp_to_utc_dt(timestamp, timestamp_type):
 def get_current_utc():
     return datetime.now(UTC)
 
+def get_current_utc_date():
+    return datetime.now(UTC).date()
+
 def convert_to_utc_tz_aware(utc_dt):
     """
     Database stores TZ naive timestamp, so convert it to TZ aware,

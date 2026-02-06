@@ -6,7 +6,7 @@ from metrics.base import MetricsBackend
 from metrics.keys import metrics_dated_key
 from metrics.registry import MetricName
 from utils.constants import REDIS_METRICS_TTL
-from utils.datetime_utils import get_current_utc
+from utils.datetime_utils import get_current_utc_date
 
 
 class HybridMetricsBackend(MetricsBackend):
@@ -71,7 +71,7 @@ class HybridMetricsBackend(MetricsBackend):
             ):
                 return
 
-            now = get_current_utc()
+            now = get_current_utc_date()
             pipe = self.redis.pipeline()
 
             try:

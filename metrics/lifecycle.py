@@ -1,6 +1,7 @@
 import atexit
 import signal
 import sys
+import threading
 
 
 def register_metrics_shutdown(app, metrics):
@@ -18,7 +19,8 @@ def register_metrics_shutdown(app, metrics):
             else:
                 reason = "atexit"
 
-            logger.info("Flushing metrics on shutdown", extra={"reason": reason})
+            level = logger.info if signum else logger.debug
+            level("Flushing metrics on shutdown", extra={"reason": reason})
             metrics.flush()
         except Exception:
             # Never let shutdown crash the process
@@ -31,6 +33,7 @@ def register_metrics_shutdown(app, metrics):
     # Normal interpreter exit
     atexit.register(lambda: flush_and_exit())
 
-    # Process termination signals
-    for sig in (signal.SIGINT, signal.SIGTERM):
-        signal.signal(sig, lambda s, f: flush_and_exit(s))
+    # Process termination signals, only in the main thread
+    if threading.current_thread() is threading.main_thread():
+        for sig in (signal.SIGINT, signal.SIGTERM):
+            signal.signal(sig, lambda s, f: flush_and_exit(s))
