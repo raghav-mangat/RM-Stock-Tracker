@@ -16,16 +16,18 @@ Notes:
 - The admin routes can only be accessed by admin users by manually 
     entering the url.
 - Currently the admin blueprint only has the admin dashboard page 
-    which shows a table of user data along with some useful stats. 
+    which shows a table of user data along with some useful stats.
+    Also shows data for the Daily App Status Database table. 
     We can build more on top of it later on.
 """
 
 @admin_bp.route("/", methods=["GET"])
 @admin_required
 def index():
-    users_data, stats = get_admin_dashboard_data()
+    users_data, stats, daily_status = get_admin_dashboard_data()
     return render_template(
         "dashboard.html",
         users_data=users_data,
-        stats=stats
+        stats=stats,
+        daily_status=daily_status
     )

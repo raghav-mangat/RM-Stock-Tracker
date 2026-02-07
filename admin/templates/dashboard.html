@@ -1,4 +1,5 @@
-{% from "macros/dashboard_components.html" import stats_card, bool_badge %}
+{% from "macros/dashboard_components.html" import stats_card %}
+{% from "macros/dashboard_tables.html" import users_table, daily_users_status_table, daily_app_status_table %}
 
 {% extends "admin_base.html" %}
 
@@ -12,7 +13,7 @@
   <!-- Page Header -->
   <div class="mb-4">
     <h2 class="fw-bold">Admin Dashboard</h2>
-    <p class="text-muted mb-0">Overview of user activity and registrations</p>
+    <p class="text-muted mb-0">Overview of user activity, registrations and app status</p>
   </div>
 
   <!-- Stats Cards -->
@@ -25,100 +26,58 @@
     {{ stats_card("Verified Users", stats.verified_users, stats.verified_perc) }}
     {{ stats_card("Users w/ Password", stats.password_users, stats.password_perc) }}
     {{ stats_card("Users w/ Google ID", stats.google_id_users, stats.google_id_perc) }}
+    {{ stats_card("Users w/ Password & Google ID", stats.password_and_google_id_users, stats.password_and_google_id_perc) }}
+
     {{ stats_card("Email Alerts On", stats.email_alerts_users, stats.email_alerts_perc) }}
+    {{ stats_card("User Logins (24h)", stats.logged_in_users_24h, stats.logged_in_users_24h_perc) }}
+    {{ stats_card("New Users (24h)", stats.new_users_24h, stats.new_users_24h_perc) }}
+    {{ stats_card("Total Admins", stats.num_admins) }}
   </div>
 
-  <!-- Users Table -->
+  <!-- Tables -->
   <div class="card shadow-sm">
     <div class="card-body">
-      <h5 class="card-title mb-3">Users</h5>
+      <h5 class="card-title mb-3">Tables</h5>
 
-      <div class="table-responsive">
-        <table class="table table-striped table-bordered table-hover align-middle">
-          <thead class="table-light">
-            <tr class="align-middle">
-              <th>#</th>
-              <th>ID</th>
-              <th>Name</th>
-              <th>Username</th>
-              <th>Email</th>
+      <ul class="nav nav-tabs mb-3" role="tablist">
+        <li class="nav-item" role="presentation">
+          <button class="nav-link fw-semibold active"
+                  data-bs-toggle="tab"
+                  data-bs-target="#users"
+                  type="button">
+            Users
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link fw-semibold"
+                  data-bs-toggle="tab"
+                  data-bs-target="#daily-users-status"
+                  type="button">
+            Daily Users Status
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link fw-semibold"
+                  data-bs-toggle="tab"
+                  data-bs-target="#daily-app-status"
+                  type="button">
+            Daily App Status
+          </button>
+        </li>
+      </ul>
 
-              <th>Verified</th>
-              <th>Password</th>
-              <th>Google ID</th>
-              <th>Email Alerts</th>
+      <div class="tab-content">
+        <div class="tab-pane fade show active" id="users">
+          {{ users_table(users_data) }}
+        </div>
 
-              <th>Signup Source</th>
-              <th>Status</th>
-              <th>Last Login</th>
-              <th>Last Update</th>
-              <th>Joined</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for user in users_data %}
-            <tr>
-              <td class="fw-bold">{{ loop.index }}</td>
-              <td>{{ user.account.id }}</td>
+        <div class="tab-pane fade" id="daily-users-status">
+          {{ daily_users_status_table(daily_status) }}
+        </div>
 
-              <td>
-                {{ user.account.first_name }} {{ user.account.last_name }}
-              </td>
-
-              <td>{{ user.account.username }}</td>
-              <td>{{ user.account.email }}</td>
-
-              <td class="text-center">
-                {{ bool_badge(user.account.is_verified, true_color="success", false_color="warning") }}
-              </td>
-
-              <td class="text-center">
-                {{ bool_badge(user.account.password_hash) }}
-              </td>
-
-              <td class="text-center">
-                {{ bool_badge(user.account.google_id) }}
-              </td>
-
-              <td class="text-center">
-                {{ bool_badge(user.account.email_alerts_on) }}
-              </td>
-
-              <td class="text-center">
-                {% if user.account.signup_source.name == "GOOGLE" %}
-                  <span class="badge bg-primary">Google</span>
-                {% else %}
-                  <span class="badge bg-info text-dark">Email</span>
-                {% endif %}
-              </td>
-
-              <td class="text-center">
-                {% if user.active %}
-                  <span class="badge bg-success">Active</span>
-                {% else %}
-                  <span class="badge bg-secondary">Inactive</span>
-                {% endif %}
-              </td>
-
-              <td>
-                {% if user.account.last_login_at %}
-                  {{ user.account.last_login_at.strftime("%b %d, %Y - %I:%M %p") }}
-                {% else %}
-                  <span class="text-muted">Never</span>
-                {% endif %}
-              </td>
-
-              <td>
-                {{ user.account.updated_at.strftime("%b %d, %Y") }}
-              </td>
-
-              <td>
-                {{ user.account.created_at.strftime("%b %d, %Y") }}
-              </td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+        <div class="tab-pane fade" id="daily-app-status">
+          {{ daily_app_status_table(daily_status) }}
+        </div>
       </div>
 
     </div>

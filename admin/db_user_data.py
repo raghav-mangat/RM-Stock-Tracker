@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
-from models.database import db, User, SignupSource
+from sqlalchemy.sql.functions import count
+from models.database import db, User, SignupSource, DailyAppStatus
 from utils.db_queries.user_data import is_user_active
 from utils.datetime_utils import get_current_utc
 
@@ -24,6 +25,11 @@ def get_admin_dashboard_data():
     start = now - timedelta(days=1)
     stats = get_users_stats(start, now)
 
+    num_admins = db.session.execute(
+        db.select(count(User.id))
+        .where(User.is_admin == True)
+    ).scalar()
+
     def perc(x):
         return round((x / total_users) * 100, 2) if total_users else 0
 
@@ -38,9 +44,17 @@ def get_admin_dashboard_data():
         "email_alerts_perc": perc(stats["email_alerts_users"]),
         "logged_in_users_24h_perc": perc(stats["logged_in_users_24h"]),
         "new_users_24h_perc": perc(stats["new_users_24h"]),
+        "num_admins": num_admins,
     })
 
-    return users_data, stats
+    # Daily App Status for the past year
+    daily_status = db.session.execute(
+        db.select(DailyAppStatus)
+        .order_by(DailyAppStatus.date.desc())
+        .limit(365)
+    ).scalars().all()
+
+    return users_data, stats, daily_status
 
 def get_users_stats(start: datetime, end: datetime):
     users = get_users_before_ts(end)
@@ -108,6 +122,9 @@ def get_users_stats(start: datetime, end: datetime):
     return stats
 
 def get_users_before_ts(before_ts: datetime):
+    """
+    ts - TimeStamp
+    """
     users = db.session.execute(
         db.select(User)
         .where(User.created_at < before_ts)

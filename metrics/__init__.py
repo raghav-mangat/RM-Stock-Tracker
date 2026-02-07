@@ -17,6 +17,10 @@ from metrics.lifecycle import register_metrics_shutdown
 - Flush failures do not break requests and buffers are retried later
 - Each request has the actual app request part and static part,
     that's why we have request count and static request count
+- Metrics are only calculated in prod not in dev
+- Modular code, changing how the metrics backend works later on
+    should be very easy, only exposing the class to the rest of
+    the code which could be replaced later on
 - Improvements / Future Work
     - Background flush thread instead of opportunistic flushing
     - Export metrics to Prometheus / Grafana
