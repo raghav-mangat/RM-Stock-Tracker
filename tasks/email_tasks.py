@@ -13,12 +13,14 @@ def send_email_task(
     app = get_app()
 
     with app.app_context():
-        from utils.emails.email_service import EmailService
+        from utils.emails.providers.factory import get_email_provider
 
-        EmailService.send_email(
-            subject=subject,
-            recipients=recipients,
-            text_body=text_body,
-            html_body=html_body,
-            inline_images=inline_images,
+        provider = get_email_provider()
+
+        provider.send(
+            subject,
+            recipients,
+            text_body,
+            html_body,
+            inline_images,
         )

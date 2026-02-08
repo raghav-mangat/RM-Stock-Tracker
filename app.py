@@ -85,7 +85,18 @@ login_manager.login_view = "auth.login"
 def load_user(user_id):
     return get_user_by_id(user_id)
 
-# Initialize Flask Mail
+# Initialize Selected Email Provider
+app.config["EMAIL_PROVIDER"] = os.getenv("EMAIL_PROVIDER", "smtp")
+
+# Initialize Email Provider - Mailgun
+app.config["MAILGUN_API_KEY"] = os.getenv("MAILGUN_API_KEY")
+app.config["MAILGUN_BASE_URL"] = os.getenv("MAILGUN_BASE_URL")
+app.config["MAILGUN_DOMAIN"] = os.getenv("MAILGUN_DOMAIN")
+app.config["MAILGUN_VERSION"] = os.getenv("MAILGUN_VERSION")
+app.config["MAILGUN_ENDPOINT"] = os.getenv("MAILGUN_ENDPOINT")
+app.config["MAILGUN_DEFAULT_SENDER"] = os.getenv("MAILGUN_DEFAULT_SENDER")
+
+# Initialize Flask Mail, SMTP - Namecheap or Gmail
 app.config['MAIL_SERVER'] = os.getenv("MAIL_SERVER")
 app.config['MAIL_PORT'] = os.getenv("MAIL_PORT")
 app.config['MAIL_USE_TLS'] = os.getenv("MAIL_USE_TLS")

@@ -1,5 +1,5 @@
 RM Stock Tracker
-({{ url_for('home', _external=True) }})
+{{ url_for('home', _external=True) }}
 -----------------------------------
 
 {% block content %}{% endblock %}
