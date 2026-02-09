@@ -3,6 +3,7 @@ import os
 class BaseConfig:
     ENV = os.getenv("FLASK_APP_ENV", "prod")
     RATELIMIT_STORAGE_URI = os.getenv("FLASK_LIMITER_STORAGE_URI")
+    FLASK_LIMITER_HASH_SECRET = os.getenv("FLASK_LIMITER_HASH_SECRET")
 
     DEBUG = False
     LOG_LEVEL = "INFO"

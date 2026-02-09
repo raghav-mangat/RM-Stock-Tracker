@@ -170,7 +170,7 @@
         <th>Avg Latency (ms)</th>
         <th>Avg Static Latency (ms)</th>
 
-        <th>Emails Sent</th>
+        <th>Emails Enqueued</th>
         <th>API Calls</th>
         <th>Google OAuth Callbacks</th>
 
@@ -201,7 +201,7 @@
         <td>{{ "%.1f"|format(row.avg_latency_ms) }}</td>
         <td>{{ "%.1f"|format(row.avg_static_latency_ms) }}</td>
 
-        <td>{{ row.emails_sent }}</td>
+        <td>{{ row.emails_enqueued }}</td>
         <td>{{ row.api_calls }}</td>
         <td>{{ row.google_oauth_callbacks }}</td>
 

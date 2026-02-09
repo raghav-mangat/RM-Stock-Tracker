@@ -29,7 +29,7 @@ class EmailService:
             retry=Retry(max=3, interval=[10, 30, 60]),
         )
 
-        metrics.increment(MetricName.EMAILS_SENT)
+        metrics.increment(MetricName.EMAILS_ENQUEUED)
 
     @staticmethod
     def enqueue_watchlist_email(
@@ -56,4 +56,4 @@ class EmailService:
             retry=Retry(max=2, interval=[60, 300]),
         )
 
-        metrics.increment(MetricName.EMAILS_SENT)
+        metrics.increment(MetricName.EMAILS_ENQUEUED)

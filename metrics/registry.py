@@ -1,5 +1,5 @@
 class MetricName:
-    EMAILS_SENT = "emails_sent"
+    EMAILS_ENQUEUED = "emails_enqueued"
     API_CALLS = "api_calls"
     GOOGLE_OAUTH_CALLBACKS = "google_oauth_callbacks"
 

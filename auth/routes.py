@@ -154,11 +154,9 @@ def login():
 def logout():
     user_id = current_user.id
 
-    session.pop("security_timestamp", None)
-    session.pop("reauth_verified", None)
-    session.pop("reauth_verified_at", None)
-
     logout_user()
+
+    session.clear()
 
     current_app.logger.info(
         "User logged out",
