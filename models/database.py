@@ -837,7 +837,7 @@ class DailyAppStatus(TimestampMixin, db.Model):
     date: Mapped[date] = mapped_column(Date, nullable=False, unique=True)
 
     # Core Usage Metrics
-    emails_sent: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    emails_enqueued: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     api_calls: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     google_oauth_callbacks: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
