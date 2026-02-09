@@ -1,6 +1,6 @@
 {% from "macros/arrow_direction.html" import arrow_direction %}
 {% from "macros/jumbotron.html" import jumbotron %}
-{% from "macros/top_stocks_tables.html" import top_stocks_tab_content %}
+{% from "macros/top_market_movers_tables.html" import trending_stocks_tab_content, top_stocks_tab_content %}
 {% from "macros/search_bar.html" import search_bar %}
 
 {% extends "base.html" %}
@@ -63,18 +63,33 @@
   </section>
 
   <!--
-    This section renders a vertical tab interface for selecting an index
-    (Overall, S&P 500, Nasdaq 100, Dow Jones). Inside each index tab,
-    a horizontal tab shows top gainers, losers, and top traded stocks.
+    Top Market Movers Section
+    -------------------------
+    Displays market activity using a vertical tab layout.
+
+    - "Trending Stocks" shows the most actively traded stocks across the overall market,
+      rendered server-side for fast initial load.
+    - Other categories (Overall, S&P 500, Nasdaq 100, Dow Jones) are loaded on demand
+      via AJAX and contain horizontal tabs for Gainers, Losers, and Top Traded stocks.
+
+    This approach balances performance, UX responsiveness, and scalability.
   -->
   <section class="container my-5">
-    <h2 class="fw-bold text-center text-decoration-underline mb-5">Top Market Movers</h2>
+
+    <div class="d-flex align-items-center mb-4">
+      <div class="flex-grow-1 border-top border-2"></div>
+        <h2 class="fw-bold mx-3">Top Market Movers</h2>
+      <div class="flex-grow-1 border-top border-2"></div>
+    </div>
 
     <div class="row">
       <!-- Vertical Tabs -->
       <div class="col-md-3 mb-3 mb-md-0">
-        <div class="list-group" id="topStocksTabs" role="tablist">
-          <a class="category-link list-group-item list-group-item-action active" data-loaded="0" id="overall-tab" data-bs-toggle="list" href="#overall" role="tab" aria-controls="overall" aria-current="true">
+        <div class="list-group" id="topMarketMoversTabs" role="tablist">
+          <a class="list-group-item list-group-item-action active" id="trending-stocks-tab" data-bs-toggle="list" href="#trending-stocks" role="tab" aria-controls="trending-stocks" aria-current="true">
+            Trending Stocks
+          </a>
+          <a class="category-link list-group-item list-group-item-action" data-loaded="0" id="overall-tab" data-bs-toggle="list" href="#overall" role="tab" aria-controls="overall">
             {{ top_stocks_categories.overall }}
           </a>
           <a class="category-link list-group-item list-group-item-action" data-loaded="0" id="sp500-tab" data-bs-toggle="list" href="#sp500" role="tab" aria-controls="sp500">
@@ -91,7 +106,8 @@
 
       <!-- Horizontal Tab Content Area -->
       <div class="col-md-9">
-        <div class="tab-content" id="topStocksContent">
+        <div class="tab-content" id="topMarketMoversContent">
+          {{ trending_stocks_tab_content('trending-stocks', trending_stocks) }}
           {{ top_stocks_tab_content('overall', top_stocks_categories.overall) }}
           {{ top_stocks_tab_content('sp500', top_stocks_categories.sp500) }}
           {{ top_stocks_tab_content('nasdaq100', top_stocks_categories.nasdaq100) }}

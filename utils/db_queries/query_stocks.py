@@ -1,35 +1,31 @@
 from flask import jsonify
-from sqlalchemy import func
 from models.database import db, StockMaster
+from utils.db_queries.all_stocks import get_stocks_popularity
 from utils.constants import NUM_SUGGESTIONS
 
-def get_query_stocks(query):
-    # Estimate popularity using (day close price) * volume
-    popularity = (
-        func.coalesce(StockMaster.day_close, 0) *
-        func.coalesce(StockMaster.volume, 0)
+def get_query_stocks(user_query):
+    popularity = get_stocks_popularity()
+
+    db_base_query = db.session.query(
+        StockMaster.ticker,
+        StockMaster.name,
+    ).order_by(
+        popularity.desc()
     )
 
-    base_query = (
-        db.session.query(
-            StockMaster.ticker,
-            StockMaster.name
-        ).order_by(popularity.desc())
-    )
-
-    if query:
+    if user_query:
         # User typed something
-        query_upper = query.upper()
+        user_query_upper = user_query.upper()
         matches = (
-            base_query
+            db_base_query
             .filter(
-                StockMaster.ticker.ilike(f"{query_upper}%") |
-                StockMaster.name.ilike(f"{query}%")
+                StockMaster.ticker.ilike(f"{user_query_upper}%") |
+                StockMaster.name.ilike(f"{user_query}%")
             )
         )
     else:
-        # Empty query, return popular stocks
-        matches = base_query
+        # Empty user query, return popular stocks
+        matches = db_base_query
 
     matches = matches.limit(NUM_SUGGESTIONS).all()
 

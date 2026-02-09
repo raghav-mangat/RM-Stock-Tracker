@@ -20,7 +20,3 @@
         <span class="fw-semibold">N/A</span>
     {% endif %}
 {% endmacro %}
-
-{% macro stock_volume(stock) %}
-  <span class="fw-semibold">{{ stock.volume | humanize_number }}</span>
-{% endmacro %}

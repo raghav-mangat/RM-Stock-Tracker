@@ -39,7 +39,10 @@ from utils.breadcrumbs import generate_breadcrumbs
 from utils.populate_db_info import db_last_updated
 from utils.db_queries.all_indices import get_all_indices
 from utils.db_queries.show_index import get_index_data
-from utils.db_queries.all_stocks import get_ticker_tape_stocks, get_top_stocks_categories, db_get_top_stocks_data
+from utils.db_queries.all_stocks import (
+    get_ticker_tape_stocks, get_trending_stocks, get_top_stocks_categories,
+    db_get_top_stocks_data
+)
 from utils.db_queries.query_stocks import get_query_stocks
 from utils.db_queries.show_stock import get_stock_data, get_chart_data, get_timeframe_options
 from utils.db_queries.user_data import get_user_by_id
@@ -248,13 +251,14 @@ def all_stocks():
     last_updated = db_last_updated()
 
     ticker_tape_stocks = get_ticker_tape_stocks()
-
+    trending_stocks = get_trending_stocks()
     top_stocks_categories = get_top_stocks_categories()
 
     return render_template(
         "all_stocks.html",
         last_updated=last_updated,
         ticker_tape_stocks=ticker_tape_stocks,
+        trending_stocks=trending_stocks,
         top_stocks_categories=top_stocks_categories
     )
 

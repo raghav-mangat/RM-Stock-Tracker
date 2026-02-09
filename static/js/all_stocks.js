@@ -2,9 +2,6 @@
 const requestTracker = {};
 
 document.addEventListener("DOMContentLoaded", () => {
-  // Fetch the data for the Overall tab as soon as the page loads
-  fetchCategoryData(document.getElementById("overall-tab"));
-
   // Fetch the data for each category when the link for that
   // category is clicked
   categoryLinks = document.querySelectorAll(".category-link");
@@ -47,7 +44,7 @@ function fetchCategoryData(categoryLink) {
         categoryLink.dataset.loaded = "1";
       })
       .catch((err) =>
-        console.error("An unexpected error occurred. Please try again later.")
+        console.error("An unexpected error occurred. Please try again later."),
       );
   }
 }

@@ -11,7 +11,7 @@ from data_collectors.index_data import all_indices, get_index_info, fetch_index_
 from data_collectors.stock_data import fetch_all_stocks_data, fetch_stock_data, fetch_chart_data, DB_TIMEFRAMES
 from utils.datetime_utils import get_current_utc, format_dt_et, format_date
 from utils.db_queries.stock_master_data import get_all_stock_master
-from utils.db_queries.all_stocks import get_top_stocks_categories, db_get_top_stocks_data
+from utils.db_queries.all_stocks import get_trending_stocks, get_top_stocks_categories, db_get_top_stocks_data
 from utils.db_queries.query_stocks import get_query_stocks
 from pathlib import Path
 import json
@@ -178,6 +178,25 @@ def populate_db():
                 print("Flushed the database with the new fetched data!\n")
 
 
+                print("Fetching Trending Stocks data for updated database...")
+
+                # Clearing the collected data to collect data for trending stocks
+                clear_stocks_data()
+
+                with db.session.no_autoflush:
+                    for stock in get_trending_stocks():
+                        ticker = stock.ticker
+                        if ticker:
+                            get_or_fetch_stock(ticker, now_date, stock_master_map)
+
+                print("Fetched Trending Stocks data for updated database!")
+
+                # Flush Trending Stocks and their chart data
+                print("Flushing Trending Stocks data in the database...")
+                add_new_stocks_data()
+                print("Flushed Trending Stocks data in the database!")
+
+
                 print("Fetching Top Stocks data for updated database...")
 
                 # Clearing the collected data to collect data for top stocks
@@ -199,23 +218,24 @@ def populate_db():
                 print("Flushed Top Stocks data in the database!")
 
 
-                print("Fetching Trending Stocks data for updated database...")
+                print("Fetching Search Bar Stocks data for updated database...")
 
-                # Clearing the collected data to collect data for trending stocks
+                # Clearing the collected data to collect data for search bar stocks
                 clear_stocks_data()
 
                 with db.session.no_autoflush:
-                    for item in get_query_stocks(query=None).json:
+                    for item in get_query_stocks(user_query=None).json:
                         ticker = item.get("ticker")
                         if ticker:
                             get_or_fetch_stock(ticker, now_date, stock_master_map)
 
-                print("Fetched Trending Stocks data for updated database!")
+                print("Fetched Search Bar Stocks data for updated database!")
 
-                # Flush Trending Stocks and their chart data
-                print("Flushing Trending Stocks data in the database...")
+                # Flush Search Bar Stocks and their chart data
+                print("Flushing Search Bar Stocks data in the database...")
                 add_new_stocks_data()
-                print("Flushed Trending Stocks data in the database!")
+                print("Flushed Search Bar Stocks data in the database!")
+
 
                 # -------- Transactional Replace --------
                 print("\nCommiting all the data to the database...")

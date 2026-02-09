@@ -1,5 +1,5 @@
 import random
-from sqlalchemy import or_
+from sqlalchemy import func, or_
 from models.database import db, StockMaster, Stock, Index, IndexHolding
 
 # Number of top stocks to be shown for each category
@@ -38,6 +38,32 @@ def get_ticker_tape_stocks():
     random.shuffle(ticker_tape_stocks)
 
     return ticker_tape_stocks
+
+def get_trending_stocks():
+    popularity = get_stocks_popularity()
+    trending_stocks = db.session.query(
+        StockMaster.ticker,
+        StockMaster.name,
+        StockMaster.day_close,
+        StockMaster.todays_change,
+        StockMaster.todays_change_perc,
+        StockMaster.volume,
+        popularity
+    ).order_by(
+        popularity.desc()
+    ).limit(NUM_TOP_STOCKS).all()
+
+    return trending_stocks
+
+def get_stocks_popularity():
+    # Estimate popularity using (day close price) * volume
+    # Also, called trade activity
+    popularity = (
+        func.coalesce(StockMaster.day_close, 0) *
+        func.coalesce(StockMaster.volume, 0)
+    ).label('popularity')
+
+    return popularity
 
 def get_top_stocks_categories():
     # Dict of data to return

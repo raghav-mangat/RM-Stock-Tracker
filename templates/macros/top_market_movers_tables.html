@@ -1,4 +1,4 @@
-{% from "macros/stock_attributes.html" import stock_todays_change, stock_volume %}
+{% from "macros/stock_attributes.html" import stock_todays_change %}
 
 {% macro placeholder_cell() %}
   <td class="placeholder-glow">
@@ -22,7 +22,9 @@
         {% if stocks_type == 'gainers' or stocks_type == 'losers' %}
           <td>{{ stock_todays_change(stock) }}</td>
         {% else  %}
-          <td>{{ stock_volume(stock) }}</td>
+          <td>
+            <span class="fw-semibold">{{ stock.volume | humanize_number }}</span>
+          </td>
         {% endif %}
       </tr>
     {% endfor %}
@@ -75,7 +77,7 @@
     - tab_name: Display name for the tab (e.g., "S&P 500")
 #}
 {% macro top_stocks_tab_content(tab_id, tab_name) %}
-  <div class="tab-pane fade {% if tab_id == 'overall' %}show active{% endif %}" id="{{ tab_id }}" role="tabpanel" aria-labelledby="{{ tab_id }}-tab">
+  <div class="tab-pane fade" id="{{ tab_id }}" role="tabpanel" aria-labelledby="{{ tab_id }}-tab">
     <ul class="nav nav-tabs mb-4" id="{{ tab_id }}-subtabs" role="tablist">
       <li class="nav-item" role="presentation">
         <button class="nav-link active fw-semibold" id="{{ tab_id }}-gainers-tab" data-bs-toggle="tab" data-bs-target="#{{ tab_id }}-gainers" type="button" role="tab" aria-controls="{{ tab_id }}-gainers" aria-selected="true">Gainers</button>
@@ -97,6 +99,49 @@
       <div class="tab-pane fade" id="{{ tab_id }}-volume" role="tabpanel" aria-labelledby="{{ tab_id }}-volume-tab">
         {{ top_stocks_table(tab_id, "volume", "Most Actively Traded Stocks Today", tab_name, "Volume") }}
       </div>
+    </div>
+  </div>
+{% endmacro %}
+
+{% macro trending_stocks_tab_content(tab_id, trending_stocks) %}
+  <div class="tab-pane fade show active" id="{{ tab_id }}" role="tabpanel" aria-labelledby="{{ tab_id }}-tab">
+    <h3 class="h4 mb-1">Trending Stocks Today</h3>
+    <p class="text-muted mb-3">
+      Stocks ranked by overall trading activity today, based on price times volume.
+    </p>
+    <div class="table-responsive">
+      <table class="table table-bordered table-hover align-middle">
+        <thead class="table-light">
+          <tr>
+            <th scope="col">#</th>
+            <th scope="col">Ticker</th>
+            <th scope="col" style="max-width: 250px;">Company</th>
+            <th scope="col">Day Close</th>
+            <th scope="col">Volume</th>
+            <th scope="col">Today's Change</th>
+            <th scope="col">Trade Activity</th>
+          </tr>
+        </thead>
+        <tbody id="table-{{ id }}">
+          {% for stock in trending_stocks %}
+            <tr>
+              <th scope="row">{{ loop.index }}</th>
+              <td>{{ stock.ticker }}</td>
+              <td style="max-width: 250px;">
+                <a href="{{ url_for('show_stock', ticker=stock.ticker) }}" class="fw-semibold text-primary">
+                  {{ stock.name | display }}
+                </a>
+              </td>
+              <td>{{ stock.day_close | currency }}</td>
+              <td>{{ stock.volume | humanize_number }}</td>
+              <td>{{ stock_todays_change(stock) }}</td>
+              <td>
+                <span class="fw-semibold">{{ stock.popularity | humanize_number }}</span>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
   </div>
 {% endmacro %}
