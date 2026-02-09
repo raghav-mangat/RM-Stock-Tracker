@@ -22,6 +22,12 @@
     </div>
 {% endmacro %}
 
+{% macro submit_field(field, class) %}
+  <div class="d-grid mb-3">
+    {{ field(class=class) }}
+  </div>
+{% endmacro %}
+
 {% macro password_field(field, placeholder, check_requirements=False) %}
 <div class="password-field-group mb-3">
 

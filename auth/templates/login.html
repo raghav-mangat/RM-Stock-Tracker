@@ -1,5 +1,5 @@
-{% from "macros/auth_form_components.html" import form_heading, form_submit, form_separator, form_agreement %}
-{% from "macros/auth_fields.html" import form_field, password_field with context %}
+{% from "macros/auth_form_components.html" import form_heading, form_separator, form_agreement %}
+{% from "macros/auth_fields.html" import form_field, submit_field, password_field with context %}
 {% from "macros/google_btn.html" import google_btn %}
 
 {% extends "auth_form_base.html" %}
@@ -24,7 +24,7 @@
   {{ form_field(field=form.email, placeholder="Enter your email") }}
   {{ password_field(field=form.password, placeholder="Enter your password") }}
 
-  {{ form_submit(form=form, class="btn btn-primary btn-lg") }}
+  {{ submit_field(field=form.submit, class="btn btn-primary btn-lg") }}
 </form>
 
 <div class="text-center">

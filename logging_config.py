@@ -45,8 +45,8 @@ class ContextFilter(logging.Filter):
             # Automatically attach client IP
             record.ip = request.remote_addr
 
-            # Attach full route including query params (best for debugging)
-            record.route = request.full_path
+            # Attach request route
+            record.route = request.path
 
             # If user_id was explicitly passed via "extra", do not override it
             # Otherwise, if the user is authenticated, auto-inject current_user.id
@@ -125,8 +125,7 @@ def setup_logging(app):
     Separate concerns:
         - app.log: Operational truth, everything is logged here
         - error.log: Failures, captures errors only
-        - events.log: Business and security events, info and warning 
-            logs for the auth actions only
+        - events.log: Business and security events, info and warning
     """
 
     # App log (DEBUG/INFO+)

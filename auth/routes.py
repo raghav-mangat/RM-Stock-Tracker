@@ -379,7 +379,7 @@ def settings_set_password():
             session.pop("reauth_verified_at", None)
 
             try:
-                change_user_password(current_user, form.set_password.data)
+                change_user_password(current_user, form.password.data)
 
                 current_app.logger.info(
                     "Password set"
@@ -516,7 +516,7 @@ def reset_password(token):
                 extra={"user_id": user.id}
             )
 
-            flash("Your password has been reset. Please log in again.", "success")
+            flash("Your password has been reset. Please log in.", "success")
             try:
                 AuthEmail.password_reset_success(user)
             except Exception:
@@ -534,7 +534,11 @@ def reset_password(token):
             flash(str(e), "danger")
         except AuthError as e:
             flash(str(e), "danger")
-        return redirect(url_for("auth.logout"))
+
+        if current_user.is_authenticated:
+            return redirect(url_for("auth.logout"))
+        else:
+            return redirect(url_for("auth.login"))
 
     return render_template("reset_password.html", form=form)
 
@@ -1066,7 +1070,6 @@ def google_reauth_callback():
             "Google re-authentication"
         )
 
-        flash("Re-authentication successful.", "success")
         return redirect(next_url)
     else:
         flash("Authentication failed. Please try again.", "danger")

@@ -162,9 +162,9 @@ class SettingsToggleEmailAlertsForm(FlaskForm):
     toggle_email_alerts_submit = SubmitField("Confirm")
 
 class SettingsSetPasswordForm(FlaskForm):
-    set_password = get_password_field(label="Password", validate_strong_password=True)
-    confirm_set_password = get_confirm_password_field("password")
-    set_password_submit = SubmitField("Set Password")
+    password = get_password_field(label="Password", validate_strong_password=True)
+    confirm_password = get_confirm_password_field("password")
+    submit = SubmitField("Set Password")
 
 class SettingsResetPasswordRequestForm(FlaskForm):
     reset_password_submit = SubmitField("Send Reset Link")
@@ -173,10 +173,13 @@ class SettingsRemovePasswordForm(FlaskForm):
     remove_password = get_password_field()
     remove_password_submit = SubmitField("Remove Password")
 
-class ResetPasswordForm(FlaskForm):
-    password = get_password_field(label="New Password", validate_strong_password=True)
-    confirm_password = get_confirm_password_field("password")
-    submit = SubmitField("Reset Password")
+class SettingsUnlinkGoogleAccountForm(FlaskForm):
+    unlink_google_password = get_password_field()
+    unlink_google_submit = SubmitField("Unlink Google Account")
+
+class SettingsDeleteAccountRequestForm(FlaskForm):
+    delete_account_password = get_password_field()
+    delete_account_submit = SubmitField("Send Deletion Link")
 
 class ProfileSettingsForm(FlaskForm):
     first_name = get_first_name_field()
@@ -194,13 +197,10 @@ class ProfileSettingsForm(FlaskForm):
             return
         validate_username_field(field)
 
-class SettingsUnlinkGoogleAccountForm(FlaskForm):
-    unlink_google_password = get_password_field()
-    unlink_google_submit = SubmitField("Unlink Google Account")
-
-class SettingsDeleteAccountRequestForm(FlaskForm):
-    delete_account_password = get_password_field()
-    delete_account_submit = SubmitField("Send Deletion Link")
+class ResetPasswordForm(FlaskForm):
+    password = get_password_field(label="New Password", validate_strong_password=True)
+    confirm_password = get_confirm_password_field("password")
+    submit = SubmitField("Reset Password")
 
 class DeleteAccountForm(FlaskForm):
     email = get_email_field()

@@ -1,5 +1,5 @@
-{% from "macros/auth_form_components.html" import form_heading, form_submit %}
-{% from "macros/auth_fields.html" import form_field %}
+{% from "macros/auth_form_components.html" import form_heading %}
+{% from "macros/auth_fields.html" import form_field, submit_field %}
 
 {% extends "auth_form_base.html" %}
 
@@ -29,7 +29,7 @@
 
   {{ form_field(field=form.email, placeholder="Enter your email") }}
 
-  {{ form_submit(form=form, class="btn btn-danger btn-lg") }}
+  {{ submit_field(field=form.submit, class="btn btn-danger btn-lg") }}
 </form>
 
 {% endblock %}
