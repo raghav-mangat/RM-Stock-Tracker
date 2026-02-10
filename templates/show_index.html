@@ -47,7 +47,7 @@
                 <input class="form-check-input me-2 mt-0" type="checkbox" name="filter" value="{{ color }}" id="filter-{{ color }}"
                   {% if not request.args.getlist('filter') or color in request.args.getlist('filter') %}checked{% endif %}>
 
-                <div class="filter-color-box border border-dark me-2" style="background-color: {{ color_hex }};"></div>
+                <div class="filter-color-box border border-secondary me-2" style="background-color: {{ color_hex }};"></div>
 
                 <label class="form-check-label mb-0" for="filter-{{ color }}">
                   {{ color.replace('_', ' ').title() }}
@@ -86,9 +86,9 @@
   <!-- Data Table -->
   <section class="container mb-5">
     <div class="table-responsive">
-      <table class="table table-bordered table-hover align-middle">
-        <thead class="table-light">
-          <tr>
+      <table class="table table-striped table-bordered table-hover align-middle">
+        <thead class="">
+          <tr class="align-middle">
             <th scope="col">#</th>
             <th scope="col">Name</th>
             <th scope="col">Ticker</th>
@@ -101,7 +101,7 @@
             <th scope="col">% Diff {{ dma_200_diff_popover() }}</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody class="table-group-divider">
           {% for stock in index_data %}
           <tr>
             <th scope="row">{{ loop.index }}</th>

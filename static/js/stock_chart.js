@@ -10,10 +10,9 @@ let volumeData = [];
 let stockChart;
 
 // Colors
-const DATE_COLOR = "rgba(100, 100, 100, 1)";
+const DATE_COLOR = "rgba(130, 130, 130, 1)";
 const VOLUME_COLOR = "rgba(78, 140, 255, 0.75)";
 const FILL_COLOR = "rgba(255, 255, 255, 1)";
-const STROKE_STYLE = "rgba(0,0,0,0.4)";
 const POINT_HOVER_COLOR = "rgba(100, 0, 255, 1)";
 const TF_TOOLTIP_TEXT_COLOR = "white";
 
@@ -154,7 +153,7 @@ const hoverPlugin = {
     const y = active.element.y;
     const hoveredIndex = active.index;
 
-    ctx.strokeStyle = STROKE_STYLE;
+    ctx.strokeStyle = CHART_THEMES[getCurrentTheme()].crosshair;
     // Draw vertical dashed line
     ctx.beginPath();
     ctx.moveTo(x, chartArea.top);
@@ -387,6 +386,9 @@ function updateTfChangePerc(changePerc) {
 }
 
 function createStockChart() {
+  // Get the current theme
+  const theme = CHART_THEMES[getCurrentTheme()];
+
   // Chart configuration
   let newStockChart = new Chart(ctx, {
     type: "line",
@@ -500,16 +502,21 @@ function createStockChart() {
           offset: false, // To make grid lines go through line chart points rather than bar chart bar widths
           grid: {
             offset: false, // To remove excess space on the right caused by bar chart
+            color: theme.grid,
           },
           ticks: {
             maxTicksLimit: MAX_X_TICKS,
             font: {
               size: LABEL_FONT_SIZE,
             },
+            color: theme.axisText,
           },
         },
         y: {
           position: "right",
+          grid: {
+            color: theme.grid,
+          },
           ticks: {
             precision: DECIMAL_PRECISION,
             font: {
@@ -518,6 +525,7 @@ function createStockChart() {
             callback: function (value) {
               return value.toFixed(DECIMAL_PRECISION);
             },
+            color: theme.axisText,
           },
         },
         volumeAxis: {
@@ -634,4 +642,18 @@ timeframeBtns.forEach((button) => {
   button.addEventListener("click", (event) => {
     resetChart(event.currentTarget);
   });
+});
+
+window.addEventListener("themechange", () => {
+  if (!stockChart) return;
+
+  const theme = CHART_THEMES[getCurrentTheme()];
+
+  stockChart.options.scales.x.grid.color = theme.grid;
+  stockChart.options.scales.y.grid.color = theme.grid;
+
+  stockChart.options.scales.x.ticks.color = theme.axisText;
+  stockChart.options.scales.y.ticks.color = theme.axisText;
+
+  stockChart.update();
 });

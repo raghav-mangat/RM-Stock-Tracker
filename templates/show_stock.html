@@ -1,6 +1,6 @@
 {% from "macros/jumbotron.html" import jumbotron %}
 {% from "macros/popovers.html" import dma_200_diff_popover %}
-{% from "macros/stock_attributes.html" import stock_todays_change %}
+{% from "macros/stock_attributes.html" import stock_todays_change, stock_dma_200_perc_diff_style %}
 {% from "macros/watchlist_forms.html" import add_folder_form %}
 
 {% extends "base.html" %}
@@ -114,9 +114,9 @@
           <div class="row g-4 mb-4">
             <!-- Today's Performance Summary Card -->
             <div class="col-md-4 order-1 order-md-2">
-              <div class="card h-100 shadow-sm text-dark">
+              <div class="card h-100 shadow-sm text-body">
                 <div class="card-body text-center">
-                  <h5 class="card-title border-bottom border-dark pb-1">
+                  <h5 class="card-title border-secondary border-bottom pb-1">
                     Today's Performance
                   </h5>
 
@@ -139,9 +139,9 @@
 
             <!-- DMA-200 Summary Card -->
             <div class="col-md-4 order-2 order-md-1">
-              <div class="card h-100 shadow-sm text-dark">
+              <div class="card h-100 shadow-sm text-body">
                 <div class="card-body text-center">
-                  <h5 class="card-title border-bottom border-dark pb-1">200-Day Moving Average {{ dma_200_diff_popover() }}</h5>
+                  <h5 class="card-title border-secondary border-bottom  pb-1">200-Day Moving Average {{ dma_200_diff_popover() }}</h5>
 
                   <div class="mb-2">
                     <span class="fw-semibold">200-DMA:</span>
@@ -149,7 +149,7 @@
                   </div>
 
                   <div class="fs-5 mt-3">
-                    <span class="fw-semibold py-1 px-4 border border-dark" style="background-color: {{ stock.dma_200_perc_diff | dma_200_perc_diff_color }};">{{ stock.dma_200_perc_diff | percent }}</span>
+                    <span class="py-1 px-4 border border-secondary" style={{ stock_dma_200_perc_diff_style(stock) }}>{{ stock.dma_200_perc_diff | percent }}</span>
                   </div>
                 </div>
               </div>
@@ -157,9 +157,9 @@
 
             <!-- Related Companies Card -->
             <div class="col-md-4 order-3 order-md-3">
-              <div class="card h-100 shadow-sm text-dark">
+              <div class="card h-100 shadow-sm text-body">
                 <div class="card-body text-center">
-                  <h5 class="card-title border-bottom border-dark pb-1">Related Companies</h5>
+                  <h5 class="card-title border-secondary border-bottom pb-1">Related Companies</h5>
 
                   {% if rel_companies %}
                     <div class="d-flex flex-wrap gap-2 justify-content-center">
@@ -221,7 +221,7 @@
       <!-- Chart Tab -->
       <div class="tab-pane fade" id="chart" role="tabpanel" aria-labelledby="chart-tab">
         <!-- Stock Chart Section -->
-        <section class="container py-2 border border-2 border-dark">
+        <section class="container py-2 border border-2 border-secondary">
           <!-- Top Controls: Timeframe Selector + % Change + Tooltip Toggle + Custom Chart Legend -->
           <div class="d-flex flex-wrap align-items-center gap-3 mb-2">
             <!-- Timeframe buttons -->
@@ -243,7 +243,7 @@
             </div>
 
             <!-- Percentage change -->
-            <span id="tf-change-perc" class="py-1 px-2 fw-semibold text-white border border-dark rounded-0" aria-label="Timeframe percentage change">
+            <span id="tf-change-perc" class="py-1 px-2 fw-semibold text-white border border-secondary rounded-0" aria-label="Timeframe percentage change">
               <!-- Populated by JS -->
             </span>
 
@@ -269,14 +269,14 @@
             {{ loading_spinner("stock-chart-loading-spinner", "Chart Loading...", "absolute") }}
             <!-- Missing Data Overlay -->
             <div id="stock-chart-missing-data"
-                 class="d-none d-flex flex-column justify-content-center align-items-center position-absolute top-0 start-0 w-100 h-100 bg-white">
+                 class="d-none d-flex flex-column justify-content-center align-items-center position-absolute top-0 start-0 w-100 h-100 bg-light">
                 <p class="text-muted fs-5">No chart data available</p>
             </div>
           </div>
 
           <!-- Hover Info Section Below Chart -->
-          <div id="hover-info" class="container-fluid mt-2">
-              <div class="row text-center border-top border-dark py-2">
+          <div id="hover-info" class="container-fluid mt-3">
+              <div class="row text-center border-top border-secondary py-2">
                   <div id="date-value" class="col-6 col-sm-4 col-md-2 fw-semibold d-flex align-items-center"></div>
                   <div id="close-price-value" class="col-6 col-sm-4 col-md-2 fw-semibold d-flex align-items-center"></div>
                   <div id="ema-30-value" class="col-6 col-sm-4 col-md-2 fw-semibold d-flex align-items-center"></div>
@@ -302,7 +302,7 @@
             <!-- Data Table -->
             <div class="col-lg-8">
               <div class="table-responsive">
-                <table class="table table-bordered table-hover align-middle">
+                <table class="table table-striped table-bordered table-hover align-middle">
                   <tbody>
                     <tr><th>Ticker Symbol</th><td>{{ stock.ticker | display }}</td></tr>
                     <tr><th>Company Name</th><td>{{ stock.name | display }}</td></tr>
@@ -377,6 +377,20 @@
 
     // Globally defined constants for stock summary and chart
     const DECIMAL_PRECISION = 2;
+
+    // Themes
+    const CHART_THEMES = {
+      light: {
+        grid: "rgba(0, 0, 0, 0.1)",
+        axisText: "rgba(60, 60, 60, 1)",
+        crosshair: "rgba(0, 0, 0, 0.4)",
+      },
+      dark: {
+        grid: "rgba(255, 255, 255, 0.1)",
+        axisText: "rgba(220, 220, 220, 1)",
+        crosshair: "rgba(255, 255, 255, 0.4)",
+      },
+    };
   </script>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@latest/dist/chart.umd.min.js" defer></script>

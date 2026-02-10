@@ -44,7 +44,7 @@
               <div class="ticker-item card-hover card shadow-sm text-center fs-6 mx-2">
                 <a href="{{ url_for('show_stock', ticker=stock.ticker) }}" class="text-decoration-none">
                   <div class="ticker-content d-flex flex-column text-truncate px-3 py-2">
-                    <strong class="text-dark fw-bold text-truncate">{{ stock.ticker }}</strong>
+                    <strong class="text-body fw-bold text-truncate">{{ stock.ticker }}</strong>
                     <span class="ticker-info fw-semibold text-truncate"
                           style="color: {{ stock.todays_change | stock_change_color }};">
                       {{ stock.volume | humanize_number }}
@@ -77,9 +77,9 @@
   <section class="container my-5">
 
     <div class="d-flex align-items-center mb-4">
-      <div class="flex-grow-1 border-top border-2"></div>
+      <div class="flex-grow-1 border-secondary border-top border-2"></div>
         <h2 class="fw-bold mx-3">Top Market Movers</h2>
-      <div class="flex-grow-1 border-top border-2"></div>
+      <div class="flex-grow-1 border-secondary border-top border-2"></div>
     </div>
 
     <div class="row">

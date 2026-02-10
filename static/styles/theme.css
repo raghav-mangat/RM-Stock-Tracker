@@ -1,0 +1,59 @@
+/* Styles for the light/dark themes */
+
+/* Smooth global theme transitions */
+body {
+  transition: background-color 0.4s ease, color 0.4s ease;
+}
+
+/* Theme Switch Icon visibility based on theme */
+[data-bs-theme="light"] .theme-icon-dark {
+  display: none;
+}
+
+[data-bs-theme="dark"] .theme-icon-light {
+  display: none;
+}
+
+/* Default for google signin button: light mode */
+.google-btn-dark {
+  display: none;
+}
+
+/* Google signin button visibility based on theme */
+[data-bs-theme="dark"] .google-btn-light {
+  display: none;
+}
+
+[data-bs-theme="dark"] .google-btn-dark {
+  display: inline-block;
+}
+
+/*
+  - Theme specific overrides
+  - Right now changing colours for class: bg-light
+  - This class is used in multiple places in the code
+*/
+
+/* Light theme overrides */
+[data-bs-theme="light"] {
+  /* Default colours from Bootstrap for bg-body-secondary */
+  --bs-light: #e9ecef;
+  --bs-light-rgb: 233, 236, 239;
+}
+
+/* Dark theme overrides */
+[data-bs-theme="dark"] {
+  /* Default colours from Bootstrap for bg-body-secondary */
+  --bs-light: #343a40;
+  --bs-light-rgb: 52, 58, 64;
+}
+
+/*
+For bg-body-secondary colours:
+  --bs-secondary-bg
+  --bs-secondary-bg-rgb
+
+For body bg colours:
+  --bs-body-bg
+  --bs-body-bg-rgb
+*/

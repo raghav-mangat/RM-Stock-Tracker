@@ -34,6 +34,9 @@ function createSummaryChart(ctx, labels, data, backgroundColor) {
     array[index] = changeTransparency(value, BAR_TRANSPARENCY);
   });
 
+  // Get the current theme
+  const theme = CHART_THEMES[getCurrentTheme()];
+
   const newSummaryChart = new Chart(ctx, {
     type: "bar",
     data: {
@@ -49,9 +52,20 @@ function createSummaryChart(ctx, labels, data, backgroundColor) {
       responsive: true,
       maintainAspectRatio: false,
       scales: {
+        x: {
+          grid: {
+            color: theme.grid,
+          },
+          ticks: {
+            color: theme.axisText,
+          },
+        },
         y: {
           min: minPrice - buffer,
           max: maxPrice + buffer,
+          grid: {
+            color: theme.grid,
+          },
           ticks: {
             display: false,
           },
@@ -61,6 +75,7 @@ function createSummaryChart(ctx, labels, data, backgroundColor) {
             font: {
               weight: "bold",
             },
+            color: theme.axisText,
           },
         },
       },
@@ -160,3 +175,29 @@ const range52wChart = createSummaryChart(
   range52wChartData,
   range52wChartBackgroundColors,
 );
+
+window.addEventListener("themechange", () => {
+  if (ohlcChart) {
+    updateSummaryChart(ohlcChart);
+  }
+
+  if (dmaChart) {
+    updateSummaryChart(dmaChart);
+  }
+
+  if (range52wChart) {
+    updateSummaryChart(range52wChart);
+  }
+
+  function updateSummaryChart(chart) {
+    const theme = CHART_THEMES[getCurrentTheme()];
+
+    chart.options.scales.x.grid.color = theme.grid;
+    chart.options.scales.y.grid.color = theme.grid;
+
+    chart.options.scales.x.ticks.color = theme.axisText;
+    chart.options.scales.y.title.color = theme.axisText;
+
+    chart.update();
+  }
+});

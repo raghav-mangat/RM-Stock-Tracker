@@ -6,7 +6,7 @@
           novalidate>
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <input type="hidden" name="next" value="{{ request.path }}">
-        <input type="text" name="folder_name" class="form-control me-2 text-uppercase" placeholder="NEW FOLDER NAME">
+        <input type="text" name="folder_name" class="form-control me-2 text-uppercase border-2 border-secondary" placeholder="NEW FOLDER NAME">
         <button type="submit" class="btn btn-success">Add Folder</button>
     </form>
 {% endmacro %}

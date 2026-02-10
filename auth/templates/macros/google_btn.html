@@ -3,10 +3,19 @@
 <div class="d-flex justify-content-center mt-4">
   <a href="{{ url_for('auth.google_signin', next=request.args.get('next')) }}"
      class="google-signin-link">
+
+    <!-- Light theme button -->
     <img
-      src="{{ url_for('static', filename='assets/google_signin/google-button.svg') }}"
+      src="{{ url_for('static', filename='assets/google_signin/google-button-light.svg') }}"
       alt="Continue with Google"
-      class="google-signin-btn">
+      class="google-signin-btn google-btn-light">
+
+    <!-- Dark theme button -->
+    <img
+      src="{{ url_for('static', filename='assets/google_signin/google-button-dark.svg') }}"
+      alt="Continue with Google"
+      class="google-signin-btn google-btn-dark">
+
   </a>
 </div>
 {% endmacro %}

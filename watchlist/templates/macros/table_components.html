@@ -3,9 +3,9 @@
 
 {% macro watchlist_folder_table_header(folder_id, attribute_data, folder_sort_by_attribute, folder_sort_by_order, FolderAttribute, OrderBy) %}
 
-<th scope="col" class="align-middle">
+<th scope="col">
   <div class="d-flex align-items-center justify-content-between">
-    <span class="fw-semibold">
+    <span>
       {{ table_header_label(attribute_data.attribute, FolderAttribute) }}
     </span>
     {% if attribute_data.attribute.value != FolderAttribute.NAME %}
@@ -15,7 +15,7 @@
          {% if attribute_data.min_value is not none or attribute_data.max_value is not none %}
            text-primary
          {% else %}
-           text-secondary
+           text-body-secondary
          {% endif %}"
         data-bs-toggle="modal"
         data-bs-target="#filterFolderModal"
@@ -43,7 +43,10 @@
         <input type="hidden" name="sort_by_attribute" value="{{ attribute_data.attribute.value }}">
         <input type="hidden" name="sort_by_order" value="{{ OrderBy.ASC.value }}">
         <button type="submit" title="Sort Ascending"
-                class="btn btn-link p-0 m-0 folder-table-header-btn {% if folder_sort_by_attribute == attribute_data.attribute.value and folder_sort_by_order == OrderBy.ASC.value %} text-primary {% else %} text-secondary {% endif %}">
+                class="btn btn-link p-0 m-0 folder-table-header-btn
+                {% if folder_sort_by_attribute == attribute_data.attribute.value and
+                folder_sort_by_order == OrderBy.ASC.value %}
+                text-primary {% else %} text-body-secondary {% endif %}">
           <i class="bi bi-caret-up-fill"></i>
         </button>
       </form>
@@ -58,7 +61,10 @@
         <input type="hidden" name="sort_by_attribute" value="{{ attribute_data.attribute.value }}">
         <input type="hidden" name="sort_by_order" value="{{ OrderBy.DESC.value }}">
         <button type="submit" title="Sort Descending"
-                class="btn btn-link p-0 m-0 folder-table-header-btn {% if folder_sort_by_attribute == attribute_data.attribute.value and folder_sort_by_order == OrderBy.DESC.value %} text-primary {% else %} text-secondary {% endif %}">
+                class="btn btn-link p-0 m-0 folder-table-header-btn
+                {% if folder_sort_by_attribute == attribute_data.attribute.value and
+                folder_sort_by_order == OrderBy.DESC.value %}
+                text-primary {% else %} text-body-secondary {% endif %}">
           <i class="bi bi-caret-down-fill"></i>
         </button>
       </form>
@@ -69,7 +75,7 @@
 {% endmacro %}
 
 {% macro table_header(text) %}
-  <th scope="col" class="align-middle fw-semibold">
+  <th scope="col">
     {{ text }}
   </th>
 {% endmacro %}
@@ -102,7 +108,7 @@
 {% endmacro %}
 
 {% macro table_data_row_number(index) %}
-  <th scope="row" class="fw-semibold">
+  <th scope="row">
     {{ index }}
   </th>
 {% endmacro %}

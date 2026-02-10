@@ -40,10 +40,10 @@
   <div class="accordion accordion-flush" id="watchlistAlertsAccordion">
 
     {% for folder in watchlist_alert_data %}
-      <div class="accordion-item border border-1 border-dark shadow-sm mb-3"
+      <div class="accordion-item border border-2 border-secondary shadow-sm mb-3"
            id="accordion-item-{{ folder.folder_id }}">
         <h2 class="accordion-header">
-          <button class="accordion-button fw-semibold collapsed"
+          <button class="accordion-button fw-bold collapsed"
                   type="button"
                   data-bs-toggle="collapse"
                   data-bs-target="#collapse-{{ folder.folder_id }}"
@@ -120,9 +120,9 @@
 
                         {% if folder.all_folder_alerts.stocks %}
                           <div class="table-responsive">
-                            <table class="table table-bordered table-hover align-middle">
-                              <thead class="table-light">
-                                <tr>
+                            <table class="table table-striped table-bordered table-hover align-middle">
+                              <thead class="">
+                                <tr class="align-middle">
                                   {{ table_header("#") }}
                                   {{ table_header("Ticker") }}
                                   {{ table_header("Name") }}
@@ -135,7 +135,7 @@
                                   {% endfor %}
                                 </tr>
                               </thead>
-                              <tbody>
+                              <tbody class="table-group-divider">
                                 {% for stock in folder.all_folder_alerts.stocks %}
                                   <tr>
                                     {{ table_data_row_number(loop.index) }}
@@ -168,9 +168,9 @@
 
                           {% if alert_data.stocks %}
                             <div class="table-responsive">
-                              <table class="table table-bordered table-hover align-middle">
-                                <thead class="table-light">
-                                  <tr>
+                              <table class="table table-striped table-bordered table-hover align-middle">
+                                <thead class="">
+                                  <tr class="align-middle">
                                     {{ table_header("#") }}
                                     {{ table_header("Ticker") }}
                                     {{ table_header("Name") }}
@@ -181,7 +181,7 @@
                                     }}
                                   </tr>
                                 </thead>
-                                <tbody>
+                                <tbody class="table-group-divider">
                                   {% for stock in alert_data.stocks %}
                                     <tr>
                                       {{ table_data_row_number(loop.index) }}
@@ -260,14 +260,14 @@
                             <div class="col-md-6 mb-2 mb-md-3">
                               <div class="text-success fw-semibold text-center mb-2">Triggered</div>
                               <div class="table-responsive">
-                                <table class="table table-bordered table-hover align-middle">
-                                  <thead class="table-light">
-                                    <tr>
+                                <table class="table table-striped table-bordered table-hover align-middle">
+                                  <thead class="">
+                                    <tr class="align-middle">
                                       {{ table_header("#") }}
                                       {{ table_header("Alert") }}
                                       {{ table_header("Value") }}
                                   </thead>
-                                  <tbody>
+                                  <tbody class="table-group-divider">
                                     {% for alert_data in item.alerts if alert_data.triggered %}
                                       <tr>
                                         {{ table_data_row_number(loop.index) }}
@@ -290,15 +290,15 @@
                             <div class="col-md-6 mb-3">
                               <div class="text-danger fw-semibold text-center mb-2">Not Triggered</div>
                               <div class="table-responsive">
-                                <table class="table table-bordered table-hover align-middle">
-                                  <thead class="table-light">
-                                    <tr>
+                                <table class="table table-striped table-bordered table-hover align-middle">
+                                  <thead class="">
+                                    <tr class="align-middle">
                                       {{ table_header("#") }}
                                       {{ table_header("Alert") }}
                                       {{ table_header("Value") }}
                                     </tr>
                                   </thead>
-                                  <tbody>
+                                  <tbody class="table-group-divider">
                                     {% for alert_data in item.alerts if not alert_data.triggered %}
                                       <tr>
                                         {{ table_data_row_number(loop.index) }}

@@ -2,7 +2,7 @@
 
 {% macro stock_dma_200_perc_diff(stock) %}
     {% if stock.dma_200_perc_diff is not none %}
-        <td class="fw-bold" style="background-color: {{ stock.dma_200_perc_diff | dma_200_perc_diff_color }};">
+        <td style={{ stock_dma_200_perc_diff_style(stock) }}>
             {{ stock.dma_200_perc_diff | percent }}
         </td>
     {% else %}
@@ -19,4 +19,17 @@
     {% else %}
         <span class="fw-semibold">N/A</span>
     {% endif %}
+{% endmacro %}
+
+{% macro stock_dma_200_perc_diff_style(stock) %}
+{#
+  box-shadow: none, makes the bootstrap tables not change the color
+  of this element on hover or when rows are striped.
+#}
+"
+  background-color: {{ stock.dma_200_perc_diff | dma_200_perc_diff_color }};
+  color: #000000;
+  font-weight: 700;
+  box-shadow: none;
+"
 {% endmacro %}
