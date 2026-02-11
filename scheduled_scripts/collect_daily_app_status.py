@@ -32,7 +32,10 @@ def collect_daily_app_status():
         ).scalar_one_or_none()
 
         if exists:
-            app.logger.info(f"Daily app status already collected for {format_date(target_date)}")
+            app.logger.info(
+                f"Daily app status already collected for Date: {format_date(target_date)}",
+                extra = {"log_type": "events"}
+            )
             return
 
         # ---- Redis metrics ----
@@ -40,7 +43,7 @@ def collect_daily_app_status():
         try:
             redis_metrics = read_daily_metrics(redis, target_date)
         except Exception:
-            app.logger.exception("Failed to read Redis metrics")
+            app.logger.exception("Failed to read Redis metrics", extra = {"log_type": "events"})
 
         # ---- Time window ----
         start_ts = datetime.combine(
@@ -99,7 +102,8 @@ def collect_daily_app_status():
 
         except Exception:
             app.logger.exception(
-                "Failed to collect Upstash Redis data; continuing without Redis data"
+                "Failed to collect Upstash Redis data; continuing without Redis data",
+                extra={"log_type": "events"}
             )
 
         # ---- MySQL Database Data ----
@@ -128,7 +132,8 @@ def collect_daily_app_status():
 
         except Exception:
             app.logger.exception(
-                "Failed to collect MySQL database data; continuing without DB size data"
+                "Failed to collect MySQL database data; continuing without DB size data",
+                extra={"log_type": "events"}
             )
 
         # ---- Persist snapshot ----
@@ -146,7 +151,10 @@ def collect_daily_app_status():
             db.session.add(row)
             db.session.commit()
         except Exception:
-            app.logger.exception(f"Failed to store Daily App Status data for Date: {target_date}")
+            app.logger.exception(
+                f"Failed to store Daily App Status data for Date: {target_date}",
+                extra={"log_type": "events"}
+            )
 
 
 if __name__ == "__main__":

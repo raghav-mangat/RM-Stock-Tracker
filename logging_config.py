@@ -17,6 +17,10 @@ Notes:
 - Special note about exception()
     - Automatically logs exc_info=True
     - Must be called inside except block
+- We filter the events/auth logs using:
+    - extra={"log_type": "events"/"auth"}
+    - We put this extra part in the related logger code in the project
+    - We do not show this log_type in context filter
 """
 
 class ContextFilter(logging.Filter):
@@ -88,6 +92,26 @@ class AppOnlyFilter(logging.Filter):
         return record.name.startswith("app")
 
 
+class EventsLogFilter(logging.Filter):
+    def filter(self, record):
+        """
+        Keeps the logs for all Flask App business events like:
+            - Starting/Stopping Flask App
+            - Scheduled Scripts
+            - Metrics
+            - etc.
+        """
+        return getattr(record, "log_type", None) == "events"
+
+
+class AuthLogFilter(logging.Filter):
+    def filter(self, record):
+        """
+        Keeps the logs for auth routes.
+        """
+        return getattr(record, "log_type", None) == "auth"
+
+
 class StripExceptionInfoFilter(logging.Filter):
     def filter(self, record):
         """
@@ -124,8 +148,9 @@ def setup_logging(app):
     """
     Separate concerns:
         - app.log: Operational truth, everything is logged here
-        - error.log: Failures, captures errors only
-        - events.log: Business and security events, info and warning
+        - error.log: Failures, captures errors/exceptions only
+        - events.log: Business events for Flask App, captures info, warning, error
+        - auth.log: Auth routes, captures info and warning
     """
 
     # App log (DEBUG/INFO+)
@@ -148,7 +173,7 @@ def setup_logging(app):
     error_handler.setFormatter(formatter)
     error_handler.addFilter(context_filter)
 
-    # Events log (INFO, WARNING)
+    # Events log (INFO, WARNING, ERROR)
     events_handler = RotatingFileHandler(
         os.path.join(log_dir, "events.log"),
         maxBytes=10_000_000,
@@ -156,9 +181,23 @@ def setup_logging(app):
     )
     events_handler.setLevel(logging.INFO)
     events_handler.setFormatter(formatter)
-    events_handler.addFilter(MaxLevelFilter(logging.WARNING))
-    events_handler.addFilter(AppOnlyFilter())
     events_handler.addFilter(context_filter)
+    events_handler.addFilter(StripExceptionInfoFilter())
+    events_handler.addFilter(AppOnlyFilter())
+    events_handler.addFilter(EventsLogFilter())
+
+    # Auth log (INFO, WARNING)
+    auth_handler = RotatingFileHandler(
+        os.path.join(log_dir, "auth.log"),
+        maxBytes=10_000_000,
+        backupCount=5,
+    )
+    auth_handler.setLevel(logging.INFO)
+    auth_handler.setFormatter(formatter)
+    auth_handler.addFilter(context_filter)
+    auth_handler.addFilter(MaxLevelFilter(logging.WARNING))
+    auth_handler.addFilter(AppOnlyFilter())
+    auth_handler.addFilter(AuthLogFilter())
 
     """
     Later you can add:
@@ -189,6 +228,7 @@ def setup_logging(app):
         app.logger.addHandler(app_handler)
         app.logger.addHandler(error_handler)
         app.logger.addHandler(events_handler)
+        app.logger.addHandler(auth_handler)
 
     """
     Use this in case you see duplicate logs.

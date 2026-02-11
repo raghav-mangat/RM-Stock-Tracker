@@ -19,12 +19,11 @@ def register_metrics_shutdown(app, metrics):
             else:
                 reason = "atexit"
 
-            level = logger.info if signum else logger.debug
-            level("Flushing metrics on shutdown", extra={"reason": reason})
+            logger.info("Flushing metrics on shutdown", extra={"log_type": "events", "reason": reason})
             metrics.flush()
         except Exception:
             # Never let shutdown crash the process
-            logger.exception("Failed to flush metrics on shutdown")
+            logger.exception("Failed to flush metrics on shutdown", extra={"log_type": "events"})
         finally:
             # Re-raise default behavior
             if signum is not None:

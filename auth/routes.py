@@ -49,7 +49,7 @@ def signup():
 
             current_app.logger.info(
                 "New user joined with email",
-                extra={"user_id": user.id, "email": user.email}
+                extra={"log_type": "auth", "user_id": user.id, "email": user.email}
             )
 
             try:
@@ -60,7 +60,7 @@ def signup():
             except Exception:
                 current_app.logger.exception(
                     "Failed to send account verification email",
-                    extra={"user_id": user.id}
+                    extra={"log_type": "auth", "user_id": user.id}
                 )
                 flash(
                     "Account created, but we couldn't send the verification email. "
@@ -73,7 +73,7 @@ def signup():
         except AuthUnexpectedError as e:
             current_app.logger.exception(
                 "Unexpected error during user signup with email",
-                extra={"email": form.email.data}
+                extra={"log_type": "auth", "email": form.email.data}
             )
             flash(str(e), "danger")
             return redirect(url_for("auth.signup"))
@@ -108,7 +108,7 @@ def login():
             except Exception:
                 current_app.logger.exception(
                     "Failed to send account verification email",
-                    extra={"user_id": user.id}
+                    extra={"log_type": "auth", "user_id": user.id}
                 )
                 flash(
                     "Account not verified. We couldn't resend the verification email right now. "
@@ -125,7 +125,7 @@ def login():
             else:
                 current_app.logger.warning(
                     "Email rate limit exceeded for account verification",
-                    extra={"user_id": user.id}
+                    extra={"log_type": "auth", "user_id": user.id}
                 )
                 flash(
                     f"Account not verified. Please check your inbox (and spam) for a verification email. You can request another email in {ttl} seconds by logging in.",
@@ -140,7 +140,7 @@ def login():
 
         current_app.logger.info(
             "User logged in with email",
-            extra={"user_id": user.id}
+            extra={"log_type": "auth", "user_id": user.id}
         )
 
         flash("Logged in successfully!", "success")
@@ -160,7 +160,7 @@ def logout():
 
     current_app.logger.info(
         "User logged out",
-        extra={"user_id": user_id}
+        extra={"log_type": "auth", "user_id": user_id}
     )
 
     return redirect(url_for('home'))
@@ -185,14 +185,16 @@ def settings_profile():
             )
 
             current_app.logger.info(
-                "Profile settings updated"
+                "Profile settings updated",
+                extra={"log_type": "auth"}
             )
 
             flash("Profile updated successfully.", "success")
 
         except AuthUnexpectedError as e:
             current_app.logger.exception(
-                "Unexpected error during profile settings update"
+                "Unexpected error during profile settings update",
+                extra={"log_type": "auth"}
             )
             flash(str(e), "danger")
         except AuthError as e:
@@ -244,7 +246,7 @@ def verify_email(token):
 
         current_app.logger.info(
             "Email verification completed",
-            extra={"user_id": user.id}
+            extra={"log_type": "auth", "user_id": user.id}
         )
 
         flash("Your email is verified! Now you can log in.", "success")
@@ -254,13 +256,13 @@ def verify_email(token):
         except Exception:
             current_app.logger.exception(
                 "Failed to send account verification success email",
-                extra={"user_id": user.id}
+                extra={"log_type": "auth", "user_id": user.id}
             )
 
     except AuthUnexpectedError as e:
         current_app.logger.exception(
             "Unexpected error during email verification",
-            extra={"user_id": user.id}
+            extra={"log_type": "auth", "user_id": user.id}
         )
         flash(str(e), "danger")
     except AuthError as e:
@@ -296,7 +298,7 @@ def reset_password_request():
         except Exception:
             current_app.logger.exception(
                 "Failed to send password reset email",
-                extra={"user_id": user.id}
+                extra={"log_type": "auth", "user_id": user.id}
             )
             flash("Could not send password reset email. Please try again later.", "danger")
             return redirect(url_for("auth.login"))
@@ -304,13 +306,13 @@ def reset_password_request():
         if email_sent:
             current_app.logger.info(
                 "Password reset email sent",
-                extra={"user_id": user.id}
+                extra={"log_type": "auth", "user_id": user.id}
             )
             flash("Check your inbox (and spam) for an email containing password reset instructions.", "success")
         else:
             current_app.logger.warning(
                 "Email rate limit exceeded for reset password request",
-                extra={"user_id": user.id}
+                extra={"log_type": "auth", "user_id": user.id}
             )
             flash(f"Please wait {ttl} seconds before requesting another password reset email.", "warning")
 
@@ -328,19 +330,22 @@ def settings_toggle_email_alerts():
             toggle_user_email_alerts_on(current_user)
             if current_user.email_alerts_on:
                 current_app.logger.info(
-                    "Email alerts turned on"
+                    "Email alerts turned on",
+                    extra={"log_type": "auth"}
                 )
 
                 flash("Email alerts have been turned ON.", "success")
             else:
                 current_app.logger.info(
-                    "Email alerts turned off"
+                    "Email alerts turned off",
+                    extra={"log_type": "auth"}
                 )
 
                 flash("Email alerts have been turned OFF.","success")
         except AuthUnexpectedError as e:
             current_app.logger.exception(
-                "Unexpected error during email alerts toggle"
+                "Unexpected error during email alerts toggle",
+                extra={"log_type": "auth"}
             )
             flash(str(e), "danger")
         except AuthError as e:
@@ -380,7 +385,8 @@ def settings_set_password():
                 change_user_password(current_user, form.password.data)
 
                 current_app.logger.info(
-                    "Password set"
+                    "Password set",
+                    extra={"log_type": "auth"}
                 )
 
                 flash("Your password has been set. Please log in again.", "success")
@@ -389,12 +395,14 @@ def settings_set_password():
                     AuthEmail.settings_password_set_success(current_user)
                 except Exception:
                     current_app.logger.exception(
-                        "Failed to send password set success email"
+                        "Failed to send password set success email",
+                        extra={"log_type": "auth"}
                     )
 
             except AuthUnexpectedError as e:
                 current_app.logger.exception(
-                    "Unexpected error during password set"
+                    "Unexpected error during password set",
+                    extra={"log_type": "auth"}
                 )
                 flash(str(e), "danger")
             except AuthError as e:
@@ -431,20 +439,23 @@ def settings_reset_password_request():
         )
     except Exception:
         current_app.logger.exception(
-            "Failed to send password reset email from settings"
+            "Failed to send password reset email from settings",
+            extra={"log_type": "auth"}
         )
         flash("Could not send password reset email. Please try again later.", "danger")
         return redirect(url_for("auth.settings_account"))
 
     if email_sent:
         current_app.logger.info(
-            "Password reset email sent from settings"
+            "Password reset email sent from settings",
+            extra={"log_type": "auth"}
         )
 
         flash("Check your email for the instructions to reset your password.", "success")
     else:
         current_app.logger.warning(
-            "Email rate limit exceeded for settings reset password request"
+            "Email rate limit exceeded for settings reset password request",
+            extra={"log_type": "auth"}
         )
 
         flash(f"Please wait {ttl} seconds before requesting another password reset email.", "warning")
@@ -469,7 +480,8 @@ def settings_remove_password():
             remove_user_password(current_user)
 
             current_app.logger.info(
-                "Password removed"
+                "Password removed",
+                extra={"log_type": "auth"}
             )
 
             flash("Your password has been removed. Please log in again.", "success")
@@ -478,12 +490,14 @@ def settings_remove_password():
                 AuthEmail.settings_password_removed_success(current_user)
             except Exception:
                 current_app.logger.exception(
-                    "Failed to send password removed success email"
+                    "Failed to send password removed success email",
+                    extra={"log_type": "auth"}
                 )
 
         except AuthUnexpectedError as e:
             current_app.logger.exception(
-                "Unexpected error during password remove"
+                "Unexpected error during password remove",
+                extra={"log_type": "auth"}
             )
             flash(str(e), "danger")
         except AuthError as e:
@@ -511,7 +525,7 @@ def reset_password(token):
 
             current_app.logger.info(
                 "Password reset",
-                extra={"user_id": user.id}
+                extra={"log_type": "auth", "user_id": user.id}
             )
 
             flash("Your password has been reset. Please log in.", "success")
@@ -520,14 +534,14 @@ def reset_password(token):
             except Exception:
                 current_app.logger.exception(
                     "Failed to send password reset success email",
-                    extra={"user_id": user.id}
+                    extra={"log_type": "auth", "user_id": user.id}
                 )
                 pass
 
         except AuthUnexpectedError as e:
             current_app.logger.exception(
                 "Unexpected error during password reset",
-                extra={"user_id": user.id}
+                extra={"log_type": "auth", "user_id": user.id}
             )
             flash(str(e), "danger")
         except AuthError as e:
@@ -564,20 +578,23 @@ def delete_account_request():
         )
     except Exception:
         current_app.logger.exception(
-            "Failed to send account deletion email"
+            "Failed to send account deletion email",
+            extra={"log_type": "auth"}
         )
         flash("Could not send account deletion email. Please try again later.", "warning")
         return redirect(url_for("auth.settings_account"))
 
     if email_sent:
         current_app.logger.info(
-            "Account deletion email sent"
+            "Account deletion email sent",
+            extra={"log_type": "auth"}
         )
 
         flash("Check your email for the instructions to delete your account.", "success")
     else:
         current_app.logger.warning(
-            "Email rate limit exceeded for delete account request"
+            "Email rate limit exceeded for delete account request",
+            extra={"log_type": "auth"}
         )
 
         flash(f"Please wait {ttl} seconds before requesting another account deletion email.", "warning")
@@ -603,7 +620,7 @@ def delete_account(token):
 
                 current_app.logger.info(
                     "User deleted their account",
-                    extra={"user_id": user_id, "email": email}
+                    extra={"log_type": "auth", "user_id": user_id, "email": email}
                 )
 
                 try:
@@ -611,7 +628,7 @@ def delete_account(token):
                 except Exception:
                     current_app.logger.exception(
                         "Failed to send account deleted success email",
-                        extra={"user_id": user_id}
+                        extra={"log_type": "auth", "user_id": user_id}
                     )
 
                 flash("Your account has been deleted.", "success")
@@ -619,7 +636,7 @@ def delete_account(token):
             except AuthUnexpectedError as e:
                 current_app.logger.exception(
                     "Unexpected error during account deletion",
-                    extra={"user_id": user.id}
+                    extra={"log_type": "auth", "user_id": user.id}
                 )
                 flash(str(e), "danger")
             except AuthError as e:
@@ -716,7 +733,7 @@ def google_signin_callback():
 
                     current_app.logger.info(
                         "Google account auto-linked",
-                        extra={"user_id": user.id}
+                        extra={"log_type": "auth", "user_id": user.id}
                     )
 
                     flash("Signed in with Google. Auto-Linked Google account successfully.", "success")
@@ -726,13 +743,13 @@ def google_signin_callback():
                     except Exception:
                         current_app.logger.exception(
                             "Failed to send Google account auto-linked success email",
-                            extra={"user_id": user.id}
+                            extra={"log_type": "auth", "user_id": user.id}
                         )
 
                 except AuthUnexpectedError as e:
                     current_app.logger.exception(
                         "Unexpected error during Google signin auto-link",
-                        extra={"user_id": user.id}
+                        extra={"log_type": "auth", "user_id": user.id}
                     )
                     flash(f"Unable to signin with Google. {str(e)}", "danger")
                     return redirect(url_for("auth.login"))
@@ -755,7 +772,7 @@ def google_signin_callback():
 
     current_app.logger.info(
         "User logged in with Google",
-        extra={"user_id": user.id}
+        extra={"log_type": "auth", "user_id": user.id}
     )
 
     # Restore next url safely
@@ -797,7 +814,7 @@ def choose_username():
             )
             current_app.logger.info(
                 "New user joined with Google",
-                extra={"user_id": user.id, "email": user.email}
+                extra={"log_type": "auth", "user_id": user.id, "email": user.email}
             )
 
             session.pop("pending_google_signup", None)
@@ -807,7 +824,7 @@ def choose_username():
             except Exception:
                 current_app.logger.exception(
                     "Failed to send Google signin success email",
-                    extra={"user_id": user.id}
+                    extra={"log_type": "auth", "user_id": user.id}
                 )
 
             login_user(user)
@@ -816,7 +833,7 @@ def choose_username():
 
             current_app.logger.info(
                 "User logged in with Google",
-                extra={"user_id": user.id}
+                extra={"log_type": "auth", "user_id": user.id}
             )
 
             flash("Signed in with Google. Account created successfully.", "success")
@@ -831,7 +848,7 @@ def choose_username():
         except AuthUnexpectedError as e:
             current_app.logger.exception(
                 "Unexpected error during choosing username after user Google signup",
-                extra={"email": pending["email"]}
+                extra={"log_type": "auth", "email": pending["email"]}
             )
             flash(str(e), "danger")
             return redirect(url_for("auth.choose_username"))
@@ -922,7 +939,8 @@ def google_link_callback():
         add_user_google_id(current_user, google_id)
 
         current_app.logger.info(
-            "Google account linked"
+            "Google account linked",
+            extra={"log_type": "auth"}
         )
 
         flash("Google account linked successfully. Please log in again.", "success")
@@ -931,12 +949,14 @@ def google_link_callback():
             AuthEmail.google_account_linked_success(current_user)
         except Exception:
             current_app.logger.exception(
-                "Failed to send Google account linked success email"
+                "Failed to send Google account linked success email",
+                extra={"log_type": "auth"}
             )
 
     except AuthUnexpectedError as e:
         current_app.logger.exception(
-            "Unexpected error during Google account linking"
+            "Unexpected error during Google account linking",
+            extra={"log_type": "auth"}
         )
         flash(str(e), "danger")
     except AuthError as e:
@@ -960,7 +980,8 @@ def google_unlink():
             remove_user_google_id(current_user)
 
             current_app.logger.info(
-                "Google account unlinked"
+                "Google account unlinked",
+                extra={"log_type": "auth"}
             )
 
             flash("Your Google account has been unlinked. Please log in again.", "success")
@@ -969,12 +990,14 @@ def google_unlink():
                 AuthEmail.google_account_unlinked_success(current_user)
             except Exception:
                 current_app.logger.exception(
-                    "Failed to send Google account unlink success email"
+                    "Failed to send Google account unlink success email",
+                    extra={"log_type": "auth"}
                 )
 
         except AuthUnexpectedError as e:
             current_app.logger.exception(
-                "Unexpected error during Google account unlinking"
+                "Unexpected error during Google account unlinking",
+                extra={"log_type": "auth"}
             )
             flash(str(e), "danger")
         except AuthError as e:
@@ -1065,7 +1088,8 @@ def google_reauth_callback():
         session["reauth_verified_at"] = time.time()
 
         current_app.logger.info(
-            "Google re-authentication"
+            "Google re-authentication",
+            extra={"log_type": "auth"}
         )
 
         return redirect(next_url)
