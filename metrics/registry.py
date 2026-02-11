@@ -1,6 +1,6 @@
 class MetricName:
     EMAILS_ENQUEUED = "emails_enqueued"
-    API_CALLS = "api_calls"
+    MASSIVE_API_CALLS = "massive_api_calls"
     GOOGLE_OAUTH_CALLBACKS = "google_oauth_callbacks"
 
     # Flask app request for specific routes

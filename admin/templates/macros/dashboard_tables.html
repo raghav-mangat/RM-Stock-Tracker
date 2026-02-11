@@ -171,7 +171,7 @@
         <th>Avg Static Latency (ms)</th>
 
         <th>Emails Enqueued</th>
-        <th>API Calls</th>
+        <th>Massive API Calls</th>
         <th>Google OAuth Callbacks</th>
 
         <th>Redis Flush Success</th>
@@ -202,11 +202,105 @@
         <td>{{ "%.1f"|format(row.avg_static_latency_ms) }}</td>
 
         <td>{{ row.emails_enqueued }}</td>
-        <td>{{ row.api_calls }}</td>
+        <td>{{ row.massive_api_calls }}</td>
         <td>{{ row.google_oauth_callbacks }}</td>
 
         <td>{{ row.redis_flush_success }}</td>
         <td>{{ row.redis_flush_failure }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endmacro %}
+
+
+{% macro daily_upstash_redis_status_table(rows) %}
+<div class="table-responsive">
+  <table class="table table-striped table-bordered table-hover align-middle">
+    <thead class="table-light">
+      <tr class="align-middle">
+        <th>#</th>
+        <th>Date</th>
+        <th>Market</th>
+
+        <th>Collected At</th>
+        <th>Total Commands</th>
+        <th>Total Reads</th>
+        <th>Total Writes</th>
+        <th>Used Memory Bytes</th>
+        <th>Max Memory Bytes</th>
+        <th>Keys Count</th>
+        <th>Expired Keys</th>
+        <th>Evicted Keys</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in rows %}
+      <tr>
+        <td class="fw-bold">{{ loop.index }}</td>
+
+        <td>{{ row.date.strftime("%b %d, %Y") }}</td>
+        <td class="text-center">
+          {% if row.market_open %}
+            <span class="badge bg-success">Open</span>
+          {% else %}
+            <span class="badge bg-secondary">Closed</span>
+          {% endif %}
+        </td>
+
+        <td>{{ row.redis_data_collected_at.strftime("%b %d, %Y - %I:%M %p") }}</td>
+        <td>{{ row.redis_total_commands }}</td>
+        <td>{{ row.redis_total_reads }}</td>
+        <td>{{ row.redis_total_writes }}</td>
+        <td>{{ row.redis_used_memory_bytes }}</td>
+        <td>{{ row.redis_max_memory_bytes }}</td>
+        <td>{{ row.redis_keys_count }}</td>
+        <td>{{ row.redis_expired_keys }}</td>
+        <td>{{ row.redis_evicted_keys }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endmacro %}
+
+
+{% macro daily_mysql_db_status_table(rows) %}
+<div class="table-responsive">
+  <table class="table table-striped table-bordered table-hover align-middle">
+    <thead class="table-light">
+      <tr class="align-middle">
+        <th>#</th>
+        <th>Date</th>
+        <th>Market</th>
+
+        <th>Collected At</th>
+        <th>Total DB Size Bytes</th>
+        <th>Data Size Bytes</th>
+        <th>Index Size Bytes</th>
+        <th>Table Count</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in rows %}
+      <tr>
+        <td class="fw-bold">{{ loop.index }}</td>
+
+        <td>{{ row.date.strftime("%b %d, %Y") }}</td>
+        <td class="text-center">
+          {% if row.market_open %}
+            <span class="badge bg-success">Open</span>
+          {% else %}
+            <span class="badge bg-secondary">Closed</span>
+          {% endif %}
+        </td>
+
+        <td>{{ row.mysql_data_collected_at.strftime("%b %d, %Y - %I:%M %p") }}</td>
+        <td>{{ row.mysql_total_db_size_bytes }}</td>
+        <td>{{ row.mysql_data_size_bytes }}</td>
+        <td>{{ row.mysql_index_size_bytes }}</td>
+        <td>{{ row.mysql_table_count }}</td>
       </tr>
       {% endfor %}
     </tbody>

@@ -229,9 +229,9 @@ def all_indices():
 
 @app.route("/indices/<string:index_id>")
 def show_index(index_id):
-    sort_by = request.args.get('sort_by')
-    order = request.args.get('order')
-    filter_by = request.args.getlist('filter')
+    sort_by = request.args.get("sort_by", "weight")
+    order = request.args.get("order", "desc")
+    filter_by = request.args.getlist("filter")
 
     index_data = get_index_data(index_id, sort_by, order, filter_by)
 

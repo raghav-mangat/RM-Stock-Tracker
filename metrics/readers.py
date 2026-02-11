@@ -25,7 +25,7 @@ def read_daily_metrics(redis, utc_date: date) -> dict:
 
     return {
         MetricName.EMAILS_ENQUEUED: get_int(MetricName.EMAILS_ENQUEUED),
-        MetricName.API_CALLS: get_int(MetricName.API_CALLS),
+        MetricName.MASSIVE_API_CALLS: get_int(MetricName.MASSIVE_API_CALLS),
         MetricName.GOOGLE_OAUTH_CALLBACKS: get_int(MetricName.GOOGLE_OAUTH_CALLBACKS),
         MetricName.REQUEST_COUNT: get_int(MetricName.REQUEST_COUNT),
         MetricName.STATIC_REQUEST_COUNT: get_int(MetricName.STATIC_REQUEST_COUNT),

@@ -1,5 +1,5 @@
 {% from "macros/dashboard_components.html" import stats_card %}
-{% from "macros/dashboard_tables.html" import users_table, daily_users_status_table, daily_app_status_table %}
+{% from "macros/dashboard_tables.html" import users_table, daily_users_status_table, daily_app_status_table, daily_upstash_redis_status_table, daily_mysql_db_status_table  %}
 
 {% extends "admin_base.html" %}
 
@@ -48,6 +48,7 @@
             Users
           </button>
         </li>
+
         <li class="nav-item" role="presentation">
           <button class="nav-link fw-semibold"
                   data-bs-toggle="tab"
@@ -56,12 +57,31 @@
             Daily Users Status
           </button>
         </li>
+
         <li class="nav-item" role="presentation">
           <button class="nav-link fw-semibold"
                   data-bs-toggle="tab"
                   data-bs-target="#daily-app-status"
                   type="button">
             Daily App Status
+          </button>
+        </li>
+
+        <li class="nav-item" role="presentation">
+          <button class="nav-link fw-semibold"
+                  data-bs-toggle="tab"
+                  data-bs-target="#daily-upstash-redis-status"
+                  type="button">
+            Daily Upstash Redis Status
+          </button>
+        </li>
+
+        <li class="nav-item" role="presentation">
+          <button class="nav-link fw-semibold"
+                  data-bs-toggle="tab"
+                  data-bs-target="#daily-mysql-db-status"
+                  type="button">
+            Daily MySQL DB Status
           </button>
         </li>
       </ul>
@@ -77,6 +97,14 @@
 
         <div class="tab-pane fade" id="daily-app-status">
           {{ daily_app_status_table(daily_status) }}
+        </div>
+
+        <div class="tab-pane fade" id="daily-upstash-redis-status">
+          {{ daily_upstash_redis_status_table(daily_status) }}
+        </div>
+
+        <div class="tab-pane fade" id="daily-mysql-db-status">
+          {{ daily_mysql_db_status_table(daily_status) }}
         </div>
       </div>
 

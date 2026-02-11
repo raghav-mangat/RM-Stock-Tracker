@@ -1,19 +1,24 @@
 from datetime import datetime, timedelta, UTC
 from app import app
+from sqlalchemy import text
 from models.database import db
 from models.database import DailyAppStatus
 from metrics.readers import read_daily_metrics
 from admin.db_user_data import get_users_stats
-from utils.datetime_utils import get_current_utc_date, format_date
+from utils.datetime_utils import get_current_utc_date, format_date, get_current_utc
+
 
 """
 - Script to collect the daily app status data to be stored in the database
 - First initialize the target date to be one day before the current UTC date
-- Collect the metric data from Redis and user data from the database using 
+- Collect the metric data from Redis and User data from the database using 
     the target date
+- Collect the Upstash Redis operational data
+- Collect the MySQL database size data
 - Collect the other required data
 - Store everything in the database as a single row for the target date
 """
+
 
 def collect_daily_app_status():
     with app.app_context():
@@ -74,17 +79,74 @@ def collect_daily_app_status():
             if market_status != "closed":
                 market_open = True
 
-        # ---- Persist snapshot ----
-        row = DailyAppStatus(
-            date=target_date,
-            deleted_users_24h=deleted_users_24h,
-            market_open=market_open,
-            **stats,
-            **redis_metrics,
-        )
+        # ---- Upstash Redis Data ----
+        redis_data = {}
 
-        db.session.add(row)
-        db.session.commit()
+        try:
+            info = redis.info()
+
+            redis_data = {
+                "redis_data_collected_at": get_current_utc(),
+                "redis_total_commands": int(info.get("total_commands_processed", 0)),
+                "redis_total_reads": int(info.get("total_reads_processed", 0)),
+                "redis_total_writes": int(info.get("total_writes_processed", 0)),
+                "redis_used_memory_bytes": int(info.get("used_memory", 0)),
+                "redis_max_memory_bytes": int(info.get("maxmemory", 0)),
+                "redis_keys_count": int(info.get("total_keys", 0)),
+                "redis_expired_keys": int(info.get("expired_keys", 0)),
+                "redis_evicted_keys": int(info.get("evicted_keys", 0)),
+            }
+
+        except Exception:
+            app.logger.exception(
+                "Failed to collect Upstash Redis data; continuing without Redis data"
+            )
+
+        # ---- MySQL Database Data ----
+        mysql_data = {}
+
+        try:
+            result = db.session.execute(
+                text("""
+                    SELECT
+                      SUM(data_length + index_length) AS total_db_size,
+                      SUM(data_length) AS data_size,
+                      SUM(index_length) AS index_size,
+                      COUNT(*) AS table_count
+                    FROM information_schema.tables
+                    WHERE table_schema = DATABASE();
+                """)
+            ).mappings().one()
+
+            mysql_data = {
+                "mysql_data_collected_at": get_current_utc(),
+                "mysql_total_db_size_bytes": int(result["total_db_size"] or 0),
+                "mysql_data_size_bytes": int(result["data_size"] or 0),
+                "mysql_index_size_bytes": int(result["index_size"] or 0),
+                "mysql_table_count": int(result["table_count"] or 0),
+            }
+
+        except Exception:
+            app.logger.exception(
+                "Failed to collect MySQL database data; continuing without DB size data"
+            )
+
+        # ---- Persist snapshot ----
+        try:
+            row = DailyAppStatus(
+                date=target_date,
+                deleted_users_24h=deleted_users_24h,
+                market_open=market_open,
+                **stats,
+                **redis_metrics,
+                **redis_data,
+                **mysql_data,
+            )
+
+            db.session.add(row)
+            db.session.commit()
+        except Exception:
+            app.logger.exception(f"Failed to store Daily App Status data for Date: {target_date}")
 
 
 if __name__ == "__main__":

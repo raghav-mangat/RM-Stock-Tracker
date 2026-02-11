@@ -15,7 +15,7 @@ def get_index_data(index_id, sort_by, order, filter_by):
         filter_by = list(valid_filter)
 
     sort_dropdown_options = [
-        {"label": "Weight (High to Low)", "sort_by": None, "order": None},
+        {"label": "Weight (High to Low)", "sort_by": "weight", "order": "desc"},
         {"label": "Weight (Low to High)", "sort_by": "weight", "order": "asc"},
         {"label": "Name (High to Low)", "sort_by": "name", "order": "desc"},
         {"label": "Name (Low to High)", "sort_by": "name", "order": "asc"},
@@ -26,6 +26,7 @@ def get_index_data(index_id, sort_by, order, filter_by):
     ]
 
     sort_options = {
+        ("weight", "desc"): IndexHolding.weight.desc(),
         ("weight", "asc"): IndexHolding.weight.asc(),
         ("name", "desc"): Stock.name.desc(),
         ("name", "asc"): Stock.name.asc(),

@@ -221,7 +221,7 @@
           {% for item_id, item_data in folder_data.folder_items.items() %}
               {% set stock = item_data["stock_data"] %}
               <tr>
-                  {{ table_data_row_number(item_data["item_order"]) }}
+                  {{ table_data_row_number(loop.index) }}
                   <td>
                     {{ ticker_link(stock) }}
                   </td>
