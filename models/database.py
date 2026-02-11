@@ -838,7 +838,7 @@ class DailyAppStatus(TimestampMixin, db.Model):
 
     # Core Usage Metrics
     emails_enqueued: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
-    api_calls: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    massive_api_calls: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     google_oauth_callbacks: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
     # App Health
@@ -873,6 +873,32 @@ class DailyAppStatus(TimestampMixin, db.Model):
 
     # Market Status
     market_open: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+
+    # Upstash Redis Data
+    redis_data_collected_at: Mapped[datetime] = mapped_column(
+        UTCDateTime,
+        nullable=False,
+        default=get_current_utc
+    )
+    redis_total_commands: Mapped[int] = mapped_column(BigInteger, nullable=False, default=0)
+    redis_total_reads: Mapped[int] = mapped_column(BigInteger, nullable=False, default=0)
+    redis_total_writes: Mapped[int] = mapped_column(BigInteger, nullable=False, default=0)
+    redis_used_memory_bytes: Mapped[int] = mapped_column(BigInteger, nullable=False, default=0)
+    redis_max_memory_bytes: Mapped[int] = mapped_column(BigInteger, nullable=False, default=0)
+    redis_keys_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    redis_expired_keys: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    redis_evicted_keys: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+
+    # MySQL Database Data
+    mysql_data_collected_at: Mapped[datetime] = mapped_column(
+        UTCDateTime,
+        nullable=False,
+        default=get_current_utc
+    )
+    mysql_total_db_size_bytes: Mapped[int] = mapped_column(BigInteger, nullable=False, default=0)
+    mysql_data_size_bytes: Mapped[int] = mapped_column(BigInteger, nullable=False, default=0)
+    mysql_index_size_bytes: Mapped[int] = mapped_column(BigInteger, nullable=False, default=0)
+    mysql_table_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
     def __repr__(self) -> str:
         return (f"<DailyAppStatus id={self.id} date={self.date} request_count={self.request_count} "
