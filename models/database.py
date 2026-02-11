@@ -840,8 +840,12 @@ class DailyAppStatus(TimestampMixin, db.Model):
     emails_enqueued: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     massive_api_calls: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     google_oauth_callbacks: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    emails_sent_success: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    emails_sent_failure: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    email_send_retries: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    email_send_permanent_failure: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
-    # App Health
+    # App Health Metrics
     request_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     static_request_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
