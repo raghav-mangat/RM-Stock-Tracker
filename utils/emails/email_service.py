@@ -16,7 +16,7 @@ class EmailService:
         Enqueue auth email sending in Redis (non-blocking).
         """
         from tasks.email_tasks import send_email_task
-        from app import email_high_queue
+        from app import app, email_high_queue
 
         email_high_queue.enqueue(
             send_email_task,
@@ -31,6 +31,16 @@ class EmailService:
 
         metrics.increment(MetricName.EMAILS_ENQUEUED)
 
+        app.logger.info(
+            "Auth email enqueued",
+            extra={
+                "log_type": "emails",
+                "action": "enqueue_auth_email",
+                "recipients_count": len(recipients),
+            }
+        )
+
+
     @staticmethod
     def enqueue_watchlist_email(
         subject: str,
@@ -43,7 +53,7 @@ class EmailService:
         Enqueue watchlist email sending in Redis (non-blocking).
         """
         from tasks.email_tasks import send_email_task
-        from app import email_low_queue
+        from app import app, email_low_queue
 
         email_low_queue.enqueue(
             send_email_task,
@@ -57,3 +67,12 @@ class EmailService:
         )
 
         metrics.increment(MetricName.EMAILS_ENQUEUED)
+
+        app.logger.info(
+            "Watchlist email enqueued",
+            extra={
+                "log_type": "emails",
+                "action": "enqueue_watchlist_email",
+                "recipients_count": len(recipients),
+            }
+        )

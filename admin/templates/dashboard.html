@@ -1,5 +1,9 @@
 {% from "macros/dashboard_components.html" import stats_card %}
-{% from "macros/dashboard_tables.html" import users_table, daily_users_status_table, daily_app_status_table, daily_upstash_redis_status_table, daily_mysql_db_status_table  %}
+{% from "macros/dashboard_tables.html" import
+    users_table, daily_users_status_table, daily_core_usage_status_table,
+    daily_app_health_status_table, daily_upstash_redis_status_table,
+    daily_mysql_db_status_table
+%}
 
 {% extends "admin_base.html" %}
 
@@ -61,9 +65,18 @@
         <li class="nav-item" role="presentation">
           <button class="nav-link fw-semibold"
                   data-bs-toggle="tab"
-                  data-bs-target="#daily-app-status"
+                  data-bs-target="#daily-core-usage-status"
                   type="button">
-            Daily App Status
+            Daily Core Usage Status
+          </button>
+        </li>
+
+        <li class="nav-item" role="presentation">
+          <button class="nav-link fw-semibold"
+                  data-bs-toggle="tab"
+                  data-bs-target="#daily-app-health-status"
+                  type="button">
+            Daily App Health Status
           </button>
         </li>
 
@@ -95,8 +108,12 @@
           {{ daily_users_status_table(daily_status) }}
         </div>
 
-        <div class="tab-pane fade" id="daily-app-status">
-          {{ daily_app_status_table(daily_status) }}
+        <div class="tab-pane fade" id="daily-core-usage-status">
+          {{ daily_core_usage_status_table(daily_status) }}
+        </div>
+
+        <div class="tab-pane fade" id="daily-app-health-status">
+          {{ daily_app_health_status_table(daily_status) }}
         </div>
 
         <div class="tab-pane fade" id="daily-upstash-redis-status">

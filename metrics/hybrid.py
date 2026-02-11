@@ -1,5 +1,6 @@
 import time
 import threading
+from flask import current_app
 from collections import defaultdict
 from redis.exceptions import RedisError
 from metrics.base import MetricsBackend
@@ -113,19 +114,28 @@ class HybridMetricsBackend(MetricsBackend):
                         REDIS_METRICS_TTL,
                     )
 
-                # Execute atomic flush
-                pipe.execute()
-
                 # Record successful Redis flush
                 success_key = metrics_dated_key(MetricName.REDIS_FLUSH_SUCCESS, now)
-                self.redis.incr(success_key)
-                self.redis.expire(success_key, REDIS_METRICS_TTL)
+                pipe = self.redis.pipeline()
+                pipe.incr(success_key)
+                pipe.expire(success_key, REDIS_METRICS_TTL)
+
+                # Execute atomic flush
+                pipe.execute()
 
                 # Reset buffers only after success
                 self._counters.clear()
                 self._latency_counters.clear()
                 self._latency_counters = self.initialize_latency_counters()
                 self._last_flush = time.time()
+
+                current_app.logger.info(
+                    "Metrics flush to Redis successful",
+                    extra={
+                        "log_type": "metrics",
+                        "action": "metrics_flush_success",
+                    },
+                )
 
             except RedisError:
                 try:
@@ -136,8 +146,15 @@ class HybridMetricsBackend(MetricsBackend):
                     pipe.expire(failure_key, REDIS_METRICS_TTL)
                     pipe.execute()
                 except RedisError:
-                    # If even recording failure fails, log failure (optional)
+                    # If even recording failure fails, log failure
                     pass
 
+                current_app.logger.exception(
+                    "Metrics flush to Redis failed",
+                    extra={
+                        "log_type": "metrics",
+                        "action": "metrics_flush_failure",
+                    },
+                )
+
                 # Do NOT clear buffers, retry on next flush
-                # Log failure (optional)

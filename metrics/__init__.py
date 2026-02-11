@@ -24,13 +24,15 @@ from metrics.lifecycle import register_metrics_shutdown
 - Since the metrics are buffered, if the flask web app is restarted
     or something unexpected happens, even though we have safeguards
     for it in the lifecycle, the data may be missed, so use these
-    metrics as approximations for now
-- Right now the metrics are only working for the Flask web app,
-    and not any other workers or scheduled/cron jobs
-- Workers like RQ workers and scheduled/cron jobs work a little
-    different than Flask so maybe have an explicit flush per job
-    or Redis only backend for those if we want to have metrics 
-    like email failures/success, etc. for those
+    metrics as approximations for now.
+- Metrics are now working for the Flask web app, other workers like 
+    RQ workers, background workers, and scheduled/cron jobs. Since
+    the metrics are buffered, use these metrics as approximations
+    for now.
+- Metrics are a bit unreliable right now, use those as approximations.
+- If we want more robust metrics later on we can move on to redis
+    only architecture that does not buffer anything in memory just
+    reads/writes to redis only for each metric.
 - Improvements / Future Work
     - Background flush thread instead of opportunistic flushing
     - Export metrics to Prometheus / Grafana
@@ -38,6 +40,7 @@ from metrics.lifecycle import register_metrics_shutdown
     - Multi-process aggregation using Redis-only backend
     - Histogram-based latency buckets if higher resolution is needed
     - Per route request count and average latency calculation
+    - Send notifications if the metrics seem odd
 """
 
 

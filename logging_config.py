@@ -17,10 +17,9 @@ Notes:
 - Special note about exception()
     - Automatically logs exc_info=True
     - Must be called inside except block
-- We filter the events/auth logs using:
-    - extra={"log_type": "events"/"auth"}
+- We filter the events/auth/emails logs using:
+    - extra={"log_type": ""}
     - We put this extra part in the related logger code in the project
-    - We do not show this log_type in context filter
 """
 
 class ContextFilter(logging.Filter):
@@ -33,13 +32,15 @@ class ContextFilter(logging.Filter):
     - Ready for structured logging / Sentry later
     - Later, you can safely add to context keys:
         - "username"
-        - "action"
         - etc.
     """
 
     # Shows the values of only these specified attributes in this
     # particular order
-    CONTEXT_KEYS = ("request_id", "ip", "route", "user_id", "email", "reason")
+    CONTEXT_KEYS = ("log_type", "action",
+                    "request_id", "ip", "route", "user_id", "email",
+                    "job_id", "recipients_count", "retries_left",
+                    "reason")
 
     def filter(self, record: logging.LogRecord) -> bool:
         if has_request_context():
@@ -101,7 +102,8 @@ class EventsLogFilter(logging.Filter):
             - Metrics
             - etc.
         """
-        return getattr(record, "log_type", None) == "events"
+        events_logs_types = ["system", "scheduled_script", "metrics"]
+        return getattr(record, "log_type", None) in events_logs_types
 
 
 class AuthLogFilter(logging.Filter):
@@ -110,6 +112,14 @@ class AuthLogFilter(logging.Filter):
         Keeps the logs for auth routes.
         """
         return getattr(record, "log_type", None) == "auth"
+
+
+class EmailsLogFilter(logging.Filter):
+    def filter(self, record):
+        """
+        Keeps the logs for email services and tasks.
+        """
+        return getattr(record, "log_type", None) == "emails"
 
 
 class StripExceptionInfoFilter(logging.Filter):
@@ -151,6 +161,7 @@ def setup_logging(app):
         - error.log: Failures, captures errors/exceptions only
         - events.log: Business events for Flask App, captures info, warning, error
         - auth.log: Auth routes, captures info and warning
+        - emails.log: Email services and tasks, captures info, warning, exception
     """
 
     # App log (DEBUG/INFO+)
@@ -199,6 +210,18 @@ def setup_logging(app):
     auth_handler.addFilter(AppOnlyFilter())
     auth_handler.addFilter(AuthLogFilter())
 
+    # Emails log (INFO+)
+    email_handler = RotatingFileHandler(
+        os.path.join(log_dir, "email.log"),
+        maxBytes=10_000_000,
+        backupCount=5,
+    )
+    email_handler.setLevel(logging.INFO)
+    email_handler.setFormatter(formatter)
+    email_handler.addFilter(context_filter)
+    email_handler.addFilter(AppOnlyFilter())
+    email_handler.addFilter(EmailsLogFilter())
+
     """
     Later you can add:
         - Structured JSON logs
@@ -229,6 +252,7 @@ def setup_logging(app):
         app.logger.addHandler(error_handler)
         app.logger.addHandler(events_handler)
         app.logger.addHandler(auth_handler)
+        app.logger.addHandler(email_handler)
 
     """
     Use this in case you see duplicate logs.

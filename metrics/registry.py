@@ -3,6 +3,11 @@ class MetricName:
     MASSIVE_API_CALLS = "massive_api_calls"
     GOOGLE_OAUTH_CALLBACKS = "google_oauth_callbacks"
 
+    EMAILS_SENT_SUCCESS = "emails_sent_success"
+    EMAILS_SENT_FAILURE = "emails_sent_failure"
+    EMAIL_SEND_RETRIES = "email_send_retries"
+    EMAIL_SEND_PERMANENT_FAILURE = "email_send_permanent_failure"
+
     # Flask app request for specific routes
     REQUEST_COUNT = "request_count"
     # Static requests

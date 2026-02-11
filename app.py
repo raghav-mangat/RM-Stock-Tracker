@@ -396,5 +396,8 @@ def sitemap():
 
 
 if __name__ == "__main__":
-    app.logger.info("Starting Flask App", extra={"log_type": "events"})
+    app.logger.info(
+        "Starting Flask App",
+        extra={"log_type": "system", "action": "start_flask_app"}
+    )
     app.run()

@@ -152,7 +152,55 @@
 {% endmacro %}
 
 
-{% macro daily_app_status_table(rows) %}
+{% macro daily_core_usage_status_table(rows) %}
+<div class="table-responsive">
+  <table class="table table-striped table-bordered table-hover align-middle">
+    <thead class="table-light">
+      <tr class="align-middle">
+        <th>#</th>
+        <th>Date</th>
+        <th>Market</th>
+
+        <th>Emails Enqueued</th>
+        <th>Massive API Calls</th>
+        <th>Google OAuth Callbacks</th>
+        <th>Emails Sent Success</th>
+        <th>Emails Sent Failure</th>
+        <th>Emails Send Retries</th>
+        <th>Emails Send Permanent Failure</th>
+
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in rows %}
+      <tr>
+        <td class="fw-bold">{{ loop.index }}</td>
+
+        <td>{{ row.date.strftime("%b %d, %Y") }}</td>
+        <td class="text-center">
+          {% if row.market_open %}
+            <span class="badge bg-success">Open</span>
+          {% else %}
+            <span class="badge bg-secondary">Closed</span>
+          {% endif %}
+        </td>
+
+        <td>{{ row.emails_enqueued }}</td>
+        <td>{{ row.massive_api_calls }}</td>
+        <td>{{ row.google_oauth_callbacks }}</td>
+        <td>{{ row.emails_sent_success }}</td>
+        <td>{{ row.emails_sent_failure }}</td>
+        <td>{{ row.email_send_retries }}</td>
+        <td>{{ row.email_send_permanent_failure }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endmacro %}
+
+
+{% macro daily_app_health_status_table(rows) %}
 <div class="table-responsive">
   <table class="table table-striped table-bordered table-hover align-middle">
     <thead class="table-light">
@@ -169,10 +217,6 @@
 
         <th>Avg Latency (ms)</th>
         <th>Avg Static Latency (ms)</th>
-
-        <th>Emails Enqueued</th>
-        <th>Massive API Calls</th>
-        <th>Google OAuth Callbacks</th>
 
         <th>Redis Flush Success</th>
         <th>Redis Flush Failure</th>
@@ -200,10 +244,6 @@
 
         <td>{{ "%.1f"|format(row.avg_latency_ms) }}</td>
         <td>{{ "%.1f"|format(row.avg_static_latency_ms) }}</td>
-
-        <td>{{ row.emails_enqueued }}</td>
-        <td>{{ row.massive_api_calls }}</td>
-        <td>{{ row.google_oauth_callbacks }}</td>
 
         <td>{{ row.redis_flush_success }}</td>
         <td>{{ row.redis_flush_failure }}</td>
