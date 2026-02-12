@@ -1,3 +1,4 @@
+import sys
 from datetime import datetime, timedelta, UTC
 from app import app
 from sqlalchemy import text
@@ -6,7 +7,7 @@ from models.database import DailyAppStatus
 from metrics.readers import read_daily_metrics
 from admin.db_user_data import get_users_stats
 from utils.datetime_utils import get_current_utc_date, format_date, get_current_utc
-
+from scheduled_scripts.helpers import get_market_status
 
 """
 - Script to collect the daily app status data to be stored in the database
@@ -21,6 +22,11 @@ from utils.datetime_utils import get_current_utc_date, format_date, get_current_
 
 
 def collect_daily_app_status():
+    app.logger.info(
+        f"Starting script",
+        extra={"log_type": "scheduled_script", "action": "collect_daily_app_status"}
+    )
+
     with app.app_context():
         redis = app.config["REDIS"]
         target_date = get_current_utc_date() - timedelta(days=1)
@@ -74,16 +80,10 @@ def collect_daily_app_status():
             deleted_users_24h = 0
 
         # ---- Market status ----
-        from pathlib import Path
-        import json
-        data_path = Path(__file__).resolve().parent.parent / "data" / "market_status.json"
+        market_status = get_market_status()
         market_open = False
-        if data_path.exists():
-            with open(data_path) as f:
-                market_info = json.load(f)
-                market_status = market_info.get("market_status")
-            if market_status != "closed":
-                market_open = True
+        if market_status != "closed":
+            market_open = True
 
         # ---- Upstash Redis Data ----
         redis_data = {}
@@ -153,11 +153,18 @@ def collect_daily_app_status():
 
             db.session.add(row)
             db.session.commit()
+
+            app.logger.info(
+                f"Completed script",
+                extra={"log_type": "scheduled_script", "action": "collect_daily_app_status"}
+            )
+
         except Exception:
             app.logger.exception(
                 f"Failed to store Daily App Status data for Date: {target_date}",
                 extra={"log_type": "scheduled_script", "action": "collect_daily_app_status"}
             )
+            sys.exit(1)
 
 
 if __name__ == "__main__":

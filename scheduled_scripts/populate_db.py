@@ -14,9 +14,7 @@ from utils.db_queries.stock_master_data import get_all_stock_master
 from utils.db_queries.stock_type_meta_data import get_all_stock_types
 from utils.db_queries.all_stocks import get_trending_stocks, get_top_stocks_categories, db_get_top_stocks_data
 from utils.db_queries.query_stocks import get_query_stocks
-from pathlib import Path
-import json
-from email_scripts.send_watchlist_alerts import send_watchlist_alert_emails
+from scheduled_scripts.helpers import write_to_status_file, get_market_status
 
 # -------- Stage all new data --------
 stocks_cache = {}  # ticker -> Stock object
@@ -87,7 +85,7 @@ def add_new_stocks_data():
             db.session.add_all(value)
         db.session.flush()
 
-def populate_db():
+def populate_db(now):
     """
     Populate the database by staging all data first, then replacing
     the main tables in a single atomic transaction.
@@ -97,7 +95,6 @@ def populate_db():
     """
     with app.app_context():
         print("Starting Database Population...\n")
-        now = get_current_utc()
         now_date = format_date(now)
 
         try:
@@ -277,8 +274,6 @@ def populate_db():
                 # Data will be automatically committed to the database by db.session.begin()
             print("Committed all the data to the database!")
 
-            save_populate_db_info(now)
-
         except Exception as e:
             print(f"Error: {e}")
             db.session.rollback()
@@ -286,48 +281,64 @@ def populate_db():
 
         print("\nDatabase Population Completed!\n")
 
-def save_populate_db_info(now):
-    # Define file path
-    base_dir = Path(__file__).resolve().parent.parent
-    data_dir = base_dir / "data"
-    data_file = data_dir / "populate_db_info.json"
-
-    # Ensure folder exists
-    data_dir.mkdir(parents=True, exist_ok=True)
-
-    # Set current timestamp in US/Eastern
-    formatted_timestamp = format_dt_et(now)
-    # Set current date
-    formatted_date = format_date(now)
-
-    # Prepare data
-    populate_db_info = {
-        "last_updated": formatted_timestamp,
-        "last_updated_date": formatted_date
+def write_status(now, status):
+    status_data = {
+        "status": status,
+        "last_update_attempted":  format_dt_et(now),
+        "last_update_attempted_date": format_date(now)
     }
 
-    # Save to JSON
-    with open(data_file, "w") as f:
-        json.dump(populate_db_info, f, indent=2)
+    if status == "success":
+        status_data.update({
+            "last_updated": format_dt_et(now),
+            "last_updated_date": format_date(now)
+        })
+
+    write_to_status_file(filename="populate_db_info.json", status_data=status_data)
 
 def main():
-    # Load market status
-    data_path = Path(__file__).resolve().parent.parent / "data" / "market_status.json"
+    app.logger.info(
+        f"Starting script",
+        extra={"log_type": "scheduled_script", "action": "populate_db"}
+    )
 
-    if data_path.exists():
-        with open(data_path) as f:
-            market_info = json.load(f)
-            market_status = market_info.get("market_status")
-        if market_status == "closed":
-            print(f"Market status was {market_status} - skipping DB population!")
+    now = get_current_utc()
+    write_status(now, status="running")
+
+    try:
+        market_status = get_market_status()
+
+        if market_status:
+            if market_status == "closed":
+                print(f"Market status was {market_status} - skipping DB population!")
+                write_status(now, status="skipped")
+                app.logger.info(
+                    f"Skipping script",
+                    extra={"log_type": "scheduled_script", "action": "populate_db", "reason": f"market status: {market_status}"}
+                )
+            else:
+                print(f"Market status was {market_status} - proceeding with DB population...")
+
+                populate_db(now)
+                write_status(now, status="success")
+
+                app.logger.info(
+                    f"Completed script",
+                    extra={"log_type": "scheduled_script", "action": "populate_db"}
+                )
         else:
-            print(f"Market status was {market_status} - proceeding with DB population...")
-            populate_db()
+            message = "Market status file missing - cannot determine whether to proceed with DB population!"
+            print(message)
+            raise Exception(message)
 
-            # Send watchlist alert emails to users after DB is populated
-            send_watchlist_alert_emails()
-    else:
-        print("Market status file missing - cannot determine whether to proceed with DB population!")
+    except Exception as e:
+        write_status(now, status="failed")
+        app.logger.exception(
+            f"Script failed",
+            extra={"log_type": "scheduled_script", "action": "populate_db", "reason": str(e)}
+        )
+        sys.exit(1)
+
 
 if __name__ == "__main__":
     main()
