@@ -10,6 +10,7 @@ def send_email_task(
     text_body: str,
     html_body: str,
     inline_images: dict | None = None,
+    request_id: str | None = None
 ):
     """
     RQ job: Sends an email inside a Flask app context.
@@ -30,6 +31,7 @@ def send_email_task(
                 "log_type": "emails",
                 "action": "email_send_start",
                 "recipients_count": len(recipients),
+                "request_id": request_id,
                 "job_id": job.id if job else None,
             },
         )
@@ -52,6 +54,7 @@ def send_email_task(
                     "log_type": "emails",
                     "action": "email_send_success",
                     "recipients_count": len(recipients),
+                    "request_id": request_id,
                     "job_id": job.id if job else None,
                 },
             )
@@ -70,6 +73,7 @@ def send_email_task(
                         "log_type": "emails",
                         "action": "email_send_retry",
                         "retries_left": job.retries_left,
+                        "request_id": request_id,
                         "job_id": job.id,
                         "reason": str(exc),
                     },
@@ -83,6 +87,7 @@ def send_email_task(
                     extra={
                         "log_type": "emails",
                         "action": "email_send_failure",
+                        "request_id": request_id,
                         "job_id": job.id if job else None,
                     }
                 )

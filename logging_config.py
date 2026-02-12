@@ -211,16 +211,16 @@ def setup_logging(app):
     auth_handler.addFilter(AuthLogFilter())
 
     # Emails log (INFO+)
-    email_handler = RotatingFileHandler(
-        os.path.join(log_dir, "email.log"),
+    emails_handler = RotatingFileHandler(
+        os.path.join(log_dir, "emails.log"),
         maxBytes=10_000_000,
         backupCount=5,
     )
-    email_handler.setLevel(logging.INFO)
-    email_handler.setFormatter(formatter)
-    email_handler.addFilter(context_filter)
-    email_handler.addFilter(AppOnlyFilter())
-    email_handler.addFilter(EmailsLogFilter())
+    emails_handler.setLevel(logging.INFO)
+    emails_handler.setFormatter(formatter)
+    emails_handler.addFilter(context_filter)
+    emails_handler.addFilter(AppOnlyFilter())
+    emails_handler.addFilter(EmailsLogFilter())
 
     """
     Later you can add:
@@ -252,7 +252,7 @@ def setup_logging(app):
         app.logger.addHandler(error_handler)
         app.logger.addHandler(events_handler)
         app.logger.addHandler(auth_handler)
-        app.logger.addHandler(email_handler)
+        app.logger.addHandler(emails_handler)
 
     """
     Use this in case you see duplicate logs.

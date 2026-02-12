@@ -29,6 +29,9 @@ from metrics.lifecycle import register_metrics_shutdown
     RQ workers, background workers, and scheduled/cron jobs. Since
     the metrics are buffered, use these metrics as approximations
     for now.
+- Metrics are flushed to redis everytime a process is terminated like
+    when scheduled scripts finish, flask app stops, background workers
+    stop, etc.
 - Metrics are a bit unreliable right now, use those as approximations.
 - If we want more robust metrics later on we can move on to redis
     only architecture that does not buffer anything in memory just

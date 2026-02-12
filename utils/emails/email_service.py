@@ -17,6 +17,11 @@ class EmailService:
         """
         from tasks.email_tasks import send_email_task
         from app import app, email_high_queue
+        from flask import g, has_request_context
+
+        request_id = None
+        if has_request_context():
+            request_id = g.request_id
 
         email_high_queue.enqueue(
             send_email_task,
@@ -25,6 +30,7 @@ class EmailService:
             text_body,
             html_body,
             inline_images,
+            request_id,
             job_timeout=120,
             retry=Retry(max=3, interval=[10, 30, 60]),
         )
@@ -54,6 +60,11 @@ class EmailService:
         """
         from tasks.email_tasks import send_email_task
         from app import app, email_low_queue
+        from flask import g, has_request_context
+
+        request_id = None
+        if has_request_context():
+            request_id = g.request_id
 
         email_low_queue.enqueue(
             send_email_task,
@@ -62,6 +73,7 @@ class EmailService:
             text_body,
             html_body,
             inline_images,
+            request_id,
             job_timeout=300,
             retry=Retry(max=2, interval=[60, 300]),
         )
