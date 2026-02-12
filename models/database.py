@@ -181,6 +181,31 @@ class TimestampMixin:
 
 # --- Models ---
 
+class StockTypeMeta(TimestampMixin, db.Model):
+    __tablename__ = "stock_type_meta"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+
+    # Polygon / Massive API canonical identifier
+    code: Mapped[str] = mapped_column(
+        String(STOCK_INFO_LEN),
+        unique=True,
+        nullable=False,
+    )
+
+    # Human-readable label (can change over time)
+    description: Mapped[str] = mapped_column(
+        String(STOCK_INFO_LEN),
+        nullable=False
+    )
+
+    # Active flag in case Polygon / Massive API deprecates types
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
+    def __repr__(self) -> str:
+        return f"<StockTypeMeta id={self.id } code={self.code} description={self.description}>"
+
+
 class Stock(db.Model):
     __tablename__ = "stocks"
 
@@ -194,9 +219,19 @@ class Stock(db.Model):
     homepage_url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     list_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
     industry: Mapped[Optional[str]] = mapped_column(String(STOCK_INFO_LEN), nullable=True)
-    stock_type: Mapped[Optional[str]] = mapped_column(String(STOCK_INFO_LEN), nullable=True)
     total_employees: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     market_cap: Mapped[Optional[Decimal]] = mapped_column(Numeric(LARGE_NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
+
+    stock_type_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("stock_type_meta.id"),
+        nullable=True,
+        index=True
+    )
+
+    stock_type: Mapped[Optional["StockTypeMeta"]] = relationship(
+        "StockTypeMeta",
+        lazy="joined"
+    )
 
     # Branding
     icon_url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
@@ -271,7 +306,7 @@ class Stock(db.Model):
                 return format_date(val)
             return val
 
-        stock_dict =  {
+        stock_dict = {
             column.name: serialize(getattr(self, column.name))
             for column in self.__table__.columns
         }
@@ -330,8 +365,18 @@ class StockMaster(TimestampMixin, db.Model):
     # All tickers data
     ticker: Mapped[str] = mapped_column(String(TICKER_LEN), unique=True, nullable=False)
     name: Mapped[Optional[str]] = mapped_column(String(STOCK_NAME_LEN), nullable=True)
-    stock_type: Mapped[Optional[str]] = mapped_column(String(STOCK_INFO_LEN), nullable=True)
     primary_exchange: Mapped[Optional[str]] = mapped_column(String(STOCK_INFO_LEN), nullable=True)
+
+    stock_type_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("stock_type_meta.id"),
+        nullable=True,
+        index=True
+    )
+
+    stock_type: Mapped[Optional["StockTypeMeta"]] = relationship(
+        "StockTypeMeta",
+        lazy="joined"
+    )
 
     # Full Market Snapshot Data
     last_updated: Mapped[Optional[datetime]] = mapped_column(UTCDateTime, nullable=True)
