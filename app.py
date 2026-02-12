@@ -306,6 +306,7 @@ def show_stock(ticker):
     return render_template(
         "show_stock.html",
         stock=stock_data.get("stock"),
+        stock_type=stock_data.get("stock_type"),
         rel_companies=stock_data.get("rel_companies"),
         timeframe_options=timeframe_options,
         initial_timeframe=initial_timeframe,

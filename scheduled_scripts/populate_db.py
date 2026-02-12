@@ -6,11 +6,12 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from app import app
 from sqlalchemy import delete
-from models.database import db, Stock, Index, IndexHolding, StockMaster, StockMinute, StockHour, StockDay, StockWeek
+from models.database import db, StockTypeMeta, Stock, Index, IndexHolding, StockMaster, StockMinute, StockHour, StockDay, StockWeek
 from data_collectors.index_data import all_indices, get_index_info, fetch_index_data
-from data_collectors.stock_data import fetch_all_stocks_data, fetch_stock_data, fetch_chart_data, DB_TIMEFRAMES
+from data_collectors.stock_data import fetch_stock_types, fetch_all_stocks_data, fetch_stock_data, fetch_chart_data, DB_TIMEFRAMES
 from utils.datetime_utils import get_current_utc, format_dt_et, format_date
 from utils.db_queries.stock_master_data import get_all_stock_master
+from utils.db_queries.stock_type_meta_data import get_all_stock_types
 from utils.db_queries.all_stocks import get_trending_stocks, get_top_stocks_categories, db_get_top_stocks_data
 from utils.db_queries.query_stocks import get_query_stocks
 from pathlib import Path
@@ -36,12 +37,12 @@ for v in new_chart_data.values():
     v.clear()
 
 # ---- Helper to get Stock object (with chart data) ----
-def get_or_fetch_stock(ticker, now_date, stock_master_map):
+def get_or_fetch_stock(ticker, now_date, stock_master_map, stock_type_map):
     if ticker in stocks_cache:
         return stocks_cache[ticker]
 
     try:
-        stock = fetch_stock_data(ticker, now_date, stock_master_map.get(ticker, None))
+        stock = fetch_stock_data(ticker, now_date, stock_master_map.get(ticker, None), stock_type_map)
         if stock:
             stocks_cache[ticker] = stock
             new_stocks.append(stock)
@@ -113,9 +114,43 @@ def populate_db():
                 db.session.flush()
                 print("Tables Deleted!")
 
+                # ---- Stock Types Meta ----
+                print(f"Updating Stock Type Meta table...")
+
+                stock_types = fetch_stock_types()
+
+                existing = {
+                    st.code: st
+                    for st in get_all_stock_types()
+                }
+
+                for code, desc in stock_types.items():
+                    if code in existing:
+                        if existing[code].description != desc:
+                            existing[code].description = desc
+                            existing[code].is_active = True
+                    else:
+                        db.session.add(
+                            StockTypeMeta(code=code, description=desc)
+                        )
+
+                # Mark missing ones inactive
+                for code, obj in existing.items():
+                    if code not in stock_types:
+                        obj.is_active = False
+
+                db.session.flush()
+
+                stock_type_map = {
+                    st.code: st
+                    for st in get_all_stock_types()
+                }
+
+                print(f"Updated Stock Type Meta table!")
+
                 # ---- Stock Master ----
                 print(f"Fetching data for Stock Master...")
-                stocks = fetch_all_stocks_data()
+                stocks = fetch_all_stocks_data(stock_type_map)
                 for stock in stocks:
                     ticker = stock.ticker
                     if ticker not in stock_master_tickers:
@@ -155,7 +190,7 @@ def populate_db():
                         for holding in holdings:
                             ticker = holding.get("ticker")
                             if ticker:
-                                stock = get_or_fetch_stock(ticker, now_date, stock_master_map)
+                                stock = get_or_fetch_stock(ticker, now_date, stock_master_map, stock_type_map)
                                 if stock:
                                     index_holding = IndexHolding(
                                         index=index_obj,
@@ -187,7 +222,7 @@ def populate_db():
                     for stock in get_trending_stocks():
                         ticker = stock.ticker
                         if ticker:
-                            get_or_fetch_stock(ticker, now_date, stock_master_map)
+                            get_or_fetch_stock(ticker, now_date, stock_master_map, stock_type_map)
 
                 print("Fetched Trending Stocks data for updated database!")
 
@@ -208,7 +243,7 @@ def populate_db():
                             for stock in db_get_top_stocks_data(category, stocks_type):
                                 ticker = stock.ticker
                                 if ticker:
-                                    get_or_fetch_stock(ticker, now_date, stock_master_map)
+                                    get_or_fetch_stock(ticker, now_date, stock_master_map, stock_type_map)
 
                 print("Fetched Top Stocks data for updated database!")
 
@@ -227,7 +262,7 @@ def populate_db():
                     for item in get_query_stocks(user_query=None).json:
                         ticker = item.get("ticker")
                         if ticker:
-                            get_or_fetch_stock(ticker, now_date, stock_master_map)
+                            get_or_fetch_stock(ticker, now_date, stock_master_map, stock_type_map)
 
                 print("Fetched Search Bar Stocks data for updated database!")
 

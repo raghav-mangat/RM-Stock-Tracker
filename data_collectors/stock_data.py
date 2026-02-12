@@ -8,6 +8,7 @@ from models.database import Stock, StockMaster, StockMinute, StockHour, StockDay
 from utils.datetime_utils import polygon_timestamp_to_utc_dt, format_date, DATE_FORMAT, DATETIME_FORMAT
 from utils.populate_db_info import db_last_updated_date
 from utils.db_queries.stock_master_data import get_stock_master_by_ticker
+from utils.db_queries.stock_type_meta_data import get_stock_type_by_code
 
 load_dotenv()
 
@@ -17,15 +18,15 @@ client = RESTClient(POLYGON_API_KEY)
 # List of all attributes that we store in the database for all stocks available in Polygon API.
 # Must be the same as all the fields in the Stock Master table in the database.
 STOCK_MASTER_ATTRIBUTES = [
-            "ticker", "name", "stock_type", "primary_exchange", "last_updated", "day_close",
+            "ticker", "name", "primary_exchange", "stock_type", "last_updated", "day_close",
             "day_open", "day_high", "day_low", "volume", "todays_change", "todays_change_perc"
         ]
 
 # List of all attributes that we store in the database for a given stock.
 # Must be the same as all the fields in the Stock table in the database.
 STOCK_ATTRIBUTES = [
-            "ticker", "name", "description", "homepage_url", "list_date", "industry", "stock_type",
-            "total_employees", "market_cap", "icon_url", "last_updated",
+            "ticker", "name", "description", "homepage_url", "list_date", "industry",
+            "total_employees", "market_cap", "stock_type", "icon_url", "last_updated",
             "day_close", "day_open", "day_high", "day_low", "volume", "todays_change", "todays_change_perc",
             "dma_30", "dma_50", "dma_200", "dma_30_perc_diff", "dma_50_perc_diff", "dma_200_perc_diff",
             "high_52w", "low_52w", "high_52w_perc_diff", "low_52w_perc_diff",
@@ -101,7 +102,7 @@ DB_TIMEFRAMES = ["1D", "1W", "1Y", "5Y"]
 
 DECIMAL_PRECISION = 2
 
-def fetch_all_stocks_data():
+def fetch_all_stocks_data(stock_type_map=None):
     """
     For all the stocks available in polygon API, this function collects
     the data for all the attributes in 'STOCK_MASTER_ATTRIBUTES' defined
@@ -110,26 +111,23 @@ def fetch_all_stocks_data():
     :return: List of Stock Master DB model object, containing the required
         data for all the stocks available in polygon API
     """
+
     print("Retrieving data for all the stocks in polygon API...")
     stock_master_data = []
 
-    # Get the ticker types
-    try:
-        ticker_types = {
-            t.code: t.description for t in client.get_ticker_types(asset_class="stocks", locale="us")
-        }
-        metrics.increment(MetricName.MASSIVE_API_CALLS)
-    except Exception as e:
-        print(f"Error fetching ticker types: {e}")
-        ticker_types = {}
+    def get_stock_type(t):
+        if stock_type_map:
+            return stock_type_map.get(t.type)
+        else:
+            return get_stock_type_by_code(t.type)
 
     # Use the "All Tickers" endpoint in polygon API to get some data for each stock
     try:
         all_tickers_data = {
             t.ticker: {
                 "name": t.name,
-                "stock_type": ticker_types.get(t.type),
-                "primary_exchange": t.primary_exchange
+                "primary_exchange": t.primary_exchange,
+                "stock_type": get_stock_type(t),
             } for t in client.list_tickers(
                 market="stocks", active="true", order="asc", limit="1000", sort="ticker"
             )
@@ -183,16 +181,18 @@ def fetch_all_stocks_data():
     print(f"Retrieved {len(stock_master_data)} stocks from Polygon API!")
     return stock_master_data
 
-def get_ticker_type(ticker_type):
+def fetch_stock_types():
+    stock_types = dict()
     try:
-        types = client.get_ticker_types(asset_class="stocks", locale="us")
+        stock_types = {
+            t.code: t.description
+            for t in client.get_ticker_types(asset_class="stocks", locale="us")
+        }
         metrics.increment(MetricName.MASSIVE_API_CALLS)
-        for stock_type in types:
-            if stock_type.code == ticker_type:
-                return stock_type.description
-    except:
-        return None
-    return None
+    except Exception as e:
+        print(f"Error while fetching stock types: {e}")
+
+    return stock_types
 
 def get_related_companies(ticker):
     try:
@@ -208,7 +208,7 @@ def safe_getattr(obj, attr, default=None):
     except:
         return default
 
-def get_ticker_details(stock_data, ticker, now):
+def get_ticker_details(stock_data, ticker, now, stock_type_map=None):
     try:
         details = client.get_ticker_details(ticker, date=now)
         metrics.increment(MetricName.MASSIVE_API_CALLS)
@@ -224,9 +224,14 @@ def get_ticker_details(stock_data, ticker, now):
         stock_data["name"] = safe_getattr(details, "name", None)
         stock_data["industry"] = safe_getattr(details, "sic_description", None)
         stock_data["total_employees"] = safe_getattr(details, "total_employees", None)
-        stock_data["stock_type"] = get_ticker_type(details.type)
         stock_data["related_companies"] = get_related_companies(ticker)
         stock_data["market_cap"] = safe_getattr(details, "market_cap", None)
+
+        if stock_type_map:
+            stock_type = stock_type_map.get(details.type)
+        else:
+            stock_type = get_stock_type_by_code(details.type)
+        stock_data["stock_type"] = stock_type
 
     except Exception as e:
         print(f"[Details Error] {ticker}: {e}")
@@ -330,7 +335,7 @@ def get_ticker_52w_hl(stock_data, stock_365_day_data):
         print(f"[52W Error] {stock_data.get("ticker")}: {e}")
     return stock_data
 
-def fetch_stock_data(ticker, now=None, stock_master=None):
+def fetch_stock_data(ticker, now=None, stock_master=None, stock_type_map=None):
     """
     For the given ticker symbol of a stock, this function collects
     the data for all the attributes in 'STOCK_ATTRIBUTES' defined
@@ -339,8 +344,11 @@ def fetch_stock_data(ticker, now=None, stock_master=None):
     :param ticker: ticker symbol of a stock.
     :param now: The date for which we collect the data from polygon API.
     :param stock_master: StockMaster object associated with this Stock.
+    :param stock_type_map: Pre-computed map of stock types to prevent
+        database query when fetching stock data.
     :return: Stock DB model object containing data for all attributes.
     """
+
     stock = None
     stock_data = {}
     if not now:
@@ -349,7 +357,7 @@ def fetch_stock_data(ticker, now=None, stock_master=None):
 
     stock_365_day_data = get_365_day_data(ticker, now)
     stock_data["last_updated"] = polygon_timestamp_to_utc_dt(stock_365_day_data["timestamp"],"millisecond")
-    stock_data = get_ticker_details(stock_data, ticker, now)
+    stock_data = get_ticker_details(stock_data, ticker, now, stock_type_map)
     stock_data = get_ticker_values(stock_data, stock_365_day_data)
     stock_data = get_ticker_dmas(stock_data, stock_365_day_data)
     stock_data = get_ticker_52w_hl(stock_data, stock_365_day_data)

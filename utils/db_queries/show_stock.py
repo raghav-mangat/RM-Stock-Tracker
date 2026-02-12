@@ -20,8 +20,14 @@ def get_stock_data(ticker):
     if stock and stock.related_companies:
         rel_companies = stock.related_companies.split(',')
 
+    # Get the stock type
+    stock_type = None
+    if stock and stock.stock_type:
+        stock_type = stock.stock_type.description
+
     result = {
-        "stock": stock.to_dict(),
+        "stock": stock.to_dict() if stock else None,
+        "stock_type": stock_type,
         "rel_companies": rel_companies
     }
     return result
