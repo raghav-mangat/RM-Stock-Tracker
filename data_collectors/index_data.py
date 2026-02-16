@@ -60,16 +60,16 @@ def fetch_index_data(index):
     symbol for each stock in the index
     """
 
-    url = None
+    # List of stock data dictionary for each stock in the index
+    index_holdings = []
+
     try:
         url = get_index_info(index).get("url")
     except AttributeError as e:
         print(f"[Index Error] Index <{index}> is invalid: {e}")
+        return index_holdings
 
     print(f"Scraping: <{url}>...")
-    # List of stock data dictionary for each stock in the index at the
-    # given url
-    index_holdings = []
     headers = {
         "User-Agent": (
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
@@ -111,4 +111,4 @@ def fetch_index_data(index):
 
     except Exception as e:
         print(f"[Parsing Error] {url}: {e}")
-        return []
+        return index_holdings
