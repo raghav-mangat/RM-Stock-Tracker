@@ -327,11 +327,19 @@ def about():
 
 @app.route("/privacy")
 def privacy():
-    return render_template("legal/privacy.html")
+    last_updated_at = app.config["LEGAL_LAST_UPDATED_AT"]
+    return render_template(
+        "legal/privacy.html",
+        last_updated_at=last_updated_at
+    )
 
 @app.route("/terms")
 def terms():
-    return render_template("legal/terms.html")
+    last_updated_at = app.config["LEGAL_LAST_UPDATED_AT"]
+    return render_template(
+        "legal/terms.html",
+        last_updated_at=last_updated_at
+    )
 
 @app.route("/robots.txt")
 def robots_txt():
