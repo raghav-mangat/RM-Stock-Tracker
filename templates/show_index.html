@@ -90,8 +90,8 @@
         <thead class="">
           <tr class="align-middle">
             <th scope="col">#</th>
-            <th scope="col">Name</th>
             <th scope="col">Ticker</th>
+            <th scope="col">Name</th>
             <th scope="col">Weight</th>
             <th scope="col">52w Low</th>
             <th scope="col">Day Close</th>
@@ -106,9 +106,9 @@
           {% for stock in index_data %}
           <tr>
             <th scope="row">{{ loop.index }}</th>
-            <td class="fw-semibold">{{ stock.stock_name | display }}</td>
             <td>{{ ticker_link(stock) }}</td>
-            <td>{{ stock.weight | percent }}</td>
+            <td class="fw-semibold">{{ stock.stock_name | display }}</td>
+            <td class="fw-semibold">{{ stock.weight | percent }}</td>
             <td>{{ stock.low_52w | currency }}</td>
             <td class="fw-semibold bg-info-subtle">{{ stock.day_close | currency }}</td>
             <td>{{ stock.high_52w | currency }}</td>
