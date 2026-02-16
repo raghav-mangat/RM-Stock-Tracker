@@ -97,6 +97,7 @@
             <th scope="col">Day Close</th>
             <th scope="col">52w High</th>
             <th scope="col">Today's Change</th>
+            <th scope="col">Volume</th>
             <th scope="col">200-DMA</th>
             <th scope="col">% Diff {{ dma_200_diff_popover() }}</th>
           </tr>
@@ -110,7 +111,7 @@
                 {{ stock.stock_name | display }}
               </a>
             </td>
-            <td>{{ stock.ticker | display }}</td>
+            <td class="fw-semibold">{{ stock.ticker | display }}</td>
             <td>{{ stock.weight | percent }}</td>
             <td>{{ stock.low_52w | currency }}</td>
             <td class="fw-semibold bg-info-subtle">{{ stock.day_close | currency }}</td>
@@ -118,6 +119,7 @@
             <td>
               {{ stock_todays_change(stock) }}
             </td>
+            <td class="fw-semibold">{{ stock.volume | humanize_number }}</td>
             <td>{{ stock.dma_200 | currency }}</td>
             {{ stock_dma_200_perc_diff(stock) }}
           </tr>

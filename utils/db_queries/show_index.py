@@ -2,7 +2,7 @@ from models.database import db, Stock, Index, IndexHolding
 from sqlalchemy import and_, or_
 
 def get_index_data(index_id, sort_by, order, filter_by):
-    valid_sort_by = {"weight", "name", "todays_change", "perc_diff"}
+    valid_sort_by = {"weight", "name", "todays_change", "volume", "perc_diff"}
     valid_order = {"asc", "desc"}
     valid_filter = {"dark_green", "green", "yellow", "red", "dark_red"}
 
@@ -21,6 +21,8 @@ def get_index_data(index_id, sort_by, order, filter_by):
         {"label": "Name (Low to High)", "sort_by": "name", "order": "asc"},
         {"label": "Today's Change (High to Low)", "sort_by": "todays_change", "order": "desc"},
         {"label": "Today's Change (Low to High)", "sort_by": "todays_change", "order": "asc"},
+        {"label": "Volume (High to Low)", "sort_by": "volume", "order": "desc"},
+        {"label": "Volume (Low to High)", "sort_by": "volume", "order": "asc"},
         {"label": "200-DMA % Diff (High to Low)", "sort_by": "perc_diff", "order": "desc"},
         {"label": "200-DMA % Diff (Low to High)", "sort_by": "perc_diff", "order": "asc"},
     ]
@@ -32,6 +34,8 @@ def get_index_data(index_id, sort_by, order, filter_by):
         ("name", "asc"): Stock.name.asc(),
         ("todays_change", "desc"): Stock.todays_change_perc.desc(),
         ("todays_change", "asc"): Stock.todays_change_perc.asc(),
+        ("volume", "desc"): Stock.volume.desc(),
+        ("volume", "asc"): Stock.volume.asc(),
         ("perc_diff", "desc"): Stock.dma_200_perc_diff.desc(),
         ("perc_diff", "asc"): Stock.dma_200_perc_diff.asc(),
     }
@@ -71,6 +75,7 @@ def get_index_data(index_id, sort_by, order, filter_by):
             Stock.high_52w,
             Stock.todays_change_perc,
             Stock.todays_change,
+            Stock.volume,
             Stock.dma_200,
             Stock.dma_200_perc_diff
         )
