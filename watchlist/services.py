@@ -168,9 +168,9 @@ class Validators:
                         raise ValidationError("Value cannot be negative if absolute value function is applied.")
                     else:
                         if max_value < min_value_allowed:
-                            raise ValidationError(f"Minimum value allowed is {min_value_allowed:,}")
+                            raise ValidationError(f"Minimum value allowed is {min_value_allowed:,} ({humanize_number(min_value_allowed)})")
                         elif max_value > max_value_allowed:
-                            raise ValidationError(f"Maximum value allowed is {max_value_allowed:,}")
+                            raise ValidationError(f"Maximum value allowed is {max_value_allowed:,} ({humanize_number(max_value_allowed)})")
                 else:
                     max_value = None
 

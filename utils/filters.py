@@ -48,13 +48,14 @@ def humanize_number(num, fallback="N/A", decimals=1):
         num is not None and
         (isinstance(num, int) or isinstance(num, float) or isinstance(num, Decimal))
     ):
-        if num >= 1_000_000_000_000:
+        abs_num = abs(num)
+        if abs_num >= 1_000_000_000_000:
             result = f"{num/1_000_000_000_000:.{decimals}f} T"
-        elif num >= 1_000_000_000:
+        elif abs_num >= 1_000_000_000:
             result = f"{num/1_000_000_000:.{decimals}f} B"
-        elif num >= 1_000_000:
+        elif abs_num >= 1_000_000:
             result = f"{num/1_000_000:.{decimals}f} M"
-        elif num >= 1_000:
+        elif abs_num >= 1_000:
             result = f"{num/1_000:.{decimals}f} K"
         else:
             result = str(int(num))
