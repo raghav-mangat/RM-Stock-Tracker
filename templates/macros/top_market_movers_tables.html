@@ -1,4 +1,4 @@
-{% from "macros/stock_attributes.html" import stock_todays_change %}
+{% from "macros/stock_attributes.html" import stock_todays_change, ticker_link %}
 
 {% macro placeholder_cell() %}
   <td class="placeholder-glow">
@@ -12,11 +12,9 @@
     {% for stock in stocks %}
       <tr>
         <th scope="row">{{ loop.index }}</th>
-        <td>{{ stock.ticker }}</td>
-        <td style="max-width: 250px;">
-          <a href="{{ url_for('show_stock', ticker=stock.ticker) }}" class="fw-semibold text-primary">
+        <td>{{ ticker_link(stock) }}</td>
+        <td class="fw-semibold" style="max-width: 250px;">
             {{ stock.name | display }}
-          </a>
         </td>
         <td>{{ stock.day_close | currency }}</td>
         {% if stocks_type == 'gainers' or stocks_type == 'losers' %}
@@ -126,11 +124,9 @@
           {% for stock in trending_stocks %}
             <tr>
               <th scope="row">{{ loop.index }}</th>
-              <td>{{ stock.ticker }}</td>
-              <td style="max-width: 250px;">
-                <a href="{{ url_for('show_stock', ticker=stock.ticker) }}" class="fw-semibold text-primary">
+              <td>{{ ticker_link(stock) }}</td>
+              <td class="fw-semibold" style="max-width: 250px;">
                   {{ stock.name | display }}
-                </a>
               </td>
               <td>{{ stock.day_close | currency }}</td>
               <td>{{ stock.volume | humanize_number }}</td>

@@ -527,6 +527,9 @@ function createStockChart() {
             },
             color: theme.axisText,
           },
+          border: {
+            color: theme.grid,
+          },
         },
         volumeAxis: {
           type: "linear",
@@ -651,6 +654,8 @@ window.addEventListener("themechange", () => {
 
   stockChart.options.scales.x.grid.color = theme.grid;
   stockChart.options.scales.y.grid.color = theme.grid;
+
+  stockChart.options.scales.y.border.color = theme.grid;
 
   stockChart.options.scales.x.ticks.color = theme.axisText;
   stockChart.options.scales.y.ticks.color = theme.axisText;

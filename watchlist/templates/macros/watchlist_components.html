@@ -18,12 +18,6 @@
   {% endif %}
 {% endmacro %}
 
-{% macro ticker_link(stock) %}
-  <a href="{{ url_for('show_stock', ticker=stock.ticker) }}" class="fw-semibold text-primary">
-    {{ stock.ticker | display }}
-  </a>
-{% endmacro %}
-
 {% macro use_abs_label_button(label_for) %}
   <label class="btn btn-sm btn-outline-primary fw-semibold" for="{{ label_for }}">
     |x|

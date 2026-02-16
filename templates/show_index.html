@@ -1,11 +1,11 @@
 {% from "macros/popovers.html" import dma_200_diff_popover %}
 {% from "macros/jumbotron.html" import jumbotron %}
-{% from "macros/stock_attributes.html" import stock_todays_change, stock_dma_200_perc_diff %}
+{% from "macros/stock_attributes.html" import stock_todays_change, ticker_link, stock_dma_200_perc_diff %}
 
 {% extends "base.html" %}
 
 {% block title %}
-  {{ index.name | display }} Index | RM Stock Tracker
+  {{ index.name | display }} | RM Stock Tracker
 {% endblock %}
 
 {% block style %}
@@ -106,12 +106,8 @@
           {% for stock in index_data %}
           <tr>
             <th scope="row">{{ loop.index }}</th>
-            <td>
-              <a href="{{ url_for('show_stock', ticker=stock.ticker) }}" class="fw-semibold text-primary">
-                {{ stock.stock_name | display }}
-              </a>
-            </td>
-            <td class="fw-semibold">{{ stock.ticker | display }}</td>
+            <td class="fw-semibold">{{ stock.stock_name | display }}</td>
+            <td>{{ ticker_link(stock) }}</td>
             <td>{{ stock.weight | percent }}</td>
             <td>{{ stock.low_52w | currency }}</td>
             <td class="fw-semibold bg-info-subtle">{{ stock.day_close | currency }}</td>

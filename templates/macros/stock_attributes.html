@@ -21,6 +21,12 @@
     {% endif %}
 {% endmacro %}
 
+{% macro ticker_link(stock) %}
+  <a href="{{ url_for('show_stock', ticker=stock.ticker) }}" class="fw-semibold text-primary">
+    {{ stock.ticker | display }}
+  </a>
+{% endmacro %}
+
 {% macro stock_dma_200_perc_diff_style(stock) %}
 {#
   box-shadow: none, makes the bootstrap tables not change the color
