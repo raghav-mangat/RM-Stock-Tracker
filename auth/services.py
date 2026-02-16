@@ -1,5 +1,7 @@
-from flask import request, url_for
 from urllib.parse import urlparse, urljoin
+from flask import request, url_for, get_flashed_messages, session, current_app, flash
+from flask_login import current_user, logout_user
+
 
 class RedirectService:
     @staticmethod
@@ -28,3 +30,26 @@ class RedirectService:
             return next_url
 
         return url_for(default_endpoint)
+
+
+class LogoutService:
+    @staticmethod
+    def perform_logout():
+        user_id = current_user.id if current_user.is_authenticated else None
+
+        # Get the flashed messages since clearing the session also clears
+        # the flashed messages
+        flashed_messages = get_flashed_messages(with_categories=True)
+
+        logout_user()
+
+        session.clear()
+
+        current_app.logger.info(
+            "User logged out",
+            extra={"log_type": "auth", "user_id": user_id}
+        )
+
+        # Re-flash the flashed messages after clearing the session
+        for category, message in flashed_messages:
+            flash(message, category)

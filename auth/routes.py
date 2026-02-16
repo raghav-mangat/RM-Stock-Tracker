@@ -1,6 +1,9 @@
 from . import auth_bp
-from flask import render_template, redirect, url_for, flash, session, request, current_app
-from flask_login import current_user, login_user, login_required, logout_user
+from flask import (
+    render_template, redirect, url_for, flash, session, request,
+    current_app, get_flashed_messages
+)
+from flask_login import current_user, login_user, login_required
 from authlib.integrations.flask_client import OAuthError
 import secrets
 import time
@@ -9,7 +12,7 @@ from models.database import User, SignupSource
 from metrics import metrics
 from metrics.registry import MetricName
 from .emails import AuthEmail
-from .services import RedirectService
+from .services import RedirectService, LogoutService
 from .forms import (
     LoginForm, SignupForm, ChooseUsernameForm, ResetPasswordRequestForm, ResetPasswordForm, ProfileSettingsForm,
     SettingsDeleteAccountRequestForm, DeleteAccountForm, SettingsResetPasswordRequestForm, SettingsUnlinkGoogleAccountForm,
@@ -152,16 +155,10 @@ def login():
 @auth_bp.route("/logout", methods=["GET"])
 @login_required
 def logout():
-    user_id = current_user.id
+    LogoutService.perform_logout()
 
-    logout_user()
-
-    session.clear()
-
-    current_app.logger.info(
-        "User logged out",
-        extra={"log_type": "auth", "user_id": user_id}
-    )
+    if not get_flashed_messages(with_categories=True):
+        flash("Logged out successfully", "success")
 
     return redirect(url_for('home'))
 
@@ -612,8 +609,8 @@ def delete_account(token):
     form = DeleteAccountForm()
     if form.validate_on_submit():
         if user.email == form.email.data:
+            user_id = user.id
             try:
-                user_id = user.id
                 email = user.email
 
                 delete_user_account(user)
@@ -641,7 +638,11 @@ def delete_account(token):
                 flash(str(e), "danger")
             except AuthError as e:
                 flash(str(e), "danger")
-            return redirect(url_for("auth.logout"))
+
+            if current_user.is_authenticated and current_user.id == user_id:
+                LogoutService.perform_logout()
+
+            return redirect(url_for("auth.login"))
         else:
             flash("Incorrect email to delete account.", "warning")
             return redirect(url_for("auth.delete_account", token=token))

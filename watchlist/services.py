@@ -6,6 +6,8 @@ from utils.db_queries.watchlist import (
 )
 from utils.db_queries.stock_master_data import get_stock_master_by_ticker
 from utils.constants import MAX_FOLDER_NAME_LEN
+from utils.filters import humanize_number
+
 
 class AjaxService:
     """
@@ -141,8 +143,9 @@ class Validators:
 
     @staticmethod
     def validate_values(use_abs, min_value, max_value):
-        min_value_allowed = -1_000_000
-        max_value_allowed = 1_000_000
+        # 1 Trillion
+        min_value_allowed = -1_000_000_000_000
+        max_value_allowed = 1_000_000_000_000
 
         if not min_value and not max_value:
             raise ValidationError("Please enter a value.")
@@ -154,9 +157,9 @@ class Validators:
                         raise ValidationError("Value cannot be negative if absolute value function is applied.")
                     else:
                         if min_value < min_value_allowed:
-                            raise ValidationError(f"Minimum value allowed is {min_value_allowed:,}")
+                            raise ValidationError(f"Minimum value allowed is {min_value_allowed:,} ({humanize_number(min_value_allowed)})")
                         elif min_value > max_value_allowed:
-                            raise ValidationError(f"Maximum value allowed is {max_value_allowed:,}")
+                            raise ValidationError(f"Maximum value allowed is {max_value_allowed:,} ({humanize_number(max_value_allowed)})")
                 else:
                     min_value = None
                 if max_value:

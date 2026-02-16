@@ -462,6 +462,10 @@ def add_default_folder_attributes(folder):
         folder=folder
     ))
     db.session.add(WatchlistFolderAttribute(
+        attribute=FolderAttribute.VOLUME,
+        folder=folder
+    ))
+    db.session.add(WatchlistFolderAttribute(
         attribute=FolderAttribute.DMA_200,
         folder=folder
     ))

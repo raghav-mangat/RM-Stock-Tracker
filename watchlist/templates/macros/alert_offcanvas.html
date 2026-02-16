@@ -152,7 +152,7 @@
               <select id="attribute-new-{{ db_id }}"
                       name="attribute-new"
                       class="form-select d-inline-block w-75 mx-1 text-center">
-                <option value="" selected>Attribute</option>
+                  <option value="" disabled selected hidden>Attribute</option>
                 {% for attribute in attributes %}
                   <option value="{{ attribute.value }}">{{ attribute.label }}</option>
                 {% endfor %}
