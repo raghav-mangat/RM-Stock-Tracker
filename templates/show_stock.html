@@ -1,6 +1,6 @@
 {% from "macros/jumbotron.html" import jumbotron %}
 {% from "macros/popovers.html" import dma_200_diff_popover %}
-{% from "macros/stock_attributes.html" import stock_todays_change, stock_dma_200_perc_diff_style %}
+{% from "macros/stock_attributes.html" import stock_todays_change, ticker_link, stock_dma_200_perc_diff_style %}
 {% from "macros/watchlist_forms.html" import add_folder_form %}
 
 {% extends "base.html" %}
@@ -164,9 +164,7 @@
                   {% if rel_companies %}
                     <div class="d-flex flex-wrap gap-2 justify-content-center">
                       {% for ticker in rel_companies %}
-                        <a href="{{ url_for('show_stock', ticker=ticker) }}" class="fw-semibold text-primary">
-                          {{ ticker }}
-                        </a>
+                        {{ ticker_link(ticker)  }}
                       {% endfor %}
                     </div>
                   {% else %}

@@ -22,8 +22,14 @@
 {% endmacro %}
 
 {% macro ticker_link(stock) %}
-  <a href="{{ url_for('show_stock', ticker=stock.ticker) }}" class="fw-semibold text-primary">
-    {{ stock.ticker | display }}
+  {# The parameter "stock" should be a stock object or the ticker name #}
+  {% if stock.ticker %}
+    {% set ticker = stock.ticker %}
+  {% else %}
+    {% set ticker = stock %}
+  {% endif %}
+  <a href="{{ url_for('show_stock', ticker=ticker) }}" class="fw-bold text-primary">
+    {{ ticker | display }}
   </a>
 {% endmacro %}
 
@@ -35,7 +41,7 @@
 "
   background-color: {{ stock.dma_200_perc_diff | dma_200_perc_diff_color }};
   color: #000000;
-  font-weight: 700;
+  font-weight: 600;
   box-shadow: none;
 "
 {% endmacro %}
