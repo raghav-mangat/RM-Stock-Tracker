@@ -68,6 +68,7 @@ class FolderAttribute(str, Enum):
     NAME = "name"
     DAY_CLOSE = "day_close"
     TODAYS_CHANGE_PERC = "todays_change_perc"
+    VOLUME = "volume"
     DMA_200 = "dma_200"
     DMA_200_PERC_DIFF = "dma_200_perc_diff"
     DMA_50 = "dma_50"
@@ -85,6 +86,7 @@ class FolderAttribute(str, Enum):
             FolderAttribute.NAME: "Name",
             FolderAttribute.DAY_CLOSE: "Day Close",
             FolderAttribute.TODAYS_CHANGE_PERC: "Today's % Change",
+            FolderAttribute.VOLUME: "Volume",
             FolderAttribute.DMA_200: "200-DMA",
             FolderAttribute.DMA_200_PERC_DIFF: "200-DMA % Diff",
             FolderAttribute.DMA_50: "50-DMA",
@@ -103,6 +105,7 @@ class FolderAttribute(str, Enum):
             FolderAttribute.NAME: None,
             FolderAttribute.DAY_CLOSE: "currency",
             FolderAttribute.TODAYS_CHANGE_PERC: None,
+            FolderAttribute.VOLUME: None,
             FolderAttribute.DMA_200: "currency",
             FolderAttribute.DMA_200_PERC_DIFF: None,
             FolderAttribute.DMA_50: "currency",
@@ -118,6 +121,7 @@ class FolderAttribute(str, Enum):
 class AlertAttribute(str, Enum):
     DAY_CLOSE = "day_close"
     TODAYS_CHANGE_PERC = "todays_change_perc"
+    VOLUME = "volume"
     DMA_200_PERC_DIFF = "dma_200_perc_diff"
     DMA_50_PERC_DIFF = "dma_50_perc_diff"
     DMA_30_PERC_DIFF = "dma_30_perc_diff"
@@ -129,6 +133,7 @@ class AlertAttribute(str, Enum):
         return {
             AlertAttribute.DAY_CLOSE: "Day Close",
             AlertAttribute.TODAYS_CHANGE_PERC: "Today's Percentage Change",
+            AlertAttribute.VOLUME: "Volume",
             AlertAttribute.DMA_200_PERC_DIFF: "200-DMA Percentage Difference",
             AlertAttribute.DMA_50_PERC_DIFF: "50-DMA Percentage Difference",
             AlertAttribute.DMA_30_PERC_DIFF: "30-DMA Percentage Difference",
@@ -141,6 +146,7 @@ class AlertAttribute(str, Enum):
         return {
             AlertAttribute.DAY_CLOSE: "currency",
             AlertAttribute.TODAYS_CHANGE_PERC: None,
+            AlertAttribute.VOLUME: None,
             AlertAttribute.DMA_200_PERC_DIFF: None,
             AlertAttribute.DMA_50_PERC_DIFF: "percent",
             AlertAttribute.DMA_30_PERC_DIFF: "percent",
