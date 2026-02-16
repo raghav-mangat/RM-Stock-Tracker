@@ -46,7 +46,7 @@ db = SQLAlchemy(model_class=Base)
 
 # --- Constants ---
 
-LARGE_NUMERIC_PRECISION = 20
+LARGE_NUMERIC_PRECISION = 16
 NUMERIC_PRECISION = 12
 DECIMAL_PRECISION = 2
 
@@ -778,8 +778,8 @@ class WatchlistFolderAttribute(TimestampMixin, db.Model):
 
     # Values for filters
     use_abs: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
-    min_value: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
-    max_value: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
+    min_value: Mapped[Optional[Decimal]] = mapped_column(Numeric(LARGE_NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
+    max_value: Mapped[Optional[Decimal]] = mapped_column(Numeric(LARGE_NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
 
     folder_id: Mapped[int] = mapped_column(
         Integer,
@@ -816,10 +816,10 @@ class WatchlistAlert(TimestampMixin, db.Model):
     )
     use_abs: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     min_value: Mapped[Optional[Decimal]] = mapped_column(
-        Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True
+        Numeric(LARGE_NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True
     )
     max_value: Mapped[Optional[Decimal]] = mapped_column(
-        Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True
+        Numeric(LARGE_NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True
     )
 
     # Ownership
