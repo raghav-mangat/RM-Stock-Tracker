@@ -7,7 +7,7 @@ from models.database import DailyAppStatus
 from metrics.readers import read_daily_metrics
 from admin.db_user_data import get_users_stats
 from utils.datetime_utils import get_current_utc_date, format_date, get_current_utc
-from scheduled_scripts.helpers import get_market_status
+from scheduled_scripts.helpers.helpers import get_market_status
 
 """
 - Script to collect the daily app status data to be stored in the database

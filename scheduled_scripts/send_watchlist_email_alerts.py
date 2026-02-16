@@ -1,6 +1,6 @@
 import sys
 from app import app
-from scheduled_scripts.helpers import get_market_status, write_to_status_file, get_db_populate_status
+from scheduled_scripts.helpers.helpers import get_market_status, write_to_status_file, get_db_populate_status
 from utils.datetime_utils import get_current_utc, format_dt_et, format_date
 from utils.db_queries.user_data import get_all_users, is_user_active, is_user_email_alert_on, user_has_watchlist_alerts
 from utils.db_queries.watchlist import db_get_watchlist_alert_email_data

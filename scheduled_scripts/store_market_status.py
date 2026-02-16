@@ -3,7 +3,7 @@ from polygon import RESTClient
 from dotenv import load_dotenv
 import os
 from app import app
-from scheduled_scripts.helpers import write_to_status_file
+from scheduled_scripts.helpers.helpers import write_to_status_file
 from utils.datetime_utils import get_current_utc, format_dt_et, format_date
 
 

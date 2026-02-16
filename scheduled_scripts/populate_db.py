@@ -14,7 +14,7 @@ from utils.db_queries.stock_master_data import get_all_stock_master
 from utils.db_queries.stock_type_meta_data import get_all_stock_types
 from utils.db_queries.all_stocks import get_trending_stocks, get_top_stocks_categories, db_get_top_stocks_data
 from utils.db_queries.query_stocks import get_query_stocks
-from scheduled_scripts.helpers import write_to_status_file, get_market_status
+from scheduled_scripts.helpers.helpers import write_to_status_file, get_market_status
 
 # -------- Stage all new data --------
 stocks_cache = {}  # ticker -> Stock object
