@@ -158,6 +158,9 @@ document.addEventListener("submit", async (event) => {
       // Initialize the Bootstrap Popovers for the new HTML content
       initializeBSPopovers(bodyContainer);
 
+      // Re-attach number formatting to the new HTML content
+      attachNumberFormatting(bodyContainer);
+
       // Fade content back in
       headerContainer.classList.remove("is-fading-out");
       bodyContainer.classList.remove("is-fading-out");

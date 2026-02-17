@@ -143,9 +143,19 @@ class Validators:
 
     @staticmethod
     def validate_values(use_abs, min_value, max_value):
-        # 1 Trillion
+        # 1 Trillion (1.0 T)
         min_value_allowed = -1_000_000_000_000
         max_value_allowed = 1_000_000_000_000
+
+        def normalize_numeric_input(value):
+            if value is None:
+                return None
+            if isinstance(value, str):
+                value = value.replace(",", "").strip()
+            return value
+
+        min_value = normalize_numeric_input(min_value)
+        max_value = normalize_numeric_input(max_value)
 
         if not min_value and not max_value:
             raise ValidationError("Please enter a value.")

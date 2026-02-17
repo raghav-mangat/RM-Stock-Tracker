@@ -30,8 +30,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     attachAbsBtnToggleBehavior(filterFolderModalEl, ".filter-container");
 
+    attachNumberFormatting(filterFolderModalEl);
+
     const filterForm = filterFolderModalEl.querySelector(
-      'form[data-action="filter"]'
+      'form[data-action="filter"]',
     );
     if (filterForm) {
       // Set the data-folder-id attribute
@@ -41,7 +43,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Setup the delete folder confirm modal
   const deleteFolderConfirmModalEl = document.getElementById(
-    "deleteFolderConfirmModal"
+    "deleteFolderConfirmModal",
   );
   if (!deleteFolderConfirmModalEl) return;
 
@@ -55,9 +57,12 @@ document.addEventListener("DOMContentLoaded", () => {
     deleteFolderConfirmModalEl.querySelector("#delete-folder-id").value =
       folderId;
     deleteFolderConfirmModalEl.querySelector(
-      "#delete-folder-name"
+      "#delete-folder-name",
     ).textContent = folderName;
   });
+
+  // Attach number formatting to the required fields in the document
+  attachNumberFormatting();
 });
 
 function attachAbsBtnToggleBehavior(content, containerRef) {
@@ -70,7 +75,7 @@ function attachAbsBtnToggleBehavior(content, containerRef) {
 
     function updateAbsUI() {
       absSymbols.forEach((symbol) =>
-        symbol.classList.toggle("d-none", !checkbox.checked)
+        symbol.classList.toggle("d-none", !checkbox.checked),
       );
     }
 
@@ -114,6 +119,45 @@ function attachAlertDeleteBtnBehavior(content, containerRef) {
           .forEach((el) => (el.disabled = false));
         absToggle.disabled = false;
       }
+    });
+  });
+}
+
+function formatNumberWithCommas(value) {
+  if (value === "" || value === null || value === undefined) return "";
+
+  // Remove existing commas
+  const raw = value.toString().replace(/,/g, "");
+
+  // Allow negative and decimal values
+  if (isNaN(raw)) return value;
+
+  const [integerPart, decimalPart] = raw.split(".");
+
+  const formattedInt = Number(integerPart).toLocaleString("en-US");
+
+  return decimalPart !== undefined
+    ? `${formattedInt}.${decimalPart}`
+    : formattedInt;
+}
+
+function attachNumberFormatting(root = document) {
+  const inputs = root.querySelectorAll("input[data-number-format]");
+
+  inputs.forEach((input) => {
+    // Format existing value (on page load / AJAX)
+    input.value = formatNumberWithCommas(input.value);
+
+    // Format while typing
+    input.addEventListener("input", (e) => {
+      const cursorPosition = input.selectionStart;
+      input.value = formatNumberWithCommas(input.value);
+      input.setSelectionRange(cursorPosition, cursorPosition);
+    });
+
+    // Final cleanup on blur
+    input.addEventListener("blur", () => {
+      input.value = formatNumberWithCommas(input.value);
     });
   });
 }
