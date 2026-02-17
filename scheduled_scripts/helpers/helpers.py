@@ -22,9 +22,14 @@ def write_to_status_file(filename, status_data):
     # Ensure folder exists
     data_dir.mkdir(parents=True, exist_ok=True)
 
+    with open(data_file, 'r') as f:
+        data = json.load(f)
+
+    data.update(status_data)
+
     # Save to JSON
     with open(data_file, "w") as f:
-        json.dump(status_data, f, indent=2)
+        json.dump(data, f, indent=2)
 
 def get_db_populate_status():
     # Load db_populate status
