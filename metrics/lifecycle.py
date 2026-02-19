@@ -23,7 +23,10 @@ def register_metrics_shutdown(app, metrics):
                 "Flushing metrics on shutdown",
                 extra={"log_type": "system", "action": "metrics_flush_on_shutdown", "reason": reason}
             )
-            metrics.flush()
+
+            with app.app_context():
+                metrics.flush()
+
         except Exception:
             # Never let shutdown crash the process
             logger.exception(
