@@ -1,4 +1,9 @@
+import os
 import sys
+
+# Make sure that the project root is in Python's path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 from datetime import datetime, timedelta, UTC
 from app import app
 from sqlalchemy import text
@@ -8,6 +13,7 @@ from metrics.readers import read_daily_metrics
 from admin.db_user_data import get_users_stats
 from utils.datetime_utils import get_current_utc_date, format_date, get_current_utc
 from scheduled_scripts.helpers.helpers import get_market_status
+
 
 """
 - Script to collect the daily app status data to be stored in the database

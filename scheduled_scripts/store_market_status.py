@@ -1,11 +1,14 @@
-import sys
-from polygon import RESTClient
-from dotenv import load_dotenv
 import os
+import sys
+
+# Make sure that the project root is in Python's path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+from dotenv import load_dotenv
 from app import app
 from scheduled_scripts.helpers.helpers import write_to_status_file
 from utils.datetime_utils import get_current_utc, format_dt_et, format_date
-
+from data_collectors.market_data import fetch_market_data
 
 def main():
     app.logger.info(
@@ -22,12 +25,10 @@ def main():
 
     try:
         load_dotenv()
-        client = RESTClient(os.getenv("POLYGON_API_KEY"))
 
-        # Get market status from polygon API
-        result = client.get_market_status()
-        market_status = result.market
-        server_time = result.server_time
+        market_data = fetch_market_data()
+        market_status = market_data.get("market_status")
+        server_time = market_data.get("server_time")
 
         # Prepare data
         status_data.update({

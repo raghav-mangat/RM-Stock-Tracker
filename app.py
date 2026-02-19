@@ -20,6 +20,7 @@ from dotenv import load_dotenv
 from flask_login import LoginManager, current_user
 from flask_mail import Mail
 from flask_wtf.csrf import CSRFProtect
+from werkzeug.middleware.proxy_fix import ProxyFix
 from extensions import limiter
 from logging_config import setup_logging
 from metrics import init_metrics
@@ -63,6 +64,13 @@ if os.getenv("FLASK_APP_ENV") == "dev":
 else:
     app.config.from_object("config.ProdConfig")
 
+# To get the users' correct IP address
+app.wsgi_app = ProxyFix(
+    app.wsgi_app,
+    x_for=1,
+    x_proto=1
+)
+
 # Required for generating absolute URLs (url_for with _external=True)
 # outside request context (e.g. emails, cron jobs)
 app.config["SERVER_NAME"] = os.getenv("SERVER_NAME")
@@ -72,6 +80,7 @@ app.config["PREFERRED_URL_SCHEME"] = os.getenv("PREFERRED_URL_SCHEME")
 app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URI")
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
     'pool_pre_ping': True,
+    'pool_recycle': 280,
     'pool_size': 5,
     'max_overflow': 0
 }
