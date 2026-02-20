@@ -45,3 +45,18 @@ function initializeBSPopovers(content) {
     (popoverTriggerEl) => new bootstrap.Popover(popoverTriggerEl),
   );
 }
+
+// Clear the session storage on logout
+document.addEventListener("DOMContentLoaded", () => {
+  const logoutLink = document.getElementById("logout-link");
+
+  if (!logoutLink) return;
+
+  logoutLink.addEventListener("click", () => {
+    // Clear only auth-scoped UI state
+
+    sessionStorage.removeItem("rm_watchlist_open_accordions");
+
+    // If we later add more auth-scoped keys, clear them here too
+  });
+});

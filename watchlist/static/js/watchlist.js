@@ -25,12 +25,25 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("filter-attribute-label").textContent = label;
 
     document.getElementById("modal-use-abs").checked = useAbs ? true : false;
-    document.getElementById("modal-min-value").value = minValue ?? "";
-    document.getElementById("modal-max-value").value = maxValue ?? "";
+
+    const minInput = document.getElementById("modal-min-value");
+    const maxInput = document.getElementById("modal-max-value");
+
+    // Ensure AutoNumeric is attached
+    attachNumberFormatting(filterFolderModalEl);
+
+    const minAN = AutoNumeric.getAutoNumericElement(minInput);
+    const maxAN = AutoNumeric.getAutoNumericElement(maxInput);
+
+    // Clear previous values safely
+    if (minAN) minAN.clear();
+    if (maxAN) maxAN.clear();
+
+    // Set values using AutoNumeric API
+    if (minValue && minAN) minAN.set(minValue);
+    if (maxValue && maxAN) maxAN.set(maxValue);
 
     attachAbsBtnToggleBehavior(filterFolderModalEl, ".filter-container");
-
-    attachNumberFormatting(filterFolderModalEl);
 
     const filterForm = filterFolderModalEl.querySelector(
       'form[data-action="filter"]',
@@ -123,41 +136,23 @@ function attachAlertDeleteBtnBehavior(content, containerRef) {
   });
 }
 
-function formatNumberWithCommas(value) {
-  if (value === "" || value === null || value === undefined) return "";
-
-  // Remove existing commas
-  const raw = value.toString().replace(/,/g, "");
-
-  // Allow negative and decimal values
-  if (isNaN(raw)) return value;
-
-  const [integerPart, decimalPart] = raw.split(".");
-
-  const formattedInt = Number(integerPart).toLocaleString("en-US");
-
-  return decimalPart !== undefined
-    ? `${formattedInt}.${decimalPart}`
-    : formattedInt;
-}
-
 function attachNumberFormatting(root = document) {
+  // Using AutoNumeric JS library to handle number formatting
+
   const inputs = root.querySelectorAll("input[data-number-format]");
 
   inputs.forEach((input) => {
-    // Format existing value (on page load / AJAX)
-    input.value = formatNumberWithCommas(input.value);
+    // Prevent duplicate AutoNumeric instances
+    if (AutoNumeric.getAutoNumericElement(input)) {
+      return;
+    }
 
-    // Format while typing
-    input.addEventListener("input", (e) => {
-      const cursorPosition = input.selectionStart;
-      input.value = formatNumberWithCommas(input.value);
-      input.setSelectionRange(cursorPosition, cursorPosition);
-    });
-
-    // Final cleanup on blur
-    input.addEventListener("blur", () => {
-      input.value = formatNumberWithCommas(input.value);
+    new AutoNumeric(input, {
+      digitGroupSeparator: ",",
+      decimalCharacter: ".",
+      decimalPlaces: 2,
+      allowDecimalPadding: false,
+      modifyValueOnWheel: false,
     });
   });
 }
