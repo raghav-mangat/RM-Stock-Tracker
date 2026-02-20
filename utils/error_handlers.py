@@ -21,3 +21,7 @@ def register_error_handlers(app):
     def rate_limit_exceeded(e):
         app.logger.warning("Route rate limit exceeded")
         return render_template("error/429.html"), 429
+
+    @app.errorhandler(403)
+    def forbidden(e):
+        return render_template("error/403.html"), 403
