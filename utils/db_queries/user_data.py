@@ -77,6 +77,9 @@ def remove_user_password(user):
         raise AuthUnexpectedError("Unable to remove password.")
 
 def verify_user(user):
+    if user.is_verified:
+        return
+
     try:
         user.is_verified = True
         update_security_timestamp(user)
@@ -144,6 +147,9 @@ def get_user_by_google_id(google_id):
 
 def get_all_users():
     return db.session.execute(db.select(User)).scalars().all()
+
+def is_user_verified(user):
+    return user.is_verified
 
 def is_user_active(user):
     # Time beyond which we consider the user as being inactive

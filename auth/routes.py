@@ -21,7 +21,7 @@ from .forms import (
 from utils.db_queries.user_data import (
     AuthError, AuthUnexpectedError, add_new_user, update_user_profile, change_user_password, verify_user,
     get_user_by_email, get_user_by_google_id, delete_user_account, add_user_google_id, remove_user_google_id,
-    remove_user_password, update_user_last_login_at, toggle_user_email_alerts_on
+    remove_user_password, update_user_last_login_at, toggle_user_email_alerts_on, is_user_verified
 )
 from utils.flask_rate_limits import ip_and_email
 from utils.emails.email_rate_limiter import EmailType
@@ -36,7 +36,9 @@ from utils.emails.email_rate_limiter import EmailType
 def signup():
     if current_user.is_authenticated:
         return redirect(url_for("watchlist.index"))
+
     form = SignupForm()
+
     if form.validate_on_submit():
         try:
             user = add_new_user(
@@ -737,7 +739,7 @@ def google_signin_callback():
                         extra={"log_type": "auth", "user_id": user.id}
                     )
 
-                    flash("Signed in with Google. Auto-Linked Google account successfully.", "success")
+                    message = "Signed in with Google. Auto-Linked Google account successfully."
 
                     try:
                         AuthEmail.google_account_auto_linked_success(user)
@@ -746,6 +748,36 @@ def google_signin_callback():
                             "Failed to send Google account auto-linked success email",
                             extra={"log_type": "auth", "user_id": user.id}
                         )
+
+                    if not is_user_verified(user):
+                        try:
+                            verify_user(user)
+
+                            current_app.logger.info(
+                                "Email verification completed",
+                                extra={"log_type": "auth", "user_id": user.id}
+                            )
+
+                            message += " Your email is verified."
+
+                            try:
+                                AuthEmail.user_verification_success(user)
+                            except Exception:
+                                current_app.logger.exception(
+                                    "Failed to send account verification success email",
+                                    extra={"log_type": "auth", "user_id": user.id}
+                                )
+
+                        except AuthUnexpectedError as e:
+                            current_app.logger.exception(
+                                "Unexpected error during email verification",
+                                extra={"log_type": "auth", "user_id": user.id}
+                            )
+                            flash(str(e), "danger")
+                        except AuthError as e:
+                            flash(str(e), "danger")
+
+                    flash(message, "success")
 
                 except AuthUnexpectedError as e:
                     current_app.logger.exception(

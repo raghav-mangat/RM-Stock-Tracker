@@ -142,17 +142,27 @@ function attachNumberFormatting(root = document) {
   const inputs = root.querySelectorAll("input[data-number-format]");
 
   inputs.forEach((input) => {
-    // Prevent duplicate AutoNumeric instances
-    if (AutoNumeric.getAutoNumericElement(input)) {
-      return;
+    let an = AutoNumeric.getAutoNumericElement(input);
+
+    if (!an) {
+      an = new AutoNumeric(input, {
+        digitGroupSeparator: ",",
+        decimalCharacter: ".",
+        decimalPlaces: 2,
+        allowDecimalPadding: false,
+        modifyValueOnWheel: false,
+      });
     }
 
-    new AutoNumeric(input, {
-      digitGroupSeparator: ",",
-      decimalCharacter: ".",
-      decimalPlaces: 2,
-      allowDecimalPadding: false,
-      modifyValueOnWheel: false,
-    });
+    // Handle browser autofill
+    const syncFromDom = () => {
+      const raw = input.value;
+      if (raw !== "") {
+        an.set(raw);
+      }
+    };
+
+    input.addEventListener("change", syncFromDom);
+    input.addEventListener("blur", syncFromDom);
   });
 }
