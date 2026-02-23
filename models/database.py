@@ -958,3 +958,25 @@ class DailyAppStatus(TimestampMixin, db.Model):
     def __repr__(self) -> str:
         return (f"<DailyAppStatus id={self.id} date={self.date} request_count={self.request_count} "
                 f"avg_latency_ms={self.avg_latency_ms} total_users={self.total_users}>")
+
+
+class TickerTapeStockCache(TimestampMixin, db.Model):
+    __tablename__ = "ticker_tape_stocks_cache"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+
+    # FK - StockMaster
+    stock_master_id: Mapped[int] = mapped_column(
+        ForeignKey("stocks_master.id", ondelete="CASCADE"),
+        nullable=False,
+        unique=True
+    )
+
+    # Relationship
+    stock_master: Mapped["StockMaster"] = relationship(
+        "StockMaster",
+        lazy="joined"
+    )
+
+    def __repr__(self) -> str:
+        return f"<TickerTapeStockCache id={self.id} stock_master_id={self.stock_master_id}>"
