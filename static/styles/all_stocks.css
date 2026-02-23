@@ -7,11 +7,12 @@
 }
 
 .ticker-track {
+  /*
+    Set the animation property in the <style> tag
+    in the HTML document
+  */
   display: inline-flex;
   white-space: nowrap;
-  /* Make the animation seconds equal to 3 times the number
-   of stocks being displayed on the ticker tape */
-  animation: ticker-scroll 150s linear infinite;
   min-width: max-content;
 }
 

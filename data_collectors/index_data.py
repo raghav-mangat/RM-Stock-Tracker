@@ -82,7 +82,7 @@ def fetch_index_data(index):
         response = requests.get(url, headers=headers, timeout=10)
         response.raise_for_status()
         time.sleep(5)
-    except requests.RequestException as e:
+    except Exception as e:
         print(f"[Request Error] Failed to fetch {url}: {e}")
         return index_holdings
 

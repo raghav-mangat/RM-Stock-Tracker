@@ -253,7 +253,7 @@ def folder_partial(folder_id):
     try:
         folder = check_and_get_user_folder(folder_id, current_user)
 
-        folder_data = db_get_folder_data(folder)
+        folder_data = db_get_folder_with_items_data(folder)
         num_folders = db_get_num_folders(current_user)
 
         folder_header = render_template(

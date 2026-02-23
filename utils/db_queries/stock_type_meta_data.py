@@ -4,6 +4,10 @@ def get_stock_type_by_code(code):
     stock_type = db.session.execute(db.select(StockTypeMeta).where(StockTypeMeta.code == code)).scalar()
     return stock_type
 
+def get_stock_type_by_id(stock_type_id):
+    stock_type = db.session.execute(db.select(StockTypeMeta).where(StockTypeMeta.id == stock_type_id)).scalar()
+    return stock_type
+
 def get_stock_type_id_by_code(code):
     stock_type_id = db.session.execute(
         db.select(StockTypeMeta.id).where(StockTypeMeta.code == code)

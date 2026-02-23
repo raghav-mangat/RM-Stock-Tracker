@@ -2,6 +2,7 @@
  * folder_actions.js
  *
  * Handles all folder-level AJAX form submissions.
+ * Handles all folder partial HTML AJAX loads.
  */
 
 /* -------------------------------------------------------------------------- */
@@ -14,15 +15,15 @@ const FOLDER_SPINNER_OVERLAY_DELAY = 300;
 // Duration (ms) of fade-out before swapping folder HTML
 const FOLDER_FADE_TRANSITION_DURATION = 150;
 
-// Delay (ms) before the bootstrap toasts automatically get dismissed
-const TOAST_DISMISS_DELAY = 5000;
+// Duration (ms) of staggering the requests for initial folder HTML load
+const FOLDER_INITIAL_LOAD_STAGGER_MS = 75;
+
+// To ensure only a single request is made per folder by using locks
+const folderLocks = new Map();
 
 /* -------------------------------------------------------------------------- */
 /* Form Submission Handler                                                    */
 /* -------------------------------------------------------------------------- */
-
-// To ensure only a single request is made per folder by using locks
-const folderLocks = new Map();
 
 document.addEventListener("submit", async (event) => {
   const form = event.target;
@@ -39,7 +40,7 @@ document.addEventListener("submit", async (event) => {
     return;
   }
 
-  // Keep track of the new request started for this folder, lock the folder
+  // Keep track of the request started for this folder, lock the folder
   folderLocks.set(folderId, true);
 
   // Get DOM references for the affected folder
@@ -50,16 +51,16 @@ document.addEventListener("submit", async (event) => {
   const overlay = document.getElementById(`folder-loading-spinner-${folderId}`);
 
   // Abort safely if folder DOM no longer exists
-  if (!headerContainer || !bodyContainer || !overlay) return;
-
-  /* ---------------------------------------------------------------------- */
-  /* Delayed Loading Overlay                                                */
-  /* ---------------------------------------------------------------------- */
+  if (!headerContainer || !bodyContainer || !overlay) {
+    // Free the lock for the folder
+    folderLocks.delete(folderId);
+    return;
+  }
 
   // Show spinner only if request takes longer than the delay
   const overlayTimeoutId = setTimeout(() => {
     overlay.classList.remove("d-none");
-    // prevent interaction while loading
+    // Prevent interaction while loading
     bodyContainer.classList.add("pe-none");
   }, FOLDER_SPINNER_OVERLAY_DELAY);
 
@@ -118,59 +119,12 @@ document.addEventListener("submit", async (event) => {
     }
 
     /* ------------------------------------------------------------------ */
-    /* Fetch updated folder partial                                       */
+    /* Fetch folder partial                                               */
     /* ------------------------------------------------------------------ */
 
-    // Request refreshed HTML for the folder
-    const partialResponse = await fetch(
-      `/watchlist/folder/${encodeURIComponent(folderId)}/partial`,
-      { headers: { "X-Requested-With": "XMLHttpRequest" } },
-    );
-
-    const partialData = await partialResponse.json();
-
-    // Handle partial-render failure separately from POST success
-    if (!partialResponse.ok && partialData.requires_refresh) {
-      refreshPage(
-        (message = partialData.message),
-        (category = partialData.category),
-      );
-      return;
-    }
-
-    /* ------------------------------------------------------------------ */
-    /* Fade + DOM swap                                                    */
-    /* ------------------------------------------------------------------ */
-
-    // Fade existing content out before swapping HTML
-    headerContainer.classList.add("is-fading-out");
-    bodyContainer.classList.add("is-fading-out");
-
-    setTimeout(() => {
-      // Replace folder HTML while hidden
-      headerContainer.innerHTML = partialData.html.folder_header;
-      bodyContainer.innerHTML = partialData.html.folder_body;
-
-      // Add the required event-listeners to the new HTML content
-      attachAbsBtnToggleBehavior(bodyContainer, ".alert-container");
-      attachAlertDeleteBtnBehavior(bodyContainer, ".alert-container");
-
-      // Initialize the Bootstrap Popovers for the new HTML content
-      initializeBSPopovers(bodyContainer);
-
-      // Re-attach number formatting to the new HTML content
-      attachNumberFormatting(bodyContainer);
-
-      // Fade content back in
-      headerContainer.classList.remove("is-fading-out");
-      bodyContainer.classList.remove("is-fading-out");
-
-      // Show feedback after UI is fully updated
-      showToast(actionData.toast);
-    }, FOLDER_FADE_TRANSITION_DURATION);
+    loadFolderPartial(folderId, folderLocks.get(folderId), actionData);
   } catch {
     // Catch network or unexpected runtime errors
-    showToast("Unexpected error occurred", "danger");
   } finally {
     // Request for this folder was completed, free the lock for next request
     folderLocks.delete(folderId);
@@ -253,4 +207,144 @@ function showToast(toastHTML) {
   toast.show();
 
   toastEl.addEventListener("hidden.bs.toast", () => toastEl.remove());
+}
+
+/* -------------------------------------------------------------------------- */
+/* Folder Partial HTML Load Handler                                           */
+/* -------------------------------------------------------------------------- */
+
+async function loadFolderPartial(
+  folderId,
+  folderLock = null,
+  actionData = null,
+) {
+  // If there is an existing request for the folder, abort safely
+  if (!folderLock && folderLocks.get(folderId)) {
+    return;
+  }
+
+  // Keep track of the request started for this folder, lock the folder
+  folderLocks.set(folderId, true);
+
+  // Get DOM references for the affected folder
+  const headerContainer = document.getElementById(
+    `accordion-header-${folderId}`,
+  );
+  const bodyContainer = document.getElementById(`accordion-body-${folderId}`);
+  const overlay = document.getElementById(`folder-loading-spinner-${folderId}`);
+
+  // Abort safely if folder DOM no longer exists
+  if (!headerContainer || !bodyContainer || !overlay) {
+    // Free the lock for the folder
+    folderLocks.delete(folderId);
+    return;
+  }
+
+  // Show spinner only if request takes longer than the delay
+  const overlayTimeoutId = setTimeout(() => {
+    overlay.classList.remove("d-none");
+    // Prevent interaction while loading
+    bodyContainer.classList.add("pe-none");
+  }, FOLDER_SPINNER_OVERLAY_DELAY);
+
+  try {
+    // Request partial HTML for the folder
+    const partialResponse = await fetch(
+      `/watchlist/folder/${encodeURIComponent(folderId)}/partial`,
+      { headers: { "X-Requested-With": "XMLHttpRequest" } },
+    );
+
+    const partialData = await partialResponse.json();
+
+    // Handle partial-render failure
+    if (!partialResponse.ok) {
+      throw new Error("Folder partial unavailable");
+    }
+
+    /* ------------------------------------------------------------------ */
+    /* Fade + DOM swap                                                    */
+    /* ------------------------------------------------------------------ */
+
+    // Fade existing content out before swapping HTML
+    headerContainer.classList.add("is-fading-out");
+    bodyContainer.classList.add("is-fading-out");
+
+    setTimeout(() => {
+      // Replace folder HTML while hidden
+      headerContainer.innerHTML = partialData.html.folder_header;
+      bodyContainer.innerHTML = partialData.html.folder_body;
+
+      // Add the required event-listeners to the new HTML content
+      attachAbsBtnToggleBehavior(bodyContainer, ".alert-container");
+      attachAlertDeleteBtnBehavior(bodyContainer, ".alert-container");
+
+      // Initialize the Bootstrap Popovers for the new HTML content
+      initializeBSPopovers(bodyContainer);
+
+      // Re-attach number formatting to the new HTML content
+      attachNumberFormatting(bodyContainer);
+
+      // Fade content back in
+      headerContainer.classList.remove("is-fading-out");
+      bodyContainer.classList.remove("is-fading-out");
+    }, FOLDER_FADE_TRANSITION_DURATION);
+  } catch {
+    // Show folder loading failure HTML
+    folderLoadingFailure = document.getElementById(
+      `folder-loading-failure-${folderId}`,
+    );
+
+    if (!folderLoadingFailure) return;
+
+    const failureNode = folderLoadingFailure.cloneNode(true);
+    failureNode.classList.remove("d-none");
+
+    const target =
+      bodyContainer.querySelector(".folder-table-container") || bodyContainer;
+
+    target.replaceChildren(failureNode);
+  } finally {
+    // Show feedback after UI is fully updated
+    if (actionData?.toast) {
+      showToast(actionData.toast);
+    }
+
+    // Request for this folder was completed, free the lock for next request
+    folderLocks.delete(folderId);
+
+    // Always clean up spinner and restore interaction state
+    clearTimeout(overlayTimeoutId);
+    overlay.classList.add("d-none");
+    bodyContainer.classList.remove("pe-none");
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/* Load all Folder HTML on initial page load                                  */
+/* -------------------------------------------------------------------------- */
+
+document.addEventListener("DOMContentLoaded", () => {
+  const folders = document.querySelectorAll("[data-watchlist-folder-id]");
+
+  folders.forEach((folderEl, index) => {
+    const folderId = folderEl.dataset.watchlistFolderId;
+    const folderNumItems = folderEl.dataset.watchlistFolderNumItems;
+
+    /* ------------------------------------------------------------------ */
+    /* Fetch folder partial                                               */
+    /* ------------------------------------------------------------------ */
+
+    if (folderNumItems > 0) {
+      setTimeout(() => {
+        loadFolderPartial(folderId);
+      }, index * FOLDER_INITIAL_LOAD_STAGGER_MS);
+    }
+  });
+});
+
+/* -------------------------------------------------------------------------- */
+/* Folder Partial HTML Retry Load Handler                                     */
+/* -------------------------------------------------------------------------- */
+function retryLoadFolder(folderId) {
+  loadFolderPartial(folderId);
 }

@@ -4,6 +4,9 @@ from datetime import datetime, UTC
 DATETIME_FORMAT = "%m-%d %I:%M %p"
 DATE_FORMAT = "%Y-%m-%d"
 
+# 'Friday, Jan 16, 2026 · 10:34 AM, ET'
+DATETIME_ET_FORMAT = "%A, %b %d, %Y · %I:%M %p, ET"
+
 def polygon_timestamp_to_utc_dt(timestamp, timestamp_type):
     """
     Convert the given polygon timestamp to datetime
@@ -44,11 +47,11 @@ def convert_to_utc_tz_aware(utc_dt):
 
 def format_dt_et(utc_dt):
     """
-    Formats datetime in UTC into string in ET: 'Friday, Jan 16, 2026 · 10:34 AM, ET'
+    Formats datetime in UTC into string in ET
     """
 
     et_dt = convert_to_et_dt(utc_dt)
-    return et_dt.strftime('%A, %b %d, %Y · %I:%M %p, ET')
+    return et_dt.strftime(DATETIME_ET_FORMAT)
 
 def format_date(date):
     return date.strftime(DATE_FORMAT)
@@ -61,3 +64,9 @@ def convert_to_et_dt(dt):
     et_dt = dt.astimezone(et)
 
     return et_dt
+
+def get_dt_from_et_dt_str(et_dt_str):
+    # Parse the string into a datetime object
+    dt = datetime.strptime(et_dt_str, DATETIME_ET_FORMAT)
+
+    return dt

@@ -4,6 +4,7 @@ from flask import abort
 from data_collectors.stock_data import fetch_stock_data, fetch_chart_data, TIMEFRAME_OPTIONS, SELECT_DB_TABLE, \
     DB_TIMEFRAMES
 from utils.datetime_utils import DATE_FORMAT, convert_to_et_dt
+from utils.db_queries.stock_type_meta_data import get_stock_type_by_id
 from utils.populate_db_info import db_last_updated_date
 
 def get_stock_data(ticker):
@@ -11,6 +12,7 @@ def get_stock_data(ticker):
 
     # Check if the stock is present in the database
     stock = Stock.query.filter_by(ticker=ticker).first()
+
     # if not in db then use stock data collector script to get stock data
     if not stock:
         stock = fetch_stock_data(ticker)
@@ -22,8 +24,12 @@ def get_stock_data(ticker):
 
     # Get the stock type
     stock_type = None
-    if stock and stock.stock_type:
-        stock_type = stock.stock_type.description
+    if stock:
+        if stock.stock_type:
+            stock_type = stock.stock_type.description
+        elif stock.stock_type_id:
+            stock_type = get_stock_type_by_id(stock.stock_type_id)
+            stock_type = stock_type.description if stock_type else None
 
     result = {
         "stock": stock.to_dict() if stock else None,

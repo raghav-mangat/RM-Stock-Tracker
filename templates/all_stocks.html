@@ -6,12 +6,23 @@
 {% extends "base.html" %}
 
 {% block title %}
-  U.S. Stocks Dashboard | RM Stock Tracker
+  Stocks Dashboard | RM Stock Tracker
 {% endblock %}
 
 {% block style %}
   <link rel="stylesheet" href="{{ url_for('static', filename='styles/all_stocks.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='styles/search_bar.css') }}">
+
+  <style>
+    .ticker-track {
+      {#
+        Make the animation seconds equal to 3 times the number
+        of stocks being displayed on the ticker tape, adjust
+        the multiplier as needed.
+      #}
+      animation: ticker-scroll {{ 3 * ticker_tape_stocks | length }}s linear infinite;
+    }
+  </style>
 {% endblock %}
 
 {% block content %}

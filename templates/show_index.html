@@ -104,21 +104,27 @@
         </thead>
         <tbody class="table-group-divider">
           {% for stock in index_data %}
-          <tr>
-            <th scope="row">{{ loop.index }}</th>
-            <td>{{ ticker_link(stock) }}</td>
-            <td class="fw-semibold">{{ stock.stock_name | display }}</td>
-            <td class="fw-semibold">{{ stock.weight | percent }}</td>
-            <td>{{ stock.low_52w | currency }}</td>
-            <td class="fw-semibold bg-info-subtle">{{ stock.day_close | currency }}</td>
-            <td>{{ stock.high_52w | currency }}</td>
-            <td>
-              {{ stock_todays_change(stock) }}
-            </td>
-            <td class="fw-semibold">{{ stock.volume | humanize_number }}</td>
-            <td>{{ stock.dma_200 | currency }}</td>
-            {{ stock_dma_200_perc_diff(stock) }}
-          </tr>
+            <tr>
+              <th scope="row">{{ loop.index }}</th>
+              <td>{{ ticker_link(stock) }}</td>
+              <td class="fw-semibold">{{ stock.stock_name | display }}</td>
+              <td class="fw-semibold">{{ stock.weight | percent }}</td>
+              <td>{{ stock.low_52w | currency }}</td>
+              <td class="fw-semibold bg-info-subtle">{{ stock.day_close | currency }}</td>
+              <td>{{ stock.high_52w | currency }}</td>
+              <td>
+                {{ stock_todays_change(stock) }}
+              </td>
+              <td class="fw-semibold">{{ stock.volume | humanize_number }}</td>
+              <td>{{ stock.dma_200 | currency }}</td>
+              {{ stock_dma_200_perc_diff(stock) }}
+            </tr>
+          {% else %}
+            <tr>
+              <td colspan="11" class="text-center text-muted py-4">
+                <em>No stocks to show for this index.</em>
+              </td>
+            </tr>
           {% endfor %}
         </tbody>
       </table>

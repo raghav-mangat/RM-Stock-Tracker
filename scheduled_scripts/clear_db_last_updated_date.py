@@ -1,6 +1,11 @@
+import os
 import sys
-from helpers.helpers import write_to_status_file
+
+# Make sure that the project root is in Python's path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 from app import app
+from helpers.helpers import write_to_status_file
 
 def main():
     app.logger.info(

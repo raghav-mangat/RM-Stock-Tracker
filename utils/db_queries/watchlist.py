@@ -26,15 +26,25 @@ def db_get_all_watchlist_data(user):
     return result
 
 def db_get_folder_data(folder):
-    folder_attributes_data = folder.folder_attributes
-    folder_attributes_list = [folder_attribute.attribute for folder_attribute in folder.folder_attributes]
+    return {
+        "folder_name": folder.name,
+        "folder_order": folder.order,
+        "folder_num_items": len(folder.items),
+        "folder_sort_by_attribute": folder.sort_by_attribute,
+        "folder_sort_by_order": folder.sort_by_order,
+        "folder_attributes_data": folder.folder_attributes,
+        "folder_attributes_list": [folder_attribute.attribute for folder_attribute in folder.folder_attributes],
+        "folder_alerts": folder.alerts,
+        "folder_items": None,
+    }
 
-    folder_alerts = folder.alerts
+def db_get_folder_with_items_data(folder):
+    folder_data = db_get_folder_data(folder)
 
     all_items_data = get_all_items_data(folder.id)
 
     # Filter the items data if filters are applied to the folder
-    for attribute_data in folder_attributes_data:
+    for attribute_data in folder_data.get("folder_attributes_data"):
         if attribute_data.attribute.value != FolderAttribute.NAME:
             use_abs = attribute_data.use_abs
             min_value = attribute_data.min_value
@@ -61,8 +71,8 @@ def db_get_folder_data(folder):
                 ))
 
     # Sort the items data if sorting is applied to the folder
-    sort_by_attribute = folder.sort_by_attribute
-    sort_by_order = folder.sort_by_order
+    sort_by_attribute = folder_data["folder_sort_by_attribute"]
+    sort_by_order =folder_data["folder_sort_by_order"]
     if sort_by_attribute and sort_by_order:
         reverse = (sort_by_order == OrderBy.DESC)
         all_items_data = dict(sorted(
@@ -71,18 +81,11 @@ def db_get_folder_data(folder):
             reverse=reverse
         ))
 
-    result = {
-        "folder_name": folder.name,
-        "folder_order": folder.order,
-        "folder_attributes_data": folder_attributes_data,
-        "folder_attributes_list": folder_attributes_list,
-        "folder_alerts": folder_alerts,
-        "folder_items": all_items_data,
-        "folder_sort_by_attribute": sort_by_attribute,
-        "folder_sort_by_order": sort_by_order
-    }
+    folder_data.update({
+        "folder_items": all_items_data
+    })
 
-    return result
+    return folder_data
 
 def db_get_num_folders(user):
     return len(user.watchlist_folders)
