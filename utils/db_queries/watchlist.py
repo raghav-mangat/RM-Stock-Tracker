@@ -511,6 +511,9 @@ def get_item_by_id(item_id):
     item = db.session.execute(db.select(WatchlistItem).where(WatchlistItem.id == item_id)).scalar()
     return item
 
+def get_all_user_watchlist_alerts(user):
+    return user.watchlist_alerts
+
 def get_all_user_folders(user):
     """
     Helper function that returns a list of all folders for the given user,
@@ -604,11 +607,11 @@ def stock_data_filter(stock_data, alerts):
 
     return filter_result
 
-def db_get_watchlist_alert_data(user):
+def db_get_watchlist_alert_folder_data(folder):
     """
     - Structure of the data returned by this function:
 
-    watchlist_alert_data = [
+    folder_data =
         {
             "folder_id": None,
             "folder_order": None,
@@ -645,112 +648,105 @@ def db_get_watchlist_alert_data(user):
                 }
             ]
         }
-    ]
     """
 
-    # List of data to return
-    watchlist_alert_data = list()
+    # Collect folder data
+    folder_data = {
+        "folder_id": folder.id,
+        "folder_order": folder.order,
+        "folder_name": folder.name
+    }
 
-    # All user's folders
-    folders = get_all_user_folders(user)
+    # Get data for each item in the folder
+    all_items_data = get_all_items_data(folder.id)
 
-    # For each folder
-    for folder in folders:
-        # Collect folder data
-        folder_data = {
-            "folder_id": folder.id,
-            "folder_order": folder.order,
-            "folder_name": folder.name
-        }
+    # Store the number of items in the folder
+    folder_data["num_items"] = len(all_items_data.items())
 
-        # Get data for each item in the folder
-        all_items_data = get_all_items_data(folder.id)
+    # Get all alerts for the folder
+    folder_alerts = folder.alerts
 
-        # Store the number of items in the folder
-        folder_data["num_items"] = len(all_items_data.items())
+    # For each alert in the folder
+    folder_data["folder_alerts"] = []
+    for alert in folder_alerts:
+        # Get a list of all the stocks in the folder that match the alert
+        filter_all_stock_data = [
+            value.get("stock_data")
+            for value in all_items_data.values()
+            if stock_data_filter(
+                value.get("stock_data"),
+                [alert]
+            )
+        ]
 
-        # Get all alerts for the folder
-        folder_alerts = folder.alerts
+        # Store the alert with the associated stocks
+        folder_data["folder_alerts"].append({
+            "alert": alert,
+            "stocks": filter_all_stock_data
+        })
 
-        # For each alert in the folder
-        folder_data["folder_alerts"] = []
-        for alert in folder_alerts:
-            # Get a list of all the stocks in the folder that match the alert
-            filter_all_stock_data = [
-                value.get("stock_data")
-                for value in all_items_data.values()
-                if stock_data_filter(
-                    value.get("stock_data"),
-                    [alert]
-                )
-            ]
+    # Store all the folder's alerts as a list along with the list of
+    # stocks in the folder that match all the alerts combined
+    folder_data["all_folder_alerts"] = {
+        "alerts": folder_alerts,
+        "stocks": [
+            value.get("stock_data")
+            for value in all_items_data.values()
+            if stock_data_filter(
+                value.get("stock_data"),
+                folder_alerts
+            )
+        ]
+    }
 
-            # Store the alert with the associated stocks
-            folder_data["folder_alerts"].append({
-                "alert": alert,
-                "stocks": filter_all_stock_data
+    # For each item in the folder
+    folder_data["item_alerts"] = []
+    for value in all_items_data.values():
+        # If the item has alerts
+        if value.get("item_alerts"):
+            # Get the stock data for the item
+            stock_data = value.get("stock_data")
+
+            # For each alert for the item
+            item_alerts = []
+            num_triggered = 0
+            num_non_triggered = 0
+            for item_alert in value.get("item_alerts"):
+                # Store the alert along with a boolean to tell if the
+                # stock matches the alert
+                alert = {
+                    "alert": item_alert,
+                    "triggered": False
+                }
+                if stock_data_filter(stock_data, [item_alert]):
+                    alert["triggered"] = True
+                    num_triggered += 1
+                else:
+                    num_non_triggered += 1
+                item_alerts.append(alert)
+
+            # Store this data for the item
+            folder_data["item_alerts"].append({
+                "stock_data": stock_data,
+                "num_triggered": num_triggered,
+                "num_non_triggered": num_non_triggered,
+                "alerts": item_alerts
             })
 
-        # Store all the folder's alerts as a list along with the list of
-        # stocks in the folder that match all the alerts combined
-        folder_data["all_folder_alerts"] = {
-            "alerts": folder_alerts,
-            "stocks": [
-                value.get("stock_data")
-                for value in all_items_data.values()
-                if stock_data_filter(
-                    value.get("stock_data"),
-                    folder_alerts
-                )
-            ]
-        }
-
-        # For each item in the folder
-        folder_data["item_alerts"] = []
-        for value in all_items_data.values():
-            # If the item has alerts
-            if value.get("item_alerts"):
-                # Get the stock data for the item
-                stock_data = value.get("stock_data")
-
-                # For each alert for the item
-                item_alerts = []
-                num_triggered = 0
-                num_non_triggered = 0
-                for item_alert in value.get("item_alerts"):
-                    # Store the alert along with a boolean to tell if the
-                    # stock matches the alert
-                    alert = {
-                        "alert": item_alert,
-                        "triggered": False
-                    }
-                    if stock_data_filter(stock_data, [item_alert]):
-                        alert["triggered"] = True
-                        num_triggered += 1
-                    else:
-                        num_non_triggered += 1
-                    item_alerts.append(alert)
-
-                # Store this data for the item
-                folder_data["item_alerts"].append({
-                    "stock_data": stock_data,
-                    "num_triggered": num_triggered,
-                    "num_non_triggered": num_non_triggered,
-                    "alerts": item_alerts
-                })
-
-        # Store all of this data for the folder
-        watchlist_alert_data.append(folder_data)
-
-    # Return the data for all the folders
-    return watchlist_alert_data
+    # Return the data for the folder
+    return folder_data
 
 def db_get_watchlist_alert_email_data(user):
     # Maximum number of folders for which we include the data in the email
     max_num_folders = 10
 
+    # All user's folders
+    folders = get_all_user_folders(user)
+
     # Get watchlist alert data for the user
-    watchlist_alert_data = db_get_watchlist_alert_data(user)
+    watchlist_alert_data = list()
+    for folder in folders:
+        watchlist_alert_data.append(db_get_watchlist_alert_folder_data(folder))
 
     # Extracted email data to return
     email_data = []

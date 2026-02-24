@@ -62,12 +62,13 @@ def alerts():
     # Load last updated timestamp of populate db
     last_updated = db_last_updated()
 
-    watchlist_alert_data = db_get_watchlist_alert_data(current_user)
+    watchlist_alert_data = db_get_all_watchlist_data(current_user)
+    num_user_alerts = len(get_all_user_watchlist_alerts(current_user))
 
     return render_template(
         "watchlist_alerts.html",
         watchlist_alert_data=watchlist_alert_data,
-        AlertAttribute=AlertAttribute,
+        num_user_alerts=num_user_alerts,
         last_updated=last_updated
     )
 
@@ -275,6 +276,32 @@ def folder_partial(folder_id):
             "html": {
                 "folder_header": folder_header,
                 "folder_body": folder_body,
+            }
+        })
+
+    except Exception as exc:
+        ctx = ActionContext("access", "folder")
+        return ExceptionService.handle_action_exception(exc, ctx, is_ajax=True)
+
+@watchlist_bp.route("/alert/folder/<int:folder_id>/partial", methods=["GET"])
+@login_required
+def alert_folder_partial(folder_id):
+    AjaxService.require_ajax()
+
+    try:
+        folder = check_and_get_user_folder(folder_id, current_user)
+
+        alert_folder_data = db_get_watchlist_alert_folder_data(folder)
+
+        alert_folder_body = render_template(
+            "partials/alert_folder_body.html",
+            alert_folder_data=alert_folder_data,
+            AlertAttribute=AlertAttribute,
+        )
+
+        return jsonify({
+            "html": {
+                "alert_folder_body": alert_folder_body,
             }
         })
 

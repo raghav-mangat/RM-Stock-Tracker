@@ -21,6 +21,9 @@ const FOLDER_INITIAL_LOAD_STAGGER_MS = 75;
 // To ensure only a single request is made per folder by using locks
 const folderLocks = new Map();
 
+// Used if the user navigates away during an AJAX request
+const pageAbortController = new AbortController();
+
 /* -------------------------------------------------------------------------- */
 /* Form Submission Handler                                                    */
 /* -------------------------------------------------------------------------- */
@@ -104,6 +107,7 @@ document.addEventListener("submit", async (event) => {
     const actionResponse = await fetch(form.action, {
       method: "POST",
       headers: { "X-Requested-With": "XMLHttpRequest" },
+      signal: pageAbortController.signal,
       body: formData,
     });
 
@@ -123,7 +127,11 @@ document.addEventListener("submit", async (event) => {
     /* ------------------------------------------------------------------ */
 
     loadFolderPartial(folderId, folderLocks.get(folderId), actionData);
-  } catch {
+  } catch (error) {
+    if (error.name === "AbortError") {
+      return; // User navigated away, do nothing
+    }
+
     // Catch network or unexpected runtime errors
   } finally {
     // Request for this folder was completed, free the lock for next request
@@ -251,7 +259,10 @@ async function loadFolderPartial(
     // Request partial HTML for the folder
     const partialResponse = await fetch(
       `/watchlist/folder/${encodeURIComponent(folderId)}/partial`,
-      { headers: { "X-Requested-With": "XMLHttpRequest" } },
+      {
+        headers: { "X-Requested-With": "XMLHttpRequest" },
+        signal: pageAbortController.signal,
+      },
     );
 
     const partialData = await partialResponse.json();
@@ -288,7 +299,11 @@ async function loadFolderPartial(
       headerContainer.classList.remove("is-fading-out");
       bodyContainer.classList.remove("is-fading-out");
     }, FOLDER_FADE_TRANSITION_DURATION);
-  } catch {
+  } catch (error) {
+    if (error.name === "AbortError") {
+      return; // User navigated away, do nothing
+    }
+
     // Show folder loading failure HTML
     folderLoadingFailure = document.getElementById(
       `folder-loading-failure-${folderId}`,
@@ -348,3 +363,8 @@ document.addEventListener("DOMContentLoaded", () => {
 function retryLoadFolder(folderId) {
   loadFolderPartial(folderId);
 }
+
+// Abort Controller
+window.addEventListener("beforeunload", () => {
+  pageAbortController.abort();
+});

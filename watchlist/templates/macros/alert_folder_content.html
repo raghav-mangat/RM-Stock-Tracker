@@ -1,0 +1,520 @@
+{% from "macros/watchlist_components.html" import display_alert, no_data_message_small %}
+{% from "macros/table_components.html" import table_header, table_header_label, table_data, table_data_row_number %}
+{% from "macros/stock_attributes.html" import ticker_link %}
+
+{% macro alert_folder_body(folder, AlertAttribute) %}
+<div>
+
+<!-- Folder Alerts -->
+<section class="mb-4">
+  <h4 class="fw-bold mb-1">Folder Alerts</h4>
+  <p class="text-muted small mb-1">
+    Alerts applied to the entire folder. Each alert shows which stocks currently satisfy its condition.
+  </p>
+  <p class="badge text-bg-secondary mb-3">
+    Stocks in folder: {{ folder.num_items }}
+  </p>
+
+  {% if not folder.folder_alerts %}
+    {{ no_data_message_small("No folder-level alerts have been configured for this folder.") }}
+  {% else %}
+    <div class="row mb-4">
+      <!-- Tabs -->
+      <div class="col-md-4 mb-3 mb-md-0">
+        <div class="list-group" role="tablist">
+          <a class="list-group-item list-group-item-action active fw-bold"
+             data-bs-toggle="list"
+             href="#combined-alerts-{{ folder.folder_order }}">
+            <span class="d-flex align-items-center">
+              <span class="me-2">
+                All Folder Alerts Combined
+              </span>
+              <span class="badge rounded-pill text-bg-secondary ms-auto">
+                {{ folder.all_folder_alerts.stocks | length }}
+              </span>
+            </span>
+          </a>
+
+          {% for alert_data in folder.folder_alerts %}
+            <a class="list-group-item list-group-item-action fw-semibold"
+               data-bs-toggle="list"
+               href="#folder-{{ folder.folder_order }}-alert-{{ loop.index }}">
+              <span class="d-flex align-items-center">
+                <span class="me-2">
+                  {{ loop.index }}) {{ display_alert(alert_data.alert) }}
+                </span>
+                <span class="badge rounded-pill text-bg-secondary ms-auto">
+                  {{ alert_data.stocks | length }}
+                </span>
+              </span>
+            </a>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Tab Content -->
+      <div class="col-md-8">
+        <div class="tab-content">
+
+          <!-- Combined -->
+          <div class="tab-pane fade show active"
+               id="combined-alerts-{{ folder.folder_order }}">
+
+            <h5 class="fw-semibold mb-1">All Folder Alerts Combined</h5>
+            <p class="text-muted small mb-3">
+              Stocks listed below satisfy <strong>all</strong> folder-level alert conditions simultaneously.
+            </p>
+
+            {% if folder.all_folder_alerts.stocks %}
+              <div class="table-responsive">
+                <table class="table table-striped table-bordered table-hover align-middle">
+                  <thead class="">
+                    <tr class="align-middle">
+                      {{ table_header("#") }}
+                      {{ table_header("Ticker") }}
+                      {{ table_header("Name") }}
+                      {% for alert in folder.all_folder_alerts.alerts %}
+                        {{
+                          table_header(
+                            table_header_label(alert.attribute, AlertAttribute)
+                          )
+                        }}
+                      {% endfor %}
+                    </tr>
+                  </thead>
+                  <tbody class="table-group-divider">
+                    {% for stock in folder.all_folder_alerts.stocks %}
+                      <tr>
+                        {{ table_data_row_number(loop.index) }}
+                        <td>{{ ticker_link(stock) }}</td>
+                        <td class="fw-semibold">{{ stock.name }}</td>
+                        {% for alert in folder.all_folder_alerts.alerts %}
+                          {{ table_data(alert.attribute, stock, AlertAttribute) }}
+                        {% endfor %}
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            {% else %}
+              {{ no_data_message_small("No stocks currently satisfy all folder alerts.") }}
+            {% endif %}
+          </div>
+
+          <!-- Individual Alerts -->
+          {% for alert_data in folder.folder_alerts %}
+            <div class="tab-pane fade"
+                 id="folder-{{ folder.folder_order }}-alert-{{ loop.index }}">
+
+              <h5 class="fw-semibold mb-1">
+               {{ loop.index }}) {{ display_alert(alert_data.alert) }}
+              </h5>
+              <p class="text-muted small mb-3">
+                Stocks below currently match this alert condition.
+              </p>
+
+              {% if alert_data.stocks %}
+                <div class="table-responsive">
+                  <table class="table table-striped table-bordered table-hover align-middle">
+                    <thead class="">
+                      <tr class="align-middle">
+                        {{ table_header("#") }}
+                        {{ table_header("Ticker") }}
+                        {{ table_header("Name") }}
+                        {{
+                          table_header(
+                            table_header_label(alert_data.alert.attribute, AlertAttribute)
+                          )
+                        }}
+                      </tr>
+                    </thead>
+                    <tbody class="table-group-divider">
+                      {% for stock in alert_data.stocks %}
+                        <tr>
+                          {{ table_data_row_number(loop.index) }}
+                          <td>{{ ticker_link(stock) }}</td>
+                          <td class="fw-semibold">{{ stock.name }}</td>
+                          {{ table_data(alert_data.alert.attribute, stock, AlertAttribute) }}
+                        </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+              {% else %}
+                {{ no_data_message_small("No stocks currently match this alert.") }}
+              {% endif %}
+            </div>
+          {% endfor %}
+
+        </div>
+      </div>
+    </div>
+  {% endif %}
+</section>
+
+<div class="border-top"></div>
+
+<!-- Stock Alerts -->
+<section class="mt-4">
+  <h4 class="fw-bold mb-1">Stock-Specific Alerts</h4>
+  <p class="text-muted small mb-3">
+    Alerts configured for individual stocks, shown by their triggered status.
+  </p>
+
+  {% if not folder.item_alerts %}
+    {{ no_data_message_small("No stock-specific alerts configured for this folder.") }}
+  {% else %}
+    <div class="row">
+      <div class="col-md-4 mb-3 mb-md-0">
+        <div class="list-group">
+          {% for item in folder.item_alerts %}
+            <a class="list-group-item list-group-item-action fw-semibold {% if loop.index == 1 %}active{% endif %}"
+               data-bs-toggle="list"
+               href="#stock-alerts-{{ folder.folder_order }}-{{ loop.index }}">
+              <span class="d-flex align-items-center">
+                <span class="me-2">
+                  {{ loop.index }}) {{ item.stock_data.ticker }} - {{ item.stock_data.name }}
+                </span>
+                <span class="d-flex ms-auto gap-1">
+                  <span class="badge rounded-pill text-bg-success">
+                    {{ item.num_triggered }}
+                  </span>
+                  <span class="badge rounded-pill text-bg-danger">
+                    {{ item.num_non_triggered }}
+                  </span>
+                </span>
+              </span>
+            </a>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="col-md-8">
+        <div class="tab-content">
+          {% for item in folder.item_alerts %}
+            <div class="tab-pane fade {% if loop.index == 1 %}show active{% endif %}"
+                 id="stock-alerts-{{ folder.folder_order }}-{{ loop.index }}">
+
+              <h5 class="fw-semibold mb-1">
+                {{ loop.index }}) {{ ticker_link(item.stock_data) }} - {{ item.stock_data.name }}
+              </h5>
+              <p class="text-muted small mb-3">
+                Breakdown of triggered and non-triggered alerts for this stock.
+              </p>
+
+              <div class="row">
+                <!-- Triggered -->
+                <div class="col-md-6 mb-2 mb-md-3">
+                  <div class="text-success fw-semibold text-center mb-2">Triggered</div>
+                  <div class="table-responsive">
+                    <table class="table table-striped table-bordered table-hover align-middle">
+                      <thead class="">
+                        <tr class="align-middle">
+                          {{ table_header("#") }}
+                          {{ table_header("Alert") }}
+                          {{ table_header("Value") }}
+                      </thead>
+                      <tbody class="table-group-divider">
+                        {% for alert_data in item.alerts if alert_data.triggered %}
+                          <tr>
+                            {{ table_data_row_number(loop.index) }}
+                            <td class="bg-success-subtle">{{ display_alert(alert_data.alert) }}</td>
+                            {{ table_data(alert_data.alert.attribute, item.stock_data, AlertAttribute) }}
+                          </tr>
+                        {% else %}
+                          <tr>
+                            <td colspan="3" class="text-muted text-center">
+                              No alerts triggered
+                            </td>
+                          </tr>
+                        {% endfor %}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <!-- Not Triggered -->
+                <div class="col-md-6 mb-3">
+                  <div class="text-danger fw-semibold text-center mb-2">Not Triggered</div>
+                  <div class="table-responsive">
+                    <table class="table table-striped table-bordered table-hover align-middle">
+                      <thead class="">
+                        <tr class="align-middle">
+                          {{ table_header("#") }}
+                          {{ table_header("Alert") }}
+                          {{ table_header("Value") }}
+                        </tr>
+                      </thead>
+                      <tbody class="table-group-divider">
+                        {% for alert_data in item.alerts if not alert_data.triggered %}
+                          <tr>
+                            {{ table_data_row_number(loop.index) }}
+                            <td class="bg-danger-subtle">{{ display_alert(alert_data.alert) }}</td>
+                            {{ table_data(alert_data.alert.attribute, item.stock_data, AlertAttribute) }}
+                          </tr>
+                        {% else %}
+                          <tr>
+                            <td colspan="3" class="text-muted text-center">
+                              All alerts triggered
+                            </td>
+                          </tr>
+                        {% endfor %}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  {% endif %}
+</section>
+
+</div>
+{% endmacro %}
+
+
+{% macro alert_folder_body_placeholder(folder_id, folder) %}
+<div>
+
+<!-- Folder Loading Failure Message -->
+<div id="folder-loading-failure-{{ folder_id }}" class="d-none border text-center py-4">
+  <p class="fw-semibold text-danger">Failed to load folder data</p>
+  <button class="btn btn-sm btn-outline-primary"
+          onclick="window.location.reload();">
+    Refresh Page
+  </button>
+</div>
+
+<!-- Folder Alerts -->
+<section class="mb-4">
+  <h4 class="placeholder-glow"><span class="placeholder col-6"></span></h4>
+  <p class="placeholder-glow text-muted small mb-1">
+    <span class="placeholder col-6"></span>
+  </p>
+  <p class="placeholder-glow badge text-bg-secondary mb-3">
+     <span class="placeholder col-6" style="width: 12px;"></span>
+  </p>
+
+  <div class="row mb-4">
+    <!-- Tabs -->
+    <div class="col-md-4 mb-3 mb-md-0">
+      <div class="list-group" role="tablist">
+        <a class="list-group-item list-group-item-action active fw-bold"
+           data-bs-toggle="list"
+           href="#combined-alerts-{{ folder.folder_order }}">
+          <span class="d-flex align-items-center">
+            <span class="placeholder-glow me-2">
+              <span class="placeholder col-6" style="width: 100px;"></span>
+            </span>
+            <span class="placeholder-glow badge rounded-pill text-bg-secondary ms-auto">
+              <span class="placeholder col-6" style="width: 12px;"></span>
+            </span>
+          </span>
+        </a>
+
+        {% for _ in folder.folder_alerts %}
+          <a class="list-group-item list-group-item-action fw-semibold"
+             data-bs-toggle="list"
+             href="#folder-{{ folder.folder_order }}-alert-{{ loop.index }}">
+            <span class="d-flex align-items-center">
+              <span class="placeholder-glow me-2">
+                <span class="placeholder col-6" style="width: 100px;"></span>
+              </span>
+              <span class="placeholder-glow badge rounded-pill text-bg-secondary ms-auto">
+                <span class="placeholder col-6" style="width: 12px;"></span>
+              </span>
+            </span>
+          </a>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Tab Content -->
+    <div class="col-md-8">
+      <div class="tab-content">
+
+        <!-- Combined -->
+        <div class="tab-pane fade show active"
+             id="combined-alerts-{{ folder.folder_order }}">
+
+          <h5 class="placeholder-glow fw-semibold mb-1"><span class="placeholder col-6"></span></h5>
+          <p class="placeholder-glow text-muted small mb-3">
+            <span class="placeholder col-6"></span>
+          </p>
+
+          <div class="table-responsive">
+            <table class="table table-striped table-bordered table-hover align-middle">
+              <thead class="">
+                <tr class="align-middle">
+                  <th class="placeholder-glow"><span class="placeholder col-12"></span></th>
+                  <th class="placeholder-glow"><span class="placeholder col-12"></span></th>
+                  <th class="placeholder-glow"><span class="placeholder col-12"></span></th>
+                  <th class="placeholder-glow"><span class="placeholder col-12"></span></th>
+                </tr>
+              </thead>
+              <tbody class="table-group-divider">
+                {% for _ in range(5) %}
+                  <tr>
+                    <td class="placeholder-glow"><span class="placeholder col-12"></span></td>
+                    <td class="placeholder-glow"><span class="placeholder col-12"></span></td>
+                    <td class="placeholder-glow"><span class="placeholder col-12"></span></td>
+                    <td class="placeholder-glow"><span class="placeholder col-12"></span></td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Individual Alerts -->
+        {% for _ in folder.folder_alerts %}
+          <div class="tab-pane fade"
+               id="folder-{{ folder.folder_order }}-alert-{{ loop.index }}">
+
+            <h5 class="placeholder-glow fw-semibold mb-1">
+             <span class="placeholder col-6"></span>
+            </h5>
+            <p class="placeholder-glow text-muted small mb-3">
+              <span class="placeholder col-6"></span>
+            </p>
+
+            <div class="table-responsive">
+              <table class="table table-striped table-bordered table-hover align-middle">
+                <thead class="">
+                  <tr class="align-middle">
+                    <th class="placeholder-glow"><span class="placeholder col-12"></span></th>
+                    <th class="placeholder-glow"><span class="placeholder col-12"></span></th>
+                    <th class="placeholder-glow"><span class="placeholder col-12"></span></th>
+                    <th class="placeholder-glow"><span class="placeholder col-12"></span></th>
+                  </tr>
+                </thead>
+                <tbody class="table-group-divider">
+                  {% for _ in range(5) %}
+                    <tr>
+                      <td class="placeholder-glow"><span class="placeholder col-12"></span></td>
+                      <td class="placeholder-glow"><span class="placeholder col-12"></span></td>
+                      <td class="placeholder-glow"><span class="placeholder col-12"></span></td>
+                      <td class="placeholder-glow"><span class="placeholder col-12"></span></td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="border-top"></div>
+
+<!-- Stock Alerts -->
+<section class="mt-4">
+  <h4 class="placeholder-glow fw-bold mb-1"><span class="placeholder col-6"></span></h4>
+  <p class="placeholder-glow text-muted small mb-3">
+    <span class="placeholder col-6"></span>
+  </p>
+
+  <div class="row">
+    <div class="col-md-4 mb-3 mb-md-0">
+      <div class="list-group">
+        {% for _ in range(5) %}
+          <a class="list-group-item list-group-item-action fw-semibold {% if loop.index == 1 %}active{% endif %}"
+             data-bs-toggle="list"
+             href="#stock-alerts-{{ folder.folder_order }}-{{ loop.index }}">
+            <span class="d-flex align-items-center">
+              <span class="placeholder-glow me-2">
+                <span class="placeholder col-6" style="width: 100px;"></span>
+              </span>
+              <span class="d-flex ms-auto gap-1">
+                <span class="placeholder-glow badge rounded-pill text-bg-success">
+                  <span class="placeholder col-6" style="width: 12px;"></span>
+                </span>
+                <span class="placeholder-glow badge rounded-pill text-bg-danger">
+                  <span class="placeholder col-6" style="width: 12px;"></span>
+                </span>
+              </span>
+            </span>
+          </a>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="col-md-8">
+      <div class="tab-content">
+        {% for _ in range(5) %}
+          <div class="tab-pane fade {% if loop.index == 1 %}show active{% endif %}"
+               id="stock-alerts-{{ folder.folder_order }}-{{ loop.index }}">
+
+            <h5 class="placeholder-glow fw-semibold mb-1">
+              <span class="placeholder col-6"></span>
+            </h5>
+            <p class="placeholder-glow text-muted small mb-3">
+              <span class="placeholder col-6"></span>
+            </p>
+
+            <div class="row">
+              <!-- Triggered -->
+              <div class="col-md-6 mb-2 mb-md-3">
+                <div class="placeholder-glow text-success fw-semibold text-center mb-2"><span class="placeholder col-6"></span></div>
+                <div class="table-responsive">
+                  <table class="table table-striped table-bordered table-hover align-middle">
+                    <thead class="">
+                      <tr class="align-middle">
+                        <th class="placeholder-glow"><span class="placeholder col-12"></span></th>
+                        <th class="placeholder-glow"><span class="placeholder col-12"></span></th>
+                        <th class="placeholder-glow"><span class="placeholder col-12"></span></th>
+                    </thead>
+                    <tbody class="table-group-divider">
+                      {% for _ in range(2) %}
+                        <tr>
+                          <td class="placeholder-glow"><span class="placeholder col-12"></span></td>
+                          <td class="placeholder-glow bg-success-subtle"><span class="placeholder col-12"></span></td>
+                          <td class="placeholder-glow"><span class="placeholder col-12"></span></td>
+                        </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Not Triggered -->
+              <div class="col-md-6 mb-3">
+                <div class="placeholder-glow text-danger fw-semibold text-center mb-2"><span class="placeholder col-6"></span></div>
+                <div class="table-responsive">
+                  <table class="table table-striped table-bordered table-hover align-middle">
+                    <thead class="">
+                      <tr class="align-middle">
+                        <th class="placeholder-glow"><span class="placeholder col-12"></span></th>
+                        <th class="placeholder-glow"><span class="placeholder col-12"></span></th>
+                        <th class="placeholder-glow"><span class="placeholder col-12"></span></th>
+                      </tr>
+                    </thead>
+                    <tbody class="table-group-divider">
+                      {% for _ in range(2) %}
+                        <tr>
+                          <td class="placeholder-glow"><span class="placeholder col-12"></span></td>
+                          <td class="placeholder-glow bg-danger-subtle"><span class="placeholder col-12"></span></td>
+                          <td class="placeholder-glow"><span class="placeholder col-12"></span></td>
+                        </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</section>
+
+</div>
+{% endmacro %}
