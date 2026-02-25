@@ -21,9 +21,6 @@ const FOLDER_INITIAL_LOAD_STAGGER_MS = 75;
 // To ensure only a single request is made per folder by using locks
 const folderLocks = new Map();
 
-// Used if the user navigates away during an AJAX request
-const pageAbortController = new AbortController();
-
 /* -------------------------------------------------------------------------- */
 /* Form Submission Handler                                                    */
 /* -------------------------------------------------------------------------- */
@@ -107,7 +104,6 @@ document.addEventListener("submit", async (event) => {
     const actionResponse = await fetch(form.action, {
       method: "POST",
       headers: { "X-Requested-With": "XMLHttpRequest" },
-      signal: pageAbortController.signal,
       body: formData,
     });
 
@@ -126,18 +122,12 @@ document.addEventListener("submit", async (event) => {
     /* Fetch folder partial                                               */
     /* ------------------------------------------------------------------ */
 
-    loadFolderPartial(folderId, folderLocks.get(folderId), actionData);
+    await loadFolderPartial(folderId, folderLocks.get(folderId), actionData);
   } catch (error) {
-    if (error.name === "AbortError") {
-      return; // User navigated away, do nothing
-    }
-
-    // Catch network or unexpected runtime errors
-  } finally {
-    // Request for this folder was completed, free the lock for next request
+    // Free the lock for next request
     folderLocks.delete(folderId);
 
-    // Always clean up spinner and restore interaction state
+    // Clean up spinner and restore interaction state
     clearTimeout(overlayTimeoutId);
     overlay.classList.add("d-none");
     bodyContainer.classList.remove("pe-none");
@@ -261,7 +251,6 @@ async function loadFolderPartial(
       `/watchlist/folder/${encodeURIComponent(folderId)}/partial`,
       {
         headers: { "X-Requested-With": "XMLHttpRequest" },
-        signal: pageAbortController.signal,
       },
     );
 
@@ -300,10 +289,6 @@ async function loadFolderPartial(
       bodyContainer.classList.remove("is-fading-out");
     }, FOLDER_FADE_TRANSITION_DURATION);
   } catch (error) {
-    if (error.name === "AbortError") {
-      return; // User navigated away, do nothing
-    }
-
     // Show folder loading failure HTML
     folderLoadingFailure = document.getElementById(
       `folder-loading-failure-${folderId}`,
@@ -319,13 +304,13 @@ async function loadFolderPartial(
 
     target.replaceChildren(failureNode);
   } finally {
+    // Request for this folder was completed, free the lock for next request
+    folderLocks.delete(folderId);
+
     // Show feedback after UI is fully updated
     if (actionData?.toast) {
       showToast(actionData.toast);
     }
-
-    // Request for this folder was completed, free the lock for next request
-    folderLocks.delete(folderId);
 
     // Always clean up spinner and restore interaction state
     clearTimeout(overlayTimeoutId);
@@ -363,8 +348,3 @@ document.addEventListener("DOMContentLoaded", () => {
 function retryLoadFolder(folderId) {
   loadFolderPartial(folderId);
 }
-
-// Abort Controller
-window.addEventListener("beforeunload", () => {
-  pageAbortController.abort();
-});

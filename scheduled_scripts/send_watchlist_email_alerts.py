@@ -6,7 +6,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from app import app
 from scheduled_scripts.helpers.helpers import get_market_status, write_to_status_file, get_db_populate_info
-from utils.datetime_utils import get_current_utc, format_dt_et, format_date
+from utils.datetime_utils import get_current_utc, format_dt_et, format_date_et
 from utils.db_queries.user_data import get_all_users, is_user_active, is_user_email_alert_on, user_has_watchlist_alerts
 from utils.db_queries.watchlist import db_get_watchlist_alert_email_data
 from watchlist.emails import WatchlistEmail
@@ -56,13 +56,13 @@ def write_status(now, status):
     status_data = {
         "status": status,
         "last_send_attempted":  format_dt_et(now),
-        "last_send_attempted_date": format_date(now)
+        "last_send_attempted_date": format_date_et(now)
     }
 
     if status == "success":
         status_data.update({
             "last_sent": format_dt_et(now),
-            "last_sent_date": format_date(now)
+            "last_sent_date": format_date_et(now)
         })
 
     write_to_status_file(filename="sending_watchlist_email_alerts_info.json", status_data=status_data)

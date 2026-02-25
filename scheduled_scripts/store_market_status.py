@@ -7,7 +7,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from dotenv import load_dotenv
 from app import app
 from scheduled_scripts.helpers.helpers import write_to_status_file
-from utils.datetime_utils import get_current_utc, format_dt_et, format_date
+from utils.datetime_utils import get_current_utc, format_dt_et, format_date_et
 from data_collectors.market_data import fetch_market_data
 
 def main():
@@ -20,7 +20,7 @@ def main():
     filename = "market_status.json"
     status_data = {
         "last_update_attempted": format_dt_et(now),
-        "last_update_attempted_date": format_date(now)
+        "last_update_attempted_date": format_date_et(now)
     }
 
     try:
@@ -35,7 +35,7 @@ def main():
             "market_status": market_status,
             "server_time": server_time,
             "last_updated": format_dt_et(now),
-            "last_updated_date": format_date(now)
+            "last_updated_date": format_date_et(now)
         })
 
         write_to_status_file(filename, status_data)

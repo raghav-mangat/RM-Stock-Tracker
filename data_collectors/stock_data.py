@@ -26,7 +26,7 @@ STOCK_MASTER_ATTRIBUTES = [
 # Must be the same as all the fields in the Stock table in the database.
 STOCK_ATTRIBUTES = [
             "ticker", "name", "description", "homepage_url", "list_date", "industry",
-            "total_employees", "market_cap", "stock_type", "icon_url", "last_updated",
+            "total_employees", "market_cap", "stock_type_id", "icon_url", "last_updated",
             "day_close", "day_open", "day_high", "day_low", "volume", "todays_change", "todays_change_perc",
             "dma_30", "dma_50", "dma_200", "dma_30_perc_diff", "dma_50_perc_diff", "dma_200_perc_diff",
             "high_52w", "low_52w", "high_52w_perc_diff", "low_52w_perc_diff",

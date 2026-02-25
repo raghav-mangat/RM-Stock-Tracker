@@ -53,6 +53,14 @@ def format_dt_et(utc_dt):
     et_dt = convert_to_et_dt(utc_dt)
     return et_dt.strftime(DATETIME_ET_FORMAT)
 
+def format_date_et(utc_dt):
+    """
+    Formats datetime in UTC into date string in ET
+    """
+
+    et_dt = convert_to_et_dt(utc_dt)
+    return format_date(et_dt)
+
 def format_date(date):
     return date.strftime(DATE_FORMAT)
 

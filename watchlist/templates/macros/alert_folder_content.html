@@ -278,7 +278,9 @@
 
 
 {% macro alert_folder_body_placeholder(folder_id, folder) %}
-<div>
+<div class="pe-none"
+     aria-hidden="true" aria-busy="true" aria-live="polite"
+     aria-label="Loading alert folder data">
 
 <!-- Folder Loading Failure Message -->
 <div id="folder-loading-failure-{{ folder_id }}" class="d-none border text-center py-4">

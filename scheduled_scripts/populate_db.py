@@ -13,7 +13,7 @@ from models.database import (
 from data_collectors.index_data import all_indices, get_index_info, fetch_index_data
 from data_collectors.stock_data import fetch_stock_types, fetch_all_stocks_data, fetch_stock_data, fetch_chart_data, DB_TIMEFRAMES
 from data_collectors.market_data import fetch_market_data
-from utils.datetime_utils import get_current_utc, format_dt_et, format_date
+from utils.datetime_utils import get_current_utc, format_dt_et, format_date_et
 from utils.db_queries.stock_type_meta_data import get_all_stock_types, get_all_active_stock_types
 from utils.db_queries.stock_master_data import get_all_stock_master
 from utils.db_queries.all_stocks import get_trending_stocks, get_top_stocks_categories, db_get_top_stocks_data
@@ -144,7 +144,7 @@ def populate_db(now):
     """
 
     print("Starting Database Population...\n")
-    now_date = format_date(now)
+    now_date = format_date_et(now)
 
     stock_type_id_map = None
     stock_master_map = None
@@ -361,13 +361,13 @@ def write_status(now, status):
     status_data = {
         "status": status,
         "last_update_attempted":  format_dt_et(now),
-        "last_update_attempted_date": format_date(now)
+        "last_update_attempted_date": format_date_et(now)
     }
 
     if status == "success":
         status_data.update({
             "last_updated": format_dt_et(now),
-            "last_updated_date": format_date(now)
+            "last_updated_date": format_date_et(now)
         })
 
     write_to_status_file(filename="populate_db_info.json", status_data=status_data)
@@ -390,11 +390,13 @@ def main():
     )
 
     now = get_current_utc()
-    now_date = format_date(now)
+    now_date = format_date_et(now)
 
     try:
         stored_market_status = get_market_status()
-        current_market_status = fetch_market_data()
+
+        current_market_data = fetch_market_data()
+        current_market_status = current_market_data.get("market_status") if current_market_data else None
 
         db_populate_info = get_db_populate_info()
         db_last_updated_date = db_populate_info.get("last_updated_date")

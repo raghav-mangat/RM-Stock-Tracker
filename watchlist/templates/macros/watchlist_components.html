@@ -1,11 +1,11 @@
 {% macro display_alert(alert) %}
   <span class="fw-semibold">
     {% if (alert.min_value is not none) and (alert.max_value is not none) %}
-      {{ display_use_abs(alert) }}: {{ alert.min_value }} - {{ alert.max_value }}
+      {{ display_use_abs(alert) }}: {{ alert.min_value | float }} - {{ alert.max_value | float }}
     {% elif alert.min_value is not none %}
-      {{ display_use_abs(alert) }} &gt; {{ alert.min_value }}
+      {{ display_use_abs(alert) }} &gt; {{ alert.min_value | float }}
     {% elif alert.max_value is not none %}
-      {{ display_use_abs(alert) }} &lt;= {{ alert.max_value }}
+      {{ display_use_abs(alert) }} &lt;= {{ alert.max_value | float }}
     {% endif %}
   </span>
 {% endmacro %}
