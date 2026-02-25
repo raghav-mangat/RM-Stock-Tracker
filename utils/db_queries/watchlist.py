@@ -549,37 +549,79 @@ def get_folder_items(folder_id):
     ).all()
     return result
 
-def get_ticker_stock_data(ticker):
-    # Check if the stock is present in the database
-    stock_data = db.session.execute(
-        db.select(
-            Stock
-        ).where(
-            Stock.ticker == ticker
-        )
-    ).scalar()
-
-    # If not in db then use stock data collector script to get stock data
-    if not stock_data:
-        stock_data = fetch_stock_data(ticker)
-
-    # Return the stock_data
-    return stock_data.to_dict()
-
 def get_all_items_data(folder_id):
-    folder_items = get_folder_items(folder_id)
+    """
+    Returns all the items data for the given folder.
+    Uses a combination of db queries and python data
+    structures to assemble this data to avoid multiple
+    database queries by avoiding individual queries for
+    each stock and item in the folder.
+    """
 
     all_items_data = {}
+
+    folder_items = get_folder_items(folder_id)
+    if not folder_items:
+        return all_items_data
+
+    # Preserve order explicitly
+    ordered_item_ids = []
+    ticker_by_item_id = {}
+
     for ticker, item_id in folder_items:
-        stock_data = get_ticker_stock_data(ticker)
-        if stock_data:
-            item = get_item_by_id(item_id)
-            if item:
-                all_items_data[item_id] = {
-                    "stock_data": stock_data,
-                    "item_order": item.order,
-                    "item_alerts": item.alerts
-                }
+        ordered_item_ids.append(item_id)
+        ticker_by_item_id[item_id] = ticker
+
+    # Fetch all WatchlistItem rows in one query
+    items = (
+        db.session.execute(
+            db.select(WatchlistItem).where(
+                WatchlistItem.id.in_(ordered_item_ids)
+            )
+        )
+        .scalars()
+        .all()
+    )
+    items_by_id = {item.id: item for item in items}
+
+    # Fetch all stocks in one query
+    tickers = set({ticker for ticker in ticker_by_item_id.values()})
+    stocks = (
+        db.session.execute(
+            db.select(Stock).where(
+                Stock.ticker.in_(tickers)
+            )
+        )
+        .scalars()
+        .all()
+    )
+    stocks_by_ticker = {stock.ticker: stock for stock in stocks}
+
+    # Fetch all remaining stocks that we did not get from the db
+    remaining_tickers = tickers - set(stocks_by_ticker.keys())
+    for ticker in remaining_tickers:
+        stock = fetch_stock_data(ticker)
+        db.session.add(stock)
+        db.session.flush()
+
+        if stock:
+            stocks_by_ticker[ticker] = stock
+
+    # Assemble final ordered result
+    for item_id in ordered_item_ids:
+        ticker = ticker_by_item_id[item_id]
+
+        stock = stocks_by_ticker.get(ticker)
+        item = items_by_id.get(item_id)
+
+        if not stock or not item:
+            continue
+
+        all_items_data[item_id] = {
+            "stock_data": stock.to_dict(),
+            "item_order": item.order,
+            "item_alerts": item.alerts,
+        }
 
     return all_items_data
 

@@ -1,5 +1,5 @@
 from datetime import datetime
-from models.database import StockMaster, Stock
+from models.database import db, StockMaster, Stock
 from flask import abort
 from data_collectors.stock_data import fetch_stock_data, fetch_chart_data, TIMEFRAME_OPTIONS, SELECT_DB_TABLE, \
     DB_TIMEFRAMES
@@ -16,6 +16,8 @@ def get_stock_data(ticker):
     # if not in db then use stock data collector script to get stock data
     if not stock:
         stock = fetch_stock_data(ticker)
+        db.session.add(stock)
+        db.session.flush()
 
     # Get the list of related companies
     rel_companies = []

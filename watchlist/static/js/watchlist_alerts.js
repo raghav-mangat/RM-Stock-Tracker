@@ -1,3 +1,13 @@
+/**
+ * watchlist_alerts.js
+ *
+ * Handles all alert folder partial HTML AJAX loads.
+ */
+
+/* -------------------------------------------------------------------------- */
+/* Constants                                                                  */
+/* -------------------------------------------------------------------------- */
+
 // Duration (ms) of fade-out before swapping folder HTML
 const FOLDER_FADE_TRANSITION_DURATION = 150;
 

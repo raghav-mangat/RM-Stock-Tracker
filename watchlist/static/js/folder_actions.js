@@ -126,8 +126,8 @@ document.addEventListener("submit", async (event) => {
   } catch (error) {
     // Free the lock for next request
     folderLocks.delete(folderId);
-
-    // Clean up spinner and restore interaction state
+  } finally {
+    // Always clean up spinner and restore interaction state
     clearTimeout(overlayTimeoutId);
     overlay.classList.add("d-none");
     bodyContainer.classList.remove("pe-none");
