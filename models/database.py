@@ -668,7 +668,7 @@ class WatchlistFolder(TimestampMixin, db.Model):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
 
     name: Mapped[str] = mapped_column(String(MAX_FOLDER_NAME_LEN), nullable=False)
-    order: Mapped[int] = mapped_column(Integer, nullable=False)
+    folder_order: Mapped[int] = mapped_column(Integer, nullable=False)
     sort_by_attribute: Mapped[Optional["FolderAttribute"]] = mapped_column(
         SQLEnum(FolderAttribute, name="folder_attribute_enum"),
         nullable=True
@@ -714,12 +714,12 @@ class WatchlistFolder(TimestampMixin, db.Model):
     __table_args__ = (
         # Make folder names unique per user: (user_id, name) must be unique
         UniqueConstraint("user_id", "name", name="uq_watchlist_folder_name_user"),
-        # Make folder order unique per user: (user_id, order) must be unique
-        UniqueConstraint("user_id", "order", name="uq_watchlist_folder_order_user"),
+        # Make folder order unique per user: (user_id, folder_order) must be unique
+        UniqueConstraint("user_id", "folder_order", name="uq_watchlist_folder_order_user"),
 
-        # order >= 1
+        # folder_order >= 1
         CheckConstraint(
-            "order >= 1",
+            "folder_order >= 1",
             name="ck_watchlist_folder_order_ge_1",
         ),
 
@@ -727,8 +727,9 @@ class WatchlistFolder(TimestampMixin, db.Model):
     )
 
     def __repr__(self) -> str:
-        return (f"<WatchlistFolder id={self.id} user_id={self.user_id} order={self.order} name={self.name} "
-                f"sort_by_attribute={self.sort_by_attribute} sort_by_order={self.sort_by_order}>")
+        return (f"<WatchlistFolder id={self.id} user_id={self.user_id} folder_order={self.folder_order} "
+                f"name={self.name} sort_by_attribute={self.sort_by_attribute} "
+                f"sort_by_order={self.sort_by_order}>")
 
 
 class WatchlistItem(TimestampMixin, db.Model):
@@ -736,7 +737,7 @@ class WatchlistItem(TimestampMixin, db.Model):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
 
-    order: Mapped[int] = mapped_column(Integer, nullable=False)
+    item_order: Mapped[int] = mapped_column(Integer, nullable=False)
 
     folder_id: Mapped[int] = mapped_column(
         Integer,
@@ -764,12 +765,12 @@ class WatchlistItem(TimestampMixin, db.Model):
     __table_args__ = (
         # Prevent duplicate (same stock in same folder)
         UniqueConstraint("folder_id", "stock_id", name="uq_watchlist_item_folder_stock"),
-        # Make item order unique per folder: (folder_id, order) must be unique
-        UniqueConstraint("folder_id", "order", name="uq_watchlist_item_order_folder"),
+        # Make item order unique per folder: (folder_id, item_order) must be unique
+        UniqueConstraint("folder_id", "item_order", name="uq_watchlist_item_order_folder"),
 
-        # order >= 1
+        # item_order >= 1
         CheckConstraint(
-            "order >= 1",
+            "item_order >= 1",
             name="ck_watchlist_item_order_ge_1",
         ),
 
@@ -779,7 +780,7 @@ class WatchlistItem(TimestampMixin, db.Model):
 
     def __repr__(self) -> str:
         return (f"<WatchlistItem id={self.id} folder_id={self.folder_id} stock_id={self.stock_id} "
-                f"order={self.order}>")
+                f"item_order={self.item_order}>")
 
 
 class WatchlistFolderAttribute(TimestampMixin, db.Model):
