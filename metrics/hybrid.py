@@ -116,7 +116,6 @@ class HybridMetricsBackend(MetricsBackend):
 
                 # Record successful Redis flush
                 success_key = metrics_dated_key(MetricName.REDIS_FLUSH_SUCCESS, now)
-                pipe = self.redis.pipeline()
                 pipe.incr(success_key)
                 pipe.expire(success_key, REDIS_METRICS_TTL)
 
@@ -125,7 +124,6 @@ class HybridMetricsBackend(MetricsBackend):
 
                 # Reset buffers only after success
                 self._counters.clear()
-                self._latency_counters.clear()
                 self._latency_counters = self.initialize_latency_counters()
                 self._last_flush = time.time()
 

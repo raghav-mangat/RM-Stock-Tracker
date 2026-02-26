@@ -180,54 +180,73 @@ def db_remove_folder(folder_id, user):
 
 def db_update_order(folder_id, new_order, user):
     try:
-        # The folder we need to update
-        update_folder = check_and_get_user_folder(folder_id, user)
-
-        # Get all the user's folders
+        folder = check_and_get_user_folder(folder_id, user)
         folders = get_all_user_folders(user)
 
-        # Get the maximum order for user's folders
         max_order = len(folders)
 
-        # Check if the new_order is valid
         if not 1 <= new_order <= max_order:
-            raise Exception(f"New order '{new_order}' not in range ({1}, {max_order})")
+            raise ValueError(f"New order must be between 1 and {max_order}")
 
-        # Old order of the folder
-        old_order = update_folder.order
+        old_order = folder.order
 
-        # Direction of shift for reordering of the folders
-        if new_order < old_order:
-            order_shift = 1
-        else:
-            order_shift = -1
+        # Nothing to do
+        if new_order == old_order:
+            return MutationResult(
+                ok=True,
+                message="Folder order unchanged.",
+            )
 
-        # Move target folder out of the way (temporary value)
-        update_folder.order = max_order + 1
+        # Determine direction
+        moving_down = new_order > old_order
+
+        # Temporarily move target folder out of range
+        folder.order = max_order + 1
         db.session.flush()
 
-        # Reorder the folders between new order and old order
-        for i in range(new_order, old_order, order_shift):
-            # Get the current folder
-            curr_folder = folders[i-1]
-            # Shift the folder
-            curr_folder.order = curr_folder.order + order_shift
-            db.session.flush()
+        if moving_down:
+            # Example: 1 → 3
+            # Shift folders [old+1 ... new] up by -1
+            affected = (
+                db.session.query(WatchlistFolder)
+                .filter(
+                    WatchlistFolder.user_id == user.id,
+                    WatchlistFolder.order > old_order,
+                    WatchlistFolder.order <= new_order,
+                )
+            )
+            for f in affected:
+                f.order -= 1
 
-        # Update the order of the given folder
-        update_folder.order = new_order
+        else:
+            # Example: 3 → 1
+            # Shift folders [new ... old-1] down by +1
+            affected = (
+                db.session.query(WatchlistFolder)
+                .filter(
+                    WatchlistFolder.user_id == user.id,
+                    WatchlistFolder.order >= new_order,
+                    WatchlistFolder.order < old_order,
+                )
+            )
+            for f in affected:
+                f.order += 1
 
-        # Commit the reordering of the user's folders
+        db.session.flush()
+
+        # Put target folder into its final position
+        folder.order = new_order
+
         db.session.commit()
 
         return MutationResult(
             ok=True,
-            message=f"Folder '{update_folder.name}' reordered successfully.",
+            message=f"Folder '{folder.name}' reordered successfully.",
         )
 
-    except Exception as e:
+    except Exception:
         db.session.rollback()
-        raise e
+        raise
 
 def db_add_watchlist_item(folder_id, stock, user):
     try:
