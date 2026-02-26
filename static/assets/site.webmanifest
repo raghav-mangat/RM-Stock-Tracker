@@ -1,6 +1,6 @@
 {
   "name": "RM Stock Tracker",
-  "short_name": "RM Tracker",
+  "short_name": "RMST",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
