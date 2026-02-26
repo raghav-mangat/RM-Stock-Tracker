@@ -281,9 +281,18 @@ def get_ticker_values(stock_data, stock_365_day_data):
         stock_data["volume"] = stock_365_day_data["volume"][0]
 
         last_close = stock_365_day_data["close"][0]
-        prev_close = stock_365_day_data["close"][1]
-        todays_change = last_close - prev_close
-        todays_change_perc = (todays_change/prev_close) * 100
+
+        try:
+            prev_close = stock_365_day_data["close"][1]
+            todays_change = last_close - prev_close
+        except IndexError:
+            prev_close = None
+            todays_change = None
+
+        try:
+            todays_change_perc = (todays_change/prev_close) * 100
+        except ZeroDivisionError:
+            todays_change_perc = None
 
         stock_data["todays_change"] = round(todays_change, DECIMAL_PRECISION)
         stock_data["todays_change_perc"] = round(todays_change_perc, DECIMAL_PRECISION)
@@ -296,16 +305,34 @@ def get_ticker_dmas(stock_data, stock_365_day_data):
         last_close = stock_365_day_data["close"][0]
 
         closing_200_days = stock_365_day_data["close"][:200]
-        dma_200 = sum(closing_200_days) / len(closing_200_days)
-        dma_200_perc_diff = (last_close - dma_200) / dma_200 * 100
+        try:
+            dma_200 = sum(closing_200_days) / len(closing_200_days)
+        except ZeroDivisionError:
+            dma_200 = None
+        try:
+            dma_200_perc_diff = (last_close - dma_200) / dma_200 * 100
+        except ZeroDivisionError:
+            dma_200_perc_diff = None
 
         closing_50_days = stock_365_day_data["close"][:50]
-        dma_50 = sum(closing_50_days) / len(closing_50_days)
-        dma_50_perc_diff = (last_close - dma_50) / dma_50 * 100
+        try:
+            dma_50 = sum(closing_50_days) / len(closing_50_days)
+        except ZeroDivisionError:
+            dma_50 = None
+        try:
+            dma_50_perc_diff = (last_close - dma_50) / dma_50 * 100
+        except ZeroDivisionError:
+            dma_50_perc_diff = None
 
         closing_30_days = stock_365_day_data["close"][:30]
-        dma_30 = sum(closing_30_days) / len(closing_30_days)
-        dma_30_perc_diff = (last_close - dma_30) / dma_30 * 100
+        try:
+            dma_30 = sum(closing_30_days) / len(closing_30_days)
+        except ZeroDivisionError:
+            dma_30 = None
+        try:
+            dma_30_perc_diff = (last_close - dma_30) / dma_30 * 100
+        except ZeroDivisionError:
+            dma_30_perc_diff = None
 
         stock_data["dma_200"] = round(dma_200, DECIMAL_PRECISION)
         stock_data["dma_50"] = round(dma_50, DECIMAL_PRECISION)
@@ -323,14 +350,21 @@ def get_ticker_52w_hl(stock_data, stock_365_day_data):
         last_close = stock_365_day_data["close"][0]
 
         stock_data["high_52w"] = max(stock_365_day_data["high"]) if stock_365_day_data else None
-        stock_data["high_52w_perc_diff"] = round(
-            (stock_data["high_52w"] - last_close) / last_close * 100
-        , DECIMAL_PRECISION)
+        try:
+            stock_data["high_52w_perc_diff"] = round(
+                (stock_data["high_52w"] - last_close) / last_close * 100
+            , DECIMAL_PRECISION)
+        except ZeroDivisionError:
+            stock_data["high_52w_perc_diff"] = None
 
         stock_data["low_52w"] = min(stock_365_day_data["low"]) if stock_365_day_data else None
-        stock_data["low_52w_perc_diff"] = round(
-            (stock_data["low_52w"] - last_close) / last_close * 100
-        , DECIMAL_PRECISION)
+        try:
+            stock_data["low_52w_perc_diff"] = round(
+                (stock_data["low_52w"] - last_close) / last_close * 100
+            , DECIMAL_PRECISION)
+        except ZeroDivisionError:
+            stock_data["low_52w_perc_diff"] =None
+
     except Exception as e:
         print(f"[52W Error] {stock_data.get("ticker")}: {e}")
     return stock_data
