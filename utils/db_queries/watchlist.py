@@ -28,7 +28,7 @@ def db_get_all_watchlist_data(user):
 def db_get_folder_data(folder):
     return {
         "folder_name": folder.name,
-        "folder_order": folder.order,
+        "folder_order": folder.folder_order,
         "folder_num_items": len(folder.items),
         "folder_sort_by_attribute": folder.sort_by_attribute,
         "folder_sort_by_order": folder.sort_by_order,
@@ -94,7 +94,7 @@ def db_add_folder(folder_name, user):
     try:
         new_folder = WatchlistFolder(
             name=folder_name,
-            order=len(user.watchlist_folders) + 1,
+            folder_order=len(user.watchlist_folders) + 1,
             user=user
         )
         db.session.add(new_folder)
@@ -147,7 +147,7 @@ def db_remove_folder(folder_id, user):
     try:
         folder = check_and_get_user_folder(folder_id, user)
         folder_name = folder.name
-        order = folder.order
+        order = folder.folder_order
 
         # Delete Folder
         db.session.delete(folder)
@@ -158,14 +158,14 @@ def db_remove_folder(folder_id, user):
             db.select(WatchlistFolder).where(
                 and_(
                     WatchlistFolder.user == user,
-                    WatchlistFolder.order > order
+                    WatchlistFolder.folder_order > order
                 )
             )
         ).scalars().all()
 
         # Reorder affected folders for the user after deletion
         for folder in affected_folders:
-            folder.order -= 1
+            folder.folder_order -= 1
             db.session.flush()
 
         db.session.commit()
@@ -188,7 +188,7 @@ def db_update_order(folder_id, new_order, user):
         if not 1 <= new_order <= max_order:
             raise ValueError(f"New order must be between 1 and {max_order}")
 
-        old_order = folder.order
+        old_order = folder.folder_order
 
         # Nothing to do
         if new_order == old_order:
@@ -201,7 +201,7 @@ def db_update_order(folder_id, new_order, user):
         moving_down = new_order > old_order
 
         # Temporarily move target folder out of range
-        folder.order = max_order + 1
+        folder.folder_order = max_order + 1
         db.session.flush()
 
         if moving_down:
@@ -211,12 +211,12 @@ def db_update_order(folder_id, new_order, user):
                 db.session.query(WatchlistFolder)
                 .filter(
                     WatchlistFolder.user_id == user.id,
-                    WatchlistFolder.order > old_order,
-                    WatchlistFolder.order <= new_order,
+                    WatchlistFolder.folder_order > old_order,
+                    WatchlistFolder.folder_order <= new_order,
                 )
             )
             for f in affected:
-                f.order -= 1
+                f.folder_order -= 1
 
         else:
             # Example: 3 → 1
@@ -225,17 +225,17 @@ def db_update_order(folder_id, new_order, user):
                 db.session.query(WatchlistFolder)
                 .filter(
                     WatchlistFolder.user_id == user.id,
-                    WatchlistFolder.order >= new_order,
-                    WatchlistFolder.order < old_order,
+                    WatchlistFolder.folder_order >= new_order,
+                    WatchlistFolder.folder_order < old_order,
                 )
             )
             for f in affected:
-                f.order += 1
+                f.folder_order += 1
 
         db.session.flush()
 
         # Put target folder into its final position
-        folder.order = new_order
+        folder.folder_order = new_order
 
         db.session.commit()
 
@@ -255,7 +255,7 @@ def db_add_watchlist_item(folder_id, stock, user):
         watchlist_item = WatchlistItem(
             folder=folder,
             stock=stock,
-            order=len(folder.items) + 1
+            item_order=len(folder.items) + 1
         )
         db.session.add(watchlist_item)
         db.session.commit()
@@ -282,7 +282,7 @@ def db_remove_watchlist_item(item_id, user):
         folder = item.folder
         ticker = item.stock.ticker
         folder_name = folder.name
-        order = item.order
+        order = item.item_order
 
         # Delete Watchlist item
         db.session.delete(item)
@@ -293,14 +293,14 @@ def db_remove_watchlist_item(item_id, user):
             db.select(WatchlistItem).where(
                 and_(
                     WatchlistItem.folder == folder,
-                    WatchlistItem.order > order
+                    WatchlistItem.item_order > order
                 )
             )
         ).scalars().all()
 
         # Reorder affected items for the folder after deletion
         for item in affected_items:
-            item.order -= 1
+            item.item_order -= 1
             db.session.flush()
 
         db.session.commit()
@@ -536,7 +536,7 @@ def get_all_user_watchlist_alerts(user):
 def get_all_user_folders(user):
     """
     Helper function that returns a list of all folders for the given user,
-    in ascending order of the 'order'.
+    in ascending order of the 'folder_order'.
     """
     folders = db.session.execute(
         db.select(
@@ -544,7 +544,7 @@ def get_all_user_folders(user):
         ).where(
             WatchlistFolder.user == user
         ).order_by(
-            WatchlistFolder.order.asc()
+            WatchlistFolder.folder_order.asc()
         )
     ).scalars().all()
     return folders
@@ -552,7 +552,7 @@ def get_all_user_folders(user):
 def get_folder_items(folder_id):
     """
     Helper function that returns a list of all items for the given folder,
-    in ascending order of the 'order'.
+    in ascending order of the 'item_order'.
     """
     result = db.session.query(
         StockMaster.ticker,
@@ -564,7 +564,7 @@ def get_folder_items(folder_id):
     ).where(
         WatchlistFolder.id == folder_id
     ).order_by(
-        WatchlistItem.order.asc()
+        WatchlistItem.item_order.asc()
     ).all()
     return result
 
@@ -638,7 +638,7 @@ def get_all_items_data(folder_id):
 
         all_items_data[item_id] = {
             "stock_data": stock.to_dict(),
-            "item_order": item.order,
+            "item_order": item.item_order,
             "item_alerts": item.alerts,
         }
 
@@ -714,7 +714,7 @@ def db_get_watchlist_alert_folder_data(folder):
     # Collect folder data
     folder_data = {
         "folder_id": folder.id,
-        "folder_order": folder.order,
+        "folder_order": folder.folder_order,
         "folder_name": folder.name
     }
 
