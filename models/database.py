@@ -391,7 +391,7 @@ class StockMaster(TimestampMixin, db.Model):
     day_high: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
     day_low: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
     volume: Mapped[Optional[int]] = mapped_column(BigInteger, nullable=True)
-    todays_change: Mapped[Optional[Decimal]] = mapped_column(nullable=True)
+    todays_change: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
     todays_change_perc: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
 
     # Stock Relationship
@@ -403,7 +403,11 @@ class StockMaster(TimestampMixin, db.Model):
     )
 
     # Backref from watchlist items
-    watchlist_items: Mapped[list["WatchlistItem"]] = relationship("WatchlistItem", back_populates="stock")
+    watchlist_items: Mapped[list["WatchlistItem"]] = relationship(
+        "WatchlistItem",
+        back_populates="stock",
+        passive_deletes=True
+    )
 
     # Adding Index for faster performance
     __table_args__ = (
@@ -528,7 +532,7 @@ class User(UserMixin, TimestampMixin, db.Model):
     password_hash: Mapped[Optional[str]] = mapped_column(String(USER_INFO_LEN), nullable=True)
     google_id: Mapped[Optional[str]] = mapped_column(String(USER_INFO_LEN), unique=True, nullable=True)
 
-    is_verified: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    is_verified: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
     # Timestamps
     last_login_at: Mapped[datetime] = mapped_column(
@@ -713,6 +717,12 @@ class WatchlistFolder(TimestampMixin, db.Model):
         # Make folder order unique per user: (user_id, order) must be unique
         UniqueConstraint("user_id", "order", name="uq_watchlist_folder_order_user"),
 
+        # order >= 1
+        CheckConstraint(
+            "order >= 1",
+            name="ck_watchlist_folder_order_ge_1",
+        ),
+
         DBIndex("ix_watchlist_folders_user_id", "user_id"),
     )
 
@@ -753,9 +763,15 @@ class WatchlistItem(TimestampMixin, db.Model):
 
     __table_args__ = (
         # Prevent duplicate (same stock in same folder)
-        UniqueConstraint("folder_id", "stock_id", name="uq_watchlist_items_folder_stock"),
+        UniqueConstraint("folder_id", "stock_id", name="uq_watchlist_item_folder_stock"),
         # Make item order unique per folder: (folder_id, order) must be unique
         UniqueConstraint("folder_id", "order", name="uq_watchlist_item_order_folder"),
+
+        # order >= 1
+        CheckConstraint(
+            "order >= 1",
+            name="ck_watchlist_item_order_ge_1",
+        ),
 
         DBIndex("ix_watchlist_items_folder_id", "folder_id"),
         DBIndex("ix_watchlist_items_stock_id", "stock_id"),
@@ -792,11 +808,12 @@ class WatchlistFolderAttribute(TimestampMixin, db.Model):
 
     __table_args__ = (
         # Cannot have duplicate attributes in a folder
-        UniqueConstraint("folder_id", "attribute", name="uq_folder_attribute"),
+        UniqueConstraint("folder_id", "attribute", name="uq_watchlist_folder_attribute"),
+
         # min_value <= max_value
         CheckConstraint(
             "(min_value IS NULL OR max_value IS NULL OR min_value <= max_value)",
-            name="ck_folder_attribute_min_le_max",
+            name="ck_watchlist_folder_attribute_min_le_max",
         ),
     )
 
@@ -851,19 +868,20 @@ class WatchlistAlert(TimestampMixin, db.Model):
     )
 
     __table_args__ = (
+        # Each folder/item can have only one alert for a given attribute
+        UniqueConstraint("folder_id", "attribute", name="uq_watchlist_alert_folder_attribute"),
+        UniqueConstraint("item_id", "attribute", name="uq_watchlist_alert_item_attribute"),
+
         # Enforce folder XOR item
         CheckConstraint(
             "(folder_id IS NOT NULL AND item_id IS NULL) OR "
             "(folder_id IS NULL AND item_id IS NOT NULL)",
-            name="ck_alert_folder_xor_item",
+            name="ck_watchlist_alert_folder_xor_item",
         ),
-        # Each folder/item can have only one alert for a given attribute
-        UniqueConstraint("folder_id", "attribute", name="uq_folder_attribute"),
-        UniqueConstraint("item_id", "attribute", name="uq_item_attribute"),
         # min_value <= max_value
         CheckConstraint(
             "(min_value IS NULL OR max_value IS NULL OR min_value <= max_value)",
-            name="ck_alert_min_le_max",
+            name="ck_watchlist_alert_min_le_max",
         ),
 
         DBIndex("ix_watchlist_alerts_user_id", "user_id"),
