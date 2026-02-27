@@ -65,7 +65,7 @@ def fetch_index_data(index):
 
     try:
         url = get_index_info(index).get("url")
-    except AttributeError as e:
+    except Exception as e:
         print(f"[Index Error] Index <{index}> is invalid: {e}")
         return index_holdings
 

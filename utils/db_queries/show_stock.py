@@ -1,17 +1,25 @@
 from datetime import datetime
 from models.database import db, StockMaster, Stock
 from flask import abort
+from sqlalchemy.orm import joinedload
 from data_collectors.stock_data import fetch_stock_data, fetch_chart_data, TIMEFRAME_OPTIONS, SELECT_DB_TABLE, \
     DB_TIMEFRAMES
-from utils.datetime_utils import DATE_FORMAT, convert_to_et_dt
-from utils.db_queries.stock_type_meta_data import get_stock_type_by_id
+from utils.datetime_utils import DATE_FORMAT, convert_to_et_dt, format_dt_et
 from utils.populate_db_info import db_last_updated_date
 
 def get_stock_data(ticker):
     verify_ticker(ticker)
 
     # Check if the stock is present in the database
-    stock = Stock.query.filter_by(ticker=ticker).first()
+    stock = (
+        db.session.query(Stock)
+        .options(
+            joinedload(Stock.stock_master),
+            joinedload(Stock.stock_type),
+        )
+        .filter(Stock.ticker == ticker)
+        .first()
+    )
 
     # if not in db then use stock data collector script to get stock data
     if not stock:
@@ -25,18 +33,18 @@ def get_stock_data(ticker):
         rel_companies = stock.related_companies.split(',')
 
     # Get the stock type
-    stock_type = None
-    if stock:
-        if stock.stock_type:
-            stock_type = stock.stock_type.description
-        elif stock.stock_type_id:
-            stock_type = get_stock_type_by_id(stock.stock_type_id)
-            stock_type = stock_type.description if stock_type else None
+    stock_type = stock.stock_type.description if stock.stock_type else None
+
+    # Get the last updated time from associated stock master object
+    last_updated = None
+    if stock and stock.stock_master and stock.stock_master.last_updated:
+        last_updated = format_dt_et(stock.stock_master.last_updated)
 
     result = {
         "stock": stock.to_dict() if stock else None,
         "stock_type": stock_type,
-        "rel_companies": rel_companies
+        "rel_companies": rel_companies,
+        "last_updated": last_updated
     }
     return result
 

@@ -317,6 +317,7 @@ def show_stock(ticker):
         stock=stock_data.get("stock"),
         stock_type=stock_data.get("stock_type"),
         rel_companies=stock_data.get("rel_companies"),
+        last_updated=stock_data.get("last_updated"),
         timeframe_options=timeframe_options,
         initial_timeframe=initial_timeframe,
         initial_stock_chart_data=initial_stock_chart_data,
