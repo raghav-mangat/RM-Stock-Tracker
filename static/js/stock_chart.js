@@ -375,14 +375,23 @@ function activateTfBtn(button, timeframe) {
 }
 
 function updateTfChangePerc(changePerc) {
+  // Handle missing / unavailable data
+  if (changePerc === null || changePerc === undefined) {
+    tfChangePerc.textContent = "N/A";
+    tfChangePerc.style.backgroundColor = "transparent";
+    tfChangePerc.classList.add("text-muted");
+    return;
+  }
+
+  let color;
   if (changePerc >= 0) color = POSITIVE_COLOR;
   else color = NEGATIVE_COLOR;
 
-  changePerc = changePerc.toFixed(DECIMAL_PRECISION);
-  const formatted = `${changePerc >= 0 ? "+" : ""}${changePerc}%`;
+  const formatted = `${changePerc >= 0 ? "+" : ""}${changePerc.toFixed(DECIMAL_PRECISION)}%`;
 
   tfChangePerc.textContent = formatted;
   tfChangePerc.style.backgroundColor = color;
+  tfChangePerc.classList.remove("text-muted");
 }
 
 function createStockChart() {

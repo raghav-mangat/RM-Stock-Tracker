@@ -62,6 +62,11 @@ def get_chart_data(ticker, timeframe):
             before = timeframe_data.get("before")(datetime.strptime(now, DATE_FORMAT))
             query = query.filter(db_table.date >= before)
         chart_data = query.order_by(db_table.date.asc()).all()
+
+        # Fallback if no chart data exists
+        if not chart_data:
+            chart_data = fetch_chart_data(stock, timeframe)
+
     else:
         stock = Stock(ticker=ticker)
         chart_data = fetch_chart_data(stock, timeframe)
@@ -84,12 +89,13 @@ def get_chart_data(ticker, timeframe):
             ema_50_data.append(float(data.ema_50))
             ema_200_data.append(float(data.ema_200))
 
-    change_perc = 0
+    change_perc = None
     if len(close_price_data) > 1:
-        try:
-            change_perc = float(round(((close_price_data[-1] - close_price_data[0]) * 100 / close_price_data[0]), 2))
-        except ZeroDivisionError:
-            change_perc = 0
+        start = close_price_data[0]
+        end = close_price_data[-1]
+
+        if start not in (None, 0) and end is not None:
+            change_perc = round(((end - start) * 100 / start), 2)
 
     result = {
         "date_data": date_data,
