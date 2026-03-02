@@ -212,15 +212,15 @@ class StockTypeMeta(TimestampMixin, db.Model):
         return f"<StockTypeMeta id={self.id } code={self.code} description={self.description}>"
 
 
-class Stock(db.Model):
+class Stock(TimestampMixin, db.Model):
     __tablename__ = "stocks"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
 
     ticker: Mapped[str] = mapped_column(String(TICKER_LEN), unique=True, nullable=False)
-    name: Mapped[Optional[str]] = mapped_column(String(STOCK_NAME_LEN), nullable=True)
 
     # Company Info
+    name: Mapped[Optional[str]] = mapped_column(String(STOCK_NAME_LEN), nullable=True)
     description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     homepage_url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     list_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
@@ -249,8 +249,15 @@ class Stock(db.Model):
     day_high: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
     day_low: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
     volume: Mapped[Optional[int]] = mapped_column(BigInteger, nullable=True)
+    vwap: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
     todays_change: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
     todays_change_perc: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
+    prev_o: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
+    prev_h: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
+    prev_l: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
+    prev_c: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
+    prev_v: Mapped[Optional[int]] = mapped_column(BigInteger, nullable=True)
+    prev_vwap: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
 
     # Daily Moving Averages
     dma_30: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
@@ -286,21 +293,22 @@ class Stock(db.Model):
     # Index Relationship
     index_holdings: Mapped[list["IndexHolding"]] = relationship(
         back_populates="stock",
-        cascade="all, delete-orphan"
+        cascade="all, delete-orphan",
+        passive_deletes=True
     )
 
     # Chart Data Relationships
     minute_data: Mapped[list["StockMinute"]] = relationship(
-        back_populates="stock", cascade="all, delete-orphan"
+        back_populates="stock", cascade="all, delete-orphan", passive_deletes=True
     )
     hour_data: Mapped[list["StockHour"]] = relationship(
-        back_populates="stock", cascade="all, delete-orphan"
+        back_populates="stock", cascade="all, delete-orphan", passive_deletes=True
     )
     day_data: Mapped[list["StockDay"]] = relationship(
-        back_populates="stock", cascade="all, delete-orphan"
+        back_populates="stock", cascade="all, delete-orphan", passive_deletes=True
     )
     week_data: Mapped[list["StockWeek"]] = relationship(
-        back_populates="stock", cascade="all, delete-orphan"
+        back_populates="stock", cascade="all, delete-orphan", passive_deletes=True
     )
 
     # Returns a dict of all the stock attributes and their respective values
@@ -324,15 +332,15 @@ class Stock(db.Model):
                 f"day_close={self.day_close}>")
 
 
-class Index(db.Model):
+class Index(TimestampMixin, db.Model):
     __tablename__ = "indices"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
 
     slug: Mapped[str] = mapped_column(String(INDEX_NAME_LEN), unique=True, nullable=False)
     name: Mapped[str] = mapped_column(String(INDEX_NAME_LEN), unique=True, nullable=False)
+    last_updated: Mapped[datetime] = mapped_column(UTCDateTime, nullable=False)
     url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    last_updated: Mapped[Optional[datetime]] = mapped_column(UTCDateTime, nullable=True)
 
     holdings: Mapped[list["IndexHolding"]] = relationship(
         back_populates="index",
@@ -343,7 +351,7 @@ class Index(db.Model):
         return f"<Index id={self.id } slug={self.slug} name={self.name}>"
 
 
-class IndexHolding(db.Model):
+class IndexHolding(TimestampMixin, db.Model):
     __tablename__ = "index_holdings"
 
     # Composite Primary Key (index_id, stock_id)
@@ -370,29 +378,43 @@ class StockMaster(TimestampMixin, db.Model):
 
     # All tickers data
     ticker: Mapped[str] = mapped_column(String(TICKER_LEN), unique=True, nullable=False)
-    name: Mapped[Optional[str]] = mapped_column(String(STOCK_NAME_LEN), nullable=True)
-    primary_exchange: Mapped[Optional[str]] = mapped_column(String(STOCK_INFO_LEN), nullable=True)
+    name: Mapped[str] = mapped_column(String(STOCK_NAME_LEN), nullable=False)
+    primary_exchange: Mapped[str] = mapped_column(String(STOCK_INFO_LEN), nullable=False)
 
-    stock_type_id: Mapped[Optional[int]] = mapped_column(
+    stock_type_id: Mapped[int] = mapped_column(
         ForeignKey("stock_type_meta.id"),
-        nullable=True,
+        nullable=False,
         index=True
     )
 
-    stock_type: Mapped[Optional["StockTypeMeta"]] = relationship(
+    stock_type: Mapped["StockTypeMeta"] = relationship(
         "StockTypeMeta",
         lazy="joined"
     )
 
     # Full Market Snapshot Data
-    last_updated: Mapped[Optional[datetime]] = mapped_column(UTCDateTime, nullable=True)
-    day_close: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
-    day_open: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
-    day_high: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
-    day_low: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
-    volume: Mapped[Optional[int]] = mapped_column(BigInteger, nullable=True)
-    todays_change: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
-    todays_change_perc: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
+    last_updated: Mapped[datetime] = mapped_column(UTCDateTime, nullable=False)
+    day_close: Mapped[Decimal] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=False)
+    day_open: Mapped[Decimal] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=False)
+    day_high: Mapped[Decimal] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=False)
+    day_low: Mapped[Decimal] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=False)
+    volume: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    vwap: Mapped[Decimal] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=False)
+    todays_change: Mapped[Decimal] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=False)
+    todays_change_perc: Mapped[Decimal] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=False)
+    prev_o: Mapped[Decimal] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=False)
+    prev_h: Mapped[Decimal] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=False)
+    prev_l: Mapped[Decimal] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=False)
+    prev_c: Mapped[Decimal] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=False)
+    prev_v: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    prev_vwap: Mapped[Decimal] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=False)
+
+    # Flag to check if the data is valid
+    is_data_valid: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=True
+    )
 
     # Stock Relationship
     stock: Mapped[Optional["Stock"]] = relationship(
@@ -944,6 +966,14 @@ class DailyAppStatus(TimestampMixin, db.Model):
     logged_in_users_24h: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     new_users_24h: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     deleted_users_24h: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+
+    # Watchlist Status
+    num_watchlist_folders: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    num_watchlist_items: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    num_watchlist_alerts: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    num_stock_watchlist_items: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    num_stock_master: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    num_stock: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
     # Market Status
     market_open: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
