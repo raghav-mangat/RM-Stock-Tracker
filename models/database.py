@@ -263,6 +263,22 @@ class StockMaster(TimestampMixin, db.Model):
         ]
         return attributes
 
+    # Returns a dict of all the stock master attributes and their respective values
+    def to_dict(self):
+        def serialize(val):
+            if isinstance(val, datetime):
+                return format_dt_et(val)
+            if isinstance(val, date):
+                return format_date(val)
+            return val
+
+        stock_master_dict = {
+            column.name: serialize(getattr(self, column.name))
+            for column in self.__table__.columns
+        }
+
+        return stock_master_dict
+
     def __repr__(self) -> str:
         return (f"<StockMaster id={self.id} ticker={self.ticker} name={self.name} "
                 f"day_close={self.day_close}>")
@@ -273,10 +289,7 @@ class Stock(TimestampMixin, db.Model):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
 
-    ticker: Mapped[str] = mapped_column(String(TICKER_LEN), unique=True, nullable=False)
-
     # Company Info
-    name: Mapped[Optional[str]] = mapped_column(String(STOCK_NAME_LEN), nullable=True)
     description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     homepage_url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     list_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
@@ -284,36 +297,8 @@ class Stock(TimestampMixin, db.Model):
     total_employees: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     market_cap: Mapped[Optional[Decimal]] = mapped_column(Numeric(LARGE_NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
 
-    stock_type_id: Mapped[Optional[int]] = mapped_column(
-        ForeignKey("stock_type_meta.id"),
-        nullable=True,
-        index=True
-    )
-
-    stock_type: Mapped[Optional["StockTypeMeta"]] = relationship(
-        "StockTypeMeta",
-        lazy="joined"
-    )
-
     # Branding
     icon_url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-
-    # Snapshot Data
-    last_updated: Mapped[Optional[datetime]] = mapped_column(UTCDateTime, nullable=True)
-    day_close: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
-    day_open: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
-    day_high: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
-    day_low: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
-    volume: Mapped[Optional[int]] = mapped_column(BigInteger, nullable=True)
-    vwap: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
-    todays_change: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
-    todays_change_perc: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
-    prev_o: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
-    prev_h: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
-    prev_l: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
-    prev_c: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
-    prev_v: Mapped[Optional[int]] = mapped_column(BigInteger, nullable=True)
-    prev_vwap: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
 
     # Daily Moving Averages
     dma_30: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
@@ -376,16 +361,19 @@ class Stock(TimestampMixin, db.Model):
                 return format_date(val)
             return val
 
-        stock_dict = {
+        stock_dict = dict()
+        if self.stock_master:
+            stock_dict.update(self.stock_master.to_dict())
+
+        stock_dict.update({
             column.name: serialize(getattr(self, column.name))
             for column in self.__table__.columns
-        }
+        })
 
         return stock_dict
 
     def __repr__(self) -> str:
-        return (f"<Stock id={self.id} ticker={self.ticker} name={self.name} "
-                f"day_close={self.day_close}>")
+        return f"<Stock id={self.id} stock_master_id={self.stock_master_id}>"
 
 
 class StockTypeMeta(TimestampMixin, db.Model):
