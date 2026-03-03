@@ -187,29 +187,85 @@ class TimestampMixin:
 
 # --- Models ---
 
-class StockTypeMeta(TimestampMixin, db.Model):
-    __tablename__ = "stock_type_meta"
+class StockMaster(TimestampMixin, db.Model):
+    __tablename__ = "stocks_master"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
 
-    # Polygon / Massive API canonical identifier
-    code: Mapped[str] = mapped_column(
-        String(STOCK_INFO_LEN),
-        unique=True,
+    # All tickers data
+    ticker: Mapped[str] = mapped_column(String(TICKER_LEN), unique=True, nullable=False)
+    name: Mapped[str] = mapped_column(String(STOCK_NAME_LEN), nullable=False)
+    primary_exchange: Mapped[str] = mapped_column(String(STOCK_INFO_LEN), nullable=False)
+
+    stock_type_id: Mapped[int] = mapped_column(
+        ForeignKey("stock_type_meta.id"),
         nullable=False,
+        index=True
     )
 
-    # Human-readable label (can change over time)
-    description: Mapped[str] = mapped_column(
-        String(STOCK_INFO_LEN),
-        nullable=False
+    stock_type: Mapped["StockTypeMeta"] = relationship(
+        "StockTypeMeta",
+        lazy="joined"
     )
 
-    # Active flag in case Polygon / Massive API deprecates types
-    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    # Full Market Snapshot Data
+    last_updated: Mapped[datetime] = mapped_column(UTCDateTime, nullable=False)
+    day_close: Mapped[Decimal] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=False)
+    day_open: Mapped[Decimal] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=False)
+    day_high: Mapped[Decimal] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=False)
+    day_low: Mapped[Decimal] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=False)
+    volume: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    vwap: Mapped[Decimal] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=False)
+    todays_change: Mapped[Decimal] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=False)
+    todays_change_perc: Mapped[Decimal] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=False)
+    prev_o: Mapped[Decimal] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=False)
+    prev_h: Mapped[Decimal] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=False)
+    prev_l: Mapped[Decimal] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=False)
+    prev_c: Mapped[Decimal] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=False)
+    prev_v: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    prev_vwap: Mapped[Decimal] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=False)
+
+    # Flag to check if the data is valid
+    is_data_valid: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=True
+    )
+
+    # Stock Relationship
+    stock: Mapped[Optional["Stock"]] = relationship(
+        "Stock",
+        back_populates="stock_master",
+        uselist=False,
+        cascade="all, delete-orphan"
+    )
+
+    # Backref from watchlist items
+    watchlist_items: Mapped[list["WatchlistItem"]] = relationship(
+        "WatchlistItem",
+        back_populates="stock",
+        passive_deletes=True
+    )
+
+    # Adding Index for faster performance
+    __table_args__ = (
+        DBIndex("ix_stock_master_ticker_name", "ticker", "name"),
+    )
+
+    # Returns a list of all the attributes in the table except for the excluded ones
+    def attribute_list(self):
+        exclude = ["id", "created_at", "updated_at"]
+
+        attributes = [
+            column.name
+            for column in self.__table__.columns
+            if column.name not in exclude
+        ]
+        return attributes
 
     def __repr__(self) -> str:
-        return f"<StockTypeMeta id={self.id } code={self.code} description={self.description}>"
+        return (f"<StockMaster id={self.id} ticker={self.ticker} name={self.name} "
+                f"day_close={self.day_close}>")
 
 
 class Stock(TimestampMixin, db.Model):
@@ -332,124 +388,29 @@ class Stock(TimestampMixin, db.Model):
                 f"day_close={self.day_close}>")
 
 
-class Index(TimestampMixin, db.Model):
-    __tablename__ = "indices"
+class StockTypeMeta(TimestampMixin, db.Model):
+    __tablename__ = "stock_type_meta"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
 
-    slug: Mapped[str] = mapped_column(String(INDEX_NAME_LEN), unique=True, nullable=False)
-    name: Mapped[str] = mapped_column(String(INDEX_NAME_LEN), unique=True, nullable=False)
-    last_updated: Mapped[datetime] = mapped_column(UTCDateTime, nullable=False)
-    url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-
-    holdings: Mapped[list["IndexHolding"]] = relationship(
-        back_populates="index",
-        cascade="all, delete-orphan"
+    # Polygon / Massive API canonical identifier
+    code: Mapped[str] = mapped_column(
+        String(STOCK_INFO_LEN),
+        unique=True,
+        nullable=False,
     )
+
+    # Human-readable label (can change over time)
+    description: Mapped[str] = mapped_column(
+        String(STOCK_INFO_LEN),
+        nullable=False
+    )
+
+    # Active flag in case Polygon / Massive API deprecates types
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
     def __repr__(self) -> str:
-        return f"<Index id={self.id } slug={self.slug} name={self.name}>"
-
-
-class IndexHolding(TimestampMixin, db.Model):
-    __tablename__ = "index_holdings"
-
-    # Composite Primary Key (index_id, stock_id)
-    index_id: Mapped[int] = mapped_column(
-        Integer,
-        ForeignKey("indices.id", ondelete="CASCADE"),
-        primary_key=True
-    )
-    stock_id: Mapped[int] = mapped_column(
-        Integer,
-        ForeignKey("stocks.id", ondelete="CASCADE"),
-        primary_key=True
-    )
-    weight: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
-
-    index: Mapped["Index"] = relationship(back_populates="holdings")
-    stock: Mapped["Stock"] = relationship(back_populates="index_holdings")
-
-
-class StockMaster(TimestampMixin, db.Model):
-    __tablename__ = "stocks_master"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-
-    # All tickers data
-    ticker: Mapped[str] = mapped_column(String(TICKER_LEN), unique=True, nullable=False)
-    name: Mapped[str] = mapped_column(String(STOCK_NAME_LEN), nullable=False)
-    primary_exchange: Mapped[str] = mapped_column(String(STOCK_INFO_LEN), nullable=False)
-
-    stock_type_id: Mapped[int] = mapped_column(
-        ForeignKey("stock_type_meta.id"),
-        nullable=False,
-        index=True
-    )
-
-    stock_type: Mapped["StockTypeMeta"] = relationship(
-        "StockTypeMeta",
-        lazy="joined"
-    )
-
-    # Full Market Snapshot Data
-    last_updated: Mapped[datetime] = mapped_column(UTCDateTime, nullable=False)
-    day_close: Mapped[Decimal] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=False)
-    day_open: Mapped[Decimal] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=False)
-    day_high: Mapped[Decimal] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=False)
-    day_low: Mapped[Decimal] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=False)
-    volume: Mapped[int] = mapped_column(BigInteger, nullable=False)
-    vwap: Mapped[Decimal] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=False)
-    todays_change: Mapped[Decimal] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=False)
-    todays_change_perc: Mapped[Decimal] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=False)
-    prev_o: Mapped[Decimal] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=False)
-    prev_h: Mapped[Decimal] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=False)
-    prev_l: Mapped[Decimal] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=False)
-    prev_c: Mapped[Decimal] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=False)
-    prev_v: Mapped[int] = mapped_column(BigInteger, nullable=False)
-    prev_vwap: Mapped[Decimal] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=False)
-
-    # Flag to check if the data is valid
-    is_data_valid: Mapped[bool] = mapped_column(
-        Boolean,
-        nullable=False,
-        default=True
-    )
-
-    # Stock Relationship
-    stock: Mapped[Optional["Stock"]] = relationship(
-        "Stock",
-        back_populates="stock_master",
-        uselist=False,
-        cascade="all, delete-orphan"
-    )
-
-    # Backref from watchlist items
-    watchlist_items: Mapped[list["WatchlistItem"]] = relationship(
-        "WatchlistItem",
-        back_populates="stock",
-        passive_deletes=True
-    )
-
-    # Adding Index for faster performance
-    __table_args__ = (
-        DBIndex("ix_stock_master_ticker_name", "ticker", "name"),
-    )
-
-    # Returns a list of all the attributes in the table except for the excluded ones
-    def attribute_list(self):
-        exclude = ["id", "created_at", "updated_at"]
-
-        attributes = [
-            column.name
-            for column in self.__table__.columns
-            if column.name not in exclude
-        ]
-        return attributes
-
-    def __repr__(self) -> str:
-        return (f"<StockMaster id={self.id} ticker={self.ticker} name={self.name} "
-                f"day_close={self.day_close}>")
+        return f"<StockTypeMeta id={self.id } code={self.code} description={self.description}>"
 
 
 class StockMinute(db.Model):
@@ -539,6 +500,45 @@ class StockWeek(db.Model):
     __table_args__ = (
         UniqueConstraint("stock_id", "date", name="uq_stockweek_stockid_date"),
     )
+
+
+class Index(TimestampMixin, db.Model):
+    __tablename__ = "indices"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+
+    slug: Mapped[str] = mapped_column(String(INDEX_NAME_LEN), unique=True, nullable=False)
+    name: Mapped[str] = mapped_column(String(INDEX_NAME_LEN), unique=True, nullable=False)
+    last_updated: Mapped[datetime] = mapped_column(UTCDateTime, nullable=False)
+    url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
+    holdings: Mapped[list["IndexHolding"]] = relationship(
+        back_populates="index",
+        cascade="all, delete-orphan"
+    )
+
+    def __repr__(self) -> str:
+        return f"<Index id={self.id } slug={self.slug} name={self.name}>"
+
+
+class IndexHolding(TimestampMixin, db.Model):
+    __tablename__ = "index_holdings"
+
+    # Composite Primary Key (index_id, stock_id)
+    index_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("indices.id", ondelete="CASCADE"),
+        primary_key=True
+    )
+    stock_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("stocks.id", ondelete="CASCADE"),
+        primary_key=True
+    )
+    weight: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
+
+    index: Mapped["Index"] = relationship(back_populates="holdings")
+    stock: Mapped["Stock"] = relationship(back_populates="index_holdings")
 
 
 class User(UserMixin, TimestampMixin, db.Model):
