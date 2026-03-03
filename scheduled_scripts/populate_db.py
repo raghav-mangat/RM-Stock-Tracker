@@ -12,13 +12,12 @@ from models.database import (
 )
 from data_collectors.index_data import all_indices, get_index_info, fetch_index_data
 from data_collectors.stock_data import fetch_stock_types, fetch_all_stocks_data, fetch_stock_data, fetch_chart_data, DB_TIMEFRAMES
-from data_collectors.market_data import fetch_market_data
-from utils.datetime_utils import get_current_utc, format_dt_et, format_date_et
+from utils.datetime_utils import get_current_utc, get_current_et, format_dt_et, format_date_et
 from utils.db_queries.stock_type_meta_data import get_all_stock_types, get_all_active_stock_types
 from utils.db_queries.stock_master_data import get_all_stock_master
 from utils.db_queries.all_stocks import get_trending_stocks, get_top_stocks_categories, db_get_top_stocks_data
 from utils.db_queries.query_stocks import get_query_stocks
-from scheduled_scripts.helpers.helpers import write_to_status_file, get_market_status, get_db_populate_info
+from scheduled_scripts.helpers.helpers import write_to_status_file, get_market_status
 
 # -------- Stage all new data --------
 stocks_cache = {}  # ticker -> Stock object
@@ -403,19 +402,13 @@ def main():
     )
 
     now = get_current_utc()
-    now_date = format_date_et(now)
+
+    current_et_hour = get_current_et().hour
 
     try:
         stored_market_status = get_market_status()
 
-        current_market_data = fetch_market_data()
-        current_market_status = current_market_data.get("market_status") if current_market_data else None
-
-        db_populate_info = get_db_populate_info()
-        db_last_updated_date = db_populate_info.get("last_updated_date")
-        db_populate_status = db_populate_info.get("status")
-
-        if stored_market_status and current_market_status:
+        if stored_market_status:
             if stored_market_status == "closed":
                 print(f"Market status was {stored_market_status} - skipping DB population!")
                 write_status(now, status="skipped")
@@ -423,28 +416,13 @@ def main():
                     f"Skipping script",
                     extra={"log_type": "scheduled_script", "action": "populate_db", "reason": f"market status: {stored_market_status}"}
                 )
-            elif current_market_status == "open":
-                print(f"Current market status was {current_market_status} - skipping DB population!")
+            elif not (current_et_hour == 16 or current_et_hour == 20):
+                print(f"Not in the correct time slot - skipping DB population!")
                 write_status(now, status="skipped")
                 app.logger.info(
                     f"Skipping script",
                     extra={"log_type": "scheduled_script", "action": "populate_db",
-                           "reason": f"current market status: {current_market_status}"}
-                )
-            elif db_last_updated_date == now_date:
-                print(f"DB already populated - skipping DB population!")
-                write_status(now, status="skipped")
-                app.logger.info(
-                    f"Skipping script",
-                    extra={"log_type": "scheduled_script", "action": "populate_db",
-                           "reason": f"DB already populated"}
-                )
-            elif db_populate_status == "running":
-                print(f"DB population already in progress - skipping DB population!")
-                app.logger.info(
-                    f"Skipping script",
-                    extra={"log_type": "scheduled_script", "action": "populate_db",
-                           "reason": f"DB population already in progress"}
+                           "reason": f"Not in the correct time slot"}
                 )
             else:
                 print(f"Market status was {stored_market_status} - proceeding with DB population...")

@@ -104,8 +104,6 @@ SELECT_DB_TABLE = {
 # Timeframes for which we store the chart data in the database
 DB_TIMEFRAMES = ["1D", "1W", "1Y", "5Y"]
 
-DECIMAL_PRECISION = 2
-
 def fetch_all_stocks_data(stock_type_id_map=None):
     """
     For all the stocks available in polygon API, this function collects
@@ -314,13 +312,13 @@ def get_ticker_dmas(stock_data, stock_365_day_data):
         except ZeroDivisionError:
             dma_30_perc_diff = None
 
-        stock_data["dma_200"] = round(dma_200, DECIMAL_PRECISION)
-        stock_data["dma_50"] = round(dma_50, DECIMAL_PRECISION)
-        stock_data["dma_30"] = round(dma_30, DECIMAL_PRECISION)
+        stock_data["dma_200"] = dma_200
+        stock_data["dma_50"] = dma_50
+        stock_data["dma_30"] = dma_30
 
-        stock_data["dma_200_perc_diff"] = round(dma_200_perc_diff, DECIMAL_PRECISION)
-        stock_data["dma_50_perc_diff"] = round(dma_50_perc_diff, DECIMAL_PRECISION)
-        stock_data["dma_30_perc_diff"] = round(dma_30_perc_diff, DECIMAL_PRECISION)
+        stock_data["dma_200_perc_diff"] = dma_200_perc_diff
+        stock_data["dma_50_perc_diff"] = dma_50_perc_diff
+        stock_data["dma_30_perc_diff"] = dma_30_perc_diff
     except Exception as e:
         print(f"[DMA Error] {stock_data.get("ticker")}: {e}")
     return stock_data
@@ -331,17 +329,13 @@ def get_ticker_52w_hl(stock_data, stock_365_day_data):
 
         stock_data["high_52w"] = max(stock_365_day_data["high"]) if stock_365_day_data else None
         try:
-            stock_data["high_52w_perc_diff"] = round(
-                (stock_data["high_52w"] - last_close) / last_close * 100
-            , DECIMAL_PRECISION)
+            stock_data["high_52w_perc_diff"] = (stock_data["high_52w"] - last_close) / last_close * 100
         except ZeroDivisionError:
             stock_data["high_52w_perc_diff"] = None
 
         stock_data["low_52w"] = min(stock_365_day_data["low"]) if stock_365_day_data else None
         try:
-            stock_data["low_52w_perc_diff"] = round(
-                (stock_data["low_52w"] - last_close) / last_close * 100
-            , DECIMAL_PRECISION)
+            stock_data["low_52w_perc_diff"] = (stock_data["low_52w"] - last_close) / last_close * 100
         except ZeroDivisionError:
             stock_data["low_52w_perc_diff"] =None
 

@@ -60,7 +60,7 @@
                 <label for="folderSelect" class="form-label">Select Folder</label>
                 <select class="form-select" id="folderSelect" name="folder_id">
                   {% for folder in user_folders %}
-                    <option value="{{ folder.id }}">{{ folder.order }}) {{ folder.name }}</option>
+                    <option value="{{ folder.id }}">{{ folder.folder_order }}) {{ folder.name }}</option>
                   {% endfor %}
                 </select>
               {% else %}

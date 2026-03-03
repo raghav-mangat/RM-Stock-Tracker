@@ -54,6 +54,9 @@ def get_current_utc():
 def get_current_utc_date():
     return datetime.now(UTC).date()
 
+def get_current_et():
+    return convert_to_et_dt(get_current_utc())
+
 def convert_to_utc_tz_aware(utc_dt):
     """
     Database stores TZ naive timestamp, so convert it to TZ aware,
