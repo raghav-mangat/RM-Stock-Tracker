@@ -5,7 +5,10 @@ import os
 from metrics import metrics
 from metrics.registry import MetricName
 from models.database import Stock, StockMaster, StockMinute, StockHour, StockDay, StockWeek
-from utils.datetime_utils import polygon_timestamp_to_utc_dt, format_date, DATE_FORMAT, DATETIME_FORMAT
+from utils.datetime_utils import (
+    polygon_timestamp_to_utc_dt, format_date, DATE_FORMAT, DATETIME_FORMAT,
+    utc_dt_to_polygon_timestamp
+)
 from utils.populate_db_info import db_last_updated_date
 from utils.db_queries.stock_master_data import get_stock_master_by_ticker
 from utils.db_queries.stock_type_meta_data import get_stock_type_id_by_code
@@ -18,8 +21,11 @@ client = RESTClient(POLYGON_API_KEY)
 # List of all attributes that we store in the database for all stocks available in Polygon API.
 # Must be the same as all the fields in the Stock Master table in the database.
 STOCK_MASTER_ATTRIBUTES = [
-            "ticker", "name", "primary_exchange", "stock_type_id", "last_updated", "day_close",
-            "day_open", "day_high", "day_low", "volume", "todays_change", "todays_change_perc"
+            "ticker", "name", "primary_exchange", "stock_type_id",
+            "last_updated", "day_close", "day_open", "day_high", "day_low", "volume",
+            "vwap", "todays_change", "todays_change_perc",
+            "prev_o", "prev_h", "prev_l", "prev_c", "prev_v", "prev_vwap",
+            "is_data_valid"
         ]
 
 # List of all attributes that we store in the database for a given stock.
@@ -27,7 +33,8 @@ STOCK_MASTER_ATTRIBUTES = [
 STOCK_ATTRIBUTES = [
             "ticker", "name", "description", "homepage_url", "list_date", "industry",
             "total_employees", "market_cap", "stock_type_id", "icon_url", "last_updated",
-            "day_close", "day_open", "day_high", "day_low", "volume", "todays_change", "todays_change_perc",
+            "day_close", "day_open", "day_high", "day_low", "volume", "vwap", "todays_change",
+            "todays_change_perc", "prev_o", "prev_h", "prev_l", "prev_c", "prev_v", "prev_vwap",
             "dma_30", "dma_50", "dma_200", "dma_30_perc_diff", "dma_50_perc_diff", "dma_200_perc_diff",
             "high_52w", "low_52w", "high_52w_perc_diff", "low_52w_perc_diff",
             "related_companies", "stock_master"
@@ -164,10 +171,21 @@ def fetch_all_stocks_data(stock_type_id_map=None):
                 "day_high": safe_getattr(stock.day, "high"),
                 "day_low": safe_getattr(stock.day, "low"),
                 "volume": safe_getattr(stock.day, "volume"),
+                "vwap": safe_getattr(stock.day, "vwap"),
+                "prev_o": safe_getattr(stock.prev_day, "open"),
+                "prev_h": safe_getattr(stock.prev_day, "high"),
+                "prev_l": safe_getattr(stock.prev_day, "low"),
+                "prev_c": safe_getattr(stock.prev_day, "close"),
+                "prev_v": safe_getattr(stock.prev_day, "volume"),
+                "prev_vwap": safe_getattr(stock.prev_day, "vwap"),
                 "todays_change": safe_getattr(stock, "todays_change"),
                 "todays_change_perc": safe_getattr(stock, "todays_change_percent"),
                 "last_updated": polygon_timestamp_to_utc_dt(stock.updated, "nanosecond")
             }
+
+            stock_data.update({
+                "is_data_valid": True
+            })
 
             # Check that all fields are not None
             if all(stock_data.get(attr) is not None for attr in STOCK_MASTER_ATTRIBUTES):
@@ -237,65 +255,59 @@ def get_ticker_details(stock_data, ticker, now, stock_type_id_map=None):
         print(f"[Details Error] {ticker}: {e}")
     return stock_data
 
-def get_365_day_data(ticker, now):
-    before = datetime.strptime(now, DATE_FORMAT) - timedelta(days=365)
+def get_365_day_data(ticker, now, stock_master):
+    now_dt = datetime.strptime(now, DATE_FORMAT)
+    from_ = now_dt - timedelta(days=365)
+    to = now_dt - timedelta(days=2)
+
+    # Get the recent values from stock master
     data = {
-        "timestamp": None,
-        "open": [],
-        "high": [],
-        "low": [],
-        "close": [],
-        "volume": []
+        "open": [float(stock_master.day_open), float(stock_master.prev_o)],
+        "high": [float(stock_master.day_high), float(stock_master.prev_h)],
+        "low": [float(stock_master.day_low), float(stock_master.prev_l)],
+        "close": [float(stock_master.day_close), float(stock_master.prev_c)],
+        "volume": [int(stock_master.volume), int(stock_master.prev_v)]
     }
 
-    first_iteration = True
     for day_data in client.list_aggs(
         ticker=ticker,
         multiplier=1,
         timespan="day",
-        from_=before,
-        to=now,
+        from_=from_,
+        to=to,
         adjusted=True,
         sort="desc",
         limit=365,
     ):
-        if first_iteration:
-            data["timestamp"] = day_data.timestamp
-            first_iteration = False
-        data["open"].append(round(day_data.open, DECIMAL_PRECISION))
-        data["high"].append(round(day_data.high, DECIMAL_PRECISION))
-        data["low"].append(round(day_data.low, DECIMAL_PRECISION))
-        data["close"].append(round(day_data.close, DECIMAL_PRECISION))
+        data["open"].append(day_data.open)
+        data["high"].append(day_data.high)
+        data["low"].append(day_data.low)
+        data["close"].append(day_data.close)
         data["volume"].append(int(day_data.volume))
 
     metrics.increment(MetricName.MASSIVE_API_CALLS)
 
     return data
 
-def get_ticker_values(stock_data, stock_365_day_data):
+def get_ticker_values(stock_data, stock_365_day_data, stock_master):
     try:
         stock_data["day_open"] = stock_365_day_data["open"][0]
         stock_data["day_high"] = stock_365_day_data["high"][0]
         stock_data["day_low"] = stock_365_day_data["low"][0]
         stock_data["day_close"] = stock_365_day_data["close"][0]
         stock_data["volume"] = stock_365_day_data["volume"][0]
+        stock_data["vwap"] = stock_master.vwap
 
-        last_close = stock_365_day_data["close"][0]
+        stock_data["prev_o"] = stock_365_day_data["open"][1]
+        stock_data["prev_h"] = stock_365_day_data["high"][1]
+        stock_data["prev_l"] = stock_365_day_data["low"][1]
+        stock_data["prev_c"] = stock_365_day_data["close"][1]
+        stock_data["prev_v"] = stock_365_day_data["volume"][1]
+        stock_data["prev_vwap"] = stock_master.prev_vwap
 
-        try:
-            prev_close = stock_365_day_data["close"][1]
-            todays_change = last_close - prev_close
-        except IndexError:
-            prev_close = None
-            todays_change = None
+        stock_data["todays_change"] = stock_master.todays_change
+        stock_data["todays_change_perc"] = stock_master.todays_change_perc
 
-        try:
-            todays_change_perc = (todays_change/prev_close) * 100
-        except ZeroDivisionError:
-            todays_change_perc = None
-
-        stock_data["todays_change"] = round(todays_change, DECIMAL_PRECISION)
-        stock_data["todays_change_perc"] = round(todays_change_perc, DECIMAL_PRECISION)
     except Exception as e:
         print(f"[Values Error] {stock_data.get("ticker")}: {e}")
     return stock_data
@@ -384,32 +396,40 @@ def fetch_stock_data(ticker, now=None, stock_master=None, stock_type_id_map=None
     """
 
     stock = None
-    stock_data = {}
-    if not now:
-        now = db_last_updated_date()
+
+    if not ticker:
+        print(f"Ticker Symbol Not Given.")
+        return stock
+
+    ticker = ticker.strip().upper()
     print(f"Fetching data for: {ticker}")
 
-    stock_365_day_data = get_365_day_data(ticker, now)
-    stock_data["last_updated"] = polygon_timestamp_to_utc_dt(stock_365_day_data["timestamp"],"millisecond")
+    if not stock_master:
+        stock_master = get_stock_master_by_ticker(ticker)
+    if not stock_master:
+        print(f"Skipping {ticker}: Stock Master Missing.")
+        return stock
+
+    if not now:
+        now = db_last_updated_date()
+
+    stock_data = {}
     stock_data = get_ticker_details(stock_data, ticker, now, stock_type_id_map)
-    stock_data = get_ticker_values(stock_data, stock_365_day_data)
+    if not stock_data.get("ticker"):
+        print(f"Skipping {ticker}: Ticker Symbol Missing.")
+        return stock
+
+    stock_365_day_data = get_365_day_data(stock_data.get("ticker"), now, stock_master)
+    stock_data["last_updated"] = stock_master.last_updated
+    stock_data = get_ticker_values(stock_data, stock_365_day_data, stock_master)
     stock_data = get_ticker_dmas(stock_data, stock_365_day_data)
     stock_data = get_ticker_52w_hl(stock_data, stock_365_day_data)
 
-    if stock_data.get("ticker"):
-        if not stock_master:
-            stock_master = get_stock_master_by_ticker(stock_data.get("ticker"))
-
-        if stock_master:
-            for attribute in STOCK_ATTRIBUTES:
-                if attribute not in stock_data:
-                    stock_data[attribute] = None
-            stock = Stock(**stock_data)
-            stock.stock_master = stock_master
-        else:
-            print(f"Skipping {ticker}: Stock Master Missing.")
-    else:
-        print(f"Skipping {ticker}: Ticker Symbol Missing.")
+    for attribute in STOCK_ATTRIBUTES:
+        if attribute not in stock_data:
+            stock_data[attribute] = None
+    stock = Stock(**stock_data)
+    stock.stock_master = stock_master
 
     return stock
 
@@ -418,11 +438,16 @@ def fetch_chart_data(stock, timeframe, now=None):
     Fetch chart data for a given stock object from Polygon API.
     The `stock` argument should be a Stock ORM object.
     """
+
     chart_data = []
     if not stock or not isinstance(stock, Stock):
         return chart_data
 
+    if not stock.stock_master or not stock.stock_master.last_updated:
+        return chart_data
+
     ticker = stock.ticker
+    last_updated = stock.stock_master.last_updated
     if not now:
         now = db_last_updated_date()
 
@@ -432,7 +457,7 @@ def fetch_chart_data(stock, timeframe, now=None):
     db_table = SELECT_DB_TABLE.get(timespan)
     ema_data = timeframe_data.get("ema_data")
 
-    common_dates = set()
+    common_timestamps = set()
     close_price_data = {}
     volume_data = {}
 
@@ -445,11 +470,11 @@ def fetch_chart_data(stock, timeframe, now=None):
         to=now,
         adjusted=True,
         sort="asc",
-        limit=1000,
+        limit=5000,
     ):
         timestamp = stock_data.timestamp
-        common_dates.add(timestamp)
-        close_price_data[timestamp] = round(stock_data.close, DECIMAL_PRECISION)
+        common_timestamps.add(timestamp)
+        close_price_data[timestamp] = stock_data.close
         volume_data[timestamp] = int(stock_data.volume)
 
     metrics.increment(MetricName.MASSIVE_API_CALLS)
@@ -465,13 +490,13 @@ def fetch_chart_data(stock, timeframe, now=None):
             window=ema_window,
             series_type="close",
             order="asc",
-            limit="1000",
+            limit="5000",
         )
         metrics.increment(MetricName.MASSIVE_API_CALLS)
 
         for value in ema.values:
             timestamp_ = value.timestamp
-            ema_data_[timestamp_] = round(value.value, DECIMAL_PRECISION)
+            ema_data_[timestamp_] = value.value
         return ema_data_
 
     # EMA calculations
@@ -483,13 +508,20 @@ def fetch_chart_data(stock, timeframe, now=None):
         ema_50_data = get_ema_data("50")
         ema_200_data = get_ema_data("200")
 
-        common_dates &= set(ema_30_data) & set(ema_50_data) & set(ema_200_data)
+        common_timestamps &= set(ema_30_data) & set(ema_50_data) & set(ema_200_data)
+
+    polygon_timestamp_type = "millisecond"
+    last_updated_timestamp = utc_dt_to_polygon_timestamp(last_updated, polygon_timestamp_type)
 
     # Build ORM objects
-    for date in sorted(common_dates):
-        utc_date = polygon_timestamp_to_utc_dt(date, "millisecond")
-        close_price = close_price_data[date]
-        volume = volume_data[date]
+    for timestamp in sorted(common_timestamps):
+        # Only include the values upto the last updated timestamp
+        if timestamp > last_updated_timestamp:
+            break
+
+        utc_date = polygon_timestamp_to_utc_dt(timestamp, polygon_timestamp_type)
+        close_price = close_price_data[timestamp]
+        volume = volume_data[timestamp]
 
         kwargs = dict(
             stock=stock,
@@ -500,9 +532,9 @@ def fetch_chart_data(stock, timeframe, now=None):
 
         if ema_data:
             kwargs.update(
-                ema_30=ema_30_data[date],
-                ema_50=ema_50_data[date],
-                ema_200=ema_200_data[date]
+                ema_30=ema_30_data[timestamp],
+                ema_50=ema_50_data[timestamp],
+                ema_200=ema_200_data[timestamp]
             )
 
         chart_data.append(db_table(**kwargs))

@@ -5,11 +5,8 @@ from sqlalchemy.orm import joinedload
 from data_collectors.stock_data import fetch_stock_data, fetch_chart_data, TIMEFRAME_OPTIONS, SELECT_DB_TABLE, \
     DB_TIMEFRAMES
 from utils.datetime_utils import DATE_FORMAT, convert_to_et_dt, format_dt_et
-from utils.populate_db_info import db_last_updated_date
 
-def get_stock_data(ticker):
-    verify_ticker(ticker)
-
+def get_stock_data(ticker, stock_master=None, now=None):
     # Check if the stock is present in the database
     stock = (
         db.session.query(Stock)
@@ -21,9 +18,9 @@ def get_stock_data(ticker):
         .first()
     )
 
-    # if not in db then use stock data collector script to get stock data
+    # If not in db then use stock data collector script to get stock data
     if not stock:
-        stock = fetch_stock_data(ticker)
+        stock = fetch_stock_data(ticker=ticker, now=now, stock_master=stock_master)
         db.session.add(stock)
         db.session.flush()
 
@@ -35,10 +32,10 @@ def get_stock_data(ticker):
     # Get the stock type
     stock_type = stock.stock_type.description if stock.stock_type else None
 
-    # Get the last updated time from associated stock master object
+    # Get the last updated time
     last_updated = None
-    if stock and stock.stock_master and stock.stock_master.last_updated:
-        last_updated = format_dt_et(stock.stock_master.last_updated)
+    if stock and stock.last_updated:
+        last_updated = format_dt_et(stock.last_updated)
 
     result = {
         "stock": stock.to_dict() if stock else None,
@@ -48,10 +45,8 @@ def get_stock_data(ticker):
     }
     return result
 
-def get_chart_data(ticker, timeframe):
-    verify_ticker(ticker)
+def get_chart_data(ticker, timeframe, stock_master=None, now=None):
     timeframe_data = TIMEFRAME_OPTIONS[timeframe]
-    now = db_last_updated_date()
 
     stock = Stock.query.filter_by(ticker=ticker).first()
     if stock:
@@ -65,11 +60,11 @@ def get_chart_data(ticker, timeframe):
 
         # Fallback if no chart data exists
         if not chart_data:
-            chart_data = fetch_chart_data(stock, timeframe)
+            chart_data = fetch_chart_data(stock, timeframe, now)
 
     else:
-        stock = Stock(ticker=ticker)
-        chart_data = fetch_chart_data(stock, timeframe)
+        stock = Stock(ticker=ticker, stock_master=stock_master)
+        chart_data = fetch_chart_data(stock, timeframe, now)
 
     ema_data = timeframe_data.get("ema_data")
     date_format = timeframe_data["date_format"]
@@ -111,9 +106,12 @@ def get_chart_data(ticker, timeframe):
 
 def verify_ticker(ticker):
     # To verify if the given ticker is valid
-    stock = StockMaster.query.filter_by(ticker=ticker).first()
-    if not stock:
+    stock_master = StockMaster.query.filter_by(ticker=ticker).first()
+
+    if not stock_master:
         abort(404)
+
+    return stock_master
 
 def get_timeframe_options():
     return list(TIMEFRAME_OPTIONS.keys())

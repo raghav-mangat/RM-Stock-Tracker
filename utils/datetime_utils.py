@@ -15,13 +15,7 @@ def polygon_timestamp_to_utc_dt(timestamp, timestamp_type):
     :param timestamp_type:
     :return: Datetime object in UTC
     """
-    factor = None
-    if timestamp_type == "nanosecond":
-        factor = 1_000_000_000
-    elif timestamp_type == "microsecond":
-        factor = 1_000_000
-    elif timestamp_type == "millisecond":
-        factor = 1_000
+    factor = get_polygon_timestamp_conversion_factor(timestamp_type)
 
     utc_dt = None
     if factor:
@@ -31,6 +25,28 @@ def polygon_timestamp_to_utc_dt(timestamp, timestamp_type):
         utc_dt = datetime.fromtimestamp(unix_seconds, tz=UTC)
 
     return utc_dt
+
+def utc_dt_to_polygon_timestamp(utc_dt, timestamp_type):
+    factor = get_polygon_timestamp_conversion_factor(timestamp_type)
+
+    timestamp = None
+    if factor:
+        unix_seconds = utc_dt.timestamp()
+
+        # Convert to Polygon timestamp
+        timestamp = int(unix_seconds * factor)
+
+    return timestamp
+
+def get_polygon_timestamp_conversion_factor(timestamp_type):
+    factor = None
+    if timestamp_type == "nanosecond":
+        factor = 1_000_000_000
+    elif timestamp_type == "microsecond":
+        factor = 1_000_000
+    elif timestamp_type == "millisecond":
+        factor = 1_000
+    return factor
 
 def get_current_utc():
     return datetime.now(UTC)

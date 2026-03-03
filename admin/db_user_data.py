@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
-from sqlalchemy.sql.functions import count
-from models.database import db, User, SignupSource, DailyAppStatus
+from sqlalchemy.sql.functions import count, func
+from models.database import db, User, SignupSource, DailyAppStatus, WatchlistFolder, WatchlistItem, WatchlistAlert, \
+    StockMaster, Stock
 from utils.db_queries.user_data import is_user_active
 from utils.datetime_utils import get_current_utc
 
@@ -23,7 +24,7 @@ def get_admin_dashboard_data():
 
     total_users = len(users)
     start = now - timedelta(days=1)
-    stats = get_users_stats(start, now)
+    user_stats = get_users_stats(start, now)
 
     num_admins = db.session.execute(
         db.select(count(User.id))
@@ -33,19 +34,21 @@ def get_admin_dashboard_data():
     def perc(x):
         return round((x / total_users) * 100, 2) if total_users else 0
 
-    stats.update({
-        "active_perc": perc(stats["active_users"]),
-        "google_perc": perc(stats["google_users"]),
-        "email_perc": perc(stats["email_users"]),
-        "verified_perc": perc(stats["verified_users"]),
-        "password_perc": perc(stats["password_users"]),
-        "google_id_perc": perc(stats["google_id_users"]),
-        "password_and_google_id_perc": perc(stats["password_and_google_id_users"]),
-        "email_alerts_perc": perc(stats["email_alerts_users"]),
-        "logged_in_users_24h_perc": perc(stats["logged_in_users_24h"]),
-        "new_users_24h_perc": perc(stats["new_users_24h"]),
+    user_stats.update({
+        "active_perc": perc(user_stats["active_users"]),
+        "google_perc": perc(user_stats["google_users"]),
+        "email_perc": perc(user_stats["email_users"]),
+        "verified_perc": perc(user_stats["verified_users"]),
+        "password_perc": perc(user_stats["password_users"]),
+        "google_id_perc": perc(user_stats["google_id_users"]),
+        "password_and_google_id_perc": perc(user_stats["password_and_google_id_users"]),
+        "email_alerts_perc": perc(user_stats["email_alerts_users"]),
+        "logged_in_users_24h_perc": perc(user_stats["logged_in_users_24h"]),
+        "new_users_24h_perc": perc(user_stats["new_users_24h"]),
         "num_admins": num_admins,
     })
+
+    watchlist_stats = get_watchlist_stats(now)
 
     # Daily App Status for the past year
     daily_status = db.session.execute(
@@ -54,7 +57,7 @@ def get_admin_dashboard_data():
         .limit(365)
     ).scalars().all()
 
-    return users_data, stats, daily_status
+    return users_data, user_stats, watchlist_stats, daily_status
 
 def get_users_stats(start: datetime, end: datetime):
     users = get_users_before_ts(end)
@@ -117,6 +120,58 @@ def get_users_stats(start: datetime, end: datetime):
         "email_alerts_users": email_alerts_users,
         "logged_in_users_24h": logged_in_users_24h,
         "new_users_24h": new_users_24h,
+    }
+
+    return stats
+
+def get_watchlist_stats(end: datetime):
+    num_watchlist_folders = db.session.execute(
+        db.select(func.count())
+        .select_from(WatchlistFolder)
+        .where(WatchlistFolder.created_at < end)
+    ).scalar()
+
+    num_watchlist_items = db.session.execute(
+        db.select(func.count())
+        .select_from(WatchlistItem)
+        .where(WatchlistItem.created_at < end)
+    ).scalar()
+
+    num_watchlist_alerts = db.session.execute(
+        db.select(func.count())
+        .select_from(WatchlistAlert)
+        .where(WatchlistAlert.created_at < end)
+    ).scalar()
+
+    num_stock_watchlist_items = len(
+        db.session.query(
+            WatchlistItem.stock_id
+        )
+        .where(WatchlistItem.created_at < end)
+        .group_by(WatchlistItem.stock_id)
+        .all()
+    )
+
+    num_stock_master = db.session.execute(
+        db.select(func.count())
+        .select_from(StockMaster)
+        .where(StockMaster.created_at < end)
+    ).scalar()
+
+    num_stock = db.session.execute(
+        db.select(func.count())
+        .select_from(Stock)
+        .where(Stock.created_at < end)
+    ).scalar()
+
+
+    stats = {
+        "num_watchlist_folders": num_watchlist_folders,
+        "num_watchlist_items": num_watchlist_items,
+        "num_watchlist_alerts": num_watchlist_alerts,
+        "num_stock_watchlist_items": num_stock_watchlist_items,
+        "num_stock_master": num_stock_master,
+        "num_stock": num_stock,
     }
 
     return stats

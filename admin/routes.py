@@ -24,10 +24,11 @@ Notes:
 @admin_bp.route("/", methods=["GET"])
 @admin_required
 def index():
-    users_data, stats, daily_status = get_admin_dashboard_data()
+    users_data, user_stats, watchlist_stats, daily_status = get_admin_dashboard_data()
     return render_template(
         "dashboard.html",
         users_data=users_data,
-        stats=stats,
+        user_stats=user_stats,
+        watchlist_stats=watchlist_stats,
         daily_status=daily_status
     )

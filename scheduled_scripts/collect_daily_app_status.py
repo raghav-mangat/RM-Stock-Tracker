@@ -10,7 +10,7 @@ from sqlalchemy import text
 from models.database import db
 from models.database import DailyAppStatus
 from metrics.readers import read_daily_metrics
-from admin.db_user_data import get_users_stats
+from admin.db_user_data import get_users_stats, get_watchlist_stats
 from utils.datetime_utils import get_current_utc_date, format_date, get_current_utc
 from scheduled_scripts.helpers.helpers import get_market_status
 
@@ -67,7 +67,7 @@ def collect_daily_app_status():
         end_ts = start_ts + timedelta(days=1)
 
         # ---- Users stats ----
-        stats = get_users_stats(start_ts, end_ts)
+        user_stats = get_users_stats(start_ts, end_ts)
 
         # ---- Deleted users (inferred) ----
         previous = db.session.execute(
@@ -79,11 +79,14 @@ def collect_daily_app_status():
 
         if previous:
             deleted_users_24h = max(
-                previous.total_users + stats["new_users_24h"] - stats["total_users"],
+                previous.total_users + user_stats["new_users_24h"] - user_stats["total_users"],
                 0
             )
         else:
             deleted_users_24h = 0
+
+        # ---- Watchlist stats ----
+        watchlist_stats = get_watchlist_stats(end_ts)
 
         # ---- Market status ----
         market_status = get_market_status()
@@ -151,7 +154,8 @@ def collect_daily_app_status():
                 date=target_date,
                 deleted_users_24h=deleted_users_24h,
                 market_open=market_open,
-                **stats,
+                **user_stats,
+                **watchlist_stats,
                 **redis_metrics,
                 **redis_data,
                 **mysql_data,

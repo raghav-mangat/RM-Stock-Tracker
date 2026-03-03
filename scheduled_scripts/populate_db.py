@@ -155,6 +155,10 @@ def populate_db(now):
 
         stock_types = fetch_stock_types()
 
+        # Abort if no stock types data is received from Massive API
+        if not stock_types:
+            raise Exception("No stock types data received from Massive API")
+
         print(f"Fetched data for Stock Type Meta!")
 
         try:
@@ -204,6 +208,13 @@ def populate_db(now):
         # ---- Stock Master ----
         print(f"Fetching data for Stock Master...")
         stocks = fetch_all_stocks_data(stock_type_id_map)
+
+        # Abort if no stock master data is received from Massive API,
+        # otherwise the entire user watchlist items data would be wiped
+        # away because of database cascading on watchlist items
+        if not stocks:
+            raise Exception("No stock master data received from Massive API")
+
         for stock in stocks:
             ticker = stock.ticker
             if ticker not in stock_master_tickers:

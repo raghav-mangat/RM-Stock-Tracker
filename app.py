@@ -37,7 +37,7 @@ from watchlist import watchlist_bp
 from utils.filters import register_custom_filters
 from utils.error_handlers import register_error_handlers
 from utils.breadcrumbs import generate_breadcrumbs
-from utils.populate_db_info import db_last_updated
+from utils.populate_db_info import db_last_updated, db_last_updated_date
 from utils.db_queries.all_indices import get_all_indices
 from utils.db_queries.show_index import get_index_data
 from utils.db_queries.all_stocks import (
@@ -45,7 +45,9 @@ from utils.db_queries.all_stocks import (
     db_get_top_stocks_data
 )
 from utils.db_queries.query_stocks import get_query_stocks
-from utils.db_queries.show_stock import get_stock_data, get_chart_data, get_timeframe_options
+from utils.db_queries.show_stock import (
+    get_stock_data, get_chart_data, get_timeframe_options, verify_ticker
+)
 from utils.db_queries.user_data import get_user_by_id
 from utils.db_queries.watchlist import get_all_user_folders
 
@@ -302,11 +304,22 @@ def query_stocks():
 
 @app.route("/stocks/<string:ticker>")
 def show_stock(ticker):
-    stock_data = get_stock_data(ticker)
+    canonical_ticker = ticker.strip().upper()
+
+    if ticker != canonical_ticker:
+        return redirect(
+            url_for("show_stock", ticker=canonical_ticker),
+            code=301
+        )
+
+    stock_master = verify_ticker(ticker)
+    now = db_last_updated_date()
+
+    stock_data = get_stock_data(ticker, stock_master, now)
 
     timeframe_options = get_timeframe_options()
     initial_timeframe = timeframe_options[0]
-    initial_stock_chart_data = get_chart_data(ticker, initial_timeframe)
+    initial_stock_chart_data = get_chart_data(ticker, initial_timeframe, stock_master, now)
 
     user_folders = []
     if current_user.is_authenticated:
@@ -326,9 +339,13 @@ def show_stock(ticker):
 
 @app.route("/chart-data")
 def chart_data():
-    ticker = request.args.get("ticker", "").strip()
+    ticker = request.args.get("ticker", "").strip().upper()
+
+    stock_master = verify_ticker(ticker)
+    now = db_last_updated_date()
+
     timeframe = request.args.get("timeframe", "").strip()
-    data = get_chart_data(ticker, timeframe)
+    data = get_chart_data(ticker, timeframe, stock_master, now)
     return data
 
 @app.route("/about")

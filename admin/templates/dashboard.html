@@ -1,8 +1,8 @@
 {% from "macros/dashboard_components.html" import stats_card %}
 {% from "macros/dashboard_tables.html" import
     users_table, daily_users_status_table, daily_core_usage_status_table,
-    daily_app_health_status_table, daily_upstash_redis_status_table,
-    daily_mysql_db_status_table
+    daily_app_health_status_table, daily_watchlist_status_table,
+    daily_upstash_redis_status_table, daily_mysql_db_status_table
 %}
 
 {% extends "admin_base.html" %}
@@ -22,20 +22,27 @@
 
   <!-- Stats Cards -->
   <div class="row g-3 mb-4">
-    {{ stats_card("Total Users", stats.total_users) }}
-    {{ stats_card("Active Users", stats.active_users, stats.active_perc) }}
-    {{ stats_card("Google Signups", stats.google_users, stats.google_perc) }}
-    {{ stats_card("Email Signups", stats.email_users, stats.email_perc) }}
+    {{ stats_card("Total Users", user_stats.total_users) }}
+    {{ stats_card("Active Users", user_stats.active_users, user_stats.active_perc) }}
+    {{ stats_card("Google Signups", user_stats.google_users, user_stats.google_perc) }}
+    {{ stats_card("Email Signups", user_stats.email_users, user_stats.email_perc) }}
 
-    {{ stats_card("Verified Users", stats.verified_users, stats.verified_perc) }}
-    {{ stats_card("Users w/ Password", stats.password_users, stats.password_perc) }}
-    {{ stats_card("Users w/ Google ID", stats.google_id_users, stats.google_id_perc) }}
-    {{ stats_card("Users w/ Password & Google ID", stats.password_and_google_id_users, stats.password_and_google_id_perc) }}
+    {{ stats_card("Verified Users", user_stats.verified_users, user_stats.verified_perc) }}
+    {{ stats_card("Users w/ Password", user_stats.password_users, user_stats.password_perc) }}
+    {{ stats_card("Users w/ Google ID", user_stats.google_id_users, user_stats.google_id_perc) }}
+    {{ stats_card("Users w/ Password & Google ID", user_stats.password_and_google_id_users, user_stats.password_and_google_id_perc) }}
 
-    {{ stats_card("Email Alerts On", stats.email_alerts_users, stats.email_alerts_perc) }}
-    {{ stats_card("User Logins (24h)", stats.logged_in_users_24h, stats.logged_in_users_24h_perc) }}
-    {{ stats_card("New Users (24h)", stats.new_users_24h, stats.new_users_24h_perc) }}
-    {{ stats_card("Total Admins", stats.num_admins) }}
+    {{ stats_card("Email Alerts On", user_stats.email_alerts_users, user_stats.email_alerts_perc) }}
+    {{ stats_card("User Logins (24h)", user_stats.logged_in_users_24h, user_stats.logged_in_users_24h_perc) }}
+    {{ stats_card("New Users (24h)", user_stats.new_users_24h, user_stats.new_users_24h_perc) }}
+    {{ stats_card("Total Admins", user_stats.num_admins) }}
+
+    {{ stats_card("Num Watchlist Folders", watchlist_stats.num_watchlist_folders) }}
+    {{ stats_card("Num Watchlist Items", watchlist_stats.num_watchlist_items) }}
+    {{ stats_card("Num Watchlist Alerts", watchlist_stats.num_watchlist_alerts) }}
+    {{ stats_card("Num Stock Watchlist Items", watchlist_stats.num_stock_watchlist_items) }}
+    {{ stats_card("Num Stock Master", watchlist_stats.num_stock_master) }}
+    {{ stats_card("Num Stock", watchlist_stats.num_stock) }}
   </div>
 
   <!-- Tables -->
@@ -83,6 +90,15 @@
         <li class="nav-item" role="presentation">
           <button class="nav-link fw-semibold"
                   data-bs-toggle="tab"
+                  data-bs-target="#daily-watchlist-status"
+                  type="button">
+            Daily Watchlist Status
+          </button>
+        </li>
+
+        <li class="nav-item" role="presentation">
+          <button class="nav-link fw-semibold"
+                  data-bs-toggle="tab"
                   data-bs-target="#daily-upstash-redis-status"
                   type="button">
             Daily Upstash Redis Status
@@ -114,6 +130,10 @@
 
         <div class="tab-pane fade" id="daily-app-health-status">
           {{ daily_app_health_status_table(daily_status) }}
+        </div>
+
+        <div class="tab-pane fade" id="daily-watchlist-status">
+          {{ daily_watchlist_status_table(daily_status) }}
         </div>
 
         <div class="tab-pane fade" id="daily-upstash-redis-status">

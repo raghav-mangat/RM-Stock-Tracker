@@ -255,6 +255,51 @@
 {% endmacro %}
 
 
+{% macro daily_watchlist_status_table(rows) %}
+<div class="table-responsive">
+  <table class="table table-striped table-bordered table-hover align-middle">
+    <thead class="table-light">
+      <tr class="align-middle">
+        <th>#</th>
+        <th>Date</th>
+        <th>Market</th>
+
+        <th>Num Watchlist Folders</th>
+        <th>Num Watchlist Items</th>
+        <th>Num Watchlist Alerts</th>
+        <th>Num Stock Watchlist Items</th>
+        <th>Num Stock Master</th>
+        <th>Num Stock</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in rows %}
+      <tr>
+        <td class="fw-bold">{{ loop.index }}</td>
+
+        <td>{{ row.date.strftime("%b %d, %Y") }}</td>
+        <td class="text-center">
+          {% if row.market_open %}
+            <span class="badge bg-success">Open</span>
+          {% else %}
+            <span class="badge bg-secondary">Closed</span>
+          {% endif %}
+        </td>
+
+        <td>{{ row.num_watchlist_folders }}</td>
+        <td>{{ row.num_watchlist_items }}</td>
+        <td>{{ row.num_watchlist_alerts }}</td>
+        <td>{{ row.num_stock_watchlist_items }}</td>
+        <td>{{ row.num_stock_master }}</td>
+        <td>{{ row.num_stock }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endmacro %}
+
+
 {% macro daily_upstash_redis_status_table(rows) %}
 <div class="table-responsive">
   <table class="table table-striped table-bordered table-hover align-middle">
