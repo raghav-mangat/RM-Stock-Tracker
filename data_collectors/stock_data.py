@@ -10,7 +10,6 @@ from utils.datetime_utils import (
     utc_dt_to_polygon_timestamp
 )
 from utils.populate_db_info import db_last_updated_date
-from utils.db_queries.stock_master_data import get_stock_master_by_ticker
 from utils.db_queries.stock_type_meta_data import get_stock_type_id_by_code
 
 load_dotenv()
@@ -21,24 +20,22 @@ client = RESTClient(POLYGON_API_KEY)
 # List of all attributes that we store in the database for all stocks available in Polygon API.
 # Must be the same as all the fields in the Stock Master table in the database.
 STOCK_MASTER_ATTRIBUTES = [
-            "ticker", "name", "primary_exchange", "stock_type_id",
-            "last_updated", "day_close", "day_open", "day_high", "day_low", "volume",
-            "vwap", "todays_change", "todays_change_perc",
-            "prev_o", "prev_h", "prev_l", "prev_c", "prev_v", "prev_vwap",
-            "is_data_valid"
-        ]
+    "ticker", "name", "primary_exchange", "stock_type_id",
+    "last_updated", "day_close", "day_open", "day_high", "day_low", "volume",
+    "vwap", "todays_change", "todays_change_perc",
+    "prev_o", "prev_h", "prev_l", "prev_c", "prev_v", "prev_vwap",
+    "is_data_valid"
+]
 
 # List of all attributes that we store in the database for a given stock.
 # Must be the same as all the fields in the Stock table in the database.
 STOCK_ATTRIBUTES = [
-            "ticker", "name", "description", "homepage_url", "list_date", "industry",
-            "total_employees", "market_cap", "stock_type_id", "icon_url", "last_updated",
-            "day_close", "day_open", "day_high", "day_low", "volume", "vwap", "todays_change",
-            "todays_change_perc", "prev_o", "prev_h", "prev_l", "prev_c", "prev_v", "prev_vwap",
-            "dma_30", "dma_50", "dma_200", "dma_30_perc_diff", "dma_50_perc_diff", "dma_200_perc_diff",
-            "high_52w", "low_52w", "high_52w_perc_diff", "low_52w_perc_diff",
-            "related_companies", "stock_master"
-        ]
+    "description", "homepage_url", "list_date", "industry", "total_employees",
+    "market_cap", "icon_url",
+    "dma_30", "dma_50", "dma_200", "dma_30_perc_diff", "dma_50_perc_diff", "dma_200_perc_diff",
+    "high_52w", "low_52w", "high_52w_perc_diff", "low_52w_perc_diff",
+    "related_companies", "stock_master"
+]
 
 TIMEFRAME_OPTIONS = {
     "1D": {
@@ -226,30 +223,24 @@ def safe_getattr(obj, attr, default=None):
     except:
         return default
 
-def get_ticker_details(stock_data, ticker, now, stock_type_id_map=None):
+def get_ticker_details(stock_data, ticker, now):
     try:
         details = client.get_ticker_details(ticker, date=now)
         metrics.increment(MetricName.MASSIVE_API_CALLS)
 
-        stock_data["ticker"] = safe_getattr(details, "ticker", None)
-        stock_data["icon_url"] = safe_getattr(details.branding, "icon_url", None)
         stock_data["description"] = safe_getattr(details, "description", None)
         stock_data["homepage_url"] = safe_getattr(details, "homepage_url", None)
         stock_data["list_date"] = (
             datetime.strptime(details.list_date, DATE_FORMAT).date()
             if details.list_date else None
         )
-        stock_data["name"] = safe_getattr(details, "name", None)
         stock_data["industry"] = safe_getattr(details, "sic_description", None)
         stock_data["total_employees"] = safe_getattr(details, "total_employees", None)
-        stock_data["related_companies"] = get_related_companies(ticker)
         stock_data["market_cap"] = safe_getattr(details, "market_cap", None)
 
-        if stock_type_id_map:
-            stock_type_id = stock_type_id_map.get(details.type)
-        else:
-            stock_type_id = get_stock_type_id_by_code(details.type)
-        stock_data["stock_type_id"] = stock_type_id
+        stock_data["icon_url"] = safe_getattr(details.branding, "icon_url", None)
+
+        stock_data["related_companies"] = get_related_companies(ticker)
 
     except Exception as e:
         print(f"[Details Error] {ticker}: {e}")
@@ -288,29 +279,6 @@ def get_365_day_data(ticker, now, stock_master):
     metrics.increment(MetricName.MASSIVE_API_CALLS)
 
     return data
-
-def get_ticker_values(stock_data, stock_365_day_data, stock_master):
-    try:
-        stock_data["day_open"] = stock_365_day_data["open"][0]
-        stock_data["day_high"] = stock_365_day_data["high"][0]
-        stock_data["day_low"] = stock_365_day_data["low"][0]
-        stock_data["day_close"] = stock_365_day_data["close"][0]
-        stock_data["volume"] = stock_365_day_data["volume"][0]
-        stock_data["vwap"] = stock_master.vwap
-
-        stock_data["prev_o"] = stock_365_day_data["open"][1]
-        stock_data["prev_h"] = stock_365_day_data["high"][1]
-        stock_data["prev_l"] = stock_365_day_data["low"][1]
-        stock_data["prev_c"] = stock_365_day_data["close"][1]
-        stock_data["prev_v"] = stock_365_day_data["volume"][1]
-        stock_data["prev_vwap"] = stock_master.prev_vwap
-
-        stock_data["todays_change"] = stock_master.todays_change
-        stock_data["todays_change_perc"] = stock_master.todays_change_perc
-
-    except Exception as e:
-        print(f"[Values Error] {stock_data.get("ticker")}: {e}")
-    return stock_data
 
 def get_ticker_dmas(stock_data, stock_365_day_data):
     try:
@@ -381,47 +349,33 @@ def get_ticker_52w_hl(stock_data, stock_365_day_data):
         print(f"[52W Error] {stock_data.get("ticker")}: {e}")
     return stock_data
 
-def fetch_stock_data(ticker, now=None, stock_master=None, stock_type_id_map=None):
+def fetch_stock_data(stock_master=None, now=None):
     """
-    For the given ticker symbol of a stock, this function collects
+    For the given stock master of a stock, this function collects
     the data for all the attributes in 'STOCK_ATTRIBUTES' defined
     at the top of the script, using the polygon API. It then saves
     all this data as a Stock DB model object, and returns it.
-    :param ticker: ticker symbol of a stock.
-    :param now: The date for which we collect the data from polygon API.
     :param stock_master: StockMaster object associated with this Stock.
-    :param stock_type_id_map: Pre-computed map of stock types IDs to prevent
-        database query when fetching stock data.
+    :param now: The date for which we collect the data from polygon API.
     :return: Stock DB model object containing data for all attributes.
     """
 
     stock = None
 
-    if not ticker:
-        print(f"Ticker Symbol Not Given.")
+    if not stock_master:
+        print(f"Stock Master not given.")
         return stock
 
-    ticker = ticker.strip().upper()
+    ticker = stock_master.ticker
     print(f"Fetching data for: {ticker}")
-
-    if not stock_master:
-        stock_master = get_stock_master_by_ticker(ticker)
-    if not stock_master:
-        print(f"Skipping {ticker}: Stock Master Missing.")
-        return stock
 
     if not now:
         now = db_last_updated_date()
 
     stock_data = {}
-    stock_data = get_ticker_details(stock_data, ticker, now, stock_type_id_map)
-    if not stock_data.get("ticker"):
-        print(f"Skipping {ticker}: Ticker Symbol Missing.")
-        return stock
+    stock_data = get_ticker_details(stock_data, ticker, now)
 
-    stock_365_day_data = get_365_day_data(stock_data.get("ticker"), now, stock_master)
-    stock_data["last_updated"] = stock_master.last_updated
-    stock_data = get_ticker_values(stock_data, stock_365_day_data, stock_master)
+    stock_365_day_data = get_365_day_data(ticker, now, stock_master)
     stock_data = get_ticker_dmas(stock_data, stock_365_day_data)
     stock_data = get_ticker_52w_hl(stock_data, stock_365_day_data)
 
@@ -443,10 +397,10 @@ def fetch_chart_data(stock, timeframe, now=None):
     if not stock or not isinstance(stock, Stock):
         return chart_data
 
-    if not stock.stock_master or not stock.stock_master.last_updated:
+    if not stock.stock_master:
         return chart_data
 
-    ticker = stock.ticker
+    ticker = stock.stock_master.ticker
     last_updated = stock.stock_master.last_updated
     if not now:
         now = db_last_updated_date()

@@ -6,21 +6,20 @@ from data_collectors.stock_data import fetch_stock_data, fetch_chart_data, TIMEF
     DB_TIMEFRAMES
 from utils.datetime_utils import DATE_FORMAT, convert_to_et_dt, format_dt_et
 
-def get_stock_data(ticker, stock_master=None, now=None):
+def get_stock_data(stock_master=None, now=None):
     # Check if the stock is present in the database
     stock = (
         db.session.query(Stock)
         .options(
             joinedload(Stock.stock_master),
-            joinedload(Stock.stock_type),
         )
-        .filter(Stock.ticker == ticker)
+        .filter(Stock.stock_master_id == stock_master.id)
         .first()
     )
 
     # If not in db then use stock data collector script to get stock data
     if not stock:
-        stock = fetch_stock_data(ticker=ticker, now=now, stock_master=stock_master)
+        stock = fetch_stock_data(stock_master=stock_master, now=now)
         db.session.add(stock)
         db.session.flush()
 
@@ -30,12 +29,12 @@ def get_stock_data(ticker, stock_master=None, now=None):
         rel_companies = stock.related_companies.split(',')
 
     # Get the stock type
-    stock_type = stock.stock_type.description if stock.stock_type else None
+    stock_type = stock.stock_master.stock_type.description if stock and stock.stock_master else None
 
     # Get the last updated time
     last_updated = None
-    if stock and stock.last_updated:
-        last_updated = format_dt_et(stock.last_updated)
+    if stock and stock.stock_master:
+        last_updated = format_dt_et(stock.stock_master.last_updated)
 
     result = {
         "stock": stock.to_dict() if stock else None,
@@ -45,10 +44,19 @@ def get_stock_data(ticker, stock_master=None, now=None):
     }
     return result
 
-def get_chart_data(ticker, timeframe, stock_master=None, now=None):
+def get_chart_data(timeframe, stock_master=None, now=None):
+    # Check if the stock is present in the database
+    stock = (
+        db.session.query(Stock)
+        .options(
+            joinedload(Stock.stock_master),
+        )
+        .filter(Stock.stock_master_id == stock_master.id)
+        .first()
+    )
+
     timeframe_data = TIMEFRAME_OPTIONS[timeframe]
 
-    stock = Stock.query.filter_by(ticker=ticker).first()
     if stock:
         stock_id = stock.id
         db_table = SELECT_DB_TABLE.get(timeframe_data["timespan"])
@@ -63,7 +71,7 @@ def get_chart_data(ticker, timeframe, stock_master=None, now=None):
             chart_data = fetch_chart_data(stock, timeframe, now)
 
     else:
-        stock = Stock(ticker=ticker, stock_master=stock_master)
+        stock = Stock(stock_master=stock_master)
         chart_data = fetch_chart_data(stock, timeframe, now)
 
     ema_data = timeframe_data.get("ema_data")

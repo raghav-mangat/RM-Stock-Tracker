@@ -1,4 +1,4 @@
-from models.database import db, Stock, Index, IndexHolding
+from models.database import db, StockMaster, Stock, Index, IndexHolding
 from sqlalchemy import and_, or_
 
 def get_index_data(index_id, sort_by, order, filter_by):
@@ -30,14 +30,14 @@ def get_index_data(index_id, sort_by, order, filter_by):
     sort_options = {
         ("weight", "desc"): IndexHolding.weight.desc(),
         ("weight", "asc"): IndexHolding.weight.asc(),
-        ("todays_change", "desc"): Stock.todays_change_perc.desc(),
-        ("todays_change", "asc"): Stock.todays_change_perc.asc(),
-        ("volume", "desc"): Stock.volume.desc(),
-        ("volume", "asc"): Stock.volume.asc(),
+        ("todays_change", "desc"): StockMaster.todays_change_perc.desc(),
+        ("todays_change", "asc"): StockMaster.todays_change_perc.asc(),
+        ("volume", "desc"): StockMaster.volume.desc(),
+        ("volume", "asc"): StockMaster.volume.asc(),
         ("perc_diff", "desc"): Stock.dma_200_perc_diff.desc(),
         ("perc_diff", "asc"): Stock.dma_200_perc_diff.asc(),
-        ("name", "desc"): Stock.name.desc(),
-        ("name", "asc"): Stock.name.asc(),
+        ("name", "desc"): StockMaster.name.desc(),
+        ("name", "asc"): StockMaster.name.asc(),
     }
 
     # Build filtering conditions
@@ -68,18 +68,19 @@ def get_index_data(index_id, sort_by, order, filter_by):
     query = (
         db.session.query(
             IndexHolding.weight,
-            Stock.ticker,
-            Stock.name.label("stock_name"),
-            Stock.day_close,
+            StockMaster.ticker,
+            StockMaster.name.label("stock_name"),
+            StockMaster.day_close,
             Stock.low_52w,
             Stock.high_52w,
-            Stock.todays_change_perc,
-            Stock.todays_change,
-            Stock.volume,
+            StockMaster.todays_change_perc,
+            StockMaster.todays_change,
+            StockMaster.volume,
             Stock.dma_200,
             Stock.dma_200_perc_diff
         )
         .join(Stock, IndexHolding.stock_id == Stock.id)
+        .join(StockMaster, Stock.stock_master_id == StockMaster.id)
         .filter(IndexHolding.index_id == index.id)
     )
 

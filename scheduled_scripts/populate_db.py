@@ -39,12 +39,12 @@ for v in new_chart_data.values():
     v.clear()
 
 # ---- Helper to get Stock object (with chart data) ----
-def get_or_fetch_stock(ticker, now_date, stock_master_map, stock_type_id_map):
+def get_or_fetch_stock(ticker, now_date, stock_master_map):
     if ticker in stocks_cache:
         return stocks_cache[ticker]
 
     try:
-        stock = fetch_stock_data(ticker, now_date, stock_master_map.get(ticker, None), stock_type_id_map)
+        stock = fetch_stock_data(stock_master=stock_master_map.get(ticker, None), now=now_date)
         if stock:
             stocks_cache[ticker] = stock
             new_stocks.append(stock)
@@ -235,6 +235,8 @@ def populate_db(now):
             for sm in all_stock_master
         }
 
+        stock_type_id_map.clear()
+
     with app.app_context():
         # ---- Indices and holdings ----
         print(f"Fetching data for indices...")
@@ -252,7 +254,7 @@ def populate_db(now):
             for holding in holdings:
                 ticker = holding.get("ticker")
                 if ticker:
-                    stock = get_or_fetch_stock(ticker, now_date, stock_master_map, stock_type_id_map)
+                    stock = get_or_fetch_stock(ticker, now_date, stock_master_map)
                     if stock:
                         index_holding = IndexHolding(
                             index=index_obj,
@@ -325,7 +327,7 @@ def populate_db(now):
         for stock in get_trending_stocks():
             ticker = stock.ticker
             if ticker:
-                get_or_fetch_stock(ticker, now_date, stock_master_map, stock_type_id_map)
+                get_or_fetch_stock(ticker, now_date, stock_master_map)
         print("Fetched Trending Stocks data for updated database!")
 
         print("Fetching Top Stocks data for updated database...")
@@ -334,14 +336,14 @@ def populate_db(now):
                 for stock in db_get_top_stocks_data(category, stocks_type):
                     ticker = stock.ticker
                     if ticker:
-                        get_or_fetch_stock(ticker, now_date, stock_master_map, stock_type_id_map)
+                        get_or_fetch_stock(ticker, now_date, stock_master_map)
         print("Fetched Top Stocks data for updated database!")
 
         print("Fetching Search Bar Stocks data for updated database...")
         for item in get_query_stocks(user_query=None).json:
             ticker = item.get("ticker")
             if ticker:
-                get_or_fetch_stock(ticker, now_date, stock_master_map, stock_type_id_map)
+                get_or_fetch_stock(ticker, now_date, stock_master_map)
         print("Fetched Search Bar Stocks data for updated database!")
 
     with app.app_context():

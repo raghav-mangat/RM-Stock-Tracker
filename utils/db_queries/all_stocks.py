@@ -92,23 +92,27 @@ def db_get_top_stocks_data(category, stocks_type):
         ).first()
         # Query stocks that are part of the current index using IndexHolding join
         stocks = db.session.query(
-            Stock.ticker,
-            Stock.name,
-            Stock.day_close,
-            Stock.todays_change,
-            Stock.todays_change_perc,
-            Stock.volume
-        ).select_from(IndexHolding).join(
+            StockMaster.ticker,
+            StockMaster.name,
+            StockMaster.day_close,
+            StockMaster.todays_change,
+            StockMaster.todays_change_perc,
+            StockMaster.volume
+        ).select_from(
+            IndexHolding
+        ).join(
             Stock, IndexHolding.stock_id == Stock.id
+        ).join(
+            StockMaster, Stock.stock_master_id == StockMaster.id
         ).filter(
             IndexHolding.index_id == index.id,
-            Stock.name.isnot(None),
-            Stock.day_close.isnot(None),
-            Stock.todays_change.isnot(None),
-            Stock.todays_change_perc.isnot(None),
-            Stock.volume.isnot(None),
+            StockMaster.name.isnot(None),
+            StockMaster.day_close.isnot(None),
+            StockMaster.todays_change.isnot(None),
+            StockMaster.todays_change_perc.isnot(None),
+            StockMaster.volume.isnot(None),
         )
-        table = Stock
+        table = StockMaster
 
     result = None
     if stocks is None or table is None:

@@ -315,11 +315,11 @@ def show_stock(ticker):
     stock_master = verify_ticker(ticker)
     now = db_last_updated_date()
 
-    stock_data = get_stock_data(ticker, stock_master, now)
+    stock_data = get_stock_data(stock_master, now)
 
     timeframe_options = get_timeframe_options()
     initial_timeframe = timeframe_options[0]
-    initial_stock_chart_data = get_chart_data(ticker, initial_timeframe, stock_master, now)
+    initial_stock_chart_data = get_chart_data(initial_timeframe, stock_master, now)
 
     user_folders = []
     if current_user.is_authenticated:
@@ -345,7 +345,7 @@ def chart_data():
     now = db_last_updated_date()
 
     timeframe = request.args.get("timeframe", "").strip()
-    data = get_chart_data(ticker, timeframe, stock_master, now)
+    data = get_chart_data(timeframe, stock_master, now)
     return data
 
 @app.route("/about")

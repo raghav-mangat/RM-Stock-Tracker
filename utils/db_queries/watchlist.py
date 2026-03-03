@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from models.database import (db, WatchlistFolder, WatchlistItem, WatchlistFolderAttribute,
                              WatchlistAlert, StockMaster, Stock, FolderAttribute, OrderBy)
 from data_collectors.stock_data import fetch_stock_data
+from utils.populate_db_info import db_last_updated_date
 
 @dataclass
 class MutationResult:
@@ -555,7 +556,7 @@ def get_folder_items(folder_id):
     in ascending order of the 'item_order'.
     """
     result = db.session.query(
-        StockMaster.ticker,
+        StockMaster,
         WatchlistItem.id
     ).join(
         WatchlistItem
@@ -585,11 +586,13 @@ def get_all_items_data(folder_id):
 
     # Preserve order explicitly
     ordered_item_ids = []
-    ticker_by_item_id = {}
+    stock_master_id_by_item_id = {}
+    stock_master_by_stock_master_id = {}
 
-    for ticker, item_id in folder_items:
+    for stock_master, item_id in folder_items:
         ordered_item_ids.append(item_id)
-        ticker_by_item_id[item_id] = ticker
+        stock_master_id_by_item_id[item_id] = stock_master.id
+        stock_master_by_stock_master_id[stock_master.id] = stock_master
 
     # Fetch all WatchlistItem rows in one query
     items = (
@@ -604,33 +607,36 @@ def get_all_items_data(folder_id):
     items_by_id = {item.id: item for item in items}
 
     # Fetch all stocks in one query
-    tickers = set({ticker for ticker in ticker_by_item_id.values()})
+    stock_master_ids = set({stock_master_id for stock_master_id in stock_master_id_by_item_id.values()})
     stocks = (
         db.session.execute(
             db.select(Stock).where(
-                Stock.ticker.in_(tickers)
+                Stock.stock_master_id.in_(stock_master_ids)
             )
         )
         .scalars()
         .all()
     )
-    stocks_by_ticker = {stock.ticker: stock for stock in stocks}
+    stocks_by_stock_master_id = {stock.stock_master_id: stock for stock in stocks}
 
     # Fetch all remaining stocks that we did not get from the db
-    remaining_tickers = tickers - set(stocks_by_ticker.keys())
-    for ticker in remaining_tickers:
-        stock = fetch_stock_data(ticker)
+    remaining_stock_master_ids = stock_master_ids - set(stocks_by_stock_master_id.keys())
+
+    now = db_last_updated_date()
+    for stock_master_id in remaining_stock_master_ids:
+        stock_master = stock_master_by_stock_master_id[stock_master_id]
+        stock = fetch_stock_data(stock_master=stock_master, now=now)
         db.session.add(stock)
         db.session.flush()
 
         if stock:
-            stocks_by_ticker[ticker] = stock
+            stocks_by_stock_master_id[stock_master_id] = stock
 
     # Assemble final ordered result
     for item_id in ordered_item_ids:
-        ticker = ticker_by_item_id[item_id]
+        stock_master_id = stock_master_id_by_item_id[item_id]
 
-        stock = stocks_by_ticker.get(ticker)
+        stock = stocks_by_stock_master_id.get(stock_master_id)
         item = items_by_id.get(item_id)
 
         if not stock or not item:
