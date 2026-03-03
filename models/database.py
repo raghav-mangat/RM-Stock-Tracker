@@ -46,9 +46,8 @@ db = SQLAlchemy(model_class=Base)
 
 # --- Constants ---
 
-LARGE_NUMERIC_PRECISION = 16
-NUMERIC_PRECISION = 12
-DECIMAL_PRECISION = 2
+NUMERIC_PRECISION = 20
+DECIMAL_PRECISION = 4
 
 TICKER_LEN = 16
 STOCK_NAME_LEN = 500
@@ -194,7 +193,7 @@ class StockMaster(TimestampMixin, db.Model):
 
     # All tickers data
     ticker: Mapped[str] = mapped_column(String(TICKER_LEN), unique=True, nullable=False)
-    name: Mapped[str] = mapped_column(String(STOCK_NAME_LEN), nullable=False)
+    name: Mapped[str] = mapped_column(String(STOCK_NAME_LEN), index=True, nullable=False)
     primary_exchange: Mapped[str] = mapped_column(String(STOCK_INFO_LEN), nullable=False)
 
     stock_type_id: Mapped[int] = mapped_column(
@@ -295,7 +294,7 @@ class Stock(TimestampMixin, db.Model):
     list_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
     industry: Mapped[Optional[str]] = mapped_column(String(STOCK_INFO_LEN), nullable=True)
     total_employees: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
-    market_cap: Mapped[Optional[Decimal]] = mapped_column(Numeric(LARGE_NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
+    market_cap: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
 
     # Branding
     icon_url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
@@ -388,7 +387,7 @@ class StockTypeMeta(TimestampMixin, db.Model):
         nullable=False,
     )
 
-    # Human-readable label (can change over time)
+    # Human-readable label
     description: Mapped[str] = mapped_column(
         String(STOCK_INFO_LEN),
         nullable=False
@@ -502,7 +501,8 @@ class Index(TimestampMixin, db.Model):
 
     holdings: Mapped[list["IndexHolding"]] = relationship(
         back_populates="index",
-        cascade="all, delete-orphan"
+        cascade="all, delete-orphan",
+        passive_deletes=True
     )
 
     def __repr__(self) -> str:
@@ -805,8 +805,8 @@ class WatchlistFolderAttribute(TimestampMixin, db.Model):
 
     # Values for filters
     use_abs: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
-    min_value: Mapped[Optional[Decimal]] = mapped_column(Numeric(LARGE_NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
-    max_value: Mapped[Optional[Decimal]] = mapped_column(Numeric(LARGE_NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
+    min_value: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
+    max_value: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
 
     folder_id: Mapped[int] = mapped_column(
         Integer,
@@ -844,10 +844,10 @@ class WatchlistAlert(TimestampMixin, db.Model):
     )
     use_abs: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     min_value: Mapped[Optional[Decimal]] = mapped_column(
-        Numeric(LARGE_NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True
+        Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True
     )
     max_value: Mapped[Optional[Decimal]] = mapped_column(
-        Numeric(LARGE_NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True
+        Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True
     )
 
     # Ownership
