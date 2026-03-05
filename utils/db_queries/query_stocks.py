@@ -1,4 +1,5 @@
 from flask import jsonify
+import random
 from models.database import db, StockMaster
 from utils.db_queries.all_stocks import get_stocks_popularity
 from utils.constants import NUM_SUGGESTIONS
@@ -23,11 +24,12 @@ def get_query_stocks(user_query):
                 StockMaster.name.ilike(f"{user_query}%")
             )
         )
+        matches = matches.limit(NUM_SUGGESTIONS).all()
     else:
         # Empty user query, return popular stocks
         matches = db_base_query
-
-    matches = matches.limit(NUM_SUGGESTIONS).all()
+        matches = matches.limit(NUM_SUGGESTIONS).all()
+        random.shuffle(matches)
 
     return jsonify([
         {"ticker": match.ticker, "name": match.name}

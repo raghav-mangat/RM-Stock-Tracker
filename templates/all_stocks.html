@@ -48,28 +48,34 @@
   -->
   <section class="my-5 pt-3">
     <div class="ticker-tape bg-light py-4 border-top border-bottom">
-      <div class="ticker-track d-flex align-items-center">
-        {% for i in range(2) %} <!-- Duplicate once for seamless loop -->
-          {% for stock in ticker_tape_stocks %}
-            {% if (stock.volume is not none) and (stock.day_close is not none) and (stock.todays_change is not none) %}
-              <div class="ticker-item card-hover card shadow-sm text-center fs-6 mx-2">
-                <a href="{{ url_for('show_stock', ticker=stock.ticker) }}" class="text-decoration-none">
-                  <div class="ticker-content d-flex flex-column text-truncate px-3 py-2">
-                    <strong class="text-body fw-bold text-truncate">{{ stock.ticker }}</strong>
-                    <span class="ticker-info fw-semibold text-truncate"
-                          style="color: {{ stock.todays_change | stock_change_color }};">
-                      {{ stock.volume | humanize_number }}
-                      @ {{ stock.day_close | float }}
-                      {{ arrow_direction(stock.todays_change) }}
-                      {{ stock.todays_change | abs | float }}
-                    </span>
-                  </div>
-                </a>
-              </div>
-            {% endif %}
+      {% if ticker_tape_stocks %}
+        <div class="ticker-track d-flex align-items-center">
+          {% for i in range(2) %} <!-- Duplicate once for seamless loop -->
+            {% for stock in ticker_tape_stocks %}
+              {% if (stock.volume is not none) and (stock.day_close is not none) and (stock.todays_change is not none) %}
+                <div class="ticker-item card-hover card shadow-sm text-center fs-6 mx-2">
+                  <a href="{{ url_for('show_stock', ticker=stock.ticker) }}" class="text-decoration-none">
+                    <div class="ticker-content d-flex flex-column text-truncate px-3 py-2">
+                      <strong class="text-body fw-bold text-truncate">{{ stock.ticker }}</strong>
+                      <span class="ticker-info fw-semibold text-truncate"
+                            style="color: {{ stock.todays_change | stock_change_color }};">
+                        {{ stock.volume | humanize_number }}
+                        @ {{ stock.day_close | float }}
+                        {{ arrow_direction(stock.todays_change) }}
+                        {{ stock.todays_change | abs | float }}
+                      </span>
+                    </div>
+                  </a>
+                </div>
+              {% endif %}
+            {% endfor %}
           {% endfor %}
-        {% endfor %}
-      </div>
+        </div>
+      {% else %}
+        <div class="text-center text-muted py-4">
+          <em>No ticker tape stocks available.</em>
+        </div>
+      {% endif %}
     </div>
   </section>
 
@@ -104,13 +110,13 @@
             {{ top_stocks_categories.overall }}
           </a>
           <a class="category-link list-group-item list-group-item-action" data-loaded="0" id="sp500-tab" data-bs-toggle="list" href="#sp500" role="tab" aria-controls="sp500">
-            {{ top_stocks_categories.sp500 }}
+            {{ top_stocks_categories.sp500 or "Index" }}
           </a>
           <a class="category-link list-group-item list-group-item-action" data-loaded="0" id="nasdaq100-tab" data-bs-toggle="list" href="#nasdaq100" role="tab" aria-controls="nasdaq100">
-            {{ top_stocks_categories.nasdaq100 }}
+            {{ top_stocks_categories.nasdaq100 or "Index" }}
           </a>
           <a class="category-link list-group-item list-group-item-action" data-loaded="0" id="dowjones-tab" data-bs-toggle="list" href="#dowjones" role="tab" aria-controls="dowjones">
-            {{ top_stocks_categories.dowjones }}
+            {{ top_stocks_categories.dowjones or "Index" }}
           </a>
         </div>
       </div>
@@ -120,9 +126,9 @@
         <div class="tab-content" id="topMarketMoversContent">
           {{ trending_stocks_tab_content('trending-stocks', trending_stocks) }}
           {{ top_stocks_tab_content('overall', top_stocks_categories.overall) }}
-          {{ top_stocks_tab_content('sp500', top_stocks_categories.sp500) }}
-          {{ top_stocks_tab_content('nasdaq100', top_stocks_categories.nasdaq100) }}
-          {{ top_stocks_tab_content('dowjones', top_stocks_categories.dowjones) }}
+          {{ top_stocks_tab_content('sp500', top_stocks_categories.sp500 or "Index") }}
+          {{ top_stocks_tab_content('nasdaq100', top_stocks_categories.nasdaq100 or "Index") }}
+          {{ top_stocks_tab_content('dowjones', top_stocks_categories.dowjones or "Index") }}
         </div>
       </div>
     </div>

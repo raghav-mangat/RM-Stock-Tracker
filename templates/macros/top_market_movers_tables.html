@@ -1,14 +1,23 @@
 {% from "macros/stock_attributes.html" import stock_todays_change, ticker_link %}
 
 {% macro placeholder_cell() %}
-  <td class="placeholder-glow">
+  <td class="placeholder-glow" aria-hidden="true">
     <span class="placeholder bg-body-secondary d-block w-100 h-100 py-1"></span>
   </td>
 {% endmacro %}
 
-{% macro top_stocks_data(stocks, stocks_type=None) %}
+{% macro top_stocks_data(stocks=None, stocks_type=None, placeholder=False) %}
 
-  {% if stocks %}
+  {% if placeholder %}
+    {% set NUM_PLACEHOLDER_ROWS = 50 %}
+    {% for _ in range(NUM_PLACEHOLDER_ROWS) %}
+      <tr>
+        {% for _ in range(5) %}
+          {{ placeholder_cell() }}
+        {% endfor %}
+      </tr>
+    {% endfor %}
+  {% else %}
     {% for stock in stocks %}
       <tr>
         <th scope="row">{{ loop.index }}</th>
@@ -25,13 +34,11 @@
           </td>
         {% endif %}
       </tr>
-    {% endfor %}
-  {% else %}
-    {% for _ in range(50) %}
+    {% else %}
       <tr>
-        {% for _ in range(5) %}
-          {{ placeholder_cell() }}
-        {% endfor %}
+        <td colspan="5" class="text-center text-muted py-4">
+          <em>No stocks available.</em>
+        </td>
       </tr>
     {% endfor %}
   {% endif %}
@@ -49,7 +56,12 @@
 #}
 {% macro top_stocks_table(tab_id, type, heading, name, col_title) %}
   <h3 class="h4 mb-3">{{ heading }} in {{ name }}</h3>
-  <div class="table-responsive">
+  <div class="table-responsive"
+       id="top-stocks-region-{{ tab_id }}-{{ type }}"
+       role="region"
+       aria-live="polite"
+       aria-busy="true"
+       aria-label="{{ heading }} in {{ name }}">
     <table class="table table-striped table-bordered table-hover align-middle">
       <thead class="">
         <tr class="align-middle">
@@ -60,8 +72,10 @@
           <th scope="col">{{ col_title }}</th>
         </tr>
       </thead>
-      <tbody class="table-group-divider" id="table-{{ tab_id }}-{{ type }}">
-        {{ top_stocks_data(None) }}
+      <tbody class="table-group-divider pe-none"
+             id="table-{{ tab_id }}-{{ type }}"
+             aria-hidden="true">
+        {{ top_stocks_data(stocks=None, stocks_type=None, placeholder=True) }}
       </tbody>
     </table>
   </div>
@@ -133,6 +147,12 @@
               <td>{{ stock_todays_change(stock) }}</td>
               <td>
                 <span class="fw-semibold">{{ stock.popularity | humanize_number }}</span>
+              </td>
+            </tr>
+          {% else %}
+            <tr>
+              <td colspan="7" class="text-center text-muted py-4">
+                <em>No trending stocks available.</em>
               </td>
             </tr>
           {% endfor %}

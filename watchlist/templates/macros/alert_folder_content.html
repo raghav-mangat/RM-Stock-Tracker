@@ -3,7 +3,9 @@
 {% from "macros/stock_attributes.html" import ticker_link %}
 
 {% macro alert_folder_body(folder, AlertAttribute) %}
-<div>
+<div role="region"
+     aria-live="polite"
+     aria-label="Watchlist alert folder">
 
 <!-- Folder Alerts -->
 <section class="mb-4">
@@ -279,7 +281,7 @@
 
 {% macro alert_folder_body_placeholder(folder_id, folder) %}
 <div class="pe-none"
-     aria-hidden="true" aria-busy="true" aria-live="polite"
+     aria-hidden="true" aria-busy="true"
      aria-label="Loading alert folder data">
 
 <!-- Folder Loading Failure Message -->
