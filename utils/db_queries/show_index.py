@@ -1,5 +1,6 @@
-from models.database import db, StockMaster, Stock, Index, IndexHolding
 from sqlalchemy import and_, or_
+from models.database import db, StockMaster, Stock, Index, IndexHolding, StockDetail, TickerMaster
+from utils.db_queries.tables.dataset_version import get_active_dataset_id
 
 def get_index_data(index_id, sort_by, order, filter_by):
     valid_sort_by = {"weight", "todays_change", "volume", "perc_diff", "name"}
@@ -36,8 +37,8 @@ def get_index_data(index_id, sort_by, order, filter_by):
         ("volume", "asc"): StockMaster.volume.asc(),
         ("perc_diff", "desc"): Stock.dma_200_perc_diff.desc(),
         ("perc_diff", "asc"): Stock.dma_200_perc_diff.asc(),
-        ("name", "desc"): StockMaster.name.desc(),
-        ("name", "asc"): StockMaster.name.asc(),
+        ("name", "desc"): StockDetail.name.desc(),
+        ("name", "asc"): StockDetail.name.asc(),
     }
 
     # Build filtering conditions
@@ -65,11 +66,13 @@ def get_index_data(index_id, sort_by, order, filter_by):
     # Fetch index
     index = Index.query.filter_by(slug=index_id).first_or_404()
 
+    active_dataset_id = get_active_dataset_id()
+
     query = (
         db.session.query(
             IndexHolding.weight,
-            StockMaster.ticker,
-            StockMaster.name.label("stock_name"),
+            TickerMaster.symbol.label("ticker"),
+            StockDetail.name.label("stock_name"),
             StockMaster.day_close,
             Stock.low_52w,
             Stock.high_52w,
@@ -81,7 +84,13 @@ def get_index_data(index_id, sort_by, order, filter_by):
         )
         .join(Stock, IndexHolding.stock_id == Stock.id)
         .join(StockMaster, Stock.stock_master_id == StockMaster.id)
-        .filter(IndexHolding.index_id == index.id)
+        .join(TickerMaster, StockMaster.ticker_id == TickerMaster.id)
+        .join(StockDetail, TickerMaster.id == StockDetail.ticker_id)
+        .filter(
+            TickerMaster.is_active == True,
+            StockMaster.dataset_version_id == active_dataset_id,
+            IndexHolding.index_id == index.id
+        )
     )
 
     # Only include NULLs if all filters are selected

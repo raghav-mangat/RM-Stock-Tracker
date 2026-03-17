@@ -1,10 +1,10 @@
 from flask import request, abort, jsonify, flash, redirect, url_for, render_template
 from dataclasses import dataclass
 from models.database import AlertAttribute, FolderAttribute, OrderBy
+from utils.db_queries.tables.ticker_master import get_valid_ticker_master_by_ticker
 from utils.db_queries.watchlist import (
     NotFoundError, ForbiddenError, MutationResult
 )
-from utils.db_queries.stock_master_data import get_stock_master_by_ticker
 from utils.constants import MAX_FOLDER_NAME_LEN
 from utils.filters import humanize_number
 
@@ -89,10 +89,10 @@ class Validators:
 
     @staticmethod
     def validate_ticker(ticker):
-        stock = get_stock_master_by_ticker(ticker)
-        if not stock:
+        ticker_master = get_valid_ticker_master_by_ticker(ticker)
+        if not ticker_master:
             raise ValidationError(f"Please search for a valid stock.")
-        return stock
+        return ticker_master
 
     @staticmethod
     def validate_alerts(update_alert_request):

@@ -1,9 +1,12 @@
 from sqlalchemy import and_
 from sqlalchemy.exc import IntegrityError
 from dataclasses import dataclass
-from models.database import (db, WatchlistFolder, WatchlistItem, WatchlistFolderAttribute,
-                             WatchlistAlert, StockMaster, Stock, FolderAttribute, OrderBy)
+from models.database import (
+    db, WatchlistFolder, WatchlistItem, WatchlistFolderAttribute,  WatchlistAlert,
+    StockMaster, Stock, FolderAttribute, OrderBy, TickerMaster, StockDetail
+)
 from data_collectors.stock_data import fetch_stock_data
+from utils.db_queries.tables.dataset_version import get_active_dataset_id
 from utils.populate_db_info import db_last_updated_date
 
 @dataclass
@@ -44,6 +47,11 @@ def db_get_folder_with_items_data(folder):
 
     all_items_data = get_all_items_data(folder.id)
 
+    folder_has_items_data = True
+    folder_num_items = folder_data.get("folder_num_items", None)
+    if (folder_num_items and folder_num_items > 0) and not all_items_data:
+        folder_has_items_data = False
+
     # Filter the items data if filters are applied to the folder
     for attribute_data in folder_data.get("folder_attributes_data"):
         if attribute_data.attribute.value != FolderAttribute.NAME:
@@ -83,7 +91,8 @@ def db_get_folder_with_items_data(folder):
         ))
 
     folder_data.update({
-        "folder_items": all_items_data
+        "folder_items": all_items_data,
+        "folder_has_items_data": folder_has_items_data
     })
 
     return folder_data
@@ -249,13 +258,13 @@ def db_update_order(folder_id, new_order, user):
         db.session.rollback()
         raise
 
-def db_add_watchlist_item(folder_id, stock, user):
+def db_add_watchlist_item(folder_id, ticker, user):
     try:
         folder = check_and_get_user_folder(folder_id, user)
 
         watchlist_item = WatchlistItem(
             folder=folder,
-            stock=stock,
+            ticker=ticker,
             item_order=len(folder.items) + 1
         )
         db.session.add(watchlist_item)
@@ -263,7 +272,7 @@ def db_add_watchlist_item(folder_id, stock, user):
 
         return MutationResult(
             ok=True,
-            message=f"Added stock '{stock.ticker}'.",
+            message=f"Added stock '{ticker.symbol}'.",
         )
 
     except IntegrityError:
@@ -281,7 +290,7 @@ def db_remove_watchlist_item(item_id, user):
     try:
         item = check_and_get_user_item(item_id, user)
         folder = item.folder
-        ticker = item.stock.ticker
+        ticker = item.ticker.symbol
         folder_name = folder.name
         order = item.item_order
 
@@ -368,7 +377,7 @@ def db_update_item_alerts(item_id, alerts, user):
 
         return MutationResult(
             ok=True,
-            message=f"Updated email alerts for stock '{item.stock.ticker}' in folder '{item.folder.name}'.",
+            message=f"Updated email alerts for stock '{item.ticker.symbol}' in folder '{item.folder.name}'.",
         )
 
     except Exception as e:
@@ -555,18 +564,27 @@ def get_folder_items(folder_id):
     Helper function that returns a list of all items for the given folder,
     in ascending order of the 'item_order'.
     """
-    result = db.session.query(
-        StockMaster,
-        WatchlistItem.id
-    ).join(
-        WatchlistItem
-    ).join(
-        WatchlistFolder
-    ).where(
-        WatchlistFolder.id == folder_id
-    ).order_by(
-        WatchlistItem.item_order.asc()
-    ).all()
+    active_dataset_id = get_active_dataset_id()
+    result = (
+        db.session.query(
+            TickerMaster,
+            StockMaster,
+            StockDetail,
+            WatchlistItem.id
+        )
+        .select_from(WatchlistItem)
+        .join(TickerMaster)
+        .join(StockMaster)
+        .join(StockDetail)
+        .join(WatchlistFolder)
+        .filter(
+            TickerMaster.is_active == True,
+            StockMaster.dataset_version_id == active_dataset_id,
+            WatchlistFolder.id == folder_id
+        )
+        .order_by(WatchlistItem.item_order.asc())
+        .all()
+    )
     return result
 
 def get_all_items_data(folder_id):
@@ -586,11 +604,15 @@ def get_all_items_data(folder_id):
 
     # Preserve order explicitly
     ordered_item_ids = []
+    ticker_master_by_item_id = {}
+    stock_detail_by_item_id = {}
     stock_master_id_by_item_id = {}
     stock_master_by_stock_master_id = {}
 
-    for stock_master, item_id in folder_items:
+    for ticker_master, stock_master, stock_detail, item_id in folder_items:
         ordered_item_ids.append(item_id)
+        ticker_master_by_item_id[item_id] = ticker_master
+        stock_detail_by_item_id[item_id] = stock_detail
         stock_master_id_by_item_id[item_id] = stock_master.id
         stock_master_by_stock_master_id[stock_master.id] = stock_master
 
@@ -634,6 +656,9 @@ def get_all_items_data(folder_id):
 
     # Assemble final ordered result
     for item_id in ordered_item_ids:
+        ticker_master = ticker_master_by_item_id[item_id]
+        stock_detail = stock_detail_by_item_id[item_id]
+
         stock_master_id = stock_master_id_by_item_id[item_id]
 
         stock = stocks_by_stock_master_id.get(stock_master_id)
@@ -642,8 +667,14 @@ def get_all_items_data(folder_id):
         if not stock or not item:
             continue
 
+        stock_data = stock.to_dict()
+        stock_data.update({
+            "ticker": ticker_master.symbol,
+            "name": stock_detail.name
+        })
+
         all_items_data[item_id] = {
-            "stock_data": stock.to_dict(),
+            "stock_data": stock_data,
             "item_order": item.item_order,
             "item_alerts": item.alerts,
         }

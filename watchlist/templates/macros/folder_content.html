@@ -229,7 +229,13 @@
           </tr>
         </thead>
         <tbody class="table-group-divider">
-          {% if folder_data.folder_num_items > 0 %}
+          {% if folder_data.folder_items is not none and not folder_data.folder_has_items_data %}
+            <tr>
+              <td colspan="{{ folder_data.folder_attributes_list|length + 3 }}" class="text-center text-muted py-4">
+                <em>Unable to show the stocks in this folder.</em>
+              </td>
+            </tr>
+          {% elif folder_data.folder_num_items > 0 %}
             {% if folder_data.folder_items is not none and folder_data.folder_items | length > 0 %}
               {% for item_id, item_data in folder_data.folder_items.items() %}
                   {% set stock = item_data["stock_data"] %}

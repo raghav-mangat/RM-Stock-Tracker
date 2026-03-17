@@ -1,12 +1,15 @@
 from datetime import datetime
-from models.database import db, StockMaster, Stock
+from models.database import db, StockMaster, Stock, TickerMaster, StockDetail
 from flask import abort
 from sqlalchemy.orm import joinedload
-from data_collectors.stock_data import fetch_stock_data, fetch_chart_data, TIMEFRAME_OPTIONS, SELECT_DB_TABLE, \
+from data_collectors.stock_data import (
+    fetch_stock_data, fetch_chart_data, TIMEFRAME_OPTIONS, SELECT_DB_TABLE,
     DB_TIMEFRAMES
+)
 from utils.datetime_utils import DATE_FORMAT, convert_to_et_dt, format_dt_et
+from utils.db_queries.tables.dataset_version import get_active_dataset_id
 
-def get_stock_data(stock_master=None, now=None):
+def get_stock_data(ticker_master=None, stock_master=None, stock_detail=None, now=None):
     # Check if the stock is present in the database
     stock = (
         db.session.query(Stock)
@@ -29,15 +32,21 @@ def get_stock_data(stock_master=None, now=None):
         rel_companies = stock.related_companies.split(',')
 
     # Get the stock type
-    stock_type = stock.stock_master.stock_type.description if stock and stock.stock_master else None
+    stock_type = stock_detail.stock_type.description
 
     # Get the last updated time
     last_updated = None
     if stock and stock.stock_master:
         last_updated = format_dt_et(stock.stock_master.last_updated)
 
+    stock_data = stock.to_dict()
+    stock_data.update({
+        "ticker": ticker_master.symbol,
+        "name": stock_detail.name
+    })
+
     result = {
-        "stock": stock.to_dict() if stock else None,
+        "stock": stock_data,
         "stock_type": stock_type,
         "rel_companies": rel_companies,
         "last_updated": last_updated
@@ -114,12 +123,25 @@ def get_chart_data(timeframe, stock_master=None, now=None):
 
 def verify_ticker(ticker):
     # To verify if the given ticker is valid
-    stock_master = StockMaster.query.filter_by(ticker=ticker).first()
+    active_dataset_id = get_active_dataset_id()
+    result = (
+        db.session.query(TickerMaster, StockMaster, StockDetail)
+        .select_from(TickerMaster)
+        .join(StockMaster, TickerMaster.id == StockMaster.ticker_id)
+        .join(StockDetail, TickerMaster.id == StockDetail.ticker_id)
+        .filter(
+            TickerMaster.is_active == True,
+            TickerMaster.symbol == ticker,
+            StockMaster.dataset_version_id == active_dataset_id
+        )
+        .first()
+    )
+    ticker_master, stock_master, stock_detail = result if result else (None, None, None)
 
-    if not stock_master:
+    if not (result and ticker_master and stock_master and stock_detail):
         abort(404)
 
-    return stock_master
+    return ticker_master, stock_master, stock_detail
 
 def get_timeframe_options():
     return list(TIMEFRAME_OPTIONS.keys())

@@ -151,8 +151,8 @@ def add_item():
     folder_id = request.form.get("folder_id")
 
     try:
-        stock = Validators.validate_ticker(ticker)
-        result = db_add_watchlist_item(folder_id=folder_id, stock=stock, user=current_user)
+        ticker_master = Validators.validate_ticker(ticker)
+        result = db_add_watchlist_item(folder_id=folder_id, ticker=ticker_master, user=current_user)
 
         return MutationHandler.response(result, is_ajax=is_ajax, next_url=next_url)
 

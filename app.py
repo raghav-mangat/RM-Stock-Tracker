@@ -38,6 +38,7 @@ from utils.filters import register_custom_filters
 from utils.error_handlers import register_error_handlers
 from utils.breadcrumbs import generate_breadcrumbs
 from utils.populate_db_info import db_last_updated, db_last_updated_date
+from utils.db_queries.tables.dataset_version import get_active_dataset_id
 from utils.db_queries.all_indices import get_all_indices
 from utils.db_queries.show_index import get_index_data
 from utils.db_queries.all_stocks import (
@@ -261,8 +262,10 @@ def all_stocks():
     # Load last updated timestamp of populate db
     last_updated = db_last_updated()
 
-    ticker_tape_stocks = get_ticker_tape_stocks()
-    trending_stocks = get_trending_stocks()
+    dataset_version_id = get_active_dataset_id()
+
+    ticker_tape_stocks = get_ticker_tape_stocks(dataset_version_id)
+    trending_stocks = get_trending_stocks(dataset_version_id)
     top_stocks_categories = get_top_stocks_categories()
 
     return render_template(
@@ -312,10 +315,10 @@ def show_stock(ticker):
             code=301
         )
 
-    stock_master = verify_ticker(ticker)
+    ticker_master, stock_master, stock_detail = verify_ticker(ticker)
     now = db_last_updated_date()
 
-    stock_data = get_stock_data(stock_master, now)
+    stock_data = get_stock_data(ticker_master, stock_master, stock_detail, now)
 
     timeframe_options = get_timeframe_options()
     initial_timeframe = timeframe_options[0]
@@ -341,7 +344,7 @@ def show_stock(ticker):
 def chart_data():
     ticker = request.args.get("ticker", "").strip().upper()
 
-    stock_master = verify_ticker(ticker)
+    ticker_master, stock_master, stock_detail = verify_ticker(ticker)
     now = db_last_updated_date()
 
     timeframe = request.args.get("timeframe", "").strip()

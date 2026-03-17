@@ -1,52 +1,68 @@
 import random
-from sqlalchemy import func, or_
-from models.database import db, StockMaster, Stock, Index, IndexHolding, TickerTapeStockCache
+from sqlalchemy import or_
+from models.database import (
+    db, StockMaster, Stock, Index, IndexHolding, TickerTapeStockCache,
+    TickerMaster, StockDetail
+)
+from utils.db_queries.tables.dataset_version import get_active_dataset_id
 
 # Number of top stocks to be shown for each category
 NUM_TOP_STOCKS = 50
 
-def get_ticker_tape_stocks():
-    rows = TickerTapeStockCache.query.all()
+def get_ticker_tape_stocks(dataset_version_id=None):
+    rows = db.session.execute(db.select(TickerTapeStockCache.id)).scalars().all()
 
-    stocks = [row.stock_master for row in rows if row.stock_master]
+    stocks = (
+        db.session.query(
+            StockMaster.id,
+            TickerMaster.symbol.label("ticker"),
+            StockMaster.day_close,
+            StockMaster.todays_change,
+            StockMaster.todays_change_perc,
+            StockMaster.volume,
+        )
+        .select_from(TickerMaster)
+        .join(StockMaster, StockMaster.ticker_id == TickerMaster.id)
+        .where(
+            TickerMaster.is_active == True,
+            TickerMaster.id.in_(rows),
+            StockMaster.dataset_version_id == dataset_version_id,
+        )
+        .all()
+    )
 
     # Randomize order
     random.shuffle(stocks)
 
     return stocks
 
-def get_trending_stocks():
-    popularity = get_stocks_popularity()
-    trending_stocks = db.session.query(
-        StockMaster.id,
-        StockMaster.ticker,
-        StockMaster.name,
-        StockMaster.day_close,
-        StockMaster.todays_change,
-        StockMaster.todays_change_perc,
-        StockMaster.volume,
-        popularity
-    ).filter(
-        StockMaster.name.isnot(None),
-        StockMaster.day_close.isnot(None),
-        StockMaster.todays_change.isnot(None),
-        StockMaster.todays_change_perc.isnot(None),
-        StockMaster.volume.isnot(None),
-    ).order_by(
-        popularity.desc()
-    ).limit(NUM_TOP_STOCKS).all()
+def get_trending_stocks(dataset_version_id=None):
+    if not dataset_version_id:
+        dataset_version_id = get_active_dataset_id()
+
+    trending_stocks = (
+        db.session.query(
+            TickerMaster.id.label("ticker_id"),
+            TickerMaster.symbol.label("ticker"),
+            StockDetail.name.label("name"),
+            StockMaster.day_close,
+            StockMaster.todays_change,
+            StockMaster.todays_change_perc,
+            StockMaster.volume,
+            StockMaster.popularity
+        )
+        .join(TickerMaster, StockMaster.ticker_id == TickerMaster.id)
+        .join(StockDetail, TickerMaster.id == StockDetail.ticker_id)
+        .filter(
+            TickerMaster.is_active == True,
+            StockMaster.dataset_version_id == dataset_version_id,
+        )
+        .order_by(StockMaster.popularity.desc())
+        .limit(NUM_TOP_STOCKS)
+        .all()
+    )
 
     return trending_stocks
-
-def get_stocks_popularity():
-    # Estimate popularity using (day close price) * volume
-    # Also, called trade activity
-    popularity = (
-        func.coalesce(StockMaster.day_close, 0) *
-        func.coalesce(StockMaster.volume, 0)
-    ).label('popularity')
-
-    return popularity
 
 def get_top_stocks_categories():
     # Dict of data to return
@@ -65,76 +81,80 @@ def get_top_stocks_categories():
 
     return top_stocks_categories
 
-def db_get_top_stocks_data(category, stocks_type):
+def db_get_top_stocks_data(category, stocks_type, dataset_version_id=None):
     stocks = None
-    table = None
+    if not dataset_version_id:
+        dataset_version_id = get_active_dataset_id()
+
     if category == "overall":
         # Query all stocks from StockMaster for overall market data
-        stocks = db.session.query(StockMaster).with_entities(
-            StockMaster.ticker,
-            StockMaster.name,
-            StockMaster.day_close,
-            StockMaster.todays_change,
-            StockMaster.todays_change_perc,
-            StockMaster.volume
-        ).filter(
-            StockMaster.name.isnot(None),
-            StockMaster.day_close.isnot(None),
-            StockMaster.todays_change.isnot(None),
-            StockMaster.todays_change_perc.isnot(None),
-            StockMaster.volume.isnot(None),
+        stocks = (
+            db.session.query(
+                TickerMaster.symbol.label("ticker"),
+                StockDetail.name.label("name"),
+                StockMaster.day_close,
+                StockMaster.todays_change,
+                StockMaster.todays_change_perc,
+                StockMaster.volume,
+            )
+            .join(TickerMaster, StockMaster.ticker_id == TickerMaster.id)
+            .join(StockDetail, TickerMaster.id == StockDetail.ticker_id)
+            .filter(
+                TickerMaster.is_active == True,
+                StockMaster.dataset_version_id == dataset_version_id,
+            )
         )
-        table = StockMaster
 
     elif category in get_top_stocks_categories().keys():
         index = Index.query.filter(
             Index.slug == category,
         ).first()
         # Query stocks that are part of the current index using IndexHolding join
-        stocks = db.session.query(
-            StockMaster.ticker,
-            StockMaster.name,
-            StockMaster.day_close,
-            StockMaster.todays_change,
-            StockMaster.todays_change_perc,
-            StockMaster.volume
-        ).select_from(
-            IndexHolding
-        ).join(
-            Stock, IndexHolding.stock_id == Stock.id
-        ).join(
-            StockMaster, Stock.stock_master_id == StockMaster.id
-        ).filter(
-            IndexHolding.index_id == index.id,
-            StockMaster.name.isnot(None),
-            StockMaster.day_close.isnot(None),
-            StockMaster.todays_change.isnot(None),
-            StockMaster.todays_change_perc.isnot(None),
-            StockMaster.volume.isnot(None),
+        stocks = (
+            db.session.query(
+                TickerMaster.symbol.label("ticker"),
+                StockDetail.name.label("name"),
+                StockMaster.day_close,
+                StockMaster.todays_change,
+                StockMaster.todays_change_perc,
+                StockMaster.volume,
+            ).select_from(
+                IndexHolding
+            ).join(
+                Stock, IndexHolding.stock_id == Stock.id
+            ).join(
+                StockMaster, Stock.stock_master_id == StockMaster.id
+            )
+            .join(TickerMaster, StockMaster.ticker_id == TickerMaster.id)
+            .join(StockDetail, TickerMaster.id == StockDetail.ticker_id)
+            .filter(
+                TickerMaster.is_active == True,
+                IndexHolding.index_id == index.id,
+                StockMaster.dataset_version_id == dataset_version_id,
+            )
         )
-        table = StockMaster
 
     result = None
-    if stocks is None or table is None:
+    if stocks is None:
         return result
     if stocks_type == "gainers":
         # Top Gainers
         result = stocks.filter(
-            table.todays_change_perc > 0
+            StockMaster.todays_change_perc > 0
         ).order_by(
-            table.todays_change_perc.desc()
+            StockMaster.todays_change_perc.desc()
         ).limit(NUM_TOP_STOCKS).all()
     elif stocks_type == "losers":
         # Top Losers
         result = stocks.filter(
-            table.todays_change_perc < 0
+            StockMaster.todays_change_perc < 0
         ).order_by(
-            table.todays_change_perc.asc()
+            StockMaster.todays_change_perc.asc()
         ).limit(NUM_TOP_STOCKS).all()
     elif stocks_type == "top_traded":
         # Top Stocks traded by Volume
         result = stocks.order_by(
-            table.volume.desc()
+            StockMaster.volume.desc()
         ).limit(NUM_TOP_STOCKS).all()
 
     return result

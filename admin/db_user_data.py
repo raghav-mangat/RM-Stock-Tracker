@@ -1,7 +1,9 @@
 from datetime import datetime, timedelta
 from sqlalchemy.sql.functions import count, func
-from models.database import db, User, SignupSource, DailyAppStatus, WatchlistFolder, WatchlistItem, WatchlistAlert, \
-    StockMaster, Stock
+from models.database import (
+    db, User, SignupSource, DailyAppStatus, WatchlistFolder, WatchlistItem,
+    WatchlistAlert, Stock, TickerMaster
+)
 from utils.db_queries.user_data import is_user_active
 from utils.datetime_utils import get_current_utc
 
@@ -143,19 +145,26 @@ def get_watchlist_stats(end: datetime):
         .where(WatchlistAlert.created_at < end)
     ).scalar()
 
-    num_stock_watchlist_items = len(
+    num_ticker_watchlist_items = len(
         db.session.query(
-            WatchlistItem.stock_id
+            WatchlistItem.ticker_id
         )
-        .where(WatchlistItem.created_at < end)
-        .group_by(WatchlistItem.stock_id)
+        .join(TickerMaster)
+        .filter(
+            TickerMaster.is_active == True,
+            WatchlistItem.created_at < end
+        )
+        .group_by(WatchlistItem.ticker_id)
         .all()
     )
 
-    num_stock_master = db.session.execute(
+    num_ticker_master = db.session.execute(
         db.select(func.count())
-        .select_from(StockMaster)
-        .where(StockMaster.created_at < end)
+        .select_from(TickerMaster)
+        .where(
+            TickerMaster.created_at < end,
+            TickerMaster.is_active == True
+        )
     ).scalar()
 
     num_stock = db.session.execute(
@@ -169,8 +178,8 @@ def get_watchlist_stats(end: datetime):
         "num_watchlist_folders": num_watchlist_folders,
         "num_watchlist_items": num_watchlist_items,
         "num_watchlist_alerts": num_watchlist_alerts,
-        "num_stock_watchlist_items": num_stock_watchlist_items,
-        "num_stock_master": num_stock_master,
+        "num_ticker_watchlist_items": num_ticker_watchlist_items,
+        "num_ticker_master": num_ticker_master,
         "num_stock": num_stock,
     }
 

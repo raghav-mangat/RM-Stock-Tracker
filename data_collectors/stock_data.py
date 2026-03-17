@@ -4,13 +4,13 @@ from dotenv import load_dotenv
 import os
 from metrics import metrics
 from metrics.registry import MetricName
-from models.database import Stock, StockMaster, StockMinute, StockHour, StockDay, StockWeek
+from models.database import Stock, StockMinute, StockHour, StockDay, StockWeek
 from utils.datetime_utils import (
     polygon_timestamp_to_utc_dt, format_date, DATE_FORMAT, DATETIME_FORMAT,
     utc_dt_to_polygon_timestamp
 )
 from utils.populate_db_info import db_last_updated_date
-from utils.db_queries.stock_type_meta_data import get_stock_type_id_by_code
+from utils.db_queries.tables.stock_type_meta import get_stock_type_id_by_code
 
 load_dotenv()
 
@@ -19,12 +19,21 @@ client = RESTClient(POLYGON_API_KEY)
 
 # List of all attributes that we store in the database for all stocks available in Polygon API.
 # Must be the same as all the fields in the Stock Master table in the database.
-STOCK_MASTER_ATTRIBUTES = [
-    "ticker", "name", "primary_exchange", "stock_type_id",
+FULL_MARKET_SNAPSHOT_ATTRIBUTES = [
     "last_updated", "day_close", "day_open", "day_high", "day_low", "volume",
     "vwap", "todays_change", "todays_change_perc",
     "prev_o", "prev_h", "prev_l", "prev_c", "prev_v", "prev_vwap",
-    "is_data_valid"
+]
+STOCK_MASTER_ATTRIBUTES = FULL_MARKET_SNAPSHOT_ATTRIBUTES + [
+    "ticker_id", "dataset_version_id", "popularity"
+]
+
+# Must be the same as all the fields in the Stock Detail table in the database.
+ALL_TICKERS_ATTRIBUTES = [
+    "name", "primary_exchange", "stock_type_code",
+]
+STOCK_DETAIL_ATTRIBUTES = [
+    "ticker_id", "name", "primary_exchange", "stock_type_id",
 ]
 
 # List of all attributes that we store in the database for a given stock.
@@ -104,40 +113,8 @@ SELECT_DB_TABLE = {
 # Timeframes for which we store the chart data in the database
 DB_TIMEFRAMES = ["1D", "1W", "1Y", "5Y"]
 
-def fetch_all_stocks_data(stock_type_id_map=None):
-    """
-    For all the stocks available in polygon API, this function collects
-    the data for all the attributes in 'STOCK_MASTER_ATTRIBUTES' defined
-    at the top of the script, using the polygon API. It then saves
-    all this data as a list of Stock Master DB model objects, and returns it.
-    :return: List of Stock Master DB model object, containing the required
-        data for all the stocks available in polygon API
-    """
-
-    print("Retrieving data for all the stocks in polygon API...")
-    stock_master_data = []
-
-    def get_stock_type_id(t):
-        if stock_type_id_map:
-            return stock_type_id_map.get(t.type)
-        else:
-            return get_stock_type_id_by_code(t.type)
-
-    # Use the "All Tickers" endpoint in polygon API to get some data for each stock
-    try:
-        all_tickers_data = {
-            t.ticker: {
-                "name": t.name,
-                "primary_exchange": t.primary_exchange,
-                "stock_type_id": get_stock_type_id(t),
-            } for t in client.list_tickers(
-                market="stocks", active="true", order="asc", limit="1000", sort="ticker"
-            )
-        }
-        metrics.increment(MetricName.MASSIVE_API_CALLS)
-    except Exception as e:
-        print(f"Error fetching all tickers data: {e}")
-        all_tickers_data = {}
+def fetch_full_market_snapshot_data():
+    full_market_snapshot_data = dict()
 
     # Getting "full market snapshot" endpoint data from polygon API
     try:
@@ -147,52 +124,120 @@ def fetch_all_stocks_data(stock_type_id_map=None):
         print(f"Error fetching snapshot data: {e}")
         snapshot = []
 
-    # For each stock in the snapshot, save all the required data for the stock
-    # in a Stock Master DB model object, and add it to the list to be returned
     for stock in snapshot:
+        ticker = stock.ticker.upper() if stock else None
+        if ticker and ticker not in full_market_snapshot_data:
+            try:
+                stock_data = {
+                    "day_close": safe_getattr(stock.day, "close"),
+                    "day_open": safe_getattr(stock.day, "open"),
+                    "day_high": safe_getattr(stock.day, "high"),
+                    "day_low": safe_getattr(stock.day, "low"),
+                    "volume": safe_getattr(stock.day, "volume"),
+                    "vwap": safe_getattr(stock.day, "vwap"),
+                    "prev_o": safe_getattr(stock.prev_day, "open"),
+                    "prev_h": safe_getattr(stock.prev_day, "high"),
+                    "prev_l": safe_getattr(stock.prev_day, "low"),
+                    "prev_c": safe_getattr(stock.prev_day, "close"),
+                    "prev_v": safe_getattr(stock.prev_day, "volume"),
+                    "prev_vwap": safe_getattr(stock.prev_day, "vwap"),
+                    "todays_change": safe_getattr(stock, "todays_change"),
+                    "todays_change_perc": safe_getattr(stock, "todays_change_percent"),
+                    "last_updated": polygon_timestamp_to_utc_dt(stock.updated, "nanosecond")
+                }
+
+                # Check that all fields are not None
+                if all(stock_data.get(attr) is not None for attr in FULL_MARKET_SNAPSHOT_ATTRIBUTES):
+                    full_market_snapshot_data[ticker] = stock_data
+
+            except Exception as e:
+                print(f"Error processing stock {getattr(stock, 'ticker', 'UNKNOWN')}: {e}")
+
+    print(f"Fetched {len(full_market_snapshot_data)} stocks for Full Market Snapshot!")
+    return full_market_snapshot_data
+
+def get_stock_master_data(full_market_snapshot_data, ticker_id_map, dataset_version_id):
+    stock_master_data = []
+
+    for ticker, stock_data in full_market_snapshot_data.items():
         try:
-            ticker = stock.ticker
-            ticker_meta = all_tickers_data.get(ticker)
-            if not ticker_meta:
-                raise ValueError("Missing metadata from all_tickers_data")
-
-            stock_data = {
-                "ticker": ticker,
-                "name": ticker_meta["name"],
-                "primary_exchange": ticker_meta["primary_exchange"],
-                "stock_type_id": ticker_meta["stock_type_id"],
-                "day_close": safe_getattr(stock.day, "close"),
-                "day_open": safe_getattr(stock.day, "open"),
-                "day_high": safe_getattr(stock.day, "high"),
-                "day_low": safe_getattr(stock.day, "low"),
-                "volume": safe_getattr(stock.day, "volume"),
-                "vwap": safe_getattr(stock.day, "vwap"),
-                "prev_o": safe_getattr(stock.prev_day, "open"),
-                "prev_h": safe_getattr(stock.prev_day, "high"),
-                "prev_l": safe_getattr(stock.prev_day, "low"),
-                "prev_c": safe_getattr(stock.prev_day, "close"),
-                "prev_v": safe_getattr(stock.prev_day, "volume"),
-                "prev_vwap": safe_getattr(stock.prev_day, "vwap"),
-                "todays_change": safe_getattr(stock, "todays_change"),
-                "todays_change_perc": safe_getattr(stock, "todays_change_percent"),
-                "last_updated": polygon_timestamp_to_utc_dt(stock.updated, "nanosecond")
-            }
-
-            stock_data.update({
-                "is_data_valid": True
+            data = stock_data.copy()
+            data.update({
+                "ticker_id": ticker_id_map.get(ticker, None),
+                "dataset_version_id": dataset_version_id,
+                "popularity": stock_data.get("day_close") * stock_data.get("volume")
             })
 
             # Check that all fields are not None
-            if all(stock_data.get(attr) is not None for attr in STOCK_MASTER_ATTRIBUTES):
-                stock_master_data.append(StockMaster(**stock_data))
-            else:
-                print(f"Skipping {ticker}: Incomplete data.")
+            if all(data.get(attr) is not None for attr in STOCK_MASTER_ATTRIBUTES):
+                stock_master_data.append(data)
 
         except Exception as e:
-            print(f"Error processing stock {getattr(stock, 'ticker', 'UNKNOWN')}: {e}")
+            print(f"Error processing stock {ticker}: {e}")
 
-    print(f"Retrieved {len(stock_master_data)} stocks from Polygon API!")
+    print(f"Number of Stock Master: {len(stock_master_data)}")
     return stock_master_data
+
+def fetch_all_tickers_data():
+    all_tickers_data = dict()
+
+    # Getting "All Tickers" endpoint data from polygon API
+    try:
+        all_stocks = client.list_tickers(
+            market="stocks", active="true", order="asc", limit="1000", sort="ticker"
+        )
+        metrics.increment(MetricName.MASSIVE_API_CALLS)
+    except Exception as e:
+        print(f"Error fetching all tickers data: {e}")
+        all_stocks = []
+
+    for stock in all_stocks:
+        ticker = stock.ticker.upper() if stock else None
+        if ticker and ticker not in all_tickers_data:
+            try:
+                stock_data = {
+                    "name": stock.name,
+                    "primary_exchange": stock.primary_exchange,
+                    "stock_type_code": stock.type,
+                }
+
+                # Check that all fields are not None
+                if all(stock_data.get(attr) is not None for attr in ALL_TICKERS_ATTRIBUTES):
+                    all_tickers_data[ticker] = stock_data
+
+            except Exception as e:
+                print(f"Error processing stock {getattr(stock, 'ticker', 'UNKNOWN')}: {e}")
+
+    print(f"Fetched {len(all_tickers_data)} stocks for All Tickers Data!")
+    return all_tickers_data
+
+def get_stock_detail_data(all_tickers_data, ticker_id_map, stock_type_id_map=None):
+    def get_stock_type_id(stock_type_code):
+        if stock_type_id_map:
+            return stock_type_id_map.get(stock_type_code)
+        else:
+            return get_stock_type_id_by_code(stock_type_code)
+
+    stock_detail_data = []
+
+    for ticker, stock_data in all_tickers_data.items():
+        try:
+            updated_stock_data = {
+                "ticker_id": ticker_id_map.get(ticker, None),
+                "name": stock_data.get("name", None),
+                "primary_exchange": stock_data.get("primary_exchange", None),
+                "stock_type_id": get_stock_type_id(stock_data.get("stock_type_code", None)),
+            }
+
+            # Check that all fields are not None
+            if all(updated_stock_data.get(attr) is not None for attr in STOCK_DETAIL_ATTRIBUTES):
+                stock_detail_data.append(updated_stock_data)
+
+        except Exception as e:
+            print(f"Error processing stock {ticker}: {e}")
+
+    print(f"Number of Stock Detail: {len(stock_detail_data)}")
+    return stock_detail_data
 
 def fetch_stock_types():
     stock_types = dict()
@@ -356,12 +401,12 @@ def fetch_stock_data(stock_master=None, now=None):
 
     stock = None
 
-    if not stock_master:
-        print(f"Stock Master not given.")
+    if not (stock_master and stock_master.ticker):
         return stock
 
-    ticker = stock_master.ticker
-    print(f"Fetching data for: {ticker}")
+    ticker = stock_master.ticker.symbol
+    if not ticker:
+        return stock
 
     if not now:
         now = db_last_updated_date()
@@ -377,6 +422,7 @@ def fetch_stock_data(stock_master=None, now=None):
         if attribute not in stock_data:
             stock_data[attribute] = None
     stock = Stock(**stock_data)
+    stock.stock_master_id = stock_master.id
     stock.stock_master = stock_master
 
     return stock
@@ -391,10 +437,13 @@ def fetch_chart_data(stock, timeframe, now=None):
     if not stock or not isinstance(stock, Stock):
         return chart_data
 
-    if not stock.stock_master:
+    if not (stock.stock_master and stock.stock_master.ticker):
         return chart_data
 
-    ticker = stock.stock_master.ticker
+    ticker = stock.stock_master.ticker.symbol
+    if not ticker:
+        return chart_data
+
     last_updated = stock.stock_master.last_updated
     if not now:
         now = db_last_updated_date()
