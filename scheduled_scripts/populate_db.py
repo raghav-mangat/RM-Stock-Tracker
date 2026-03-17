@@ -305,9 +305,8 @@ def update_additional_stock_data(now_date, stock_master_map, dataset_version_id)
         print("\n---- Updating Additional Data...")
         try:
             with db.session.begin():
-                for i in range(0, len(new_stocks), BATCH_SIZE):
-                    chunk = new_stocks[i:i + BATCH_SIZE]
-                    db.session.bulk_save_objects(chunk)
+                db.session.add_all(new_stocks)
+                db.session.flush()
 
                 for value in new_chart_data.values():
                     for i in range(0, len(value), BATCH_SIZE):
