@@ -57,6 +57,8 @@ INDEX_NAME_LEN = 500
 
 USER_INFO_LEN = 255
 
+DESCRIPTION_LEN = 255
+
 # --- Enums ---
 
 class SignupSource(str, Enum):
@@ -186,25 +188,158 @@ class TimestampMixin:
 
 # --- Models ---
 
+class TickerMaster(TimestampMixin, db.Model):
+    __tablename__ = "ticker_master"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+
+    symbol: Mapped[str] = mapped_column(String(TICKER_LEN), unique=True, nullable=False)
+
+    is_active: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=True,
+        server_default="1",
+        index=True
+    )
+
+    # Relationships
+    stock_detail: Mapped["StockDetail"] = relationship(
+        "StockDetail",
+        back_populates="ticker",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+        uselist=False
+    )
+
+    stock_masters: Mapped[list["StockMaster"]] = relationship(
+        "StockMaster",
+        back_populates="ticker",
+        cascade="all, delete-orphan",
+        passive_deletes=True
+    )
+
+    watchlist_items: Mapped[list["WatchlistItem"]] = relationship(
+        "WatchlistItem",
+        back_populates="ticker",
+        cascade="all, delete-orphan",
+        passive_deletes=True
+    )
+
+    __table_args__ = (
+        CheckConstraint('symbol = UPPER(symbol)', name='ck_ticker_symbol_uppercase'),
+        DBIndex("ix_ticker_symbol_active", "symbol", "is_active"),
+    )
+
+    def __repr__(self) -> str:
+        return f"<TickerMaster id={self.id} symbol={self.symbol}>"
+
+
+class DatasetVersion(TimestampMixin, db.Model):
+    __tablename__ = "dataset_versions"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+
+    is_active: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=False,
+        index=True
+    )
+
+    last_updated: Mapped[datetime] = mapped_column(
+        UTCDateTime,
+        nullable=False,
+        default=get_current_utc
+    )
+
+    description: Mapped[Optional[str]] = mapped_column(
+        String(DESCRIPTION_LEN),
+        nullable=True
+    )
+
+    stock_masters: Mapped[list["StockMaster"]] = relationship(
+        "StockMaster",
+        back_populates="dataset_version",
+        cascade="all, delete-orphan",
+        passive_deletes=True
+    )
+
+    stock_indices: Mapped[list["Index"]] = relationship(
+        "Index",
+        back_populates="dataset_version",
+        cascade="all, delete-orphan",
+        passive_deletes=True
+    )
+
+    def __repr__(self) -> str:
+        return f"<DatasetVersion id={self.id} is_active={self.is_active}>"
+
+
+class StockDetail(TimestampMixin, db.Model):
+    __tablename__ = "stocks_detail"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+
+    ticker_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("ticker_master.id", ondelete="CASCADE"),
+        unique=True,
+        nullable=False,
+    )
+    ticker: Mapped["TickerMaster"] = relationship(
+        "TickerMaster",
+        back_populates="stock_detail",
+        lazy="joined"
+    )
+
+    # All tickers data
+    name: Mapped[str] = mapped_column(String(STOCK_NAME_LEN), index=True, nullable=False)
+    primary_exchange: Mapped[str] = mapped_column(String(STOCK_INFO_LEN), nullable=False)
+
+    stock_type_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("stock_type_meta.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True
+    )
+    stock_type: Mapped["StockTypeMeta"] = relationship(
+        "StockTypeMeta",
+        back_populates="stock_details",
+        lazy="joined"
+    )
+
+    def __repr__(self) -> str:
+        return (f"<StockDetail id={self.id} ticker_id={self.ticker_id} name={self.name} "
+                f"stock_type_id={self.stock_type_id}>")
+
+
 class StockMaster(TimestampMixin, db.Model):
     __tablename__ = "stocks_master"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
 
-    # All tickers data
-    ticker: Mapped[str] = mapped_column(String(TICKER_LEN), unique=True, nullable=False)
-    name: Mapped[str] = mapped_column(String(STOCK_NAME_LEN), index=True, nullable=False)
-    primary_exchange: Mapped[str] = mapped_column(String(STOCK_INFO_LEN), nullable=False)
+    ticker_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("ticker_master.id", ondelete="CASCADE"),
+        index=True,
+        nullable=False
+    )
+    ticker: Mapped["TickerMaster"] = relationship(
+        "TickerMaster",
+        back_populates="stock_masters",
+        lazy="joined"
+    )
 
-    stock_type_id: Mapped[int] = mapped_column(
-        ForeignKey("stock_type_meta.id"),
+    dataset_version_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("dataset_versions.id", ondelete="CASCADE"),
         nullable=False,
         index=True
     )
-
-    stock_type: Mapped["StockTypeMeta"] = relationship(
-        "StockTypeMeta",
-        lazy="joined"
+    dataset_version: Mapped["DatasetVersion"] = relationship(
+        "DatasetVersion",
+        back_populates="stock_masters"
     )
 
     # Full Market Snapshot Data
@@ -224,11 +359,12 @@ class StockMaster(TimestampMixin, db.Model):
     prev_v: Mapped[int] = mapped_column(BigInteger, nullable=False)
     prev_vwap: Mapped[Decimal] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=False)
 
-    # Flag to check if the data is valid
-    is_data_valid: Mapped[bool] = mapped_column(
-        Boolean,
+    # Estimate popularity using: day close price * volume
+    # Also called trade activity
+    popularity: Mapped[Decimal] = mapped_column(
+        Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION),
         nullable=False,
-        default=True
+        index=True
     )
 
     # Stock Relationship
@@ -236,19 +372,16 @@ class StockMaster(TimestampMixin, db.Model):
         "Stock",
         back_populates="stock_master",
         uselist=False,
-        cascade="all, delete-orphan"
-    )
-
-    # Backref from watchlist items
-    watchlist_items: Mapped[list["WatchlistItem"]] = relationship(
-        "WatchlistItem",
-        back_populates="stock",
+        cascade="all, delete-orphan",
         passive_deletes=True
     )
 
-    # Adding Index for faster performance
     __table_args__ = (
-        DBIndex("ix_stock_master_ticker_name", "ticker", "name"),
+        UniqueConstraint(
+            "ticker_id",
+            "dataset_version_id",
+            name="uq_stock_master_ticker_dataset"
+        ),
     )
 
     # Returns a list of all the attributes in the table except for the excluded ones
@@ -279,8 +412,8 @@ class StockMaster(TimestampMixin, db.Model):
         return stock_master_dict
 
     def __repr__(self) -> str:
-        return (f"<StockMaster id={self.id} ticker={self.ticker} name={self.name} "
-                f"day_close={self.day_close}>")
+        return (f"<StockMaster id={self.id} ticker_id={self.ticker_id} "
+                f"dataset_version_id={self.dataset_version_id} day_close={self.day_close}>")
 
 
 class Stock(TimestampMixin, db.Model):
@@ -396,8 +529,13 @@ class StockTypeMeta(TimestampMixin, db.Model):
     # Active flag in case Polygon / Massive API deprecates types
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
+    # StockDetail relationship
+    stock_details: Mapped[list["StockDetail"]] = relationship(
+        back_populates="stock_type", cascade="all, delete-orphan", passive_deletes=True
+    )
+
     def __repr__(self) -> str:
-        return f"<StockTypeMeta id={self.id } code={self.code} description={self.description}>"
+        return f"<StockTypeMeta id={self.id} code={self.code} description={self.description}>"
 
 
 class StockMinute(db.Model):
@@ -413,10 +551,14 @@ class StockMinute(db.Model):
     volume: Mapped[Optional[int]] = mapped_column(BigInteger, nullable=True)
 
     stock_id: Mapped[int] = mapped_column(
+        Integer,
         ForeignKey("stocks.id", ondelete="CASCADE"),
         nullable=False
     )
-    stock: Mapped["Stock"] = relationship(back_populates="minute_data")
+    stock: Mapped["Stock"] = relationship(
+        "Stock",
+        back_populates="minute_data"
+    )
 
     __table_args__ = (
         UniqueConstraint("stock_id", "date", name="uq_stockminute_stockid_date"),
@@ -436,10 +578,14 @@ class StockHour(db.Model):
     volume: Mapped[Optional[int]] = mapped_column(BigInteger, nullable=True)
 
     stock_id: Mapped[int] = mapped_column(
+        Integer,
         ForeignKey("stocks.id", ondelete="CASCADE"),
         nullable=False
     )
-    stock: Mapped["Stock"] = relationship(back_populates="hour_data")
+    stock: Mapped["Stock"] = relationship(
+        "Stock",
+        back_populates="hour_data"
+    )
 
     __table_args__ = (
         UniqueConstraint("stock_id", "date", name="uq_stockhour_stockid_date"),
@@ -459,10 +605,14 @@ class StockDay(db.Model):
     volume: Mapped[Optional[int]] = mapped_column(BigInteger, nullable=True)
 
     stock_id: Mapped[int] = mapped_column(
+        Integer,
         ForeignKey("stocks.id", ondelete="CASCADE"),
         nullable=False
     )
-    stock: Mapped["Stock"] = relationship(back_populates="day_data")
+    stock: Mapped["Stock"] = relationship(
+        "Stock",
+        back_populates="day_data"
+    )
 
     __table_args__ = (
         UniqueConstraint("stock_id", "date", name="uq_stockday_stockid_date"),
@@ -479,10 +629,14 @@ class StockWeek(db.Model):
     volume: Mapped[Optional[int]] = mapped_column(BigInteger, nullable=True)
 
     stock_id: Mapped[int] = mapped_column(
+        Integer,
         ForeignKey("stocks.id", ondelete="CASCADE"),
         nullable=False
     )
-    stock: Mapped["Stock"] = relationship(back_populates="week_data")
+    stock: Mapped["Stock"] = relationship(
+        "Stock",
+        back_populates="week_data"
+    )
 
     __table_args__ = (
         UniqueConstraint("stock_id", "date", name="uq_stockweek_stockid_date"),
@@ -494,19 +648,44 @@ class Index(TimestampMixin, db.Model):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
 
-    slug: Mapped[str] = mapped_column(String(INDEX_NAME_LEN), unique=True, nullable=False)
-    name: Mapped[str] = mapped_column(String(INDEX_NAME_LEN), unique=True, nullable=False)
+    dataset_version_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("dataset_versions.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True
+    )
+    dataset_version: Mapped["DatasetVersion"] = relationship(
+        "DatasetVersion",
+        back_populates="stock_indices",
+    )
+
+    slug: Mapped[str] = mapped_column(String(INDEX_NAME_LEN), index=True, nullable=False)
+    name: Mapped[str] = mapped_column(String(INDEX_NAME_LEN), nullable=False)
     last_updated: Mapped[datetime] = mapped_column(UTCDateTime, nullable=False)
     url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
     holdings: Mapped[list["IndexHolding"]] = relationship(
-        back_populates="index",
+        back_populates="stock_index",
         cascade="all, delete-orphan",
         passive_deletes=True
     )
 
+    __table_args__ = (
+        UniqueConstraint(
+            "slug",
+            "dataset_version_id",
+            name="uq_indices_slug_dataset"
+        ),
+        UniqueConstraint(
+            "name",
+            "dataset_version_id",
+            name="uq_indices_name_dataset"
+        ),
+    )
+
     def __repr__(self) -> str:
-        return f"<Index id={self.id } slug={self.slug} name={self.name}>"
+        return (f"<Index id={self.id} dataset_version_id={self.dataset_version_id} "
+                f"slug={self.slug} name={self.name}>")
 
 
 class IndexHolding(TimestampMixin, db.Model):
@@ -525,7 +704,7 @@ class IndexHolding(TimestampMixin, db.Model):
     )
     weight: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
 
-    index: Mapped["Index"] = relationship(back_populates="holdings")
+    stock_index: Mapped["Index"] = relationship(back_populates="holdings")
     stock: Mapped["Stock"] = relationship(back_populates="index_holdings")
 
 
@@ -752,17 +931,26 @@ class WatchlistItem(TimestampMixin, db.Model):
     folder_id: Mapped[int] = mapped_column(
         Integer,
         ForeignKey("watchlist_folders.id", ondelete="CASCADE"),
+        index=True,
         nullable=False,
     )
-    stock_id: Mapped[int] = mapped_column(
+    ticker_id: Mapped[int] = mapped_column(
         Integer,
-        ForeignKey("stocks_master.id", ondelete="CASCADE"),
+        ForeignKey("ticker_master.id", ondelete="CASCADE"),
+        index=True,
         nullable=False,
     )
 
     # Relationships
-    folder: Mapped["WatchlistFolder"] = relationship("WatchlistFolder", back_populates="items")
-    stock: Mapped["StockMaster"] = relationship("StockMaster", back_populates="watchlist_items")
+    folder: Mapped["WatchlistFolder"] = relationship(
+        "WatchlistFolder",
+        back_populates="items"
+    )
+    ticker: Mapped["TickerMaster"] = relationship(
+        "TickerMaster",
+        back_populates="watchlist_items",
+        lazy="joined"
+    )
 
     # Alerts for this item
     alerts: Mapped[list["WatchlistAlert"]] = relationship(
@@ -773,8 +961,8 @@ class WatchlistItem(TimestampMixin, db.Model):
     )
 
     __table_args__ = (
-        # Prevent duplicate (same stock in same folder)
-        UniqueConstraint("folder_id", "stock_id", name="uq_watchlist_item_folder_stock"),
+        # Prevent duplicate (same ticker in same folder)
+        UniqueConstraint("folder_id", "ticker_id", name="uq_watchlist_item_folder_ticker"),
         # Make item order unique per folder: (folder_id, item_order) must be unique
         UniqueConstraint("folder_id", "item_order", name="uq_watchlist_item_order_folder"),
 
@@ -783,14 +971,11 @@ class WatchlistItem(TimestampMixin, db.Model):
             "item_order >= 1",
             name="ck_watchlist_item_order_ge_1",
         ),
-
-        DBIndex("ix_watchlist_items_folder_id", "folder_id"),
-        DBIndex("ix_watchlist_items_stock_id", "stock_id"),
     )
 
     def __repr__(self) -> str:
-        return (f"<WatchlistItem id={self.id} folder_id={self.folder_id} stock_id={self.stock_id} "
-                f"item_order={self.item_order}>")
+        return (f"<WatchlistItem id={self.id} folder_id={self.folder_id} "
+                f"ticker_id={self.ticker_id} item_order={self.item_order}>")
 
 
 class WatchlistFolderAttribute(TimestampMixin, db.Model):
@@ -959,8 +1144,8 @@ class DailyAppStatus(TimestampMixin, db.Model):
     num_watchlist_folders: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     num_watchlist_items: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     num_watchlist_alerts: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
-    num_stock_watchlist_items: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
-    num_stock_master: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    num_ticker_watchlist_items: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    num_ticker_master: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     num_stock: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
     # Market Status
@@ -1002,18 +1187,19 @@ class TickerTapeStockCache(TimestampMixin, db.Model):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
 
-    # FK - StockMaster
-    stock_master_id: Mapped[int] = mapped_column(
-        ForeignKey("stocks_master.id", ondelete="CASCADE"),
+    # FK - TickerMaster
+    ticker_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("ticker_master.id", ondelete="CASCADE"),
         nullable=False,
         unique=True
     )
 
     # Relationship
-    stock_master: Mapped["StockMaster"] = relationship(
-        "StockMaster",
+    ticker: Mapped["TickerMaster"] = relationship(
+        "TickerMaster",
         lazy="joined"
     )
 
     def __repr__(self) -> str:
-        return f"<TickerTapeStockCache id={self.id} stock_master_id={self.stock_master_id}>"
+        return f"<TickerTapeStockCache id={self.id} ticker_id={self.ticker_id}>"
