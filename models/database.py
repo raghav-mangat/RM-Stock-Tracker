@@ -493,14 +493,10 @@ class Stock(TimestampMixin, db.Model):
                 return format_date(val)
             return val
 
-        stock_dict = dict()
-        if self.stock_master:
-            stock_dict.update(self.stock_master.to_dict())
-
-        stock_dict.update({
+        stock_dict = {
             column.name: serialize(getattr(self, column.name))
             for column in self.__table__.columns
-        })
+        }
 
         return stock_dict
 
@@ -763,7 +759,7 @@ class User(UserMixin, TimestampMixin, db.Model):
     def verify_password(self, password):
         if not self.password_hash:
             return False
-        return check_password_hash(self.password_hash, password)
+        return check_password_hash(str(self.password_hash), password)
 
     # One user -> many watchlist folders
     watchlist_folders: Mapped[list["WatchlistFolder"]] = relationship(
