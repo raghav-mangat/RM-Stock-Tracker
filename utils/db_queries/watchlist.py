@@ -373,7 +373,7 @@ def db_update_folder_alerts(folder_id, alerts, user):
 
         return MutationResult(
             ok=True,
-            message=f"Updated email alerts for folder '{folder.name}'.",
+            message=f"Updated alerts for folder '{folder.name}'.",
         )
 
     except Exception as e:
@@ -404,7 +404,7 @@ def db_update_item_alerts(item_id, alerts, user):
 
         return MutationResult(
             ok=True,
-            message=f"Updated email alerts for stock '{item.ticker.symbol}' in folder '{item.folder.name}'.",
+            message=f"Updated alerts for stock '{item.ticker.symbol}' in folder '{item.folder.name}'.",
         )
 
     except Exception as e:

@@ -119,12 +119,17 @@ function updateHoverInfoText(index) {
     }
   }
 
-  dateValue.textContent = `${DATE_LABEL}: ${dateVal}`;
-  closePriceValue.textContent = `${CLOSE_PRICE_LABEL}: ${closePriceVal}`;
-  volumeValue.textContent = `${VOLUME_LABEL}: ${volumeVal}`;
-  ema30Value.textContent = `${EMA_30_LABEL}: ${ema30Val}`;
-  ema50Value.textContent = `${EMA_50_LABEL}: ${ema50Val}`;
-  ema200Value.textContent = `${EMA_200_LABEL}: ${ema200Val}`;
+  function setField(element, label, value) {
+    element.querySelector(".label").textContent = label;
+    element.querySelector(".value").textContent = value;
+  }
+
+  setField(dateValue, DATE_LABEL, dateVal);
+  setField(closePriceValue, CLOSE_PRICE_LABEL, closePriceVal);
+  setField(volumeValue, VOLUME_LABEL, volumeVal);
+  setField(ema30Value, EMA_30_LABEL, ema30Val);
+  setField(ema50Value, EMA_50_LABEL, ema50Val);
+  setField(ema200Value, EMA_200_LABEL, ema200Val);
 }
 
 // Hover Plugin:

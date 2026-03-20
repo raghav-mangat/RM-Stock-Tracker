@@ -2,7 +2,7 @@
 
 {% macro alert_offcanvas(offcanvas_target_id, form_action, folder_id, db_id, folder_name, alert_data, attributes, ticker=None) %}
 <div class="alert-offcanvas-in-folder-{{ folder_id }} offcanvas offcanvas-end mt-5"
-     data-bs-scroll="true" data-bs-backdrop="false" tabindex="-1"
+     data-bs-scroll="false" data-bs-backdrop="true" tabindex="-1"
      id="{{ offcanvas_target_id }}">
 
   <div class="offcanvas-header border-bottom border-secondary">
