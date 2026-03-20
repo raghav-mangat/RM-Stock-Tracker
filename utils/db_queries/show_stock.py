@@ -10,12 +10,11 @@ from utils.datetime_utils import DATE_FORMAT, convert_to_et_dt, format_dt_et
 from utils.db_queries.tables.dataset_version import get_active_dataset_id
 
 def get_stock_data(ticker_master=None, stock_master=None, stock_detail=None, now=None):
+    result = dict()
+
     # Check if the stock is present in the database
     stock = (
         db.session.query(Stock)
-        .options(
-            joinedload(Stock.stock_master),
-        )
         .filter(Stock.stock_master_id == stock_master.id)
         .first()
     )
@@ -23,27 +22,27 @@ def get_stock_data(ticker_master=None, stock_master=None, stock_detail=None, now
     # If not in db then use stock data collector script to get stock data
     if not stock:
         stock = fetch_stock_data(stock_master=stock_master, now=now)
-        db.session.add(stock)
-        db.session.flush()
+
+    if not stock:
+        return result
 
     # Get the list of related companies
     rel_companies = []
-    if stock and stock.related_companies:
+    if stock.related_companies:
         rel_companies = stock.related_companies.split(',')
 
     # Get the stock type
     stock_type = stock_detail.stock_type.description
 
     # Get the last updated time
-    last_updated = None
-    if stock and stock.stock_master:
-        last_updated = format_dt_et(stock.stock_master.last_updated)
+    last_updated = format_dt_et(stock_master.last_updated)
 
     stock_data = stock.to_dict()
     stock_data.update({
         "ticker": ticker_master.symbol,
         "name": stock_detail.name
     })
+    stock_data.update(stock_master.to_dict())
 
     result = {
         "stock": stock_data,
@@ -129,6 +128,10 @@ def verify_ticker(ticker):
         .select_from(TickerMaster)
         .join(StockMaster, TickerMaster.id == StockMaster.ticker_id)
         .join(StockDetail, TickerMaster.id == StockDetail.ticker_id)
+        .options(
+            joinedload(StockDetail.stock_type),
+            joinedload(StockMaster.ticker)
+        )
         .filter(
             TickerMaster.is_active == True,
             TickerMaster.symbol == ticker,

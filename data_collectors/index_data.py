@@ -1,3 +1,4 @@
+import random
 import time
 import requests
 from bs4 import BeautifulSoup
@@ -49,13 +50,15 @@ def get_index_info(index):
     """
     return indices_info.get(index)
 
-def fetch_index_data(index):
+def fetch_index_data(index, max_retries=3):
     """
     Takes an index name for an index in slickcharts website, scrapes the website
     using beautiful soup, and returns a list of holdings for that index.
     Each element in the holdings list is a dict containing 'weight' and
-    'ticker' symbol of each stock in the index.
+    'ticker' symbol of each stock in the index. Retries the scraping if
+    the response fails.
     :param index: index name for an index is slickcharts website
+    :param max_retries: maximum number of retries before giving up
     :return: index_holdings: List of dicts containing weight and ticker
     symbol for each stock in the index
     """
@@ -69,7 +72,6 @@ def fetch_index_data(index):
         print(f"[Index Error] Index <{index}> is invalid: {e}")
         return index_holdings
 
-    print(f"Scraping: <{url}>...")
     headers = {
         "User-Agent": (
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
@@ -77,38 +79,39 @@ def fetch_index_data(index):
         )
     }
 
-    # Getting response from the webpage at given url
-    try:
-        response = requests.get(url, headers=headers, timeout=10)
-        response.raise_for_status()
-        time.sleep(5)
-    except Exception as e:
-        print(f"[Request Error] Failed to fetch {url}: {e}")
-        return index_holdings
+    for attempt in range(max_retries):
+        try:
+            # Small jitter before request
+            time.sleep(random.uniform(0.2, 0.5))
 
-    try:
-        # Create soup from the webpage response
-        soup = BeautifulSoup(response.text, 'html.parser')
-        table = soup.find("table", class_="table")
+            # Getting response from the webpage at given url
+            response = requests.get(url, headers=headers, timeout=10)
+            response.raise_for_status()
 
-        # Check if index data table exists in the soup
-        if not table or not table.tbody:
-            print(f"[Parse Error] Could not find table in {url}")
-            return index_holdings
+            # Create soup from the webpage response
+            soup = BeautifulSoup(response.text, 'html.parser')
+            table = soup.find("table", class_="table")
 
-        # Retrieve stock data from the index data table
-        for row in table.tbody.find_all("tr"):
-            cols = row.find_all("td")
-            if len(cols) >= 4:
-                ticker = cols[2].text.strip()
-                weight = cols[3].text.strip().replace("%", "")
-                index_holdings.append({
-                    "ticker": ticker if ticker else None,
-                    "weight": weight if weight else None,
-                })
+            # Check if index data table exists in the soup
+            if not table or not table.tbody:
+                print(f"[Parse Error] Could not find table in {url}")
+                return index_holdings
 
-        return index_holdings
+            # Retrieve stock data from the index data table
+            for row in table.tbody.find_all("tr"):
+                cols = row.find_all("td")
+                if len(cols) >= 4:
+                    ticker = cols[2].text.strip()
+                    weight = cols[3].text.strip().replace("%", "")
+                    index_holdings.append({
+                        "ticker": ticker if ticker else None,
+                        "weight": weight if weight else None,
+                    })
 
-    except Exception as e:
-        print(f"[Parsing Error] {url}: {e}")
-        return index_holdings
+            return index_holdings  # Success -> Exit
+
+        except Exception as e:
+            print(f"[Retry {attempt + 1}] Failed {url}: {e}")
+            time.sleep(1 + attempt)  # Simple Backoff
+
+    return index_holdings  # Return empty if all retries fail

@@ -1,4 +1,5 @@
-from sqlalchemy import and_
+from sqlalchemy import and_, func
+from sqlalchemy.orm import selectinload
 from sqlalchemy.exc import IntegrityError
 from dataclasses import dataclass
 from models.database import (
@@ -25,15 +26,41 @@ def db_get_all_watchlist_data(user):
     result = {}
     folders = get_all_user_folders(user)
 
+    # Number of items with active Ticker Master per folder
+    counts = dict(
+        db.session.query(
+            WatchlistItem.folder_id,
+            func.count().label("count")
+        )
+        .join(TickerMaster)
+        .filter(
+            TickerMaster.is_active == True
+        )
+        .group_by(WatchlistItem.folder_id)
+        .all()
+    )
+
     for folder in folders:
-        result[folder.id] = db_get_folder_data(folder)
+        result[folder.id] = db_get_folder_data(folder, counts.get(folder.id, 0))
     return result
 
-def db_get_folder_data(folder):
+def db_get_folder_data(folder, num_active_items=None):
+    if num_active_items is None:
+        num_active_items = (
+            db.session.query(func.count())
+            .select_from(WatchlistItem)
+            .join(TickerMaster)
+            .filter(
+                WatchlistItem.folder_id == folder.id,
+                TickerMaster.is_active == True
+            )
+            .scalar()
+        )
+
     return {
         "folder_name": folder.name,
         "folder_order": folder.folder_order,
-        "folder_num_items": len(folder.items),
+        "folder_num_items": num_active_items,
         "folder_sort_by_attribute": folder.sort_by_attribute,
         "folder_sort_by_order": folder.sort_by_order,
         "folder_attributes_data": folder.folder_attributes,
@@ -533,12 +560,15 @@ def delete_item_alerts(item, user):
     db.session.flush()
 
 def get_folder_by_id(folder_id):
-    folder = db.session.execute(db.select(WatchlistFolder).where(WatchlistFolder.id == folder_id)).scalar()
-    return folder
-
-def get_item_by_id(item_id):
-    item = db.session.execute(db.select(WatchlistItem).where(WatchlistItem.id == item_id)).scalar()
-    return item
+    return db.session.execute(
+        db.select(WatchlistFolder)
+        .options(
+            selectinload(WatchlistFolder.items),
+            selectinload(WatchlistFolder.folder_attributes),
+            selectinload(WatchlistFolder.alerts),
+        )
+        .where(WatchlistFolder.id == folder_id)
+    ).scalar()
 
 def get_all_user_watchlist_alerts(user):
     return user.watchlist_alerts
@@ -549,14 +579,16 @@ def get_all_user_folders(user):
     in ascending order of the 'folder_order'.
     """
     folders = db.session.execute(
-        db.select(
-            WatchlistFolder
-        ).where(
-            WatchlistFolder.user == user
-        ).order_by(
-            WatchlistFolder.folder_order.asc()
+        db.select(WatchlistFolder)
+        .options(
+            selectinload(WatchlistFolder.items),
+            selectinload(WatchlistFolder.folder_attributes),
+            selectinload(WatchlistFolder.alerts),
         )
+        .where(WatchlistFolder.user == user)
+        .order_by(WatchlistFolder.folder_order.asc())
     ).scalars().all()
+
     return folders
 
 def get_folder_items(folder_id):
@@ -619,7 +651,9 @@ def get_all_items_data(folder_id):
     # Fetch all WatchlistItem rows in one query
     items = (
         db.session.execute(
-            db.select(WatchlistItem).where(
+            db.select(WatchlistItem)
+            .options(selectinload(WatchlistItem.alerts))
+            .where(
                 WatchlistItem.id.in_(ordered_item_ids)
             )
         )
@@ -648,8 +682,6 @@ def get_all_items_data(folder_id):
     for stock_master_id in remaining_stock_master_ids:
         stock_master = stock_master_by_stock_master_id[stock_master_id]
         stock = fetch_stock_data(stock_master=stock_master, now=now)
-        db.session.add(stock)
-        db.session.flush()
 
         if stock:
             stocks_by_stock_master_id[stock_master_id] = stock
@@ -660,6 +692,7 @@ def get_all_items_data(folder_id):
         stock_detail = stock_detail_by_item_id[item_id]
 
         stock_master_id = stock_master_id_by_item_id[item_id]
+        stock_master = stock_master_by_stock_master_id[stock_master_id]
 
         stock = stocks_by_stock_master_id.get(stock_master_id)
         item = items_by_id.get(item_id)
@@ -672,6 +705,7 @@ def get_all_items_data(folder_id):
             "ticker": ticker_master.symbol,
             "name": stock_detail.name
         })
+        stock_data.update(stock_master.to_dict())
 
         all_items_data[item_id] = {
             "stock_data": stock_data,

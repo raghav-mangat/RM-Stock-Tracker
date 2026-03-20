@@ -7,6 +7,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from app import app
 from sqlalchemy import delete
 from sqlalchemy.orm import joinedload
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import time
 from models.database import (
     db, Index, IndexHolding, StockTypeMeta, TickerMaster, DatasetVersion,
@@ -28,26 +29,7 @@ from scheduled_scripts.helpers.helpers import write_to_status_file, get_market_s
 
 
 BATCH_SIZE = 1000
-
-# -------- Stage new stock data --------
-stocks_fetched = set()
-new_stocks = []
-
-# ---- Helper to fetch Stock object ----
-def fetch_stock_object(ticker, now_date, stock_master_map):
-    result = True
-    if ticker not in stocks_fetched:
-        try:
-            stock = fetch_stock_data(stock_master=stock_master_map.get(ticker, None), now=now_date)
-            if stock:
-                stocks_fetched.add(ticker)
-                new_stocks.append(stock)
-            else:
-                result = False
-        except Exception as e:
-            result = False
-            print(f"[Fetch Error] {ticker}: {e}")
-    return result
+MAX_WORKERS = min(6, (os.cpu_count() or 3) * 2)
 
 def update_ticker_master(full_market_snapshot_data, all_tickers_data):
     print(f"\n---- Updating Ticker Master...")
@@ -206,52 +188,63 @@ def update_stock_master(full_market_snapshot_data, ticker_id_map, dataset_versio
     print(f"-Time: {end_time - start_time:.4f} seconds")
     print(f"---- Updated Stock Master!")
 
-def update_stock_index_data(now, now_date, stock_master_map, dataset_version_id):
+def get_and_update_indices_data(now, dataset_version_id):
+    tickers = set()
     new_indices = []
-    new_index_holdings = []
     index_holdings_temp = []
 
-    print(f"\n---- Fetching data for indices...")
+    print(f"\n---- Getting data for indices...")
     start_time = time.perf_counter()
-    with app.app_context():
-        # ---- Indices and holdings ----
-        for index in all_indices:
-            index_info = get_index_info(index)
-            index_obj = Index(
-                name=index_info.get("name"),
-                slug=index_info.get("slug"),
-                url=index_info.get("url"),
-                last_updated=now,
-                dataset_version_id=dataset_version_id
-            )
-            new_indices.append(index_obj)
 
-            holdings = fetch_index_data(index)
+    index_map = {}  # slug -> Index object
+
+    # Indices and holdings
+    for index in all_indices:
+        index_info = get_index_info(index)
+        index_obj = Index(
+            name=index_info.get("name"),
+            slug=index_info.get("slug"),
+            url=index_info.get("url"),
+            last_updated=now,
+            dataset_version_id=dataset_version_id
+        )
+        new_indices.append(index_obj)
+        index_map[index] = index_obj
+
+    # Parallel fetch holdings
+    def worker(index_):
+        holdings_ = fetch_index_data(index_)
+        return index_, holdings_
+
+    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+        futures = [executor.submit(worker, index) for index in all_indices]
+
+        for future in as_completed(futures):
+            index, holdings = future.result()
+            index_obj = index_map.get(index)
+
             for holding in holdings:
                 ticker = holding.get("ticker")
                 if ticker:
-                    is_fetched = fetch_stock_object(ticker, now_date, stock_master_map)
-                    if is_fetched:
-                        index_holdings_temp.append(
-                            (index_obj.slug, ticker, holding.get("weight"))
-                        )
+                    tickers.add(ticker)
+                    index_holdings_temp.append(
+                        (index_obj.slug, ticker, holding.get("weight"))
+                    )
 
-            print(f"Fetched data for: {index}!")
+            print(f"Got data for: {index}!")
+
     end_time = time.perf_counter()
     print(f"-Time: {end_time - start_time:.4f} seconds")
-    print(f"---- Fetched data for indices!")
+    print(f"---- Got data for indices!")
 
-    print("\n---- Adding Fetched Data...")
+    print("\n---- Updating Indices Data...")
     start_time = time.perf_counter()
+
     with app.app_context():
         try:
             with db.session.begin():
                 for i in range(0, len(new_indices), BATCH_SIZE):
                     chunk = new_indices[i:i + BATCH_SIZE]
-                    db.session.bulk_save_objects(chunk)
-
-                for i in range(0, len(new_stocks), BATCH_SIZE):
-                    chunk = new_stocks[i:i + BATCH_SIZE]
                     db.session.bulk_save_objects(chunk)
 
                 # Data will be automatically committed to the database by db.session.begin()
@@ -260,6 +253,128 @@ def update_stock_index_data(now, now_date, stock_master_map, dataset_version_id)
             print(f"Error: {e}")
             db.session.rollback()
             raise
+
+    end_time = time.perf_counter()
+    print(f"-Time: {end_time - start_time:.4f} seconds")
+    print("---- Updated Indices Data!")
+
+    return tickers, index_holdings_temp
+
+def get_additional_stock_data(tickers, dataset_version_id):
+    print("\n---- Getting Additional Stock Data for updated database...")
+    start_time = time.perf_counter()
+
+    with app.app_context():
+        print("Getting Trending Stocks data for updated database...")
+        for stock in get_trending_stocks(dataset_version_id):
+            ticker = stock.ticker
+            if ticker:
+                tickers.add(ticker)
+        print("Got Trending Stocks data for updated database!")
+
+        print("Getting Top Stocks data for updated database...")
+        for category in get_top_stocks_categories().keys():
+            for stocks_type in ["gainers", "losers", "top_traded"]:
+                for stock in db_get_top_stocks_data(category, stocks_type, dataset_version_id):
+                    ticker = stock.ticker
+                    if ticker:
+                        tickers.add(ticker)
+        print("Got Top Stocks data for updated database!")
+
+        print("Getting Search Bar Stocks data for updated database...")
+        for item in get_query_stocks(user_query=None, dataset_version_id=dataset_version_id).json:
+            ticker = item.get("ticker")
+            if ticker:
+                tickers.add(ticker)
+        print("Got Search Bar Stocks data for updated database!")
+
+    end_time = time.perf_counter()
+    print(f"-Time: {end_time - start_time:.4f} seconds")
+    print("---- Got Additional Stock Data for updated database!")
+
+    return tickers
+
+def fetch_and_update_stock_data(tickers, stock_master_map, now_date):
+    print("\n---- Fetching Stocks Data...")
+    start_time = time.perf_counter()
+
+    with app.app_context():
+        stocks = parallel_fetch_stocks(tickers, stock_master_map, now_date)
+
+    end_time = time.perf_counter()
+    print(f"-Time: {end_time - start_time:.4f} seconds")
+    print("---- Fetched Stocks Data!")
+
+    print("\n---- Updating Stocks Data...")
+    start_time = time.perf_counter()
+
+    with app.app_context():
+        try:
+            with db.session.begin():
+                for i in range(0, len(stocks), BATCH_SIZE):
+                    chunk = stocks[i:i + BATCH_SIZE]
+                    db.session.bulk_save_objects(chunk)
+
+                # Data will be automatically committed to the database by db.session.begin()
+
+        except Exception as e:
+            print(f"Error: {e}")
+            db.session.rollback()
+            raise
+
+    end_time = time.perf_counter()
+    print(f"-Time: {end_time - start_time:.4f} seconds")
+    print("---- Updated Stocks Data!")
+
+def fetch_and_update_chart_data(now_date, dataset_version_id):
+    print("\n---- Fetching Chart Data...")
+    start_time = time.perf_counter()
+
+    with app.app_context():
+        stocks = (
+            db.session.query(Stock)
+            .options(
+                joinedload(Stock.stock_master)
+                .joinedload(StockMaster.ticker)
+            )
+            .join(StockMaster)
+            .filter(StockMaster.dataset_version_id == dataset_version_id)
+        ).all()
+
+    with app.app_context():
+        all_chart_data = parallel_fetch_charts(stocks, now_date)
+
+    end_time = time.perf_counter()
+    print(f"-Time: {end_time - start_time:.4f} seconds")
+    print("---- Fetched Chart Data!")
+
+    print("\n---- Updating Chart Data...")
+    start_time = time.perf_counter()
+
+    with app.app_context():
+        try:
+            with db.session.begin():
+                for value in all_chart_data.values():
+                    for i in range(0, len(value), BATCH_SIZE):
+                        chunk = value[i:i + BATCH_SIZE]
+                        db.session.bulk_save_objects(chunk)
+
+                # Data will be automatically committed to the database by db.session.begin()
+
+        except Exception as e:
+            print(f"Error: {e}")
+            db.session.rollback()
+            raise
+
+    end_time = time.perf_counter()
+    print(f"-Time: {end_time - start_time:.4f} seconds")
+    print("---- Updated Chart Data!")
+
+def update_index_holdings_data(index_holdings_temp, dataset_version_id):
+    new_index_holdings = []
+
+    print("\n---- Updating Index Holdings Data...")
+    start_time = time.perf_counter()
 
     with app.app_context():
         indices = (
@@ -321,105 +436,60 @@ def update_stock_index_data(now, now_date, stock_master_map, dataset_version_id)
 
     end_time = time.perf_counter()
     print(f"-Time: {end_time - start_time:.4f} seconds")
-    print("---- Added Fetched Data!")
+    print("---- Updated Index Holdings Data!")
 
-def update_additional_stock_data(now_date, stock_master_map, dataset_version_id):
-    print("\n---- Fetching Additional Stock Data for updated database...")
-    start_time = time.perf_counter()
+def fetch_stock_worker(ticker, stock_master_map, now_date):
+    stock = None
 
-    with app.app_context():
-        print("Fetching Trending Stocks data for updated database...")
-        for stock in get_trending_stocks(dataset_version_id):
-            ticker = stock.ticker
-            if ticker:
-                fetch_stock_object(ticker, now_date, stock_master_map)
-        print("Fetched Trending Stocks data for updated database!")
+    stock_master = stock_master_map.get(ticker)
+    if stock_master:
+        stock = fetch_stock_data(stock_master=stock_master, now=now_date)
 
-    with app.app_context():
-        print("Fetching Top Stocks data for updated database...")
-        for category in get_top_stocks_categories().keys():
-            for stocks_type in ["gainers", "losers", "top_traded"]:
-                for stock in db_get_top_stocks_data(category, stocks_type, dataset_version_id):
-                    ticker = stock.ticker
-                    if ticker:
-                        fetch_stock_object(ticker, now_date, stock_master_map)
-        print("Fetched Top Stocks data for updated database!")
+    return stock
 
-    with app.app_context():
-        print("Fetching Search Bar Stocks data for updated database...")
-        for item in get_query_stocks(user_query=None, dataset_version_id=dataset_version_id).json:
-            ticker = item.get("ticker")
-            if ticker:
-                fetch_stock_object(ticker, now_date, stock_master_map)
-        print("Fetched Search Bar Stocks data for updated database!")
+def parallel_fetch_stocks(tickers, stock_master_map, now_date):
+    stocks = []
 
-    end_time = time.perf_counter()
-    print(f"-Time: {end_time - start_time:.4f} seconds")
-    print("---- Fetched Additional Stock Data for updated database!")
+    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+        futures = [
+            executor.submit(fetch_stock_worker, ticker, stock_master_map, now_date)
+            for ticker in tickers
+        ]
 
-    print("\n---- Updating Additional Data...")
-    start_time = time.perf_counter()
-    with app.app_context():
-        try:
-            with db.session.begin():
-                for i in range(0, len(new_stocks), BATCH_SIZE):
-                    chunk = new_stocks[i:i + BATCH_SIZE]
-                    db.session.bulk_save_objects(chunk)
+        for future in as_completed(futures):
+            stock = future.result()
+            if stock:
+                stocks.append(stock)
 
-        except Exception as e:
-            print(f"Error: {e}")
-            db.session.rollback()
-            raise
+    return stocks
 
-    end_time = time.perf_counter()
-    print(f"-Time: {end_time - start_time:.4f} seconds")
-    print("---- Updated Additional Data!")
+def fetch_chart_worker(stock, now_date):
+    chart_data = {tf: [] for tf in DB_TIMEFRAMES}
 
-def update_chart_data(dataset_version_id, now_date):
-    print(f"\n---- Fetching Chart Data...")
-    start_time = time.perf_counter()
+    for timeframe in DB_TIMEFRAMES:
+        records = fetch_chart_data(stock, timeframe, now_date)
+        chart_data[timeframe].extend(records)
 
-    with app.app_context():
-        stocks = (
-            db.session.query(Stock)
-            .options(
-                joinedload(Stock.stock_master)
-                .joinedload(StockMaster.ticker)
-            )
-            .select_from(Stock)
-            .join(StockMaster)
-            .filter(StockMaster.dataset_version_id == dataset_version_id)
-        ).all()
+    return chart_data
 
-    new_chart_data = {timeframe: [] for timeframe in DB_TIMEFRAMES}
-    for stock in stocks:
-        for timeframe, data_list in new_chart_data.items():
-            chart_records = fetch_chart_data(stock, timeframe, now_date)
-            data_list.extend(chart_records)
+def parallel_fetch_charts(stocks, now_date):
+    all_chart_data = {tf: [] for tf in DB_TIMEFRAMES}
 
-    end_time = time.perf_counter()
-    print(f"-Time: {end_time - start_time:.4f} seconds")
-    print(f"---- Fetched Chart Data!")
+    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+        futures = [
+            executor.submit(fetch_chart_worker, stock, now_date)
+            for stock in stocks
+        ]
 
-    print(f"\n---- Updating Chart Data...")
-    start_time = time.perf_counter()
+        for future in as_completed(futures):
+            result = future.result()
+            if not result:
+                continue
 
-    with app.app_context():
-        try:
-            with db.session.begin():
-                for value in new_chart_data.values():
-                    for i in range(0, len(value), BATCH_SIZE):
-                        chunk = value[i:i + BATCH_SIZE]
-                        db.session.bulk_save_objects(chunk)
+            for tf, data in result.items():
+                all_chart_data[tf].extend(data)
 
-        except Exception as e:
-            print(f"Error: {e}")
-            db.session.rollback()
-            raise
-
-    end_time = time.perf_counter()
-    print(f"-Time: {end_time - start_time:.4f} seconds")
-    print(f"---- Updated Chart Data!")
+    return all_chart_data
 
 def create_new_dataset_version(now):
     print(f"\n---- Creating Dataset Version...")
@@ -550,8 +620,8 @@ def populate_db(now):
         time to complete it either slows down the platform or just does not
         allow user changes to take place if an associated database table is
         being updated for example updating the watchlist items.
-    - If we store something in the stocks_fetched, it means we have already
-        collected the required data for that stock.
+    - We use threading to fetch the data from Massive API and data for indices
+        to speed up the fetching process alot.
     """
 
     print("Starting Database Population...\n")
@@ -603,13 +673,16 @@ def populate_db(now):
         }
 
     now_date = format_date_et(now)
-    update_stock_index_data(now, now_date, stock_master_map, dataset_version_id)
 
-    new_stocks.clear()
+    tickers, index_holdings_temp = get_and_update_indices_data(now, dataset_version_id)
 
-    update_additional_stock_data(now_date, stock_master_map, dataset_version_id)
+    tickers = get_additional_stock_data(tickers, dataset_version_id)
 
-    update_chart_data(dataset_version_id, now_date)
+    fetch_and_update_stock_data(tickers, stock_master_map, now_date)
+
+    fetch_and_update_chart_data(now_date, dataset_version_id)
+
+    update_index_holdings_data(index_holdings_temp, dataset_version_id)
 
     with app.app_context():
         update_stock_type_meta(stock_types)

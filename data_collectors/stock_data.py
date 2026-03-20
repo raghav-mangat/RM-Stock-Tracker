@@ -43,7 +43,7 @@ STOCK_ATTRIBUTES = [
     "market_cap", "icon_url",
     "dma_30", "dma_50", "dma_200", "dma_30_perc_diff", "dma_50_perc_diff", "dma_200_perc_diff",
     "high_52w", "low_52w", "high_52w_perc_diff", "low_52w_perc_diff",
-    "related_companies", "stock_master"
+    "related_companies", "stock_master_id"
 ]
 
 TIMEFRAME_OPTIONS = {
@@ -424,7 +424,6 @@ def fetch_stock_data(stock_master=None, now=None):
             stock_data[attribute] = None
     stock = Stock(**stock_data)
     stock.stock_master_id = stock_master.id
-    stock.stock_master = stock_master
 
     return stock
 
@@ -438,7 +437,7 @@ def fetch_chart_data(stock, timeframe, now=None):
     if not stock or not isinstance(stock, Stock):
         return chart_data
 
-    if not (stock.id and stock.stock_master and stock.stock_master.ticker):
+    if not (stock.stock_master and stock.stock_master.ticker):
         return chart_data
 
     ticker = stock.stock_master.ticker.symbol
