@@ -250,6 +250,7 @@ def fetch_stock_types():
     except Exception as e:
         print(f"Error while fetching stock types: {e}")
 
+    print(f"Fetched {len(stock_types)} Stock Types!")
     return stock_types
 
 def get_related_companies(ticker):
@@ -437,7 +438,7 @@ def fetch_chart_data(stock, timeframe, now=None):
     if not stock or not isinstance(stock, Stock):
         return chart_data
 
-    if not (stock.stock_master and stock.stock_master.ticker):
+    if not (stock.id and stock.stock_master and stock.stock_master.ticker):
         return chart_data
 
     ticker = stock.stock_master.ticker.symbol
@@ -521,7 +522,7 @@ def fetch_chart_data(stock, timeframe, now=None):
         volume = volume_data[timestamp]
 
         kwargs = dict(
-            stock=stock,
+            stock_id=stock.id,
             date=utc_date,
             close_price=close_price,
             volume=volume
