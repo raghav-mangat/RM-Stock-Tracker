@@ -27,12 +27,36 @@ function changeTransparency(rgbaString, newAlpha) {
 }
 
 function createSummaryChart(ctx, labels, data, backgroundColor) {
-  const minPrice = Math.min(...data);
-  const maxPrice = Math.max(...data);
-  const buffer = (maxPrice - minPrice) * BUFFER_PERC; // Add buffer for better visual separation
-  backgroundColor.forEach((value, index, array) => {
-    array[index] = changeTransparency(value, BAR_TRANSPARENCY);
-  });
+  const validData = data.filter(
+    (v) => v !== null && v !== undefined && !isNaN(v),
+  );
+
+  // Fallback if no valid data
+  if (!validData.length) {
+    validData.push(0);
+  }
+
+  let minPrice = Math.min(...validData);
+  let maxPrice = Math.max(...validData);
+
+  // Flat data (e.g., all 0s)
+  if (minPrice === maxPrice) {
+    if (minPrice === 0) {
+      minPrice = -1;
+      maxPrice = 1;
+    } else {
+      const offset = Math.abs(minPrice) * 0.1 || 1;
+      minPrice -= offset;
+      maxPrice += offset;
+    }
+  }
+
+  let buffer = (maxPrice - minPrice) * BUFFER_PERC;
+
+  // Apply transparency
+  backgroundColor = backgroundColor.map((color) =>
+    changeTransparency(color, BAR_TRANSPARENCY),
+  );
 
   // Get the current theme
   const theme = CHART_THEMES[getCurrentTheme()];
@@ -43,7 +67,9 @@ function createSummaryChart(ctx, labels, data, backgroundColor) {
       labels: labels,
       datasets: [
         {
-          data: data,
+          data: data.map((v) =>
+            v === null || v === undefined || isNaN(v) ? 0 : v,
+          ),
           backgroundColor: backgroundColor,
         },
       ],
@@ -85,7 +111,8 @@ function createSummaryChart(ctx, labels, data, backgroundColor) {
         },
         tooltip: {
           callbacks: {
-            label: (ctx) => `$${ctx.parsed.y.toFixed(DECIMAL_PRECISION)}`,
+            label: (ctx) =>
+              `$${Number(ctx.parsed.y || 0).toFixed(DECIMAL_PRECISION)}`,
           },
         },
         datalabels: {
@@ -96,10 +123,7 @@ function createSummaryChart(ctx, labels, data, backgroundColor) {
           borderRadius: DATA_LABEL_BORDER_RADIUS,
           padding: DATA_LABEL_PADDING,
           formatter: function (value) {
-            if (value) {
-              value = `$${parseFloat(value).toFixed(DECIMAL_PRECISION)}`;
-            }
-            return value;
+            return `$${Number(value || 0).toFixed(DECIMAL_PRECISION)}`;
           },
           font: {
             weight: "bold",
