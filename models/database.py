@@ -907,8 +907,6 @@ class WatchlistFolder(TimestampMixin, db.Model):
             "folder_order >= 1",
             name="ck_watchlist_folder_order_ge_1",
         ),
-
-        DBIndex("ix_watchlist_folders_user_id", "user_id"),
     )
 
     def __repr__(self) -> str:
@@ -927,7 +925,6 @@ class WatchlistItem(TimestampMixin, db.Model):
     folder_id: Mapped[int] = mapped_column(
         Integer,
         ForeignKey("watchlist_folders.id", ondelete="CASCADE"),
-        index=True,
         nullable=False,
     )
     ticker_id: Mapped[int] = mapped_column(
@@ -1035,7 +1032,8 @@ class WatchlistAlert(TimestampMixin, db.Model):
     user_id: Mapped[int] = mapped_column(
         Integer,
         ForeignKey("users.id", ondelete="CASCADE"),
-        nullable=False
+        nullable=False,
+        index=True
     )
 
     # EXACTLY ONE of these must be non-null
@@ -1043,11 +1041,13 @@ class WatchlistAlert(TimestampMixin, db.Model):
         Integer,
         ForeignKey("watchlist_folders.id", ondelete="CASCADE"),
         nullable=True,
+        index=True
     )
     item_id: Mapped[Optional[int]] = mapped_column(
         Integer,
         ForeignKey("watchlist_items.id", ondelete="CASCADE"),
         nullable=True,
+        index=True
     )
 
     # Relationships
@@ -1075,10 +1075,6 @@ class WatchlistAlert(TimestampMixin, db.Model):
             "(min_value IS NULL OR max_value IS NULL OR min_value <= max_value)",
             name="ck_watchlist_alert_min_le_max",
         ),
-
-        DBIndex("ix_watchlist_alerts_user_id", "user_id"),
-        DBIndex("ix_watchlist_alerts_folder_id", "folder_id"),
-        DBIndex("ix_watchlist_alerts_item_id", "item_id"),
     )
 
     def __repr__(self) -> str:
