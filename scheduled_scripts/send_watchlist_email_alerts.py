@@ -48,7 +48,7 @@ def send_watchlist_alert_emails():
                 except Exception:
                     print(f"Failed to send watchlist alert email to user: {user.id}")
 
-        print(f"\nWatchlist alert emails sent to {num_users} users.")
+        print(f"\nWatchlist alert emails sent to {num_users} users.\n")
 
     return num_users
 
@@ -83,9 +83,9 @@ def main():
         db_populate_status = db_populate_info.get("status")
 
         if market_status and db_populate_status:
-            message = f"market status: {market_status}, db populate status: {db_populate_status}"
+            message = f"\nMarket status: {market_status}, DB populate status: {db_populate_status}"
             if market_status == "closed" or db_populate_status != "success":
-                print(f"{message} - skipping")
+                print(f"{message} - Skipping!")
                 write_status(now, status="skipped")
                 app.logger.info(
                     f"Skipping script",
@@ -93,7 +93,7 @@ def main():
                            "reason": message}
                 )
             else:
-                print(f"{message} - proceeding...")
+                print(f"{message} - Proceeding!")
 
                 num_users = send_watchlist_alert_emails()
                 write_status(now, status="success")
@@ -103,7 +103,7 @@ def main():
                     extra={"log_type": "scheduled_script", "action": "send_watchlist_email_alerts"}
                 )
         else:
-            message = "Market status or db populate status missing - cannot determine whether to proceed!"
+            message = "\nMarket status or DB populate status missing - Cannot determine whether to proceed!"
             print(message)
             raise Exception(message)
 

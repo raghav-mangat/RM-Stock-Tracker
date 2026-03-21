@@ -2,8 +2,9 @@ from datetime import datetime, timedelta
 from sqlalchemy.sql.functions import count, func
 from models.database import (
     db, User, SignupSource, DailyAppStatus, WatchlistFolder, WatchlistItem,
-    WatchlistAlert, Stock, TickerMaster
+    WatchlistAlert, Stock, TickerMaster, StockMaster
 )
+from utils.db_queries.tables.dataset_version import get_active_dataset_id
 from utils.db_queries.user_data import is_user_active
 from utils.datetime_utils import get_current_utc
 
@@ -167,10 +168,12 @@ def get_watchlist_stats(end: datetime):
         )
     ).scalar()
 
+    active_dataset_id = get_active_dataset_id()
     num_stock = db.session.execute(
         db.select(func.count())
         .select_from(Stock)
-        .where(Stock.created_at < end)
+        .join(StockMaster)
+        .filter(StockMaster.dataset_version_id == active_dataset_id)
     ).scalar()
 
 

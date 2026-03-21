@@ -29,7 +29,7 @@ from scheduled_scripts.helpers.helpers import write_to_status_file, get_market_s
 
 
 BATCH_SIZE = 1000
-MAX_WORKERS = min(6, (os.cpu_count() or 3) * 2)
+MAX_WORKERS = min(16, (os.cpu_count() or 4) * 4)
 
 def update_ticker_master(full_market_snapshot_data, all_tickers_data):
     print(f"\n---- Updating Ticker Master...")
