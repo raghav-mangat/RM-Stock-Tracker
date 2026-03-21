@@ -23,6 +23,7 @@ Notes:
 - Initializing unique=True or having UniqueConstraint for attributes automatically 
     adds an index in MySQL.
 - Composite indexes must still be explicitly defined using Index().
+- Composite indexes like (A, B) also work as index on just A but not on just B.
 - Store the timestamps using BigInt.
 - Using Numeric data type instead of Float for better accuracy.
 - The order of folder attributes and folder/item alerts shown depends on the
@@ -899,8 +900,8 @@ class WatchlistFolder(TimestampMixin, db.Model):
     __table_args__ = (
         # Make folder names unique per user: (user_id, name) must be unique
         UniqueConstraint("user_id", "name", name="uq_watchlist_folder_name_user"),
-        # Make folder order unique per user: (user_id, folder_order) must be unique
-        UniqueConstraint("user_id", "folder_order", name="uq_watchlist_folder_order_user"),
+        # Make folder order unique per user: (folder_order, user_id) must be unique
+        UniqueConstraint("folder_order", "user_id", name="uq_watchlist_folder_order_user"),
 
         # folder_order >= 1
         CheckConstraint(
@@ -930,7 +931,6 @@ class WatchlistItem(TimestampMixin, db.Model):
     ticker_id: Mapped[int] = mapped_column(
         Integer,
         ForeignKey("ticker_master.id", ondelete="CASCADE"),
-        index=True,
         nullable=False,
     )
 
@@ -955,7 +955,7 @@ class WatchlistItem(TimestampMixin, db.Model):
 
     __table_args__ = (
         # Prevent duplicate (same ticker in same folder)
-        UniqueConstraint("folder_id", "ticker_id", name="uq_watchlist_item_folder_ticker"),
+        UniqueConstraint("ticker_id", "folder_id", name="uq_watchlist_item_ticker_folder"),
         # Make item order unique per folder: (folder_id, item_order) must be unique
         UniqueConstraint("folder_id", "item_order", name="uq_watchlist_item_order_folder"),
 
@@ -1040,14 +1040,12 @@ class WatchlistAlert(TimestampMixin, db.Model):
     folder_id: Mapped[Optional[int]] = mapped_column(
         Integer,
         ForeignKey("watchlist_folders.id", ondelete="CASCADE"),
-        nullable=True,
-        index=True
+        nullable=True
     )
     item_id: Mapped[Optional[int]] = mapped_column(
         Integer,
         ForeignKey("watchlist_items.id", ondelete="CASCADE"),
-        nullable=True,
-        index=True
+        nullable=True
     )
 
     # Relationships
