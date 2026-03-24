@@ -86,7 +86,7 @@ class FolderAttribute(str, Enum):
     def label(self):
         return {
             FolderAttribute.NAME: "Name",
-            FolderAttribute.DAY_CLOSE: "Day Close",
+            FolderAttribute.DAY_CLOSE: "Price",
             FolderAttribute.TODAYS_CHANGE_PERC: "Today's % Change",
             FolderAttribute.VOLUME: "Volume",
             FolderAttribute.DMA_200: "200-DMA",
@@ -133,7 +133,7 @@ class AlertAttribute(str, Enum):
     @property
     def label(self):
         return {
-            AlertAttribute.DAY_CLOSE: "Day Close",
+            AlertAttribute.DAY_CLOSE: "Price",
             AlertAttribute.TODAYS_CHANGE_PERC: "Today's Percentage Change",
             AlertAttribute.VOLUME: "Volume",
             AlertAttribute.DMA_200_PERC_DIFF: "200-DMA Percentage Difference",
@@ -254,9 +254,9 @@ class DatasetVersion(TimestampMixin, db.Model):
         default=get_current_utc
     )
 
-    description: Mapped[Optional[str]] = mapped_column(
+    market_status: Mapped[str] = mapped_column(
         String(DESCRIPTION_LEN),
-        nullable=True
+        nullable=False,
     )
 
     stock_masters: Mapped[list["StockMaster"]] = relationship(
@@ -274,7 +274,8 @@ class DatasetVersion(TimestampMixin, db.Model):
     )
 
     def __repr__(self) -> str:
-        return f"<DatasetVersion id={self.id} is_active={self.is_active}>"
+        return (f"<DatasetVersion id={self.id} is_active={self.is_active} "
+                f"last_updated={self.last_updated} market_status={self.market_status}>")
 
 
 class StockDetail(TimestampMixin, db.Model):
@@ -318,7 +319,7 @@ class StockDetail(TimestampMixin, db.Model):
 class StockMaster(TimestampMixin, db.Model):
     __tablename__ = "stocks_master"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
 
     ticker_id: Mapped[int] = mapped_column(
         Integer,
@@ -420,7 +421,7 @@ class StockMaster(TimestampMixin, db.Model):
 class Stock(TimestampMixin, db.Model):
     __tablename__ = "stocks"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
 
     # Company Info
     description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
@@ -452,7 +453,7 @@ class Stock(TimestampMixin, db.Model):
 
     # Stock Master Relationship
     stock_master_id: Mapped[int] = mapped_column(
-        Integer,
+        BigInteger,
         ForeignKey("stocks_master.id", ondelete="CASCADE"),
         nullable=False,
         unique=True
@@ -538,7 +539,7 @@ class StockTypeMeta(TimestampMixin, db.Model):
 class StockMinute(db.Model):
     __tablename__ = "stock_minute_data"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
 
     date: Mapped[datetime] = mapped_column(UTCDateTime, nullable=False)
     close_price: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
@@ -548,7 +549,7 @@ class StockMinute(db.Model):
     volume: Mapped[Optional[int]] = mapped_column(BigInteger, nullable=True)
 
     stock_id: Mapped[int] = mapped_column(
-        Integer,
+        BigInteger,
         ForeignKey("stocks.id", ondelete="CASCADE"),
         nullable=False
     )
@@ -565,7 +566,7 @@ class StockMinute(db.Model):
 class StockHour(db.Model):
     __tablename__ = "stock_hour_data"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
 
     date: Mapped[datetime] = mapped_column(UTCDateTime, nullable=False)
     close_price: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
@@ -575,7 +576,7 @@ class StockHour(db.Model):
     volume: Mapped[Optional[int]] = mapped_column(BigInteger, nullable=True)
 
     stock_id: Mapped[int] = mapped_column(
-        Integer,
+        BigInteger,
         ForeignKey("stocks.id", ondelete="CASCADE"),
         nullable=False
     )
@@ -592,7 +593,7 @@ class StockHour(db.Model):
 class StockDay(db.Model):
     __tablename__ = "stock_day_data"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
 
     date: Mapped[datetime] = mapped_column(UTCDateTime, nullable=False)
     close_price: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
@@ -602,7 +603,7 @@ class StockDay(db.Model):
     volume: Mapped[Optional[int]] = mapped_column(BigInteger, nullable=True)
 
     stock_id: Mapped[int] = mapped_column(
-        Integer,
+        BigInteger,
         ForeignKey("stocks.id", ondelete="CASCADE"),
         nullable=False
     )
@@ -619,14 +620,14 @@ class StockDay(db.Model):
 class StockWeek(db.Model):
     __tablename__ = "stock_week_data"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
 
     date: Mapped[datetime] = mapped_column(UTCDateTime, nullable=False)
     close_price: Mapped[Optional[Decimal]] = mapped_column(Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION), nullable=True)
     volume: Mapped[Optional[int]] = mapped_column(BigInteger, nullable=True)
 
     stock_id: Mapped[int] = mapped_column(
-        Integer,
+        BigInteger,
         ForeignKey("stocks.id", ondelete="CASCADE"),
         nullable=False
     )
@@ -695,7 +696,7 @@ class IndexHolding(TimestampMixin, db.Model):
         primary_key=True
     )
     stock_id: Mapped[int] = mapped_column(
-        Integer,
+        BigInteger,
         ForeignKey("stocks.id", ondelete="CASCADE"),
         primary_key=True
     )
