@@ -2,45 +2,57 @@
   <section class="bg-light py-5 mb-5 border-top border-bottom">
     <div class="container text-center">
 
-      <h1 class="text-body-emphasis">{{ heading | display }}</h1>
+      <!-- Heading -->
+      <h1 class="display-5 fw-semibold text-body-emphasis mb-3">
+        {{ heading | display }}
+      </h1>
 
-      <p class="lead col-lg-8 mx-auto mt-3">
+      <!-- Description -->
+      <p class="lead col-lg-8 mx-auto mb-4">
         {{ description | display }}
       </p>
 
-      {% if last_updated %}
-        <p class="text-info fw-semibold mt-4">
-          Data Last Updated: {{ last_updated | display }}
-        </p>
-      {% endif %}
+      <!-- Info Row (Market Status + Data Updated) -->
+      {% if market_status or last_updated %}
+        <div class="d-flex flex-wrap justify-content-center align-items-center gap-3 mb-4">
 
-      {% if market_status %}
-        <div id="market-status-container"
-             data-timestamp="{{ market_status.timestamp }}">
+          {% if market_status %}
+            <div id="market-status-container"
+                 class="d-flex align-items-center gap-2"
+                 data-timestamp="{{ market_status.timestamp }}">
 
-          <span class="text-info fw-semibold">Market Status:</span>
+              <span class="small text-muted">Market Status:</span>
 
-          <span id="market-status-badge"
-                class="badge
-                {% if market_status.market == 'open' %}
-                  bg-success
-                {% elif market_status.market == 'extended-hours' %}
-                  bg-warning text-dark
-                {% else %}
-                  bg-danger
-                {% endif %}">
-              {{ market_status.market | capitalize }}
-          </span>
+              <span id="market-status-badge"
+                    class="badge px-3 py-2
+                    {% if market_status.market == 'open' %}
+                      bg-success
+                    {% elif market_status.market == 'extended-hours' %}
+                      bg-warning text-dark
+                    {% else %}
+                      bg-danger
+                    {% endif %}">
+                {{ market_status.market | capitalize }}
+              </span>
 
-          <small id="market-status-time"
-                 class="text-muted ms-2">
-            {{ market_status.time_ago }}
-          </small>
+              <small id="market-status-time" class="text-muted">
+                {{ market_status.time_ago }}
+              </small>
+            </div>
+          {% endif %}
+
+          {% if last_updated %}
+            <div class="small text-muted">
+              Data Updated: <span class="fw-semibold text-body">{{ last_updated | display }}</span>
+            </div>
+          {% endif %}
+
         </div>
       {% endif %}
 
+      <!-- Extra Content (Buttons, etc.) -->
       {% if extra_content %}
-        <div class="d-flex justify-content-center mt-4">
+        <div class="d-flex justify-content-center flex-wrap gap-2 mt-3">
           {{ extra_content|safe }}
         </div>
       {% endif %}

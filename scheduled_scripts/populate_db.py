@@ -20,7 +20,7 @@ from data_collectors.stock_data import (
     fetch_full_market_snapshot_data, fetch_all_tickers_data,
     fetch_stock_types, get_stock_master_data, get_stock_detail_data
 )
-from utils.datetime_utils import get_current_utc, format_dt_et, format_date_et
+from utils.datetime_utils import get_current_utc, format_dt_et, format_date_et, get_current_et
 from utils.db_queries.tables.ticker_master import get_all_active_ticker_master
 from utils.db_queries.tables.dataset_version import get_active_dataset_market_status
 from utils.db_queries.tables.stock_type_meta import get_all_stock_types, get_all_active_stock_types
@@ -726,7 +726,18 @@ def write_status(now, status):
 
 def main():
     """
-    - We run this script hourly every day.
+    - We run this script hourly every day, and also at 9:30 am
+        ET when the market opens.
+    - We first check the ET minute at 9th ET hour to make sure the
+        script only runs after the 30th minute when the market is
+        open.
+    - We also check if the current ET hour is in the selected
+        market hours. We are only running at these hours since
+        running this script takes alot of CPU seconds, and we
+        would need to buy more to make it run more frequently.
+        Right now we run it in the selected hours since the
+        market is open at that time and once when the market is
+        closed to get the closing data.
     - Before running we check the current market status. If the
         market is not closed then always run it. If the market is
         closed check the market status when we last updated the
@@ -745,6 +756,30 @@ def main():
     )
 
     now = get_current_utc()
+
+    current_et = get_current_et()
+    current_et_hour = current_et.hour
+    current_et_minute = current_et.minute
+    should_skip = False
+
+    # Check the time slot
+    selected_market_hours = [11, 12, 13, 14, 15, 16, 20]
+    if current_et_hour == 9:
+        if current_et_minute < 30:
+            should_skip = True
+    elif current_et_hour not in selected_market_hours:
+        should_skip = True
+
+    if should_skip:
+        message = "Not in the correct time slot"
+        print(f"{message} - Skipping DB population!")
+        write_status(now, status="skipped")
+        app.logger.info(
+            f"Skipping script",
+            extra={"log_type": "scheduled_script", "action": "populate_db",
+                   "reason": f"{message}"}
+        )
+        return
 
     try:
         with app.app_context():

@@ -6,8 +6,10 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from app import app
 from utils.status_files import write_to_status_file, get_db_populate_status
-from utils.datetime_utils import get_current_utc, format_dt_et, format_date_et, format_date
-from utils.db_queries.user_data import get_all_users, is_user_active, is_user_email_alert_on, user_has_watchlist_alerts
+from utils.datetime_utils import get_current_utc, format_dt_et, format_date_et, get_current_et
+from utils.db_queries.user_data import (
+    get_all_users, is_user_active, is_user_email_alert_on, user_has_watchlist_alerts
+)
 from utils.db_queries.watchlist import db_get_watchlist_alert_email_data
 from watchlist.emails import WatchlistEmail
 
@@ -78,7 +80,18 @@ def main():
     )
 
     now = get_current_utc()
-    now_date = format_date(now)
+
+    current_et_hour = get_current_et().hour
+    if current_et_hour != 16:
+        message = "Not in the correct time slot"
+        print(f"{message} - Skipping!")
+        write_status(now, status="skipped")
+        app.logger.info(
+            f"Skipping script",
+            extra={"log_type": "scheduled_script", "action": "send_watchlist_email_alerts",
+                   "reason": message}
+        )
+        return
 
     write_status(now, status="running")
 
@@ -88,8 +101,9 @@ def main():
             db_last_updated_date = db_populate_status.get("last_updated_date", "") if db_populate_status else ""
 
         if db_last_updated_date:
-            message = f"\nDB populate last updated date: {db_last_updated_date}, Now date: {now_date}"
-            if db_last_updated_date != now_date:
+            now_et_date = format_date_et(now)
+            message = f"\nDB populate last updated date: {db_last_updated_date}, Now ET date: {now_et_date}"
+            if db_last_updated_date != now_et_date:
                 print(f"{message} - Skipping!")
                 write_status(now, status="skipped")
                 app.logger.info(

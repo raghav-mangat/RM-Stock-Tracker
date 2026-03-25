@@ -113,20 +113,22 @@
         <section class="container">
           <!-- Summary Cards: Today's Performance, 200-DMA, Related Companies -->
           <div class="row g-4 mb-4">
+
             <!-- Today's Performance Summary Card -->
             <div class="col-md-4 order-1 order-md-2">
               <div class="card h-100 shadow-sm text-body">
                 <div class="card-body text-center">
-                  <h5 class="card-title border-secondary border-bottom pb-1">
+                  <h5 class="card-title border-secondary border-bottom pb-2 mb-3">
                     Today's Performance
                   </h5>
 
-                  <div class="mb-2 fs-5 text-info fw-semibold">
-                    <span>Price:</span>
-                    <span>{{ stock.day_close | currency }}</span>
+                  <div class="mb-2">
+                    <div class="display-6 fw-bold text-body">
+                      {{ stock.day_close | currency }}
+                    </div>
                   </div>
 
-                  <div class="mb-2 fs-3">
+                  <div class="mb-2 fs-5">
                     {{ stock_todays_change(stock) }}
                   </div>
 
@@ -142,7 +144,9 @@
             <div class="col-md-4 order-2 order-md-1">
               <div class="card h-100 shadow-sm text-body">
                 <div class="card-body text-center">
-                  <h5 class="card-title border-secondary border-bottom  pb-1">200-Day Moving Average {{ dma_200_diff_popover() }}</h5>
+                  <h5 class="card-title border-secondary border-bottom pb-2 mb-3">
+                    200-Day Moving Average {{ dma_200_diff_popover() }}
+                  </h5>
 
                   <div class="mb-2">
                     <span class="fw-semibold">200-DMA:</span>
@@ -160,7 +164,9 @@
             <div class="col-md-4 order-3 order-md-3">
               <div class="card h-100 shadow-sm text-body">
                 <div class="card-body text-center">
-                  <h5 class="card-title border-secondary border-bottom pb-1">Related Companies</h5>
+                  <h5 class="card-title border-secondary border-bottom pb-2 mb-3">
+                    Related Companies
+                  </h5>
 
                   {% if stock.rel_companies %}
                     <div class="d-flex flex-wrap gap-2 justify-content-center">
@@ -174,6 +180,7 @@
                 </div>
               </div>
             </div>
+
           </div>
 
           <!-- Summary Charts Row -->
