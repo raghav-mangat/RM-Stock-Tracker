@@ -12,7 +12,7 @@ from models.database import DailyAppStatus
 from metrics.readers import read_daily_metrics
 from admin.db_user_data import get_users_stats, get_watchlist_stats
 from utils.datetime_utils import get_current_utc_date, format_date, get_current_utc
-from scheduled_scripts.helpers.helpers import get_market_status
+from utils.status_files import get_db_populate_status
 
 
 """
@@ -89,9 +89,9 @@ def collect_daily_app_status():
         watchlist_stats = get_watchlist_stats(end_ts)
 
         # ---- Market status ----
-        market_status = get_market_status()
+        db_populate_status = get_db_populate_status()
         market_open = False
-        if market_status != "closed":
+        if db_populate_status and db_populate_status.get("last_updated_date", "") == format_date(target_date):
             market_open = True
 
         # ---- Upstash Redis Data ----

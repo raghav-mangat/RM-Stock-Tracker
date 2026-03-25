@@ -13,23 +13,25 @@ from models.database import (
     db, Index, IndexHolding, StockTypeMeta, TickerMaster, DatasetVersion,
     StockDetail, StockMaster, Stock
 )
+from data_collectors.market_data import fetch_market_status
 from data_collectors.index_data import all_indices, get_index_info, fetch_index_data
 from data_collectors.stock_data import (
     fetch_stock_data, fetch_chart_data, DB_TIMEFRAMES,
     fetch_full_market_snapshot_data, fetch_all_tickers_data,
     fetch_stock_types, get_stock_master_data, get_stock_detail_data
 )
-from utils.datetime_utils import get_current_utc, get_current_et, format_dt_et, format_date_et
+from utils.datetime_utils import get_current_utc, format_dt_et, format_date_et
 from utils.db_queries.tables.ticker_master import get_all_active_ticker_master
+from utils.db_queries.tables.dataset_version import get_active_dataset_market_status
 from utils.db_queries.tables.stock_type_meta import get_all_stock_types, get_all_active_stock_types
 from utils.db_queries.tables.stock_master import get_all_stock_master_by_dataset_version
 from utils.db_queries.all_stocks import get_trending_stocks, get_top_stocks_categories, db_get_top_stocks_data
 from utils.db_queries.query_stocks import get_query_stocks
-from scheduled_scripts.helpers.helpers import write_to_status_file, get_market_status
+from utils.status_files import write_to_status_file
 
 
 BATCH_SIZE = 1000
-MAX_WORKERS = min(16, (os.cpu_count() or 4) * 4)
+MAX_WORKERS = min(32, (os.cpu_count() or 4) * 8)
 
 def update_ticker_master(full_market_snapshot_data, all_tickers_data):
     print(f"\n---- Updating Ticker Master...")
@@ -491,7 +493,7 @@ def parallel_fetch_charts(stocks, now_date):
 
     return all_chart_data
 
-def create_new_dataset_version(now):
+def create_new_dataset_version(now, market_status):
     print(f"\n---- Creating Dataset Version...")
     start_time = time.perf_counter()
 
@@ -500,7 +502,8 @@ def create_new_dataset_version(now):
         with db.session.begin():
             new_dataset_version = DatasetVersion(
                 is_active=False,
-                last_updated=now
+                last_updated=now,
+                market_status=market_status
             )
             db.session.add(new_dataset_version)
             db.session.flush()
@@ -565,7 +568,7 @@ def delete_old_data():
     print(f"-Time: {end_time - start_time:.4f} seconds")
     print("---- Deleted Old Data!")
 
-def populate_db(now):
+def populate_db(now, market_status):
     """
     - Populate the database in separate phases.
     - We first fetch the data for all the stocks from Massive API. Using
@@ -662,7 +665,7 @@ def populate_db(now):
         }
 
     with app.app_context():
-        dataset_version_id = create_new_dataset_version(now)
+        dataset_version_id = create_new_dataset_version(now, market_status)
 
     with app.app_context():
         update_stock_master(full_market_snapshot_data, ticker_id_map, dataset_version_id)
@@ -718,18 +721,22 @@ def write_status(now, status):
             "last_updated_date": format_date_et(now)
         })
 
-    write_to_status_file(filename="populate_db_info.json", status_data=status_data)
+    with app.app_context():
+        write_to_status_file(filename="db_populate_status.json", status_data=status_data)
 
 def main():
     """
-    We run this script twice every day. First when the market closes
-    at 4 pm ET and second after the market closing tasks have been
-    completed at 8 pm ET. Since the market time follows ET, we have
-    to factor in daylight savings. Since we schedule this script
-    in UTC, we schedule it twice everytime we need to run the script.
-    We have 1-hour difference between these 2 scheduled times.
-    This is why we have the conditions to check before we actually
-    populate the db.
+    - We run this script hourly every day.
+    - Before running we check the current market status. If the
+        market is not closed then always run it. If the market is
+        closed check the market status when we last updated the
+        database by looking at the active dataset version.
+        If the status was not closed then it means we did not run it
+        one last time to get the final closed market data for the day.
+        So run it one last time store the closed market data for the
+        day and then the script runs when the market is not closed next.
+    - This is why we have the conditions to check before we actually
+        run the script.
     """
 
     app.logger.info(
@@ -739,40 +746,38 @@ def main():
 
     now = get_current_utc()
 
-    current_et_hour = get_current_et().hour
-
     try:
-        stored_market_status = get_market_status()
+        with app.app_context():
+            market_status = fetch_market_status()
+            current_market_status = market_status.get("market", None) if market_status else None
+            active_dataset_market_status = get_active_dataset_market_status() or ""
 
-        if stored_market_status:
-            if stored_market_status == "closed":
-                print(f"Market status was {stored_market_status} - skipping DB population!")
-                write_status(now, status="skipped")
-                app.logger.info(
-                    f"Skipping script",
-                    extra={"log_type": "scheduled_script", "action": "populate_db", "reason": f"market status: {stored_market_status}"}
-                )
-            elif current_et_hour not in [16, 20]:
-                print(f"Not in the correct time slot - skipping DB population!")
-                write_status(now, status="skipped")
-                app.logger.info(
-                    f"Skipping script",
-                    extra={"log_type": "scheduled_script", "action": "populate_db",
-                           "reason": f"Not in the correct time slot"}
-                )
-            else:
-                print(f"Market status was {stored_market_status} - proceeding with DB population!")
+        if current_market_status:
+            message = (f"Current market status: {current_market_status}, Active dataset market status: "
+                      f"{active_dataset_market_status}")
+            if (current_market_status != "closed"
+                    or (current_market_status == "closed" and active_dataset_market_status != "closed")):
+                print(f"{message} - Proceeding with DB population!")
 
                 write_status(now, status="running")
-                populate_db(now)
+                populate_db(now, current_market_status)
                 write_status(now, status="success")
 
                 app.logger.info(
                     f"Completed script",
                     extra={"log_type": "scheduled_script", "action": "populate_db"}
                 )
+
+            else:
+                print(f"{message} - Skipping DB population!")
+                write_status(now, status="skipped")
+                app.logger.info(
+                    f"Skipping script",
+                    extra={"log_type": "scheduled_script", "action": "populate_db",
+                           "reason": f"{message}"}
+                )
         else:
-            message = "Market status files missing - cannot determine whether to proceed with DB population!"
+            message = "Market status missing - Cannot determine whether to proceed with DB population!"
             print(message)
             raise Exception(message)
 

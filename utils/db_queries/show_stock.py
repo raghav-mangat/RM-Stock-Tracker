@@ -10,7 +10,7 @@ from utils.datetime_utils import DATE_FORMAT, convert_to_et_dt, format_dt_et
 from utils.db_queries.tables.dataset_version import get_active_dataset_id
 
 def get_stock_data(ticker_master=None, stock_master=None, stock_detail=None, now=None):
-    result = dict()
+    stock_data = dict()
 
     # Check if the stock is present in the database
     stock = (
@@ -24,15 +24,16 @@ def get_stock_data(ticker_master=None, stock_master=None, stock_detail=None, now
         stock = fetch_stock_data(stock_master=stock_master, now=now)
 
     if not stock:
-        return result
+        return stock_data
 
     # Get the list of related companies
     rel_companies = []
     if stock.related_companies:
         rel_companies = stock.related_companies.split(',')
 
-    # Get the stock type
+    # Get the stock details
     stock_type = stock_detail.stock_type.description
+    primary_exchange = stock_detail.primary_exchange
 
     # Get the last updated time
     last_updated = format_dt_et(stock_master.last_updated)
@@ -43,14 +44,14 @@ def get_stock_data(ticker_master=None, stock_master=None, stock_detail=None, now
         "name": stock_detail.name
     })
     stock_data.update(stock_master.to_dict())
-
-    result = {
-        "stock": stock_data,
+    stock_data.update({
         "stock_type": stock_type,
+        "primary_exchange": primary_exchange,
         "rel_companies": rel_companies,
         "last_updated": last_updated
-    }
-    return result
+    })
+
+    return stock_data
 
 def get_chart_data(timeframe, stock_master=None, now=None):
     # Check if the stock is present in the database

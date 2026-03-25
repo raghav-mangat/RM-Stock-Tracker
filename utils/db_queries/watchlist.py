@@ -8,7 +8,7 @@ from models.database import (
 )
 from data_collectors.stock_data import fetch_stock_data
 from utils.db_queries.tables.dataset_version import get_active_dataset_id
-from utils.populate_db_info import db_last_updated_date
+from utils.status_files import db_last_updated_date
 
 @dataclass
 class MutationResult:

@@ -138,7 +138,7 @@ function createSummaryChart(ctx, labels, data, backgroundColor) {
 }
 
 const ohlcChartCtx = document.getElementById("ohlc-chart").getContext("2d");
-const ohlcChartLabels = ["Open", "High", "Low", "Close"];
+const ohlcChartLabels = ["Open", "High", "Low", "Price"];
 const ohlcChartData = [
   stockData.day_open,
   stockData.day_high,
@@ -159,7 +159,7 @@ const ohlcChart = createSummaryChart(
 );
 
 const dmaChartCtx = document.getElementById("dma-chart").getContext("2d");
-const dmaChartLabels = ["Day Close", "30-DMA", "50-DMA", "200-DMA"];
+const dmaChartLabels = ["Price", "30-DMA", "50-DMA", "200-DMA"];
 const dmaChartData = [
   stockData.day_close,
   stockData.dma_30,
@@ -182,7 +182,7 @@ const dmaChart = createSummaryChart(
 const range52wChartCtx = document
   .getElementById("range-52w-chart")
   .getContext("2d");
-const range52wChartLabels = ["52w Low", "Day Close", "52w High"];
+const range52wChartLabels = ["52w Low", "Price", "52w High"];
 const range52wChartData = [
   stockData.low_52w,
   stockData.day_close,

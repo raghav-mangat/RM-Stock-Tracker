@@ -1,0 +1,10 @@
+#market-status-time {
+  /* Smoothly transition opacity over 300ms */
+  transition: opacity 0.3s ease-in-out;
+  opacity: 1;
+}
+
+/* Class to apply via JS when updating */
+#market-status-time.fading {
+  opacity: 0;
+}

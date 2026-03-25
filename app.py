@@ -37,7 +37,8 @@ from watchlist import watchlist_bp
 from utils.filters import register_custom_filters
 from utils.error_handlers import register_error_handlers
 from utils.breadcrumbs import generate_breadcrumbs
-from utils.populate_db_info import db_last_updated, db_last_updated_date
+from utils.status_files import db_last_updated, db_last_updated_date
+from utils.market_status import get_complete_market_status
 from utils.db_queries.tables.dataset_version import get_active_dataset_id
 from utils.db_queries.all_indices import get_all_indices
 from utils.db_queries.show_index import get_index_data
@@ -64,6 +65,7 @@ app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
 # Initialize Custom Flask App Config depending on the ENV
 if os.getenv("FLASK_APP_ENV") == "dev":
     app.config.from_object("config.DevConfig")
+    app.config["STATUS_FILES_DIR"] = os.path.join(app.root_path, "status_files")
 else:
     app.config.from_object("config.ProdConfig")
 
@@ -236,7 +238,8 @@ def all_indices():
     return render_template(
         "all_indices.html",
         indices=indices,
-        last_updated=last_updated
+        last_updated=last_updated,
+        market_status=get_complete_market_status()
     )
 
 @app.route("/indices/<string:index_id>")
@@ -255,6 +258,7 @@ def show_index(index_id):
         sort_dropdown_options=index_data.get("sort_dropdown_options"),
         sort_by=sort_by,
         order=order,
+        market_status=get_complete_market_status()
     )
 
 @app.route("/stocks")
@@ -271,6 +275,7 @@ def all_stocks():
     return render_template(
         "all_stocks.html",
         last_updated=last_updated,
+        market_status=get_complete_market_status(),
         ticker_tape_stocks=ticker_tape_stocks,
         trending_stocks=trending_stocks,
         top_stocks_categories=top_stocks_categories
@@ -330,14 +335,12 @@ def show_stock(ticker):
 
     return render_template(
         "show_stock.html",
-        stock=stock_data.get("stock"),
-        stock_type=stock_data.get("stock_type"),
-        rel_companies=stock_data.get("rel_companies"),
-        last_updated=stock_data.get("last_updated"),
+        stock=stock_data,
         timeframe_options=timeframe_options,
         initial_timeframe=initial_timeframe,
         initial_stock_chart_data=initial_stock_chart_data,
-        user_folders=user_folders
+        user_folders=user_folders,
+        market_status=get_complete_market_status()
     )
 
 @app.route("/chart-data")

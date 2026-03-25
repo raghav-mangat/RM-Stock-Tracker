@@ -1,4 +1,4 @@
-{% macro jumbotron(heading, description, last_updated, extra_content=None) %}
+{% macro jumbotron(heading, description, last_updated, market_status, extra_content=None) %}
   <section class="bg-light py-5 mb-5 border-top border-bottom">
     <div class="container text-center">
 
@@ -10,8 +10,33 @@
 
       {% if last_updated %}
         <p class="text-info fw-semibold mt-4">
-          Last Updated: {{ last_updated | display }}
+          Data Last Updated: {{ last_updated | display }}
         </p>
+      {% endif %}
+
+      {% if market_status %}
+        <div id="market-status-container"
+             data-timestamp="{{ market_status.timestamp }}">
+
+          <span class="text-info fw-semibold">Market Status:</span>
+
+          <span id="market-status-badge"
+                class="badge
+                {% if market_status.market == 'open' %}
+                  bg-success
+                {% elif market_status.market == 'extended-hours' %}
+                  bg-warning text-dark
+                {% else %}
+                  bg-danger
+                {% endif %}">
+              {{ market_status.market | capitalize }}
+          </span>
+
+          <small id="market-status-time"
+                 class="text-muted ms-2">
+            {{ market_status.time_ago }}
+          </small>
+        </div>
       {% endif %}
 
       {% if extra_content %}

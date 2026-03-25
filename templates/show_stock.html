@@ -10,7 +10,8 @@
 {% endblock %}
 
 {% block style %}
-  <link href="{{ url_for('static', filename='styles/show_stock.css') }}" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles/show_stock.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles/market_status.css') }}">
 {% endblock %}
 
 {% block content %}
@@ -18,7 +19,7 @@
   <!-- Hero Section -->
   {% set heading = stock.ticker ~ " - " ~ (stock.name | display) %}
   {% set description = "See full details about the selected stock, including daily and historical performance, volume, market cap, moving averages, today's price change, and much more, or interact with the historical stock chart. Also check out related companies in the same sector." %}
-  {% set last_updated = last_updated | display %}
+  {% set last_updated = stock.last_updated | display %}
 
   {% set add_to_watchlist_button %}
     {% if current_user.is_authenticated %}
@@ -32,7 +33,7 @@
     {% endif %}
   {% endset %}
 
-  {{ jumbotron(heading, description, last_updated, add_to_watchlist_button) }}
+  {{ jumbotron(heading, description, last_updated, market_status, add_to_watchlist_button) }}
 
   <!-- Add to Watchlist Bootstrap Modal (only shown if logged in) -->
   {% if current_user.is_authenticated %}
@@ -120,8 +121,8 @@
                     Today's Performance
                   </h5>
 
-                  <div class="mb-2">
-                    <span class="fw-semibold">Day Close:</span>
+                  <div class="mb-2 fs-5 text-info fw-semibold">
+                    <span>Price:</span>
                     <span>{{ stock.day_close | currency }}</span>
                   </div>
 
@@ -161,9 +162,9 @@
                 <div class="card-body text-center">
                   <h5 class="card-title border-secondary border-bottom pb-1">Related Companies</h5>
 
-                  {% if rel_companies %}
+                  {% if stock.rel_companies %}
                     <div class="d-flex flex-wrap gap-2 justify-content-center">
-                      {% for ticker in rel_companies %}
+                      {% for ticker in stock.rel_companies %}
                         {{ ticker_link(ticker)  }}
                       {% endfor %}
                     </div>
@@ -181,7 +182,7 @@
             <div class="col-lg-4 col-md-12 order-lg-2 order-1">
               <div class="card h-100 shadow-sm">
                 <div class="card-body">
-                  <h5 class="card-title text-center">Day Price Range</h5>
+                  <h5 class="card-title text-center">Today's Price Range</h5>
                   <div class="summary-chart-container">
                     <canvas id="ohlc-chart"></canvas>
                   </div>
@@ -193,7 +194,7 @@
             <div class="col-lg-4 col-md-6 order-lg-1 order-2">
               <div class="card h-100 shadow-sm">
                 <div class="card-body">
-                  <h5 class="card-title text-center">DMA Comparison vs Close</h5>
+                  <h5 class="card-title text-center">DMA Comparison vs Price</h5>
                   <div class="summary-chart-container">
                     <canvas id="dma-chart"></canvas>
                   </div>
@@ -205,7 +206,7 @@
             <div class="col-lg-4 col-md-6 order-lg-3 order-3">
               <div class="card h-100 shadow-sm">
                 <div class="card-body">
-                  <h5 class="card-title text-center">52-Week Range vs Close</h5>
+                  <h5 class="card-title text-center">52-Week Range vs Price</h5>
                   <div class="summary-chart-container">
                     <canvas id="range-52w-chart"></canvas>
                   </div>
@@ -339,7 +340,8 @@
                     </tr>
                     <tr><th>Industry</th><td>{{ stock.industry | display }}</td></tr>
                     <tr><th>List Date</th><td>{{ stock.list_date | display }}</td></tr>
-                    <tr><th>Type</th><td>{{ stock_type | display }}</td></tr>
+                    <tr><th>Type</th><td>{{ stock.stock_type | display }}</td></tr>
+                    <tr><th>Primary Exchange</th><td>{{ stock.primary_exchange | display }}</td></tr>
                     <tr><th>Total Employees</th><td>{{ stock.total_employees | int }}</td></tr>
                     <tr>
                       <th>Market Cap</th>
@@ -419,4 +421,5 @@
 
   <script src="{{ url_for('static', filename='js/stock_summary.js') }}" type="text/javascript" defer></script>
   <script src="{{ url_for('static', filename='js/stock_chart.js') }}" type="text/javascript" defer></script>
+  <script src="{{ url_for('static', filename='js/market_status.js') }}" type="text/javascript" defer></script>
 {% endblock %}

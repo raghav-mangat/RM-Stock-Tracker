@@ -5,16 +5,19 @@ import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from app import app
-from scheduled_scripts.helpers.helpers import get_market_status, write_to_status_file, get_db_populate_info
-from utils.datetime_utils import get_current_utc, format_dt_et, format_date_et
+from utils.status_files import write_to_status_file, get_db_populate_status
+from utils.datetime_utils import get_current_utc, format_dt_et, format_date_et, format_date
 from utils.db_queries.user_data import get_all_users, is_user_active, is_user_email_alert_on, user_has_watchlist_alerts
 from utils.db_queries.watchlist import db_get_watchlist_alert_email_data
 from watchlist.emails import WatchlistEmail
 
 def send_watchlist_alert_emails():
     """
-    Sends daily watchlist alert emails to users.
-    Should be run after DB population is complete.
+    - Sends daily watchlist alert emails to users.
+    - Should be run after DB population is complete.
+    - We check if the db is populated on today's date and if
+        so then it means the market was open and hence we send
+        the emails.
     """
 
     # Number of users we sent the emails to
@@ -65,7 +68,8 @@ def write_status(now, status):
             "last_sent_date": format_date_et(now)
         })
 
-    write_to_status_file(filename="sending_watchlist_email_alerts_info.json", status_data=status_data)
+    with app.app_context():
+        write_to_status_file(filename="sending_watchlist_email_alerts_status.json", status_data=status_data)
 
 def main():
     app.logger.info(
@@ -74,17 +78,18 @@ def main():
     )
 
     now = get_current_utc()
+    now_date = format_date(now)
+
     write_status(now, status="running")
 
     try:
-        market_status = get_market_status()
+        with app.app_context():
+            db_populate_status = get_db_populate_status()
+            db_last_updated_date = db_populate_status.get("last_updated_date", "") if db_populate_status else ""
 
-        db_populate_info = get_db_populate_info()
-        db_populate_status = db_populate_info.get("status")
-
-        if market_status and db_populate_status:
-            message = f"\nMarket status: {market_status}, DB populate status: {db_populate_status}"
-            if market_status == "closed" or db_populate_status != "success":
+        if db_last_updated_date:
+            message = f"\nDB populate last updated date: {db_last_updated_date}, Now date: {now_date}"
+            if db_last_updated_date != now_date:
                 print(f"{message} - Skipping!")
                 write_status(now, status="skipped")
                 app.logger.info(
@@ -103,7 +108,7 @@ def main():
                     extra={"log_type": "scheduled_script", "action": "send_watchlist_email_alerts"}
                 )
         else:
-            message = "\nMarket status or DB populate status missing - Cannot determine whether to proceed!"
+            message = "\nDB populate status missing - Cannot determine whether to proceed!"
             print(message)
             raise Exception(message)
 

@@ -6,8 +6,8 @@ Dev
 Practice
 Prod
 Resources
-data
 logs
+status_files
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

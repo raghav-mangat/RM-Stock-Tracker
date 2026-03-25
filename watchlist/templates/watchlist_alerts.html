@@ -11,6 +11,7 @@
 
 {% block style %}
   <link rel="stylesheet" href="{{ url_for('watchlist.static', filename='styles/watchlist.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles/market_status.css') }}">
 {% endblock %}
 
 {% block content %}
@@ -29,7 +30,7 @@
     </a>
 {% endset %}
 
-{{ jumbotron(heading, description, last_updated, watchlist_button) }}
+{{ jumbotron(heading, description, last_updated, market_status, watchlist_button) }}
 
 <section class="container my-4">
 
@@ -79,4 +80,5 @@
 {% block script %}
   <script src="{{ url_for('watchlist.static', filename='js/accordion_state.js') }}" type="text/javascript" defer></script>
   <script src="{{ url_for('watchlist.static', filename='js/watchlist_alerts.js') }}" type="text/javascript" defer></script>
+  <script src="{{ url_for('static', filename='js/market_status.js') }}" type="text/javascript" defer></script>
 {% endblock %}

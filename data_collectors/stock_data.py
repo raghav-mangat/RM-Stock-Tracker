@@ -9,7 +9,7 @@ from utils.datetime_utils import (
     polygon_timestamp_to_utc_dt, format_date, DATE_FORMAT, DATETIME_FORMAT,
     utc_dt_to_polygon_timestamp
 )
-from utils.populate_db_info import db_last_updated_date
+from utils.status_files import db_last_updated_date
 from utils.db_queries.tables.stock_type_meta import get_stock_type_id_by_code
 
 load_dotenv()

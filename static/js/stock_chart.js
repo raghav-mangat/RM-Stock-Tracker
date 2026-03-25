@@ -47,7 +47,7 @@ const CHART_INTERACTION_INTERSECT = false;
 
 // Dataset Labels
 const DATE_LABEL = "Date";
-const CLOSE_PRICE_LABEL = "Close-Price";
+const CLOSE_PRICE_LABEL = "Price";
 const EMA_30_LABEL = "30-EMA";
 const EMA_50_LABEL = "50-EMA";
 const EMA_200_LABEL = "200-EMA";

@@ -3,7 +3,8 @@ from flask import render_template, request, flash, redirect, url_for, jsonify
 from flask_login import current_user, login_required
 from models.database import AlertAttribute
 from .services import AjaxService, Validators, ActionContext, ExceptionService, MutationHandler
-from utils.populate_db_info import db_last_updated
+from utils.status_files import db_last_updated
+from utils.market_status import get_complete_market_status
 from utils.db_queries.watchlist import *
 
 """
@@ -53,7 +54,8 @@ def index():
         FolderAttribute=FolderAttribute,
         AlertAttribute=AlertAttribute,
         OrderBy=OrderBy,
-        last_updated=last_updated
+        last_updated=last_updated,
+        market_status=get_complete_market_status()
     )
 
 @watchlist_bp.route("/alerts", methods=["GET"])
@@ -69,7 +71,8 @@ def alerts():
         "watchlist_alerts.html",
         watchlist_alert_data=watchlist_alert_data,
         num_user_alerts=num_user_alerts,
-        last_updated=last_updated
+        last_updated=last_updated,
+        market_status=get_complete_market_status()
     )
 
 @watchlist_bp.route("/about", methods=["GET"])

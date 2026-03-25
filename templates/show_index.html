@@ -10,6 +10,7 @@
 
 {% block style %}
   <link rel="stylesheet" href="{{ url_for('static', filename='styles/show_index.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles/market_status.css') }}">
 {% endblock %}
 
 {% block content %}
@@ -18,7 +19,7 @@
   {% set heading = index.name | display %}
   {% set description = "Take a look at all the stocks in the selected index along with some performance data. You can sort or filter the data by different attributes. Click on a company to see full details and performance data." %}
   {% set last_updated = index.last_updated | format_dt_et | display %}
-  {{ jumbotron(heading, description, last_updated) }}
+  {{ jumbotron(heading, description, last_updated, market_status) }}
 
   <!-- Sort By and Filter Dropdowns -->
   <section class="container text-end mb-4">
@@ -94,7 +95,7 @@
             <th scope="col">Name</th>
             <th scope="col">Weight</th>
             <th scope="col">52w Low</th>
-            <th scope="col">Day Close</th>
+            <th scope="col">Price</th>
             <th scope="col">52w High</th>
             <th scope="col">Today's Change</th>
             <th scope="col">Volume</th>
@@ -135,4 +136,5 @@
 
 {% block script %}
   <script src="{{ url_for('static', filename='js/show_index.js') }}" type="text/javascript" defer></script>
+  <script src="{{ url_for('static', filename='js/market_status.js') }}" type="text/javascript" defer></script>
 {% endblock %}
