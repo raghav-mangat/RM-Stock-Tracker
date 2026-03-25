@@ -14,38 +14,46 @@
 
       <!-- Info Row (Market Status + Data Updated) -->
       {% if market_status or last_updated %}
-        <div class="d-flex flex-wrap justify-content-center align-items-center gap-3 mb-4">
+        <div class="mt-4 mb-4">
 
-          {% if market_status %}
-            <div id="market-status-container"
-                 class="d-flex align-items-center gap-2"
-                 data-timestamp="{{ market_status.timestamp }}">
+          <div class="d-inline-flex flex-wrap justify-content-center align-items-center gap-3
+                 px-3 py-3 bg-body-tertiary border rounded-3 shadow-sm">
 
-              <span class="small text-muted">Market Status:</span>
+            {% if market_status %}
+              <div id="market-status-container"
+                   class="d-flex align-items-center gap-2"
+                   data-timestamp="{{ market_status.timestamp }}">
 
-              <span id="market-status-badge"
-                    class="badge px-3 py-2
-                    {% if market_status.market == 'open' %}
-                      bg-success
-                    {% elif market_status.market == 'extended-hours' %}
-                      bg-warning text-dark
-                    {% else %}
-                      bg-danger
-                    {% endif %}">
-                {{ market_status.market | capitalize }}
-              </span>
+                <span class="small text-muted">Market:</span>
 
-              <small id="market-status-time" class="text-muted">
-                {{ market_status.time_ago }}
-              </small>
-            </div>
-          {% endif %}
+                <span id="market-status-badge"
+                      class="badge px-2 py-1
+                      {% if market_status.market == 'open' %}
+                        bg-success
+                      {% elif market_status.market == 'extended-hours' %}
+                        bg-warning text-dark
+                      {% else %}
+                        bg-danger
+                      {% endif %}">
+                  {{ market_status.market | capitalize }}
+                </span>
 
-          {% if last_updated %}
-            <div class="small text-muted">
-              Data Updated: <span class="fw-semibold text-body">{{ last_updated | display }}</span>
-            </div>
-          {% endif %}
+                <small id="market-status-time" class="text-muted">
+                  {{ market_status.time_ago }}
+                </small>
+              </div>
+            {% endif %}
+
+            {% if last_updated %}
+              <div class="small text-muted">
+                Updated:
+                <span class="fw-semibold text-body">
+                  {{ last_updated | display }}
+                </span>
+              </div>
+            {% endif %}
+
+          </div>
 
         </div>
       {% endif %}
