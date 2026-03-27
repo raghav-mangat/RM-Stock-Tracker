@@ -10,12 +10,21 @@ def normalize_email(email):
     return email.strip().lower() if email else email
 
 def normalize_name(name):
-    return name.strip().title() if name else name
+    return name.strip() if name else name
 
 def normalize_username(username):
     return username.strip().lower() if username else username
 
+def normalize_password(password):
+    return password.strip() if password else password
+
 def check_password_strength(form, field):
+    raw_password = field.raw_data[0] if field.raw_data else ""
+
+    # Check leading/trailing spaces
+    if raw_password != raw_password.strip():
+        raise ValidationError("Password cannot start or end with spaces.")
+
     password = field.data
     policy = PASSWORD_POLICY
 
@@ -81,7 +90,7 @@ def get_password_field(label="Password", validate_strong_password=False):
     if validate_strong_password:
         validators.append(check_password_strength)
 
-    password = PasswordField(label, validators=validators)
+    password = PasswordField(label, filters=[normalize_password], validators=validators)
     return password
 
 def get_confirm_password_field(password_field):
@@ -101,8 +110,10 @@ def validate_last_name_field(field):
 
 def validate_username_field(field):
     if not re.match(USERNAME_REGEX, field.data):
+        message = (f"Username must start with a letter, contain only lowercase letters, numbers, dots (.), "
+                   f"underscores (_) or hyphens (-), and cannot have consecutive special characters.")
         raise ValidationError(
-            "Username must start with a letter and contain only letters, numbers, dots, hyphens or underscores"
+            message
         )
     user = get_user_by_username(field.data)
     if user:

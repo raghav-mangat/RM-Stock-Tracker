@@ -8,11 +8,11 @@ PASSWORD_POLICY = {
     "require_special": True,
     "special_chars_regex": r"[!@#$%^&*()_\-+=|\\{}\[\]:;\"'<>,.?/~` ]",
 }
-NAME_REGEX = r"^[A-Za-zÀ-ÖØ-öø-ÿ'’.-]+$"
-USERNAME_ALLOWED_CHARS_REGEX = r"[a-z0-9._-]"
-USERNAME_REGEX = r"^[a-z]" + USERNAME_ALLOWED_CHARS_REGEX + r"+$"
 MIN_USERNAME_LEN = 3
 MAX_USERNAME_LEN = 30
+USERNAME_REGEX = rf"^(?!.*[._-]{{2}})[a-z][a-z0-9._-]{{{MIN_USERNAME_LEN-1},{MAX_USERNAME_LEN-1}}}$"
+NAME_REGEX = r"^[A-Za-zÀ-ÖØ-öø-ÿ'’.\- ]+$"
+
 MAX_NAME_LEN = 50
 
 # Number of days after which the user is considered inactive

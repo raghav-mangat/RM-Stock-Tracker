@@ -78,12 +78,8 @@ def alerts():
 @watchlist_bp.route("/about", methods=["GET"])
 @login_required
 def about():
-    # Load last updated timestamp of populate db
-    last_updated = db_last_updated()
-
     return render_template(
         "watchlist_about.html",
-        last_updated=last_updated
     )
 
 @watchlist_bp.route("/add-folder", methods=["POST"])
@@ -135,7 +131,8 @@ def remove_folder():
 def update_order(folder_id):
     new_order = int(request.form.get("order"))
     try:
-        result = db_update_order(folder_id, new_order, current_user)
+        max_order = Validators.validate_folder_order(current_user, new_order)
+        result = db_update_order(folder_id, new_order, max_order, current_user)
         return MutationHandler.response(result)
     except Exception as exc:
         ctx = ActionContext("reorder", "folder")

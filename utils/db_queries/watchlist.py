@@ -215,15 +215,9 @@ def db_remove_folder(folder_id, user):
         db.session.rollback()
         raise e
 
-def db_update_order(folder_id, new_order, user):
+def db_update_order(folder_id, new_order, max_order, user):
     try:
         folder = check_and_get_user_folder(folder_id, user)
-        folders = get_all_user_folders(user)
-
-        max_order = len(folders)
-
-        if not 1 <= new_order <= max_order:
-            raise ValueError(f"New order must be between 1 and {max_order}")
 
         old_order = folder.folder_order
 

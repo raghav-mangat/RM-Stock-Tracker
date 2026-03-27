@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from models.database import AlertAttribute, FolderAttribute, OrderBy
 from utils.db_queries.tables.ticker_master import get_valid_ticker_master_by_ticker
 from utils.db_queries.watchlist import (
-    NotFoundError, ForbiddenError, MutationResult
+    NotFoundError, ForbiddenError, MutationResult, db_get_num_folders
 )
 from utils.constants import MAX_FOLDER_NAME_LEN
 from utils.filters import humanize_number
@@ -75,10 +75,10 @@ class ValidationError(Exception):
 class Validators:
     @staticmethod
     def validate_folder_name(folder_name: str) -> str:
+        folder_name = (folder_name or "").strip().upper()
+
         if not folder_name:
             raise ValidationError("Folder name cannot be empty.")
-
-        folder_name = folder_name.strip().upper()
 
         if len(folder_name) > MAX_FOLDER_NAME_LEN:
             raise ValidationError(
@@ -88,7 +88,17 @@ class Validators:
         return folder_name
 
     @staticmethod
+    def validate_folder_order(user, new_order):
+        max_order = db_get_num_folders(user)
+
+        if not 1 <= new_order <= max_order:
+            raise ValidationError(f"New order must be between 1 and {max_order}.")
+
+        return max_order
+
+    @staticmethod
     def validate_ticker(ticker):
+        ticker = (ticker or "").strip().upper()
         ticker_master = get_valid_ticker_master_by_ticker(ticker)
         if not ticker_master:
             raise ValidationError(f"Please search for a valid stock.")
