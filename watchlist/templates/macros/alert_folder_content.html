@@ -1,6 +1,8 @@
 {% from "macros/watchlist_components.html" import display_alert, no_data_message_small %}
-{% from "macros/table_components.html" import table_header, table_header_label, table_data, table_data_row_number %}
-{% from "macros/stock_attributes.html" import ticker_link %}
+{% from "macros/table_components.html" import
+    table_header, table_header_label, table_data, table_data_row_number
+%}
+{% from "macros/stock_attributes.html" import ticker_link, stock_name_td %}
 
 {% macro alert_folder_body(folder, AlertAttribute) %}
 <div role="region"
@@ -89,7 +91,7 @@
                       <tr>
                         {{ table_data_row_number(loop.index) }}
                         <td>{{ ticker_link(stock) }}</td>
-                        <td class="fw-semibold">{{ stock.name }}</td>
+                        {{ stock_name_td(stock) }}
                         {% for alert in folder.all_folder_alerts.alerts %}
                           {{ table_data(alert.attribute, stock, AlertAttribute) }}
                         {% endfor %}
@@ -135,7 +137,7 @@
                         <tr>
                           {{ table_data_row_number(loop.index) }}
                           <td>{{ ticker_link(stock) }}</td>
-                          <td class="fw-semibold">{{ stock.name }}</td>
+                          {{ stock_name_td(stock) }}
                           {{ table_data(alert_data.alert.attribute, stock, AlertAttribute) }}
                         </tr>
                       {% endfor %}

@@ -74,7 +74,7 @@ def get_top_stocks_categories():
     indices = Index.query.filter(or_(
         Index.slug == "sp500",
         Index.slug == "nasdaq100",
-        Index.slug == "dowjones"
+        Index.slug == "dow-jones"
     )).all()
     for index in indices:
         top_stocks_categories[index.slug] = index.name

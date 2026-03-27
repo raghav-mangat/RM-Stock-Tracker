@@ -16,9 +16,9 @@ indices_info = {
         "slug": "nasdaq100",
         "url": f"{slick_charts_url}/nasdaq100",
     },
-    "dowjones": {
+    "dow-jones": {
         "name": "Dow Jones Index",
-        "slug": "dowjones",
+        "slug": "dow-jones",
         "url": f"{slick_charts_url}/dowjones",
     },
     "magnificent7": {
@@ -31,9 +31,9 @@ indices_info = {
         "slug": "berkshire-hathaway",
         "url": f"{slick_charts_url}/berkshire-hathaway",
     },
-    "ark-innovations": {
+    "ark-innovation": {
         "name": "Ark Innovation Index",
-        "slug": "ARKK",
+        "slug": "ark-innovation",
         "url": f"{slick_charts_url}/etf/ark-invest/ARKK",
     },
 }

@@ -24,7 +24,7 @@
                    class="d-flex align-items-center gap-2"
                    data-timestamp="{{ market_status.timestamp }}">
 
-                <span class="small text-muted">Market:</span>
+                <span class="small text-muted fw-semibold">Market:</span>
 
                 <span id="market-status-badge"
                       class="badge px-2 py-1
@@ -45,9 +45,9 @@
             {% endif %}
 
             {% if last_updated %}
-              <div class="small text-muted">
+              <div class="small text-muted fw-semibold">
                 Updated:
-                <span class="fw-semibold text-body">
+                <span class="text-body">
                   {{ last_updated | display }}
                 </span>
               </div>

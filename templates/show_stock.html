@@ -1,6 +1,8 @@
 {% from "macros/jumbotron.html" import jumbotron %}
 {% from "macros/popovers.html" import dma_200_diff_popover %}
-{% from "macros/stock_attributes.html" import stock_todays_change, ticker_link, stock_dma_200_perc_diff_style %}
+{% from "macros/stock_attributes.html" import
+    stock_todays_change, ticker_link, stock_dma_200_perc_diff_style, stock_name_td
+%}
 {% from "macros/watchlist_forms.html" import add_folder_form %}
 
 {% extends "base.html" %}
@@ -175,7 +177,10 @@
                       {% endfor %}
                     </div>
                   {% else %}
-                    <span class="semibold text-muted">N/A</span>
+                    <div class="text-muted small d-flex flex-column align-items-center justify-content-center py-3">
+                      <i class="bi bi-diagram-3 mb-1"></i>
+                      <span>No related companies found.</span>
+                    </div>
                   {% endif %}
                 </div>
               </div>
@@ -321,9 +326,21 @@
         <section class="container">
           <div class="row">
             <!-- Company Description -->
-            <div class="col-lg-4 mb-4 text-center border py-1">
-              <span class="fs-4 fw-semibold">{{ stock.name | display }}</span>
-              <p class="mt-1">{{ stock.description | display }}</p>
+            <div class="col-lg-4 mb-4 text-center border py-3 px-3">
+              <div class="fs-4 fw-semibold border-bottom pb-1 mb-2">
+                {{ stock.name | display }}
+              </div>
+
+              {% if stock.description %}
+                <p>
+                  {{ stock.description | display }}
+                </p>
+              {% else %}
+                <div class="text-muted small d-flex flex-column align-items-center justify-content-center py-2">
+                  <i class="bi bi-info-circle mb-1"></i>
+                  <span>No company description available.</span>
+                </div>
+              {% endif %}
             </div>
 
             <!-- Data Table -->
@@ -331,8 +348,19 @@
               <div class="table-responsive">
                 <table class="table table-striped table-bordered table-hover align-middle">
                   <tbody>
-                    <tr><th>Ticker Symbol</th><td>{{ stock.ticker | display }}</td></tr>
-                    <tr><th>Company Name</th><td>{{ stock.name | display }}</td></tr>
+                    <tr><th>Ticker Symbol</th><td class="fw-bold">{{ stock.ticker | display }}</td></tr>
+                    <tr><th>Company Name</th>{{ stock_name_td(stock) }}</tr>
+                    <tr>
+                      <th>Market Cap</th>
+                      <td>
+                        {% if stock.market_cap %}
+                          {{ stock.market_cap | currency }}
+                          ({{ stock.market_cap | humanize_number(decimals=2) }})
+                        {% else %}
+                          <span>N/A</span>
+                        {% endif %}
+                      </td>
+                    </tr>
                     <tr>
                       <th>Homepage</th>
                       <td>
@@ -350,17 +378,6 @@
                     <tr><th>Type</th><td>{{ stock.stock_type | display }}</td></tr>
                     <tr><th>Primary Exchange</th><td>{{ stock.primary_exchange | display }}</td></tr>
                     <tr><th>Total Employees</th><td>{{ stock.total_employees | int }}</td></tr>
-                    <tr>
-                      <th>Market Cap</th>
-                      <td>
-                        {% if stock.market_cap %}
-                          {{ stock.market_cap | currency }}
-                          ({{ stock.market_cap | humanize_number(decimals=2) }})
-                        {% else %}
-                          <span>N/A</span>
-                        {% endif %}
-                      </td>
-                    </tr>
                   </tbody>
                 </table>
               </div>

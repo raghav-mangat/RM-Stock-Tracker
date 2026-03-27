@@ -72,7 +72,7 @@ def get_index_data(index_id, sort_by, order, filter_by):
         db.session.query(
             IndexHolding.weight,
             TickerMaster.symbol.label("ticker"),
-            StockDetail.name.label("stock_name"),
+            StockDetail.name.label("name"),
             StockMaster.day_close,
             Stock.low_52w,
             Stock.high_52w,

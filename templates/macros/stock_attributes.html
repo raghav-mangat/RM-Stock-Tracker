@@ -12,13 +12,20 @@
 
 {% macro stock_todays_change(stock) %}
     {% if (stock.todays_change is not none) and (stock.todays_change_perc is not none) %}
-        <span class="fw-semibold" style="color: {{ stock.todays_change | stock_change_color }};">
+        <span class="fw-semibold"
+              style="color: {{ stock.todays_change | stock_change_color }};">
             {{ arrow_direction(stock.todays_change) }}
             {{ stock.todays_change_perc | abs | percent }} ({{ stock.todays_change | abs | float }})
         </span>
     {% else %}
         <span class="fw-semibold">N/A</span>
     {% endif %}
+{% endmacro %}
+
+{% macro stock_todays_change_td(stock) %}
+  <td style="min-width: 150px;">
+      {{ stock_todays_change(stock) }}
+  </td>
 {% endmacro %}
 
 {% macro ticker_link(stock) %}
@@ -32,6 +39,12 @@
     {{ ticker | display }}
   </a>
 {% endmacro %}
+
+{% macro stock_name_td(stock) %}
+  <td class="fw-semibold" style="min-width: 200px; max-width: 300px;">
+    {{ stock.name | display }}
+  </td>
+{% endmacro%}
 
 {% macro stock_dma_200_perc_diff_style(stock) %}
 {#

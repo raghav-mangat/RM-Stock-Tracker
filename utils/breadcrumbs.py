@@ -18,7 +18,9 @@ def generate_breadcrumbs():
 
     elif endpoint == 'show_index' and 'index_id' in view_args:
         breadcrumbs.append({'label': 'Indices', 'url': url_for('all_indices')})
-        breadcrumbs.append({'label': view_args['index_id'], 'url': request.path})
+        breadcrumbs.append(
+            {'label': view_args.get('index_id', "").title(), 'url': request.path}
+        )
 
     elif endpoint == 'about':
         breadcrumbs.append({'label': 'About', 'url': url_for(endpoint)})

@@ -1,7 +1,12 @@
 {% from "macros/popovers.html" import dma_200_diff_popover %}
-{% from "macros/stock_attributes.html" import stock_todays_change, stock_dma_200_perc_diff %}
+{% from "macros/stock_attributes.html" import
+    stock_todays_change_td, stock_dma_200_perc_diff, stock_name_td
+%}
 
-{% macro watchlist_folder_table_header(folder_id, attribute_data, folder_sort_by_attribute, folder_sort_by_order, FolderAttribute, OrderBy) %}
+
+{% macro watchlist_folder_table_header(
+    folder_id, attribute_data, folder_sort_by_attribute, folder_sort_by_order, FolderAttribute, OrderBy
+) %}
 
 <th scope="col">
   <div class="d-flex align-items-center justify-content-between">
@@ -89,25 +94,23 @@
 
 {% macro table_data(attribute, stock, AttributeType) %}
   {% if attribute.value == AttributeType.NAME %}
-      <td class="fw-semibold">{{ stock[attribute.value] | display }}</td>
+    {{ stock_name_td(stock) }}
   {% elif attribute.value == AttributeType.DAY_CLOSE %}
-      <td class="bg-info-subtle fw-semibold">{{ stock[attribute.value] | currency }}</td>
+    <td class="bg-info-subtle fw-semibold">{{ stock[attribute.value] | currency }}</td>
   {% elif attribute.value == AttributeType.TODAYS_CHANGE_PERC %}
-      <td>
-        {{ stock_todays_change(stock) }}
-      </td>
+    {{ stock_todays_change_td(stock) }}
   {% elif attribute.value == AttributeType.VOLUME %}
-      <td class="fw-semibold">{{ stock[attribute.value] | humanize_number }}</td>
+    <td class="fw-semibold">{{ stock[attribute.value] | humanize_number }}</td>
   {% elif attribute.value == AttributeType.DMA_200_PERC_DIFF %}
-      {{ stock_dma_200_perc_diff(stock) }}
+    {{ stock_dma_200_perc_diff(stock) }}
   {% else %}
-      {% if attribute.type == "currency" %}
-          <td>{{ stock[attribute.value] | currency }}</td>
-      {% elif attribute.type == "percent" %}
-          <td>{{ stock[attribute.value] | percent }}</td>
-      {% else %}
-          <td>{{ stock[attribute.value] | display }}</td>
-      {% endif %}
+    {% if attribute.type == "currency" %}
+      <td>{{ stock[attribute.value] | currency }}</td>
+    {% elif attribute.type == "percent" %}
+      <td>{{ stock[attribute.value] | percent }}</td>
+    {% else %}
+      <td>{{ stock[attribute.value] | display }}</td>
+    {% endif %}
   {% endif %}
 {% endmacro %}
 

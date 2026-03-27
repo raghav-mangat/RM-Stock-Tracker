@@ -1,6 +1,8 @@
 {% from "macros/popovers.html" import dma_200_diff_popover %}
 {% from "macros/jumbotron.html" import jumbotron %}
-{% from "macros/stock_attributes.html" import stock_todays_change, ticker_link, stock_dma_200_perc_diff %}
+{% from "macros/stock_attributes.html" import
+    stock_todays_change_td, ticker_link, stock_dma_200_perc_diff, stock_name_td
+%}
 
 {% extends "base.html" %}
 
@@ -108,14 +110,12 @@
             <tr>
               <th scope="row">{{ loop.index }}</th>
               <td>{{ ticker_link(stock) }}</td>
-              <td class="fw-semibold">{{ stock.stock_name | display }}</td>
+              {{ stock_name_td(stock) }}
               <td class="fw-semibold">{{ stock.weight | percent }}</td>
               <td>{{ stock.low_52w | currency }}</td>
               <td class="fw-semibold bg-info-subtle">{{ stock.day_close | currency }}</td>
               <td>{{ stock.high_52w | currency }}</td>
-              <td>
-                {{ stock_todays_change(stock) }}
-              </td>
+              {{ stock_todays_change_td(stock) }}
               <td class="fw-semibold">{{ stock.volume | humanize_number }}</td>
               <td>{{ stock.dma_200 | currency }}</td>
               {{ stock_dma_200_perc_diff(stock) }}

@@ -14,7 +14,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 function fetchCategoryData(categoryLink) {
   // Get the category name from category link element's ID
-  const category = categoryLink.id.split("-")[0];
+  const category = categoryLink.id.replace("-tab", "");
 
   // Assign a new request ID for this category
   const reqId = (requestTracker[category] || 0) + 1;

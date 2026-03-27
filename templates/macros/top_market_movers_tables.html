@@ -1,4 +1,6 @@
-{% from "macros/stock_attributes.html" import stock_todays_change, ticker_link %}
+{% from "macros/stock_attributes.html" import
+    stock_todays_change_td, ticker_link, stock_name_td
+%}
 
 {% macro placeholder_cell() %}
   <td class="placeholder-glow" aria-hidden="true">
@@ -23,12 +25,10 @@
         <tr>
           <th scope="row">{{ loop.index }}</th>
           <td>{{ ticker_link(stock) }}</td>
-          <td class="fw-semibold" style="max-width: 250px;">
-              {{ stock.name | display }}
-          </td>
+          {{ stock_name_td(stock) }}
           <td>{{ stock.day_close | currency }}</td>
           {% if stocks_type == 'gainers' or stocks_type == 'losers' %}
-            <td>{{ stock_todays_change(stock) }}</td>
+            {{ stock_todays_change_td(stock) }}
           {% else  %}
             <td>
               <span class="fw-semibold">{{ stock.volume | humanize_number }}</span>
@@ -57,7 +57,16 @@
     - col_title: Header for the last column (e.g., "Volume" or "Today's Change")
 #}
 {% macro top_stocks_table(tab_id, type, heading, name, col_title) %}
-  <h3 class="h4 mb-3">{{ heading }} in {{ name }}</h3>
+  <h3 class="h4 mb-3">
+    {{ heading }} in
+    {% if tab_id == 'overall' %}
+      {{ name }}
+    {% else %}
+      <a class="text-primary" href="{{ url_for('show_index', index_id=tab_id) }}">
+        {{ name }}
+      </a>
+    {% endif %}
+  </h3>
   <div class="table-responsive"
        id="top-stocks-region-{{ tab_id }}-{{ type }}"
        role="region"
@@ -69,7 +78,7 @@
         <tr class="align-middle">
           <th scope="col">#</th>
           <th scope="col">Ticker</th>
-          <th scope="col" style="max-width: 250px;">Company</th>
+          <th scope="col">Company</th>
           <th scope="col">Price</th>
           <th scope="col">{{ col_title }}</th>
         </tr>
@@ -129,7 +138,7 @@
           <tr class="align-middle">
             <th scope="col">#</th>
             <th scope="col">Ticker</th>
-            <th scope="col" style="max-width: 250px;">Company</th>
+            <th scope="col">Company</th>
             <th scope="col">Price</th>
             <th scope="col">Volume</th>
             <th scope="col">Today's Change</th>
@@ -141,12 +150,10 @@
             <tr>
               <th scope="row">{{ loop.index }}</th>
               <td>{{ ticker_link(stock) }}</td>
-              <td class="fw-semibold" style="max-width: 250px;">
-                  {{ stock.name | display }}
-              </td>
+              {{ stock_name_td(stock) }}
               <td>{{ stock.day_close | currency }}</td>
               <td>{{ stock.volume | humanize_number }}</td>
-              <td>{{ stock_todays_change(stock) }}</td>
+              {{ stock_todays_change_td(stock) }}
               <td>
                 <span class="fw-semibold">{{ stock.popularity | humanize_number }}</span>
               </td>

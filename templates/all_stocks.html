@@ -118,8 +118,8 @@
           <a class="category-link list-group-item list-group-item-action" data-loaded="0" id="nasdaq100-tab" data-bs-toggle="list" href="#nasdaq100" role="tab" aria-controls="nasdaq100">
             {{ top_stocks_categories.nasdaq100 or "Index" }}
           </a>
-          <a class="category-link list-group-item list-group-item-action" data-loaded="0" id="dowjones-tab" data-bs-toggle="list" href="#dowjones" role="tab" aria-controls="dowjones">
-            {{ top_stocks_categories.dowjones or "Index" }}
+          <a class="category-link list-group-item list-group-item-action" data-loaded="0" id="dow-jones-tab" data-bs-toggle="list" href="#dow-jones" role="tab" aria-controls="dow-jones">
+            {{ top_stocks_categories.get("dow-jones") or "Index" }}
           </a>
         </div>
       </div>
@@ -131,7 +131,7 @@
           {{ top_stocks_tab_content('overall', top_stocks_categories.overall) }}
           {{ top_stocks_tab_content('sp500', top_stocks_categories.sp500 or "Index") }}
           {{ top_stocks_tab_content('nasdaq100', top_stocks_categories.nasdaq100 or "Index") }}
-          {{ top_stocks_tab_content('dowjones', top_stocks_categories.dowjones or "Index") }}
+          {{ top_stocks_tab_content('dow-jones', top_stocks_categories.get("dow-jones") or "Index") }}
         </div>
       </div>
     </div>
