@@ -3,7 +3,7 @@ from wtforms import StringField, PasswordField, SubmitField
 from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError
 from flask_login import current_user
 import re
-from utils.constants import PASSWORD_POLICY, NAME_REGEX, USERNAME_REGEX, MIN_USERNAME_LEN, MAX_USERNAME_LEN, MAX_NAME_LEN
+from utils.constants import PASSWORD_POLICY, USERNAME_POLICY, NAME_POLICY
 from utils.db_queries.user_data import get_user_by_email, get_user_by_username
 
 def normalize_email(email):
@@ -23,7 +23,7 @@ def check_password_strength(form, field):
 
     # Check leading/trailing spaces
     if raw_password != raw_password.strip():
-        raise ValidationError("Password cannot start or end with spaces.")
+        raise ValidationError("Password cannot start or end with spaces")
 
     password = field.data
     policy = PASSWORD_POLICY
@@ -62,26 +62,30 @@ def get_email_field():
     return email
 
 def get_first_name_field():
+    max_name_len = NAME_POLICY.get("max_length", "")
     first_name = StringField('First Name', filters=[normalize_name], validators=[
         DataRequired(message="First name is required"),
-        Length(max=MAX_NAME_LEN, message=f"First name must be at most {MAX_NAME_LEN} characters long")
+        Length(max=max_name_len, message=f"First name must be at most {max_name_len} characters long")
     ])
     return first_name
 
 def get_last_name_field():
+    max_name_len = NAME_POLICY.get("max_length", "")
     last_name = StringField('Last Name', filters=[normalize_name], validators=[
         DataRequired(message="Last name is required"),
-        Length(max=MAX_NAME_LEN, message=f"Last name must be at most {MAX_NAME_LEN} characters long")
+        Length(max=max_name_len, message=f"Last name must be at most {max_name_len} characters long")
     ])
     return last_name
 
 def get_username_field():
+    min_username_len = USERNAME_POLICY.get("min_length", "")
+    max_username_len = USERNAME_POLICY.get("max_length", "")
     username = StringField('Username', filters=[normalize_username], validators=[
         DataRequired(message="Username is required"),
         Length(
-            min=MIN_USERNAME_LEN,
-            max=MAX_USERNAME_LEN,
-            message=f"Username must be between {MIN_USERNAME_LEN} and {MAX_USERNAME_LEN} characters"),
+            min=min_username_len,
+            max=max_username_len,
+            message=f"Username must be between {min_username_len} and {max_username_len} characters long"),
     ])
     return username
 
@@ -101,23 +105,45 @@ def get_confirm_password_field(password_field):
     return confirm_password
 
 def validate_first_name_field(field):
-    if not re.match(NAME_REGEX, field.data):
-        raise ValidationError("Only alphabetic characters allowed in first name")
+    if not re.match(NAME_POLICY.get("allowed_chars_regex", ""), field.data):
+        raise ValidationError("First name can only contain letters, spaces, hyphens (-), and apostrophes (')")
 
 def validate_last_name_field(field):
-    if not re.match(NAME_REGEX, field.data):
-        raise ValidationError("Only alphabetic characters allowed in last name")
+    if not re.match(NAME_POLICY.get("allowed_chars_regex", ""), field.data):
+        raise ValidationError("Last name can only contain letters, spaces, hyphens (-), and apostrophes (')")
 
 def validate_username_field(field):
-    if not re.match(USERNAME_REGEX, field.data):
-        message = (f"Username must start with a letter, contain only lowercase letters, numbers, dots (.), "
-                   f"underscores (_) or hyphens (-), and cannot have consecutive special characters.")
+    username = field.data
+
+    # Must start with letter
+    if USERNAME_POLICY["start_with_letter"] and not username[0].isalpha():
+        raise ValidationError("Username must start with a letter")
+
+    # Allowed characters
+    if not re.match(USERNAME_POLICY["allowed_chars_regex"], username):
         raise ValidationError(
-            message
+            "Username can only contain lowercase letters, numbers, and special characters like "
+            "dots(.), underscores(_) and hyphens(-)"
         )
-    user = get_user_by_username(field.data)
+
+    # No consecutive special characters
+    if USERNAME_POLICY["no_consecutive_special"]:
+        if re.search(rf"[{USERNAME_POLICY['special_chars']}]{{{2}}}", username):
+            raise ValidationError(
+                "Username cannot contain consecutive special characters"
+            )
+
+    # No trailing special character
+    if USERNAME_POLICY["no_trailing_special"]:
+        if username[-1] in USERNAME_POLICY["special_chars"]:
+            raise ValidationError(
+                "Username cannot end with a special character ( . , _ , -)"
+            )
+
+    # Uniqueness check
+    user = get_user_by_username(username)
     if user:
-        raise ValidationError("This username is already taken. Please choose another")
+        raise ValidationError("This username is already taken, please choose another")
 
 
 class LoginForm(FlaskForm):

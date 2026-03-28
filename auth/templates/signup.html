@@ -23,9 +23,13 @@
 
   {{ form_field(field=form.email, placeholder="Enter your email") }}
 
-  <div class="d-flex gap-2">
-    {{ form_field(field=form.first_name, placeholder="Enter your first name") }}
-    {{ form_field(field=form.last_name, placeholder="Enter your last name") }}
+  <div class="row g-md-2">
+    <div class="col-md-6">
+      {{ form_field(field=form.first_name, placeholder="Enter your first name") }}
+    </div>
+    <div class="col-md-6">
+      {{ form_field(field=form.last_name, placeholder="Enter your last name") }}
+    </div>
   </div>
 
   {{ form_field(field=form.username, placeholder="Choose a username") }}

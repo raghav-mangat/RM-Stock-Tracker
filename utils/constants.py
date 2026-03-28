@@ -8,12 +8,20 @@ PASSWORD_POLICY = {
     "require_special": True,
     "special_chars_regex": r"[!@#$%^&*()_\-+=|\\{}\[\]:;\"'<>,.?/~` ]",
 }
-MIN_USERNAME_LEN = 3
-MAX_USERNAME_LEN = 30
-USERNAME_REGEX = rf"^(?!.*[._-]{{2}})[a-z][a-z0-9._-]{{{MIN_USERNAME_LEN-1},{MAX_USERNAME_LEN-1}}}$"
-NAME_REGEX = r"^[A-Za-zÀ-ÖØ-öø-ÿ'’.\- ]+$"
-
-MAX_NAME_LEN = 50
+USERNAME_POLICY = {
+    "min_length": 3,
+    "max_length": 30,
+    "allowed_chars_regex": r"^[a-z0-9._-]+$",
+    "start_with_letter": True,
+    "no_consecutive_special": True,
+    "no_trailing_special": True,
+    "special_chars": "._-",
+}
+NAME_POLICY = {
+    "min_length": 1,
+    "max_length": 100,
+    "allowed_chars_regex": r"^[A-Za-zÀ-ÖØ-öø-ÿ'’.\- ]+$",
+}
 
 # Number of days after which the user is considered inactive
 USER_INACTIVE_DAYS_LIMIT = 90
@@ -22,7 +30,7 @@ USER_INACTIVE_DAYS_LIMIT = 90
 USER_EMAIL_COOLDOWN_SECONDS = 60
 
 # Watchlist
-MAX_FOLDER_NAME_LEN = 100
+MAX_FOLDER_NAME_LEN = 255
 
 # Number of suggestions we show in the stock search bar
 NUM_SUGGESTIONS = 10
