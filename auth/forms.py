@@ -137,7 +137,7 @@ def validate_username_field(field):
     if USERNAME_POLICY["no_trailing_special"]:
         if username[-1] in USERNAME_POLICY["special_chars"]:
             raise ValidationError(
-                "Username cannot end with a special character ( . , _ , -)"
+                "Username cannot end with a special character"
             )
 
     # Uniqueness check
