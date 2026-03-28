@@ -15,7 +15,7 @@ from jwt import ExpiredSignatureError, InvalidTokenError
 from datetime import datetime, date
 from time import time
 from utils.datetime_utils import get_current_utc, format_dt_et, format_date, convert_to_utc_tz_aware
-from utils.constants import MAX_USERNAME_LEN, MAX_NAME_LEN, MAX_FOLDER_NAME_LEN
+from utils.constants import USERNAME_POLICY, NAME_POLICY, MAX_FOLDER_NAME_LEN
 
 """
 Notes:
@@ -712,9 +712,15 @@ class User(UserMixin, TimestampMixin, db.Model):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
 
     email: Mapped[str] = mapped_column(String(USER_INFO_LEN), unique=True, nullable=False)
-    username: Mapped[str] = mapped_column(String(MAX_USERNAME_LEN), unique=True, nullable=False)
-    first_name: Mapped[Optional[str]] = mapped_column(String(MAX_NAME_LEN), nullable=True)
-    last_name: Mapped[Optional[str]] = mapped_column(String(MAX_NAME_LEN), nullable=True)
+    username: Mapped[str] = mapped_column(
+        String(USERNAME_POLICY.get("max_length", USER_INFO_LEN)), unique=True, nullable=False
+    )
+    first_name: Mapped[str] = mapped_column(
+        String(NAME_POLICY.get("max_length", USER_INFO_LEN)), nullable=False
+    )
+    last_name: Mapped[str] = mapped_column(
+        String(NAME_POLICY.get("max_length", USER_INFO_LEN)), nullable=False
+    )
 
     password_hash: Mapped[Optional[str]] = mapped_column(String(USER_INFO_LEN), nullable=True)
     google_id: Mapped[Optional[str]] = mapped_column(String(USER_INFO_LEN), unique=True, nullable=True)
