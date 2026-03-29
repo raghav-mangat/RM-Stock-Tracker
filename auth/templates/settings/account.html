@@ -14,8 +14,10 @@
 
   <!-- Account Email (View Only) -->
   <div class="mb-4">
-    <label class="form-label fw-bold">Email Address</label>
-    <input type="email" class="form-control" value="{{ current_user.email }}" disabled>
+    <label class="form-label fw-bold">
+      Email Address
+    </label>
+    {{ form_email(current_user.email) }}
     <div class="form-text">
       This is the email associated with your account and cannot be changed.
     </div>

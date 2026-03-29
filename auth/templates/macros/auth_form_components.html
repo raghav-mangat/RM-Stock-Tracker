@@ -18,3 +18,14 @@
     <a href="{{ url_for('terms') }}" class="text-primary fw-semibold">Terms of Service</a>.
   </p>
 {% endmacro %}
+
+{% macro form_email(email) %}
+  <div class="border rounded px-3 py-2 bg-light d-flex align-items-center justify-content-between gap-2">
+    <span class="fw-semibold text-body flex-grow-1 text-break">
+      {{ email }}
+    </span>
+    <span class="badge bg-success-subtle text-success border flex-shrink-0">
+      Verified
+    </span>
+  </div>
+{% endmacro %}

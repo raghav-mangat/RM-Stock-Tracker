@@ -48,8 +48,8 @@ def generate_breadcrumbs():
     elif endpoint == "auth.login":
         breadcrumbs.append({'label': 'Log In', 'url': url_for(endpoint)})
 
-    elif endpoint == "auth.choose_username":
-        breadcrumbs.append({'label': 'Choose Username', 'url': url_for(endpoint)})
+    elif endpoint == "auth.confirm_google_signin":
+        breadcrumbs.append({'label': 'Confirm Google Sign-in', 'url': url_for(endpoint)})
 
     elif endpoint == "auth.settings_profile":
         breadcrumbs.append({'label': 'Settings', 'url': url_for("auth.settings")})

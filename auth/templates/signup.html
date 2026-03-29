@@ -1,5 +1,5 @@
 {% from "macros/auth_form_components.html" import form_heading, form_separator, form_agreement %}
-{% from "macros/auth_fields.html" import form_field, submit_field, password_field with context %}
+{% from "macros/auth_fields.html" import form_field, submit_field, name_fields, password_field with context %}
 {% from "macros/google_btn.html" import google_btn %}
 
 {% extends "auth_form_base.html" %}
@@ -23,14 +23,7 @@
 
   {{ form_field(field=form.email, placeholder="Enter your email") }}
 
-  <div class="row g-md-2">
-    <div class="col-md-6">
-      {{ form_field(field=form.first_name, placeholder="Enter your first name") }}
-    </div>
-    <div class="col-md-6">
-      {{ form_field(field=form.last_name, placeholder="Enter your last name") }}
-    </div>
-  </div>
+  {{ name_fields(form) }}
 
   {{ form_field(field=form.username, placeholder="Choose a username") }}
 

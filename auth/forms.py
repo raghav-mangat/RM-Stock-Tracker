@@ -184,9 +184,17 @@ class SignupForm(FlaskForm):
     def validate_username(self, field):
         validate_username_field(field)
 
-class ChooseUsernameForm(FlaskForm):
+class ConfirmGoogleSigninForm(FlaskForm):
+    first_name = get_first_name_field()
+    last_name = get_last_name_field()
     username = get_username_field()
     submit = SubmitField("Sign Up")
+
+    def validate_first_name(self, field):
+        validate_first_name_field(field)
+
+    def validate_last_name(self, field):
+        validate_last_name_field(field)
 
     def validate_username(self, field):
         validate_username_field(field)

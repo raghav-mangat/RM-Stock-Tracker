@@ -1,0 +1,40 @@
+{% from "macros/auth_form_components.html" import form_heading, form_email %}
+{% from "macros/auth_fields.html" import form_field, submit_field, name_fields %}
+
+{% extends "auth_form_base.html" %}
+
+{% block auth_form_title %}
+    Confirm Google Sign-in | RM Stock Tracker
+{% endblock %}
+
+{% block auth_form_content %}
+
+{{ form_heading(text="Confirm Google Sign-in") }}
+
+<p class="text-muted text-center my-4 small">
+  You have successfully signed in with Google.
+  Please confirm your details and choose a username to complete your account setup.
+</p>
+
+<form method="POST" novalidate>
+  {{ form.hidden_tag() }}
+
+  <!-- Email from Google (View Only) -->
+  <div class="mb-4">
+    <label class="form-label fw-semibold small text-muted">
+      Email Address
+    </label>
+    {{ form_email(email) }}
+    <div class="form-text">
+      This email is provided by Google and cannot be changed.
+    </div>
+  </div>
+
+  {{ name_fields(form) }}
+
+  {{ form_field(field=form.username, placeholder="Choose a username") }}
+
+  {{ submit_field(field=form.submit, class="btn btn-success btn-lg") }}
+</form>
+
+{% endblock %}

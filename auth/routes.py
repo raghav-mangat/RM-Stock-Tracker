@@ -14,9 +14,10 @@ from metrics.registry import MetricName
 from .emails import AuthEmail
 from .services import RedirectService, LogoutService
 from .forms import (
-    LoginForm, SignupForm, ChooseUsernameForm, ResetPasswordRequestForm, ResetPasswordForm, ProfileSettingsForm,
-    SettingsDeleteAccountRequestForm, DeleteAccountForm, SettingsResetPasswordRequestForm, SettingsUnlinkGoogleAccountForm,
-    SettingsSetPasswordForm, SettingsRemovePasswordForm, SettingsToggleEmailAlertsForm
+    LoginForm, SignupForm, ConfirmGoogleSigninForm, ResetPasswordRequestForm, ResetPasswordForm,
+    ProfileSettingsForm, SettingsDeleteAccountRequestForm, DeleteAccountForm,
+    SettingsResetPasswordRequestForm, SettingsUnlinkGoogleAccountForm, SettingsSetPasswordForm,
+    SettingsRemovePasswordForm, SettingsToggleEmailAlertsForm
 )
 from utils.db_queries.user_data import (
     AuthError, AuthUnexpectedError, add_new_user, update_user_profile, change_user_password, verify_user,
@@ -797,7 +798,7 @@ def google_signin_callback():
             "last_name": last_name,
             "created_at": time.time()
         }
-        return redirect(url_for("auth.choose_username"))
+        return redirect(url_for("auth.confirm_google_signin"))
 
     login_user(user)
     update_user_last_login_at(user)
@@ -815,23 +816,32 @@ def google_signin_callback():
 
     return redirect(url_for("watchlist.index"))
 
-@auth_bp.route("/choose-username", methods=["GET", "POST"])
-def choose_username():
+@auth_bp.route("/confirm-google-signin", methods=["GET", "POST"])
+def confirm_google_signin():
     pending = session.get("pending_google_signup")
 
     # User tries to access manually or session expired
     if not pending:
-        flash("Your sign-in session expired. Please continue by signing in with Google again.","warning")
+        flash(
+            "Your sign-in session expired. Please continue by signing in with Google again.",
+            "warning"
+        )
         return redirect(url_for("auth.login"))
 
     # Prevent stale sessions
     stale_session_delta = 15 * 60 # 15 minutes
     if time.time() - pending["created_at"] > stale_session_delta:
         session.pop("pending_google_signup", None)
-        flash("Signup session expired. Please sign in again.", "warning")
+        flash(
+            "Your session has expired. Please sign in with Google again to continue.",
+            "warning"
+        )
         return redirect(url_for("auth.login"))
 
-    form = ChooseUsernameForm()
+    form = ConfirmGoogleSigninForm(
+        first_name=pending.get("first_name", ""),
+        last_name=pending.get("last_name", ""),
+    )
 
     if form.validate_on_submit():
         try:
@@ -839,8 +849,8 @@ def choose_username():
                 signup_source=SignupSource.GOOGLE,
                 email=pending["email"],
                 username=form.username.data,
-                first_name=pending["first_name"],
-                last_name=pending["last_name"],
+                first_name=form.first_name.data,
+                last_name=form.last_name.data,
                 password=None,
                 google_id=pending["google_id"],
                 is_verified=True,
@@ -880,20 +890,24 @@ def choose_username():
 
         except AuthUnexpectedError as e:
             current_app.logger.exception(
-                "Unexpected error during choosing username after user Google signup",
+                "Unexpected error during Google signin confirmation after user Google signup",
                 extra={"log_type": "auth", "email": pending["email"]}
             )
             flash(str(e), "danger")
-            return redirect(url_for("auth.choose_username"))
+            return redirect(url_for("auth.confirm_google_signin"))
         except AuthError as e:
             flash(str(e), "danger")
-            return redirect(url_for("auth.choose_username"))
+            return redirect(url_for("auth.confirm_google_signin"))
         finally:
             # Clean up the session
             session.pop("pending_google_signup", None)
             session.pop("oauth_next", None)
 
-    return render_template("choose_username.html", form=form)
+    return render_template(
+        "confirm_google_signin.html",
+        form=form,
+        email=pending["email"]
+    )
 
 @auth_bp.route("/google/link")
 @login_required

@@ -28,6 +28,17 @@
   </div>
 {% endmacro %}
 
+{% macro name_fields(form) %}
+  <div class="row g-md-2">
+    <div class="col-md-6">
+      {{ form_field(field=form.first_name, placeholder="Enter your first name") }}
+    </div>
+    <div class="col-md-6">
+      {{ form_field(field=form.last_name, placeholder="Enter your last name") }}
+    </div>
+  </div>
+{% endmacro %}
+
 {% macro password_field(field, placeholder, autocomplete="current-password", check_requirements=False) %}
 <div class="password-field-group mb-3">
 
