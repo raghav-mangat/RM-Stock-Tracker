@@ -726,26 +726,17 @@ def write_status(now, status):
 
 def main():
     """
-    - We run this script hourly every day, and also at 9:30 am
-        ET when the market opens.
-    - We first check the ET minute at 9th ET hour to make sure the
-        script only runs after the 30th minute when the market is
-        open.
+    - We run this script hourly twice every day, at 15 and 45 minutes,
+        to get the starting-hour and mid-hour data, 15 minutes extra
+        to factor in 15 minutes data delay from Massive API.
     - We also check if the current ET hour is in the selected
         market hours. We are only running at these hours since
         running this script takes alot of CPU seconds, and we
         would need to buy more to make it run more frequently.
         Right now we run it in the selected hours since the
-        market is open at that time and once when the market is
-        closed to get the closing data.
-    - Before running we check the current market status. If the
-        market is not closed then always run it. If the market is
-        closed check the market status when we last updated the
-        database by looking at the active dataset version.
-        If the status was not closed then it means we did not run it
-        one last time to get the final closed market data for the day.
-        So run it one last time store the closed market data for the
-        day and then the script runs when the market is not closed next.
+        market is open at that time and once when the market enters
+        extended-hours and once when the market is closed to get the
+        closing data.
     - This is why we have the conditions to check before we actually
         run the script.
     """
@@ -759,18 +750,10 @@ def main():
 
     current_et = get_current_et()
     current_et_hour = current_et.hour
-    current_et_minute = current_et.minute
-    should_skip = False
+    selected_market_hours = [9, 10, 11, 12, 13, 14, 15, 16, 20]
 
     # Check the time slot
-    selected_market_hours = [11, 12, 13, 14, 15, 16, 20]
-    if current_et_hour == 9:
-        if current_et_minute < 30:
-            should_skip = True
-    elif current_et_hour not in selected_market_hours:
-        should_skip = True
-
-    if should_skip:
+    if current_et_hour not in selected_market_hours:
         message = "Not in the correct time slot"
         print(f"{message} - Skipping DB population!")
         write_status(now, status="skipped")
@@ -790,8 +773,26 @@ def main():
         if current_market_status:
             message = (f"Current market status: {current_market_status}, Active dataset market status: "
                       f"{active_dataset_market_status}")
-            if (current_market_status != "closed"
-                    or (current_market_status == "closed" and active_dataset_market_status != "closed")):
+
+            should_skip = False
+            if current_market_status == "open":
+                should_skip = False
+            elif current_market_status == "extended-hours":
+                if active_dataset_market_status in ["extended-hours", "closed"]:
+                    should_skip = True
+            elif current_market_status == "closed":
+                if active_dataset_market_status == "closed":
+                    should_skip = True
+
+            if should_skip:
+                print(f"{message} - Skipping DB population!")
+                write_status(now, status="skipped")
+                app.logger.info(
+                    f"Skipping script",
+                    extra={"log_type": "scheduled_script", "action": "populate_db",
+                           "reason": f"{message}"}
+                )
+            else:
                 print(f"{message} - Proceeding with DB population!")
 
                 write_status(now, status="running")
@@ -801,15 +802,6 @@ def main():
                 app.logger.info(
                     f"Completed script",
                     extra={"log_type": "scheduled_script", "action": "populate_db"}
-                )
-
-            else:
-                print(f"{message} - Skipping DB population!")
-                write_status(now, status="skipped")
-                app.logger.info(
-                    f"Skipping script",
-                    extra={"log_type": "scheduled_script", "action": "populate_db",
-                           "reason": f"{message}"}
                 )
         else:
             message = "Market status missing - Cannot determine whether to proceed with DB population!"

@@ -1,4 +1,5 @@
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import selectinload
 from time import time
 from datetime import timedelta
 from models.database import db, User
@@ -146,7 +147,10 @@ def get_user_by_google_id(google_id):
     return db.session.execute(db.select(User).where(User.google_id == google_id)).scalar()
 
 def get_all_users():
-    return db.session.execute(db.select(User)).scalars().all()
+    return db.session.execute(
+        db.select(User)
+        .options(selectinload(User.watchlist_alerts))
+    ).scalars().all()
 
 def is_user_verified(user):
     return user.is_verified

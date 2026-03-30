@@ -1,4 +1,4 @@
-{% from "macros/auth_form_components.html" import form_heading, form_email %}
+{% from "macros/auth_form_components.html" import form_heading %}
 {% from "macros/auth_fields.html" import form_field, submit_field, name_fields %}
 
 {% extends "auth_form_base.html" %}
@@ -19,12 +19,19 @@
 <form method="POST" novalidate>
   {{ form.hidden_tag() }}
 
-  <!-- Email from Google (View Only) -->
+  <!-- Email Address from Google (View Only) -->
   <div class="mb-4">
     <label class="form-label fw-semibold small text-muted">
       Email Address
+      <span class="badge bg-success-subtle text-success border ms-1">
+        Verified
+      </span>
     </label>
-    {{ form_email(email) }}
+    <div class="border rounded px-3 py-2 bg-light d-flex align-items-center">
+      <span class="fw-semibold text-body text-break">
+        {{ email }}
+      </span>
+    </div>
     <div class="form-text">
       This email is provided by Google and cannot be changed.
     </div>
