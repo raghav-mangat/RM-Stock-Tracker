@@ -273,6 +273,13 @@ class DatasetVersion(TimestampMixin, db.Model):
         passive_deletes=True
     )
 
+    stock_searches: Mapped[list["StockSearch"]] = relationship(
+        "StockSearch",
+        back_populates="dataset_version",
+        cascade="all, delete-orphan",
+        passive_deletes=True
+    )
+
     def __repr__(self) -> str:
         return (f"<DatasetVersion id={self.id} is_active={self.is_active} "
                 f"last_updated={self.last_updated} market_status={self.market_status}>")
@@ -704,6 +711,45 @@ class IndexHolding(TimestampMixin, db.Model):
 
     stock_index: Mapped["Index"] = relationship(back_populates="holdings")
     stock: Mapped["Stock"] = relationship(back_populates="index_holdings")
+
+
+class StockSearch(db.Model):
+    __tablename__ = "stocks_search"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+
+    symbol: Mapped[str] = mapped_column(String(TICKER_LEN), nullable=False)
+    name: Mapped[str] = mapped_column(String(STOCK_NAME_LEN), nullable=False)
+    name_lower: Mapped[str] = mapped_column(String(STOCK_NAME_LEN), nullable=False)
+    popularity: Mapped[Decimal] = mapped_column(
+        Numeric(NUMERIC_PRECISION, DECIMAL_PRECISION),
+        nullable=False
+    )
+
+    dataset_version_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("dataset_versions.id", ondelete="CASCADE"),
+        nullable=False
+    )
+
+    dataset_version: Mapped["DatasetVersion"] = relationship(
+        "DatasetVersion",
+        back_populates="stock_searches",
+    )
+
+    __table_args__ = (
+        UniqueConstraint(
+            "dataset_version_id", "symbol", name="uq_stock_search_dataset_symbol"
+        ),
+        DBIndex(
+            "ix_stock_search_dataset_name_lower",
+            "dataset_version_id", "name_lower"
+        ),
+    )
+
+    def __repr__(self) -> str:
+        return (f"<StockSearch id={self.id} dataset_version_id={self.dataset_version_id} "
+                f"symbol={self.symbol} name={self.name}>")
 
 
 class User(UserMixin, TimestampMixin, db.Model):
