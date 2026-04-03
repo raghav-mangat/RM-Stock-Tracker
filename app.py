@@ -270,7 +270,7 @@ def all_stocks():
 
     ticker_tape_stocks = get_ticker_tape_stocks(dataset_version_id)
     trending_stocks = get_trending_stocks(dataset_version_id)
-    top_stocks_categories = get_top_stocks_categories()
+    top_stocks_categories = get_top_stocks_categories(dataset_version_id)
 
     return render_template(
         "all_stocks.html",
@@ -283,21 +283,24 @@ def all_stocks():
 
 @app.route("/get-top-stocks-data/<string:category>")
 def get_top_stocks_data(category):
+    dataset_version_id = get_active_dataset_id()
+
     gainers = render_template(
         "partials/top_stocks_table_data.html",
         stocks_type="gainers",
-        stocks=db_get_top_stocks_data(category, "gainers")
+        stocks=db_get_top_stocks_data(category, "gainers", dataset_version_id)
     )
     losers = render_template(
         "partials/top_stocks_table_data.html",
         stocks_type="losers",
-        stocks=db_get_top_stocks_data(category, "losers")
+        stocks=db_get_top_stocks_data(category, "losers", dataset_version_id)
     )
     top_traded = render_template(
         "partials/top_stocks_table_data.html",
         stocks_type="top_traded",
-        stocks=db_get_top_stocks_data(category, "top_traded")
+        stocks=db_get_top_stocks_data(category, "top_traded", dataset_version_id)
     )
+
     html = {
         "gainers": gainers,
         "losers": losers,
@@ -307,7 +310,7 @@ def get_top_stocks_data(category):
 
 @app.route("/query-stocks")
 def query_stocks():
-    query = request.args.get("q", "").strip()
+    query = request.args.get("q", "")
     return get_query_stocks(query)
 
 @app.route("/stocks/<string:ticker>")

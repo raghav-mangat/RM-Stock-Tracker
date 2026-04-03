@@ -63,10 +63,13 @@ def get_index_data(index_id, sort_by, order, filter_by):
         "dark_red": -15
     }
 
-    # Fetch index
-    index = Index.query.filter_by(slug=index_id).first_or_404()
-
     active_dataset_id = get_active_dataset_id()
+
+    # Fetch index
+    index = Index.query.filter_by(
+        dataset_version_id=active_dataset_id,
+        slug=index_id
+    ).first_or_404()
 
     query = (
         db.session.query(

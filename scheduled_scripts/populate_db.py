@@ -9,9 +9,10 @@ from sqlalchemy import delete
 from sqlalchemy.orm import joinedload
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import time
+from datetime import timedelta
 from models.database import (
     db, Index, IndexHolding, StockTypeMeta, TickerMaster, DatasetVersion,
-    StockDetail, StockMaster, Stock
+    StockDetail, StockMaster, Stock, StockSearch
 )
 from data_collectors.market_data import fetch_market_status
 from data_collectors.index_data import all_indices, get_index_info, fetch_index_data
@@ -30,8 +31,11 @@ from utils.db_queries.query_stocks import get_query_stocks
 from utils.status_files import write_to_status_file
 
 
+# CONSTANTS
 BATCH_SIZE = 1000
 MAX_WORKERS = min(32, (os.cpu_count() or 4) * 8)
+MASSIVE_API_DATA_DELAY_MINUTES = 15
+
 
 def update_ticker_master(full_market_snapshot_data, all_tickers_data):
     print(f"\n---- Updating Ticker Master...")
@@ -275,7 +279,7 @@ def get_additional_stock_data(tickers, dataset_version_id):
         print("Got Trending Stocks data for updated database!")
 
         print("Getting Top Stocks data for updated database...")
-        for category in get_top_stocks_categories().keys():
+        for category in get_top_stocks_categories(dataset_version_id).keys():
             for stocks_type in ["gainers", "losers", "top_traded"]:
                 for stock in db_get_top_stocks_data(category, stocks_type, dataset_version_id):
                     ticker = stock.ticker
@@ -493,6 +497,57 @@ def parallel_fetch_charts(stocks, now_date):
 
     return all_chart_data
 
+def update_stock_search(dataset_version_id):
+    print(f"\n---- Updating Stock Search...")
+    start_time = time.perf_counter()
+
+    with app.app_context():
+        stock_search_data = (
+            db.session.query(
+                TickerMaster.symbol,
+                StockDetail.name,
+                db.func.lower(StockDetail.name).label("name_lower"),
+                StockMaster.popularity,
+                StockMaster.dataset_version_id,
+            )
+            .select_from(TickerMaster)
+            .join(StockMaster, TickerMaster.id == StockMaster.ticker_id)
+            .join(StockDetail, TickerMaster.id == StockDetail.ticker_id)
+            .filter(
+                TickerMaster.is_active == True,
+                StockMaster.dataset_version_id == dataset_version_id
+            )
+        ).all()
+
+    print(f"Number of Stock Search: {len(stock_search_data)}")
+
+    with app.app_context():
+        try:
+            with db.session.begin():
+                for i in range(0, len(stock_search_data), BATCH_SIZE):
+                    chunk = stock_search_data[i:i + BATCH_SIZE]
+                    stock_search_data_chunk = list()
+
+                    for data in chunk:
+                        stock_search_data_chunk.append({
+                            "symbol": data.symbol,
+                            "name": data.name,
+                            "name_lower": data.name_lower,
+                            "popularity": data.popularity,
+                            "dataset_version_id": data.dataset_version_id,
+                        })
+
+                    db.session.bulk_insert_mappings(StockSearch, stock_search_data_chunk)
+
+        except Exception as e:
+            print(f"Error: {e}")
+            db.session.rollback()
+            raise
+
+    end_time = time.perf_counter()
+    print(f"-Time: {end_time - start_time:.4f} seconds")
+    print(f"---- Updated Stock Search!")
+
 def create_new_dataset_version(now, market_status):
     print(f"\n---- Creating Dataset Version...")
     start_time = time.perf_counter()
@@ -566,7 +621,7 @@ def delete_old_data():
 
     end_time = time.perf_counter()
     print(f"-Time: {end_time - start_time:.4f} seconds")
-    print("---- Deleted Old Data!")
+    print("---- Deleted Old Data!\n")
 
 def populate_db(now, market_status):
     """
@@ -698,11 +753,11 @@ def populate_db(now, market_status):
     with app.app_context():
         update_stock_detail(all_tickers_data, ticker_id_map, stock_type_id_map)
 
+    update_stock_search(dataset_version_id)
+
     with app.app_context():
         update_dataset_version(dataset_version_id)
 
-    with app.app_context():
-        delete_old_data()
 
     populate_end_time = time.perf_counter()
     print(f"\n\n-Total Time: {populate_end_time - populate_start_time:.4f} seconds")
@@ -746,7 +801,9 @@ def main():
         extra={"log_type": "scheduled_script", "action": "populate_db"}
     )
 
-    now = get_current_utc()
+    # Current UTC time minus data delay minutes to factor in delayed data from
+    # Massive API
+    now = get_current_utc() - timedelta(minutes=MASSIVE_API_DATA_DELAY_MINUTES)
 
     current_et = get_current_et()
     current_et_hour = current_et.hour
@@ -798,6 +855,9 @@ def main():
                 write_status(now, status="running")
                 populate_db(now, current_market_status)
                 write_status(now, status="success")
+
+                with app.app_context():
+                    delete_old_data()
 
                 app.logger.info(
                     f"Completed script",

@@ -4,7 +4,6 @@ import json
 import tempfile
 import os
 from flask import current_app
-from utils.datetime_utils import format_date, get_dt_from_et_dt_str
 
 
 def write_to_status_file(filename: str, status_data: dict):
@@ -86,11 +85,5 @@ def db_last_updated():
 
 def db_last_updated_date():
     # Return the last updated date of populate db
-    last_updated_date = None
-
-    last_updated = db_last_updated()
-
-    if last_updated:
-        last_updated_date = format_date(get_dt_from_et_dt_str(last_updated))
-
-    return last_updated_date
+    data = get_db_populate_status()
+    return data.get("last_updated_date", None) if data else None

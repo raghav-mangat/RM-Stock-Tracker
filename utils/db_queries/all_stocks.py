@@ -64,18 +64,21 @@ def get_trending_stocks(dataset_version_id=None):
 
     return trending_stocks
 
-def get_top_stocks_categories():
+def get_top_stocks_categories(dataset_version_id):
     # Dict of data to return
     top_stocks_categories = dict()
 
     top_stocks_categories["overall"] =  "Overall Market"
 
     # Filter and loop over specific indices
-    indices = Index.query.filter(or_(
-        Index.slug == "sp500",
-        Index.slug == "nasdaq100",
-        Index.slug == "dow-jones"
-    )).all()
+    indices = Index.query.filter(
+        Index.dataset_version_id == dataset_version_id,
+        or_(
+            Index.slug == "sp500",
+            Index.slug == "nasdaq100",
+            Index.slug == "dow-jones"
+        )
+    ).all()
     for index in indices:
         top_stocks_categories[index.slug] = index.name
 
@@ -105,10 +108,12 @@ def db_get_top_stocks_data(category, stocks_type, dataset_version_id=None):
             )
         )
 
-    elif category in get_top_stocks_categories().keys():
-        index = Index.query.filter(
-            Index.slug == category,
+    elif category in get_top_stocks_categories(dataset_version_id).keys():
+        index = Index.query.filter_by(
+            dataset_version_id=dataset_version_id,
+            slug=category
         ).first()
+
         # Query stocks that are part of the current index using IndexHolding join
         stocks = (
             db.session.query(
@@ -135,7 +140,7 @@ def db_get_top_stocks_data(category, stocks_type, dataset_version_id=None):
         )
 
     result = None
-    if stocks is None:
+    if not stocks:
         return result
     if stocks_type == "gainers":
         # Top Gainers
