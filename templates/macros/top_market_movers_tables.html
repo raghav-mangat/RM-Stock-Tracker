@@ -1,5 +1,5 @@
 {% from "macros/stock_attributes.html" import
-    stock_todays_change_td, ticker_link, stock_name_td
+    stock_todays_change_td, ticker_link, stock_name_td, stock_volume_td
 %}
 
 {% macro placeholder_cell() %}
@@ -30,9 +30,7 @@
           {% if stocks_type == 'gainers' or stocks_type == 'losers' %}
             {{ stock_todays_change_td(stock) }}
           {% else  %}
-            <td>
-              <span class="fw-semibold">{{ stock.volume | humanize_number }}</span>
-            </td>
+            {{ stock_volume_td(stock) }}
           {% endif %}
         </tr>
       {% endfor %}
@@ -152,10 +150,10 @@
               <td>{{ ticker_link(stock) }}</td>
               {{ stock_name_td(stock) }}
               <td>{{ stock.day_close | currency }}</td>
-              <td>{{ stock.volume | humanize_number }}</td>
+              {{ stock_volume_td(stock, semibold=False) }}
               {{ stock_todays_change_td(stock) }}
-              <td>
-                <span class="fw-semibold">{{ stock.popularity | humanize_number }}</span>
+              <td class="fw-semibold text-nowrap">
+                <span>{{ stock.popularity | humanize_number }}</span>
               </td>
             </tr>
           {% else %}

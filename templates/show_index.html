@@ -1,7 +1,7 @@
 {% from "macros/popovers.html" import dma_200_diff_popover %}
 {% from "macros/jumbotron.html" import jumbotron %}
 {% from "macros/stock_attributes.html" import
-    stock_todays_change_td, ticker_link, stock_dma_200_perc_diff, stock_name_td
+    stock_todays_change_td, ticker_link, stock_dma_200_perc_diff, stock_name_td, stock_volume_td
 %}
 
 {% extends "base.html" %}
@@ -19,9 +19,24 @@
 
   <!-- Hero Section -->
   {% set heading = index.name | display %}
-  {% set description = "Take a look at all the stocks in the selected index along with some performance data. You can sort or filter the data by different attributes. Click on a company to see full details and performance data." %}
+  {% set description = "Take a look at all the stocks in the selected index along with some performance data. You can sort or filter the data by different attributes. Click on a ticker to see full details and performance data." %}
   {% set last_updated = index.last_updated | format_dt_et | display %}
-  {{ jumbotron(heading, description, last_updated, market_status) }}
+
+  {% if index.url %}
+    {% set data_source %}
+      <div class="small text-muted">
+        Constituents data sourced from
+        <a href="{{ index.url }}" target="_blank"
+           class="fw-semibold text-primary">
+          Wikipedia
+        </a>
+      </div>
+    {% endset %}
+  {% else %}
+    {% set data_source = None %}
+  {% endif %}
+
+  {{ jumbotron(heading, description, last_updated, market_status, data_source) }}
 
   <!-- Sort By and Filter Dropdowns -->
   <section class="container text-end mb-4">
@@ -95,7 +110,6 @@
             <th scope="col">#</th>
             <th scope="col">Ticker</th>
             <th scope="col">Name</th>
-            <th scope="col">Weight</th>
             <th scope="col">52w Low</th>
             <th scope="col">Price</th>
             <th scope="col">52w High</th>
@@ -111,12 +125,11 @@
               <th scope="row">{{ loop.index }}</th>
               <td>{{ ticker_link(stock) }}</td>
               {{ stock_name_td(stock) }}
-              <td class="fw-semibold">{{ stock.weight | percent }}</td>
               <td>{{ stock.low_52w | currency }}</td>
               <td class="fw-semibold bg-info-subtle">{{ stock.day_close | currency }}</td>
               <td>{{ stock.high_52w | currency }}</td>
               {{ stock_todays_change_td(stock) }}
-              <td class="fw-semibold">{{ stock.volume | humanize_number }}</td>
+              {{ stock_volume_td(stock) }}
               <td>{{ stock.dma_200 | currency }}</td>
               {{ stock_dma_200_perc_diff(stock) }}
             </tr>

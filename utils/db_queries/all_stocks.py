@@ -10,7 +10,7 @@ from utils.db_queries.tables.dataset_version import get_active_dataset_id
 NUM_TOP_STOCKS = 50
 
 def get_ticker_tape_stocks(dataset_version_id=None):
-    rows = db.session.execute(db.select(TickerTapeStockCache.id)).scalars().all()
+    rows = db.session.execute(db.select(TickerTapeStockCache.ticker_id)).scalars().all()
 
     stocks = (
         db.session.query(

@@ -4,7 +4,7 @@ from flask_login import current_user, login_required
 from models.database import AlertAttribute
 from .services import AjaxService, Validators, ActionContext, ExceptionService, MutationHandler
 from utils.status_files import db_last_updated
-from utils.market_status import get_complete_market_status
+from utils.market_status import get_market_status_with_time_ago
 from utils.db_queries.watchlist import *
 
 """
@@ -55,7 +55,7 @@ def index():
         AlertAttribute=AlertAttribute,
         OrderBy=OrderBy,
         last_updated=last_updated,
-        market_status=get_complete_market_status()
+        market_status=get_market_status_with_time_ago()
     )
 
 @watchlist_bp.route("/alerts", methods=["GET"])
@@ -72,7 +72,7 @@ def alerts():
         watchlist_alert_data=watchlist_alert_data,
         num_user_alerts=num_user_alerts,
         last_updated=last_updated,
-        market_status=get_complete_market_status()
+        market_status=get_market_status_with_time_ago()
     )
 
 @watchlist_bp.route("/about", methods=["GET"])

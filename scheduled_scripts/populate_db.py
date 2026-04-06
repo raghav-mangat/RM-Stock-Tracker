@@ -15,12 +15,12 @@ from models.database import (
     StockDetail, StockMaster, Stock, StockSearch
 )
 from data_collectors.market_data import fetch_market_status
-from data_collectors.index_data import all_indices, get_index_info, fetch_index_data
 from data_collectors.stock_data import (
     fetch_stock_data, fetch_chart_data, DB_TIMEFRAMES,
     fetch_full_market_snapshot_data, fetch_all_tickers_data,
     fetch_stock_types, get_stock_master_data, get_stock_detail_data
 )
+from utils.data_files import read_data_file
 from utils.datetime_utils import get_current_utc, format_dt_et, format_date_et, get_current_et
 from utils.db_queries.tables.ticker_master import get_all_active_ticker_master
 from utils.db_queries.tables.dataset_version import get_active_dataset_market_status
@@ -35,6 +35,7 @@ from utils.status_files import write_to_status_file
 BATCH_SIZE = 1000
 MAX_WORKERS = min(32, (os.cpu_count() or 4) * 8)
 MASSIVE_API_DATA_DELAY_MINUTES = 15
+INDICES_DATA_FILE_NAME = "indices_data.json"
 
 
 def update_ticker_master(full_market_snapshot_data, all_tickers_data):
@@ -202,42 +203,28 @@ def get_and_update_indices_data(now, dataset_version_id):
     print(f"\n---- Getting data for indices...")
     start_time = time.perf_counter()
 
-    index_map = {}  # slug -> Index object
+    with app.app_context():
+        indices_data = read_data_file(INDICES_DATA_FILE_NAME) or dict()
+        indices_data = indices_data.get("indices", dict())
 
-    # Indices and holdings
-    for index in all_indices:
-        index_info = get_index_info(index)
-        index_obj = Index(
-            name=index_info.get("name"),
-            slug=index_info.get("slug"),
-            url=index_info.get("url"),
-            last_updated=now,
-            dataset_version_id=dataset_version_id
-        )
-        new_indices.append(index_obj)
-        index_map[index] = index_obj
+        # Indices and holdings
+        for key, value in indices_data.items():
+            index_obj = Index(
+                slug=value.get("slug"),
+                name=value.get("name"),
+                url=value.get("url", None),
+                last_updated=now,
+                dataset_version_id=dataset_version_id
+            )
+            new_indices.append(index_obj)
 
-    # Parallel fetch holdings
-    def worker(index_):
-        holdings_ = fetch_index_data(index_)
-        return index_, holdings_
-
-    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
-        futures = [executor.submit(worker, index) for index in all_indices]
-
-        for future in as_completed(futures):
-            index, holdings = future.result()
-            index_obj = index_map.get(index)
-
-            for holding in holdings:
-                ticker = holding.get("ticker")
-                if ticker:
-                    tickers.add(ticker)
-                    index_holdings_temp.append(
-                        (index_obj.slug, ticker, holding.get("weight"))
-                    )
-
-            print(f"Got data for: {index}!")
+            holdings = value.get("holdings")
+            for ticker in holdings:
+                tickers.add(ticker)
+                index_holdings_temp.append(
+                    (index_obj.slug, ticker)
+                )
+            print(f"Got data for: {key}!")
 
     end_time = time.perf_counter()
     print(f"-Time: {end_time - start_time:.4f} seconds")
@@ -418,14 +405,14 @@ def update_index_holdings_data(index_holdings_temp, dataset_version_id):
         for stock in stocks
     }
 
-    for slug, ticker, weight in index_holdings_temp:
+    for slug, ticker in index_holdings_temp:
         index_id = indices_map.get(slug, None)
         stock_id = stocks_map.get(ticker, None)
         if index_id and stock_id:
             new_index_holdings.append({
                 "index_id": index_id,
                 "stock_id": stock_id,
-                "weight": weight
+                "weight": None
             })
 
     with app.app_context():
@@ -680,6 +667,9 @@ def populate_db(now, market_status):
         being updated for example updating the watchlist items.
     - We use threading to fetch the data from Massive API and data for indices
         to speed up the fetching process alot.
+    - When we run this script on an empty database, we do not get the additional
+        stock data since the Stock Detail table is empty. Run it again to get all
+        the required data for the database.
     """
 
     print("Starting Database Population...\n")
@@ -742,6 +732,8 @@ def populate_db(now, market_status):
 
     update_index_holdings_data(index_holdings_temp, dataset_version_id)
 
+    update_stock_search(dataset_version_id)
+
     with app.app_context():
         update_stock_type_meta(stock_types)
 
@@ -752,8 +744,6 @@ def populate_db(now, market_status):
 
     with app.app_context():
         update_stock_detail(all_tickers_data, ticker_id_map, stock_type_id_map)
-
-    update_stock_search(dataset_version_id)
 
     with app.app_context():
         update_dataset_version(dataset_version_id)

@@ -1,117 +1,119 @@
-import random
-import time
 import requests
 from bs4 import BeautifulSoup
+import time
+import random
 
-# Define the indices and their URLs
-slick_charts_url = "https://www.slickcharts.com"
-indices_info = {
-    "sp500": {
-        "name": "S&P 500 Index",
-        "slug": "sp500",
-        "url": f"{slick_charts_url}/sp500",
-    },
-    "nasdaq100": {
-        "name": "Nasdaq 100 Index",
-        "slug": "nasdaq100",
-        "url": f"{slick_charts_url}/nasdaq100",
-    },
-    "dow-jones": {
-        "name": "Dow Jones Index",
-        "slug": "dow-jones",
-        "url": f"{slick_charts_url}/dowjones",
-    },
-    "magnificent7": {
-        "name": "Magnificent Seven Index",
-        "slug": "magnificent7",
-        "url": f"{slick_charts_url}/magnificent7",
-    },
-    "berkshire-hathaway": {
-        "name": "Berkshire Hathaway Holdings",
-        "slug": "berkshire-hathaway",
-        "url": f"{slick_charts_url}/berkshire-hathaway",
-    },
-    "ark-innovation": {
-        "name": "Ark Innovation Index",
-        "slug": "ark-innovation",
-        "url": f"{slick_charts_url}/etf/ark-invest/ARKK",
-    },
-}
 
-# List of all indices available in this script
-all_indices = list(indices_info.keys())
-
-def get_index_info(index):
-    """
-    Returns the information for the index given to the function using the
-    indices_info dict defined at the top of the script.
-    :param index: key for a value in indices_info dict
-    :return: dict of information for the given index
-    """
-    return indices_info.get(index)
-
-def fetch_index_data(index, max_retries=3):
-    """
-    Takes an index name for an index in slickcharts website, scrapes the website
-    using beautiful soup, and returns a list of holdings for that index.
-    Each element in the holdings list is a dict containing 'weight' and
-    'ticker' symbol of each stock in the index. Retries the scraping if
-    the response fails.
-    :param index: index name for an index is slickcharts website
-    :param max_retries: maximum number of retries before giving up
-    :return: index_holdings: List of dicts containing weight and ticker
-    symbol for each stock in the index
-    """
-
-    # List of stock data dictionary for each stock in the index
-    index_holdings = []
-
-    try:
-        url = get_index_info(index).get("url")
-    except Exception as e:
-        print(f"[Index Error] Index <{index}> is invalid: {e}")
-        return index_holdings
+def fetch_holdings_from_wikipedia(url, max_retries=3):
+    holdings = []
 
     headers = {
         "User-Agent": (
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-            "(KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36"
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/137.0.0.0 Safari/537.36"
         )
     }
 
     for attempt in range(max_retries):
         try:
             # Small jitter before request
-            time.sleep(random.uniform(0.2, 0.5))
+            time.sleep(random.uniform(2, 3))
 
-            # Getting response from the webpage at given url
             response = requests.get(url, headers=headers, timeout=10)
             response.raise_for_status()
 
-            # Create soup from the webpage response
-            soup = BeautifulSoup(response.text, 'html.parser')
-            table = soup.find("table", class_="table")
+            soup = BeautifulSoup(response.text, "lxml")
 
-            # Check if index data table exists in the soup
-            if not table or not table.tbody:
-                print(f"[Parse Error] Could not find table in {url}")
-                return index_holdings
+            table = soup.find("table", {"id": "constituents"})
+            if not table:
+                raise Exception("Constituents table not found")
 
-            # Retrieve stock data from the index data table
-            for row in table.tbody.find_all("tr"):
-                cols = row.find_all("td")
-                if len(cols) >= 4:
-                    ticker = cols[2].text.strip()
-                    weight = cols[3].text.strip().replace("%", "")
-                    index_holdings.append({
-                        "ticker": ticker if ticker else None,
-                        "weight": weight if weight else None,
-                    })
+            # ---- Extract header row ----
+            header_row = table.find("tr")
+            if not header_row:
+                raise Exception("Header row not found")
 
-            return index_holdings  # Success -> Exit
+            header_cells = header_row.find_all(["th", "td"])
+            headers_text = [
+                cell.get_text(strip=True).lower()
+                for cell in header_cells
+            ]
+
+            # ---- Find ticker column ----
+            ticker_col_index = None
+            for i, col_name in enumerate(headers_text):
+                if col_name in ["symbol", "ticker"]:
+                    ticker_col_index = i
+                    break
+
+            if ticker_col_index is None:
+                raise Exception("Ticker column not found")
+
+            # ---- Parse data rows ----
+            rows = table.find_all("tr")[1:]  # Skip header
+
+            for row in rows:
+                cols = row.find_all(["th", "td"])
+
+                if not cols or len(cols) <= ticker_col_index:
+                    continue
+
+                ticker = cols[ticker_col_index].get_text(strip=True)
+
+                if ticker:
+                    holdings.append(ticker.strip().upper())
+
+            if len(holdings) < 10:
+                raise Exception("Too few holdings parsed")
+
+            return holdings # Success -> Exit
 
         except Exception as e:
             print(f"[Retry {attempt + 1}] Failed {url}: {e}")
             time.sleep(1 + attempt)  # Simple Backoff
 
-    return index_holdings  # Return empty if all retries fail
+    return holdings  # Return empty if all retries fail
+
+
+def fetch_sp500_holdings(url):
+    return fetch_holdings_from_wikipedia(url)
+
+def fetch_nasdaq100_holdings(url):
+    return fetch_holdings_from_wikipedia(url)
+
+def fetch_dow_jones_holdings(url):
+    return fetch_holdings_from_wikipedia(url)
+
+def fetch_magnificent7_holdings(url=None):
+    holdings = ["GOOG", "AMZN", "AAPL", "META", "MSFT", "NVDA", "TSLA"]
+    return holdings
+
+
+# Define the indices available in this script and their info
+indices_info = [
+    {
+        "slug": "sp500",
+        "name": "S&P 500 Index",
+        "url": "https://en.wikipedia.org/wiki/List_of_S%26P_500_companies",
+        "fetch_func": fetch_sp500_holdings,
+    },
+    {
+        "slug": "nasdaq100",
+        "name": "Nasdaq 100 Index",
+        "url": "https://en.wikipedia.org/wiki/Nasdaq-100",
+        "fetch_func": fetch_nasdaq100_holdings,
+    },
+    {
+        "slug": "dow-jones",
+        "name": "Dow Jones Index",
+        "url": "https://en.wikipedia.org/wiki/Dow_Jones_Industrial_Average",
+        "fetch_func": fetch_dow_jones_holdings,
+    },
+    {
+        "slug": "magnificent7",
+        "name": "Magnificent Seven Index",
+        "url": "https://en.wikipedia.org/wiki/Big_Tech#Magnificent_Seven",
+        "fetch_func": fetch_magnificent7_holdings,
+    },
+]

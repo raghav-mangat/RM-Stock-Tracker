@@ -35,24 +35,33 @@ def main():
 
             dataset_version_id = get_active_dataset_id()
 
-            # Get all stocks in Nasdaq 100 Index in descending order of weight
-            nasdaq100_stocks = [
-                row.id for row in (
-                    db.session.query(TickerMaster.id)
-                    .select_from(TickerMaster)
-                    .join(StockMaster, StockMaster.ticker_id == TickerMaster.id)
-                    .join(Stock, Stock.stock_master_id == StockMaster.id)
-                    .join(IndexHolding, IndexHolding.stock_id == Stock.id)
-                    .join(Index, Index.id == IndexHolding.index_id)
-                    .filter(
-                        TickerMaster.is_active == True,
-                        StockMaster.dataset_version_id == dataset_version_id,
-                        Index.slug == "nasdaq100",
+            nasdaq100_index_id = db.session.query(
+                Index.id
+            ).filter(
+                Index.dataset_version_id == dataset_version_id,
+                Index.slug == "nasdaq100",
+            ).scalar()
+
+            nasdaq100_stocks = []
+            if nasdaq100_index_id:
+                # Get all stocks in Nasdaq 100 Index in descending order of popularity
+                nasdaq100_stocks = [
+                    row.id for row in (
+                        db.session.query(TickerMaster.id)
+                        .select_from(TickerMaster)
+                        .join(StockMaster, StockMaster.ticker_id == TickerMaster.id)
+                        .join(Stock, Stock.stock_master_id == StockMaster.id)
+                        .join(IndexHolding, IndexHolding.stock_id == Stock.id)
+                        .join(Index, Index.id == IndexHolding.index_id)
+                        .filter(
+                            TickerMaster.is_active == True,
+                            StockMaster.dataset_version_id == dataset_version_id,
+                            Index.id == nasdaq100_index_id,
+                        )
+                        .order_by(StockMaster.popularity.desc())
+                        .all()
                     )
-                    .order_by(IndexHolding.weight.desc())
-                    .all()
-                )
-            ]
+                ]
 
             # Choose the stock list
             stock_list = nasdaq100_stocks

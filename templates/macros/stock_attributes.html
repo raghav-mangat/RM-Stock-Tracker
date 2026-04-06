@@ -23,8 +23,8 @@
 {% endmacro %}
 
 {% macro stock_todays_change_td(stock) %}
-  <td style="min-width: 150px;">
-      {{ stock_todays_change(stock) }}
+  <td class="text-nowrap">
+    {{ stock_todays_change(stock) }}
   </td>
 {% endmacro %}
 
@@ -41,8 +41,14 @@
 {% endmacro %}
 
 {% macro stock_name_td(stock) %}
-  <td class="fw-semibold" style="min-width: 200px; max-width: 300px;">
+  <td class="stock-name-attribute fw-semibold">
     {{ stock.name | display }}
+  </td>
+{% endmacro%}
+
+{% macro stock_volume_td(stock, semibold=True) %}
+  <td class="{% if semibold %}fw-semibold {% endif %}text-nowrap">
+    {{ stock.volume | humanize_number }}
   </td>
 {% endmacro%}
 

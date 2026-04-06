@@ -23,5 +23,10 @@ a.text-primary:hover {
 }
 
 .modal {
-    z-index: 1200;
+  z-index: 1200;
+}
+
+.stock-name-attribute {
+  min-width: 200px;
+  max-width: 300px;
 }

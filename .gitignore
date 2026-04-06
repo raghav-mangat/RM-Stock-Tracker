@@ -8,6 +8,7 @@ Prod
 Resources
 logs
 status_files
+data_files
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

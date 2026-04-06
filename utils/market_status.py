@@ -1,7 +1,7 @@
 from datetime import datetime, UTC
 from utils.status_files import get_market_status
 
-def get_complete_market_status():
+def get_market_status_with_time_ago():
     market_status = get_market_status()
 
     if market_status:

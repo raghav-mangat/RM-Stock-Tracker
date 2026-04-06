@@ -121,7 +121,7 @@
       <tr>
         <td class="fw-bold">{{ loop.index }}</td>
 
-        <td>{{ row.date.strftime("%b %d, %Y") }}</td>
+        <td class="text-nowrap">{{ row.date.strftime("%b %d, %Y") }}</td>
         <td class="text-center">
           {% if row.market_open %}
             <span class="badge bg-success">Open</span>
@@ -176,7 +176,7 @@
       <tr>
         <td class="fw-bold">{{ loop.index }}</td>
 
-        <td>{{ row.date.strftime("%b %d, %Y") }}</td>
+        <td class="text-nowrap">{{ row.date.strftime("%b %d, %Y") }}</td>
         <td class="text-center">
           {% if row.market_open %}
             <span class="badge bg-success">Open</span>
@@ -227,7 +227,7 @@
       <tr>
         <td class="fw-bold">{{ loop.index }}</td>
 
-        <td>{{ row.date.strftime("%b %d, %Y") }}</td>
+        <td class="text-nowrap">{{ row.date.strftime("%b %d, %Y") }}</td>
         <td class="text-center">
           {% if row.market_open %}
             <span class="badge bg-success">Open</span>
@@ -277,7 +277,7 @@
       <tr>
         <td class="fw-bold">{{ loop.index }}</td>
 
-        <td>{{ row.date.strftime("%b %d, %Y") }}</td>
+        <td class="text-nowrap">{{ row.date.strftime("%b %d, %Y") }}</td>
         <td class="text-center">
           {% if row.market_open %}
             <span class="badge bg-success">Open</span>
@@ -325,7 +325,7 @@
       <tr>
         <td class="fw-bold">{{ loop.index }}</td>
 
-        <td>{{ row.date.strftime("%b %d, %Y") }}</td>
+        <td class="text-nowrap">{{ row.date.strftime("%b %d, %Y") }}</td>
         <td class="text-center">
           {% if row.market_open %}
             <span class="badge bg-success">Open</span>
@@ -334,7 +334,7 @@
           {% endif %}
         </td>
 
-        <td>{{ row.redis_data_collected_at.strftime("%b %d, %Y - %I:%M %p") }}</td>
+        <td class="text-nowrap">{{ row.redis_data_collected_at.strftime("%b %d, %Y - %I:%M %p") }}</td>
         <td>{{ row.redis_total_commands }}</td>
         <td>{{ row.redis_total_reads }}</td>
         <td>{{ row.redis_total_writes }}</td>
@@ -372,7 +372,7 @@
       <tr>
         <td class="fw-bold">{{ loop.index }}</td>
 
-        <td>{{ row.date.strftime("%b %d, %Y") }}</td>
+        <td class="text-nowrap">{{ row.date.strftime("%b %d, %Y") }}</td>
         <td class="text-center">
           {% if row.market_open %}
             <span class="badge bg-success">Open</span>
@@ -381,7 +381,7 @@
           {% endif %}
         </td>
 
-        <td>{{ row.mysql_data_collected_at.strftime("%b %d, %Y - %I:%M %p") }}</td>
+        <td class="text-nowrap">{{ row.mysql_data_collected_at.strftime("%b %d, %Y - %I:%M %p") }}</td>
         <td>{{ row.mysql_total_db_size_bytes }}</td>
         <td>{{ row.mysql_data_size_bytes }}</td>
         <td>{{ row.mysql_index_size_bytes }}</td>

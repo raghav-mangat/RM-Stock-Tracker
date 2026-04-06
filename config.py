@@ -11,6 +11,7 @@ class BaseConfig:
     DEBUG = False
     LOG_LEVEL = "INFO"
     STATUS_FILES_DIR = None
+    DATA_FILES_DIR = None
 
 class DevConfig(BaseConfig):
     DEBUG = True
@@ -20,3 +21,4 @@ class ProdConfig(BaseConfig):
     DEBUG = False
     LOG_LEVEL = "INFO"
     STATUS_FILES_DIR = os.path.expanduser("~/status_files")
+    DATA_FILES_DIR = os.path.expanduser("~/data_files")

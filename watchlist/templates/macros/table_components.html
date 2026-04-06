@@ -1,6 +1,6 @@
 {% from "macros/popovers.html" import dma_200_diff_popover %}
 {% from "macros/stock_attributes.html" import
-    stock_todays_change_td, stock_dma_200_perc_diff, stock_name_td
+    stock_todays_change_td, stock_dma_200_perc_diff, stock_name_td, stock_volume_td
 %}
 
 
@@ -100,7 +100,7 @@
   {% elif attribute.value == AttributeType.TODAYS_CHANGE_PERC %}
     {{ stock_todays_change_td(stock) }}
   {% elif attribute.value == AttributeType.VOLUME %}
-    <td class="fw-semibold">{{ stock[attribute.value] | humanize_number }}</td>
+    {{ stock_volume_td(stock) }}
   {% elif attribute.value == AttributeType.DMA_200_PERC_DIFF %}
     {{ stock_dma_200_perc_diff(stock) }}
   {% else %}
