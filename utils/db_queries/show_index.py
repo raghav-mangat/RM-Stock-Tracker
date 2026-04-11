@@ -3,7 +3,7 @@ from models.database import db, StockMaster, Stock, Index, IndexHolding, StockDe
 from utils.db_queries.tables.dataset_version import get_active_dataset_id
 
 def get_index_data(index_id, sort_by, order, filter_by):
-    valid_sort_by = {"name", "todays_change", "volume", "perc_diff"}
+    valid_sort_by = {"name", "todays_change_perc", "volume", "perc_diff"}
     valid_order = {"asc", "desc"}
     valid_filter = {"dark_green", "green", "yellow", "red", "dark_red"}
 
@@ -18,8 +18,8 @@ def get_index_data(index_id, sort_by, order, filter_by):
     sort_dropdown_options = [
         {"label": "Name (Low to High)", "sort_by": "name", "order": "asc"},
         {"label": "Name (High to Low)", "sort_by": "name", "order": "desc"},
-        {"label": "Today's Change (Low to High)", "sort_by": "todays_change", "order": "asc"},
-        {"label": "Today's Change (High to Low)", "sort_by": "todays_change", "order": "desc"},
+        {"label": "Today's % Change (Low to High)", "sort_by": "todays_change_perc", "order": "asc"},
+        {"label": "Today's % Change (High to Low)", "sort_by": "todays_change_perc", "order": "desc"},
         {"label": "Volume (Low to High)", "sort_by": "volume", "order": "asc"},
         {"label": "Volume (High to Low)", "sort_by": "volume", "order": "desc"},
         {"label": "200-DMA % Diff (Low to High)", "sort_by": "perc_diff", "order": "asc"},
@@ -29,8 +29,8 @@ def get_index_data(index_id, sort_by, order, filter_by):
     sort_options = {
         ("name", "asc"): StockDetail.name.asc(),
         ("name", "desc"): StockDetail.name.desc(),
-        ("todays_change", "asc"): StockMaster.todays_change_perc.asc(),
-        ("todays_change", "desc"): StockMaster.todays_change_perc.desc(),
+        ("todays_change_perc", "asc"): StockMaster.todays_change_perc.asc(),
+        ("todays_change_perc", "desc"): StockMaster.todays_change_perc.desc(),
         ("volume", "asc"): StockMaster.volume.asc(),
         ("volume", "desc"): StockMaster.volume.desc(),
         ("perc_diff", "asc"): Stock.dma_200_perc_diff.asc(),

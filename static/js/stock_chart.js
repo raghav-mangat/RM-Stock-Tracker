@@ -14,16 +14,15 @@ const DATE_COLOR = "rgba(130, 130, 130, 1)";
 const VOLUME_COLOR = "rgba(78, 140, 255, 0.75)";
 const FILL_COLOR = "rgba(255, 255, 255, 1)";
 const POINT_HOVER_COLOR = "rgba(100, 0, 255, 1)";
-const TF_TOOLTIP_TEXT_COLOR = "white";
 
 // Limits
 const MAX_X_TICKS = 12;
-const ZOOM_MIN_RANGE = 5; // minimum number of values to show when zoomed in
+const ZOOM_MIN_RANGE = 5; // Minimum number of values to show when zoomed in
 const DISPLAY_TOOLTIP_DEFAULT = false; // OFF by default
-const CHART_SPINNER_DELAY = 200; // in ms
+const CHART_SPINNER_DELAY = 200; // In ms
 
 // Sizing
-const VOLUME_AXIS_MAX_MULTIPLIER = 5; // volume bars take (1/multplier) height of the chart
+const VOLUME_AXIS_MAX_MULTIPLIER = 5; // Volume bars take (1/multplier) height of the chart
 const POINT_HOVER_RADIUS = 7;
 const EMA_BORDER_WIDTH = 1.5;
 const POINT_RADIUS = 0;

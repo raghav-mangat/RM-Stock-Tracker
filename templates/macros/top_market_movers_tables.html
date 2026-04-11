@@ -52,7 +52,7 @@
     - type: Type of table (e.g., "gainers", "losers")
     - heading: Table title
     - name: Name of the current tab (e.g., "Overall Market", "S&P 500 index")
-    - col_title: Header for the last column (e.g., "Volume" or "Today's Change")
+    - col_title: Header for the last column (e.g., "Volume" or "Today's % Change")
 #}
 {% macro top_stocks_table(tab_id, type, heading, name, col_title) %}
   <h3 class="h4 mb-3">
@@ -112,10 +112,10 @@
     </ul>
     <div class="tab-content">
       <div class="tab-pane fade show active" id="{{ tab_id }}-gainers" role="tabpanel" aria-labelledby="{{ tab_id }}-gainers-tab">
-        {{ top_stocks_table(tab_id, "gainers", "Top Gaining Stocks Today", tab_name, "Today's Change") }}
+        {{ top_stocks_table(tab_id, "gainers", "Top Gaining Stocks Today", tab_name, "Today's % Change") }}
       </div>
       <div class="tab-pane fade" id="{{ tab_id }}-losers" role="tabpanel" aria-labelledby="{{ tab_id }}-losers-tab">
-        {{ top_stocks_table(tab_id, "losers", "Top Losing Stocks Today", tab_name, "Today's Change") }}
+        {{ top_stocks_table(tab_id, "losers", "Top Losing Stocks Today", tab_name, "Today's % Change") }}
       </div>
       <div class="tab-pane fade" id="{{ tab_id }}-volume" role="tabpanel" aria-labelledby="{{ tab_id }}-volume-tab">
         {{ top_stocks_table(tab_id, "volume", "Most Actively Traded Stocks Today", tab_name, "Volume") }}
@@ -139,7 +139,7 @@
             <th scope="col">Company</th>
             <th scope="col">Price</th>
             <th scope="col">Volume</th>
-            <th scope="col">Today's Change</th>
+            <th scope="col">Today's % Change</th>
             <th scope="col">Trade Activity</th>
           </tr>
         </thead>

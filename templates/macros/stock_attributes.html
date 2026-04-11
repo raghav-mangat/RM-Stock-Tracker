@@ -15,7 +15,7 @@
         <span class="fw-semibold"
               style="color: {{ stock.todays_change | stock_change_color }};">
             {{ arrow_direction(stock.todays_change) }}
-            {{ stock.todays_change_perc | abs | percent }} ({{ stock.todays_change | abs | float }})
+            {{ stock.todays_change | abs | float }} ({{ stock.todays_change_perc | abs | percent }})
         </span>
     {% else %}
         <span class="fw-semibold">N/A</span>
