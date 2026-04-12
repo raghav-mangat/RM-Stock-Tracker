@@ -186,7 +186,7 @@
         </td>
 
         <td>{{ row.emails_enqueued }}</td>
-        <td>{{ row.massive_api_calls }}</td>
+        <td>{{ "{:,}".format(row.massive_api_calls) }}</td>
         <td>{{ row.google_oauth_callbacks }}</td>
         <td>{{ row.emails_sent_success }}</td>
         <td>{{ row.emails_sent_failure }}</td>
@@ -236,14 +236,14 @@
           {% endif %}
         </td>
 
-        <td>{{ row.request_count }}</td>
+        <td>{{ "{:,}".format(row.request_count) }}</td>
         <td>{{ row.static_request_count }}</td>
         <td>{{ row.responses_5xx }}</td>
         <td>{{ row.slow_requests }}</td>
         <td>{{ row.uncaught_exceptions }}</td>
 
-        <td>{{ "%.1f"|format(row.avg_latency_ms) }}</td>
-        <td>{{ "%.1f"|format(row.avg_static_latency_ms) }}</td>
+        <td>{{ "{:,.1f}".format(row.avg_latency_ms) }}</td>
+        <td>{{ "{:,.1f}".format(row.avg_static_latency_ms) }}</td>
 
         <td>{{ row.redis_flush_success }}</td>
         <td>{{ row.redis_flush_failure }}</td>
@@ -290,7 +290,7 @@
         <td>{{ row.num_watchlist_items }}</td>
         <td>{{ row.num_watchlist_alerts }}</td>
         <td>{{ row.num_ticker_watchlist_items }}</td>
-        <td>{{ row.num_ticker_master }}</td>
+        <td>{{ "{:,}".format(row.num_ticker_master) }}</td>
         <td>{{ row.num_stock }}</td>
       </tr>
       {% endfor %}
@@ -335,11 +335,11 @@
         </td>
 
         <td class="text-nowrap">{{ row.redis_data_collected_at.strftime("%b %d, %Y - %I:%M %p") }}</td>
-        <td>{{ row.redis_total_commands }}</td>
-        <td>{{ row.redis_total_reads }}</td>
-        <td>{{ row.redis_total_writes }}</td>
-        <td>{{ row.redis_used_memory_bytes }}</td>
-        <td>{{ row.redis_max_memory_bytes }}</td>
+        <td>{{ "{:,}".format(row.redis_total_commands) }}</td>
+        <td>{{ "{:,}".format(row.redis_total_reads) }}</td>
+        <td>{{ "{:,}".format(row.redis_total_writes) }}</td>
+        <td>{{ "{:,}".format(row.redis_used_memory_bytes) }}</td>
+        <td>{{ "{:,}".format(row.redis_max_memory_bytes) }}</td>
         <td>{{ row.redis_keys_count }}</td>
         <td>{{ row.redis_expired_keys }}</td>
         <td>{{ row.redis_evicted_keys }}</td>
@@ -382,9 +382,9 @@
         </td>
 
         <td class="text-nowrap">{{ row.mysql_data_collected_at.strftime("%b %d, %Y - %I:%M %p") }}</td>
-        <td>{{ row.mysql_total_db_size_bytes }}</td>
-        <td>{{ row.mysql_data_size_bytes }}</td>
-        <td>{{ row.mysql_index_size_bytes }}</td>
+        <td>{{ "{:,}".format(row.mysql_total_db_size_bytes) }}</td>
+        <td>{{ "{:,}".format(row.mysql_data_size_bytes) }}</td>
+        <td>{{ "{:,}".format(row.mysql_index_size_bytes) }}</td>
         <td>{{ row.mysql_table_count }}</td>
       </tr>
       {% endfor %}

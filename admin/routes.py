@@ -21,7 +21,7 @@ Notes:
     We can build more on top of it later on.
 """
 
-@admin_bp.route("/", methods=["GET"])
+@admin_bp.route("", methods=["GET"])
 @admin_required
 def index():
     users_data, user_stats, watchlist_stats, daily_status = get_admin_dashboard_data()
