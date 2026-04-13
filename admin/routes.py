@@ -6,7 +6,7 @@ from flask import render_template
 """
 Notes:
 
-- The admin blueprint shows the user data to only the admin users.
+- The admin blueprint shows the data to only the admin users.
 - Admin users have to be created manually in the database, 
     all the users are non-admin by default.
 - All the code required for the admin functionality is in the admin 
@@ -16,9 +16,11 @@ Notes:
 - The admin routes can only be accessed by admin users by manually 
     entering the url.
 - Currently the admin blueprint only has the admin dashboard page 
-    which shows a table of user data along with some useful stats.
-    Also shows data for the Daily App Status Database table. 
-    We can build more on top of it later on.
+    which shows data for:
+    - Users along with some useful stats.
+    - The Daily App Status Database table. 
+    - Watchlist along with some useful stats.
+    - Stocks along with some useful stats.
 """
 
 @admin_bp.route("", methods=["GET"])
