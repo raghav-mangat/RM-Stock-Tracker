@@ -1,120 +1,206 @@
 # RM Stock Tracker
 
-An informative and user-friendly web app to explore U.S. stocks and major market indices using real-time financial data. Built with Python, Flask, SQLAlchemy, Bootstrap, Chart.js and the Polygon.io API.
+RM Stock Tracker is a production-grade web application for exploring
+U.S. stocks, analyzing market data, and managing personalized watchlist
+with alerts. The platform is designed with a strong focus on
+performance, usability, scalability, and clean backend architecture.
 
-> **Live Site:** [www.rmstocktracker.com](https://www.rmstocktracker.com)
+> **Live Site:**
+> [www.rmstocktracker.com](https://www.rmstocktracker.com)
 
 ---
 
-## Features
+## Overview
 
-- **Search Stocks** by ticker symbol or company name
-- View detailed stock information:
-  - Day open, high, low, close, and volume
-  - Today's price change and % change with up/down arrow
-  - 30-day, 50-day and 200-day moving averages (DMA)
-  - % Difference from 200-DMA (color-coded)
-  - 52-week high and low
-  - Market cap (with readable formatting)
-  - Company overview and related companies
-- **Interactive Stock Charts**
-  - Choose from multiple timeframes: 1D, 1W, 1M, 3M, 6M, YTD, 1Y, 3Y, 5Y
-  - Smooth transitions using AJAX without page reloads
-  - Custom legends, hover info, and responsive design for mobile
-  - Loading indicators and missing-data overlays for a better experience
-- **Summary Section with Charts**
-  - Visualize stock performance with neat, professional, and color-coded summary charts
-  - Responsive summary cards with key highlights
-- **Top Market Movers**
-  - View top gainers, losers, and most traded stocks
-  - Switch between overall market, S&P 500, Nasdaq 100, and Dow Jones
-- **Explore Indices**
-  - S&P 500, Nasdaq 100, Dow Jones, Magnificent Seven, ARKK Innovation, Berkshire Hathaway
-  - View top holdings with metrics like weight, day close, DMA values, % difference, and more
-  - Sort by weight, company name, DMA %, or today's price change
-- Color-coded 200-DMA % Difference:
-  - **Dark Green**: ≥ +10%
-  - **Green**: +2% to +10%
-  - **Yellow**: -2% to +2%
-  - **Red**: -2% to -10%
-  - **Dark Red**: ≤ -10%
-- Animated ticker tape showing popular and some random stocks
-- Stock search bar showing relevant suggestions with easy keyboard navigation
-- Loading spinner overlay when navigating pages or charts that take longer time to load
-- Data last updated time shown in Eastern Time
-- Responsive design with Bootstrap 5
-- Clean UI, consistent layout, and helpful error messages
+RM Stock Tracker provides a structured and efficient way to interact
+with the U.S. stock market. It combines near real-time data updates,
+interactive analytics, and a user-centric system for tracking stocks.
+
+**The application emphasizes**:
+
+- Performance-first backend design
+- Clean and modular architecture
+- Scalable data pipelines
+- User-focused experience
+
+---
+
+## Core Features
+
+### Market Exploration
+
+- Search stocks by ticker symbol or company name
+- Intelligent stock search bar showing relevant suggestions as users type,
+  supporting keyboard navigation
+- View top market movers including gainers, losers, and most traded
+  stocks
+- Trending stocks dashboard
+- Live ticker tape showing a rotating set of stocks that refreshes
+  throughout the day
+- Explore major indices including S&P 500, Nasdaq 100, and Dow Jones, with access to
+  constituents, key metrics, and sortable and filterable tables
+
+### Stock Details and Charts
+
+- Interactive charts with multiple timeframes
+- AJAX-based updates without page reloads
+- Technical indicators including 30, 50, and 200 day exponential
+  moving averages (EMA)
+- Today's performance, 52-week high/low, volume, 200-DMA, related companies,
+  market capitalization and more
+
+### Watchlist System
+
+- Folder-based organization for tracking stocks
+- Customizable data tables per folder
+- Sorting and filtering across multiple attributes
+- Support for the same stock in multiple folders
+
+### Alerts System
+
+- Condition-based alerts using minimum and maximum thresholds
+- Support for absolute value based conditions for flexible comparisons
+- Folder-level and stock-level alerts
+- Dedicated alerts page with a breakdown of alert status by folder, including
+  triggered stocks and stock-specific conditions
+- Daily email summaries after market close
+
+### User System
+
+- Email and password authentication
+- Google Sign-In using OAuth
+- Profile and account settings management
+- Secure session handling
+
+### User Experience
+
+- Light and dark mode support with seamless theme switching
+- Clear and color-coded toast notifications for user actions and system feedback
+- Fully responsive design optimized for both desktop and mobile devices
+- Consistent and smooth experience across different screen sizes
+- Optimized loading states and smooth transitions for better perceived performance
+
+### Market Data Transparency
+
+- Live market status displayed across the platform (open, closed, extended-hours)
+- Data freshness indicators showing last updated timestamps in Eastern Time (ET)
+
+---
+
+## Performance and Architecture
+
+### Precomputed Data Strategy
+
+Heavy computations are handled through scheduled scripts rather than
+during request handling.
+
+### Dataset Versioning
+
+The application uses a dataset versioning system to ensure:
+
+- Atomic data updates
+- No partial data exposure
+- Safe rollback capability
+
+### Optimized Search
+
+- Dedicated search table
+- Prefix-based queries
+- Indexed columns for fast lookups
+- No joins in search queries
+
+### Redis Integration
+
+Redis (Upstash) is used for:
+
+- Email queueing
+- Rate limiting
+- Metrics tracking
+
+### SEO Optimization
+
+- Structured metadata and semantic HTML for better search engine visibility
+- XML sitemap generation for improved indexing
+- Integrated with Google Search Console for monitoring indexing, performance, and search visibility
+
+### AJAX-Based Frontend
+
+Dynamic updates across charts, dashboards, and watchlist improve
+performance and user experience.
+
+---
+
+## Data Pipeline
+
+### Market Data
+
+- Powered by Massive.com API
+
+### Index Holdings
+
+- Sourced from Wikipedia
+- Stored in JSON for caching and efficiency
+
+### Update Strategy
+
+- Data updates every 30 minutes during market hours
+- Additional updates at market open and close
+- Final update in the evening
+
+---
+
+## Admin and Monitoring
+
+- Admin dashboard for system insights
+- Metrics tracking for users, watchlist, and system activity
+- Custom logging system for debugging and monitoring
 
 ---
 
 ## Tech Stack
 
-- **Backend**: Python, Flask, SQLAlchemy  
-- **Frontend**: HTML, CSS, JS, Jinja2, Bootstrap 5, Chart.js  
-- **Database**: SQLite (dev), MySQL (prod)  
-- **APIs**: Polygon.io, SlickCharts
+- **Backend**: Python, Flask, SQLAlchemy 2.0, MySQL
+- **Frontend**: HTML, CSS, JS, Jinja2, Bootstrap 5, Chart.js
+- **Infrastructure**: PythonAnywhere, Redis (Upstash), Google Cloud (OAuth for authentication),
+  custom domain and DNS configuration (Namecheap), custom email domain for transactional emails
 
 ---
 
 ## Project Structure
 
-```
-├── app.py                  # Flask application entry point
-├── data_collectors/        # Scripts to fetch stock, index, and market data
-├── db_populate_scripts/    # Scripts to update and populate database
-├── models/                 # SQLAlchemy ORM models
-├── static/                 # Static files (CSS, JS, favicon, etc.)
-│   ├── assets/
-│   ├── js/
-│   └── styles/
-├── templates/              # Jinja2 HTML templates
-│   └── macros/             # Reusable Jinja components
-└── utils/                  # Helpers for datetime, filters, etc.
-    └── db_queries/         # Scripts to run database queries
-```
+The project follows a modular architecture with separate components for
+authentication, watchlist management, admin tools, data collection, and
+scheduled jobs.
+
+### Key directories:
+
+- **auth**: authentication and user management
+- **watchlist**: watchlist and alerts system
+- **admin**: admin dashboard and metrics
+- **data_collectors**: external data fetching
+- **scheduled_scripts**: background jobs and pipelines
+- **utils**: shared utilities and database queries
+- **templates and static**: frontend components
 
 ---
 
-## Getting Started
+## Disclaimer
 
-1. **Clone the repository**
-
-2. **Set up a virtual environment**
-
-   ```bash
-   python -m venv venv
-   source venv/bin/activate     # On Windows: venv\Scripts\activate
-   ```
-
-3. **Install dependencies**
-
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-4. **Create a `.env` file** in the root directory
-
-   ```env
-   IS_RELEASE="0"
-   DATABASE_URI=your_sqlite_db_uri
-   POLYGON_API_KEY=your_polygon_api_key
-   ```
-
-5. **Run the app**
-
-   ```bash
-   flask run
-   ```
+Market data is provided for informational purposes only and may be
+delayed. This application does not provide financial or investment
+advice.
 
 ---
 
 ## License
 
-This project is licensed under the Creative Commons Attribution 4.0 International License.  
-See the [LICENSE](./LICENSE.md) file for details.
+This project is source-available and intended for viewing and
+educational purposes only. See the [LICENSE](./LICENSE.md) for full
+terms.
 
 ---
 
 ## Release Notes
 
-See [Release Notes](./RELEASE_NOTES.md) for version history and changelog.
+See [Release Notes](./RELEASE_NOTES.md) for version history and
+changelog.

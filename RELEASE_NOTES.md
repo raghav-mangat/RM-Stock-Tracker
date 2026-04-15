@@ -1,3 +1,195 @@
+# Release Notes - v4.0.0
+
+**Release Date:** April 15, 2026
+
+**Project:** [RM-Stock-Tracker](https://github.com/raghav-mangat/RM-Stock-Tracker)
+
+> **Live Site:** [www.rmstocktracker.com](https://www.rmstocktracker.com)
+
+---
+
+## Overview
+
+Version 4.0.0 is a **major system upgrade** that transforms RM Stock Tracker
+from a market exploration tool into a **full-featured, user-driven platform**.
+
+This release introduces:
+
+- A complete **user and watchlist system**
+- **Near real-time data updates**
+- Major **performance and architecture improvements**
+- Advanced backend optimizations for scalability
+
+---
+
+## New Features
+
+### User System
+
+- Email/password authentication
+- Google Sign-In (OAuth via Google Cloud)
+- User profile and account settings
+- Secure session management
+
+---
+
+### Watchlist System
+
+- Folder-based organization
+- Customizable tables per folder
+- Sorting and filtering by stock attributes
+- Independent configuration per folder
+
+#### Alerts
+
+- Min/max condition-based alerts
+- Support for absolute value conditions for flexible comparisons
+- Folder-level and stock-level alerts
+- Dedicated alerts page with a structured breakdown of alert status by folder and stock
+- Daily email summaries after market close
+
+---
+
+### Trending Stocks
+
+- Added trending stocks section in Stocks Dashboard
+- Helps users quickly identify market activity
+
+---
+
+### UI Improvements
+
+- Dark mode support
+- Improved light mode color system
+- Better contrast and readability
+- Enhanced responsive design
+- Added color-coded toast notifications for clear user feedback on actions and system events
+
+---
+
+### Market Status
+
+- Live market status display (open/closed/extended-hours)
+- Visible across the platform
+
+---
+
+## Performance Improvements
+
+### AJAX Integration
+
+- Implemented across:
+  - Charts
+  - Watchlist
+  - Dashboards
+- Significantly reduces page reloads and improves responsiveness
+
+---
+
+### Database Optimization
+
+- Major schema improvements
+- Faster queries and better indexing
+- Reduced query complexity
+
+---
+
+### Faster Data Population
+
+- Optimized bulk insert strategies for efficient database writes
+- Multithreaded API data fetching
+- Reduced runtime and database load
+
+---
+
+### Redis Integration (Upstash)
+
+Used for:
+
+- Email queueing
+- Rate limiting
+- Metrics tracking
+
+---
+
+## Architecture Improvements
+
+### Data Pipeline Enhancements
+
+- Market data updated every 30 minutes during market hours
+- Maintains evening update for final daily accuracy
+
+---
+
+### Index Data System
+
+- Replaced SlickCharts scraping with Wikipedia
+- JSON-based caching for index holdings
+- Improved reliability and performance
+
+---
+
+### Logging System
+
+- Custom logging for debugging and monitoring
+- Helps track errors and system behavior
+
+---
+
+### SEO Improvements
+
+- Improved metadata and structure
+- Better discoverability
+
+---
+
+## Admin & Monitoring
+
+- Added admin dashboard for:
+  - User metrics
+  - Watchlist data
+  - System insights
+
+---
+
+## Infrastructure
+
+- Custom email domain for sending emails
+- Google Cloud integration for OAuth
+- Improved deployment stability on PythonAnywhere
+
+---
+
+## Fixes
+
+- Improved stability of data update scripts
+- Reduced API-related failures
+- General UI/UX bug fixes and refinements
+
+---
+
+## Summary
+
+`v4.0.0` is a **major milestone** that introduces personalization, improves performance,
+and significantly upgrades the system architecture.
+
+The platform is now:
+
+- Faster
+- Scalable
+- User-centric
+- Production-ready
+
+---
+
+## Full Changelog
+
+https://github.com/raghav-mangat/RM-Stock-Tracker/compare/v3.0.0...v4.0.0
+
+
+------------------------------------------------------------------------------------------------------------
+
+
 # Release Notes - v3.0.0
 
 **Release Date:** August 16, 2025
@@ -400,3 +592,56 @@ The % difference between the day close and 200-day moving average is color-coded
 Version `v2.0.0` transforms the RM Stock Tracker into a scalable, real-time web app with search, detailed views, and index analysis. It's a strong foundation for adding features like charts, watchlists, and login functionality in the future.
 
 **Full Changelog**: https://github.com/raghav-mangat/RM-Stock-Tracker/compare/v1.2.0...v2.0.0
+
+
+------------------------------------------------------------------------------------------------------------
+
+
+On the home page, you have the option to choose between 6 Indexes. If you click on one of the Indexes, you can view its holdings. For each holding, you can view the rank, name, ticker symbol, weight, last close price, 200-day moving average (200-DMA), and the percentage difference between the last close price and 200-DMA.
+
+The percentage difference is coloured in the following way:
+
+Dark Green if >= 10 (More than 10% above)
+Dark Red if <= -10 (More than 10% below)
+Green if >= 2 (Between 2% and 10% above)
+Red if <= -2 (Between 2% and 10% below)
+Yellow if within ±2%
+Contains a dummy navbar and footer.
+
+**Full Changelog**: https://github.com/raghav-mangat/RM-Stock-Tracker/compare/v1.1.0...v1.2.0
+
+
+------------------------------------------------------------------------------------------------------------
+
+
+On the home page, you have the option to choose between 6 ETFs. If you click on one of the ETFs, you can view its holdings. For each holding, you can view the rank, name, ticker symbol, last close price, 200-day moving average (200-DMA), and the percentage difference between the last close price and 200-DMA.
+
+The percentage difference is coloured in the following way:
+- Dark Green if >= 10 (More than 10% above) 
+- Dark Red if <= -10 (More than 10% below) 
+- Green if >= 2 (Between 2% and 10% above) 
+-  Red if <= -2 (Between 2% and 10% below) 
+-  Yellow if within ±2% 
+
+Contains a dummy navbar and footer.
+
+**Full Changelog**: https://github.com/raghav-mangat/RM-Stock-Tracker/compare/v1.0.0...v1.1.0
+
+
+------------------------------------------------------------------------------------------------------------
+
+
+Created an MVP. Contains a dummy navbar and footer. On the home page, you have the option to choose between 6 ETFs. If you click on one of the ETFs, you can view its holdings.
+
+**Full Changelog**: https://github.com/raghav-mangat/RM-Stock-Tracker/compare/v0.0.0...v1.0.0
+
+
+------------------------------------------------------------------------------------------------------------
+
+
+This is the start of the Stocks Web App Project. Just contains a basic app that shows the home page with some welcome text. More features will be launched with further releases. 
+
+**Full Changelog**: https://github.com/raghav-mangat/RM-Stock-Tracker/commits/v0.0.0
+
+
+------------------------------------------------------------------------------------------------------------

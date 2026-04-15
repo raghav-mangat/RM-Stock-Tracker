@@ -1,25 +1,49 @@
-# Creative Commons Attribution 4.0 International License (CC BY 4.0)
+# RM Stock Tracker License
 
-This work is licensed under the [Creative Commons Attribution 4.0 International License](https://creativecommons.org/licenses/by/4.0/).
+Copyright © 2026 Raghav Mangat
 
-You are free to:
-
-- **Share** - copy and redistribute the material in any medium or format
-- **Adapt** - remix, transform, and build upon the material for any purpose, even commercially.
-
-Under the following terms:
-
-- **Attribution** - You must give appropriate credit, provide a link to the license, and indicate if changes were made. You may do so in any reasonable manner, but not in any way that suggests the licensor endorses you or your use.
-
-> No additional restrictions - You may not apply legal terms or technological measures that legally restrict others from doing anything the license permits.
+All rights reserved.
 
 ---
 
-## License Summary
+## Usage Restrictions
 
-This project is free to use and modify. If you use or share it, please give proper credit to the author:
+This source code is provided for **viewing and educational purposes only**.
 
-**Author**: Raghav Mangat  
-**Project**: RM Stock Tracker  
-**License**: CC BY 4.0  
-**Link to License**: [https://creativecommons.org/licenses/by/4.0/](https://creativecommons.org/licenses/by/4.0/)
+You are **not permitted** to:
+
+- Copy, reproduce, or redistribute this code in whole or in part
+- Modify, adapt, or create derivative works based on this code
+- Use this code for commercial or non-commercial projects
+- Deploy this code or any modified version of it
+
+---
+
+## Permission
+
+You are allowed to:
+
+- View the source code
+- Reference the project for learning purposes
+- Share links to the repository (without copying the code)
+
+---
+
+## Attribution
+
+This project is owned and maintained by:
+
+**Raghav Mangat**  
+RM Stock Tracker
+
+---
+
+## Disclaimer
+
+This software is provided "as is", without warranty of any kind, express or implied.
+
+---
+
+## Contact
+
+For permission requests or inquiries, please contact the author.
