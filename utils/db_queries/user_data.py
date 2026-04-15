@@ -156,10 +156,15 @@ def is_user_verified(user):
     return user.is_verified
 
 def is_user_active(user):
-    # Time beyond which we consider the user as being inactive
-    cutoff = get_current_utc() - timedelta(days=USER_INACTIVE_DAYS_LIMIT)
+    is_active = False
 
-    return user.last_login_at >= cutoff
+    if user.is_verified:
+        # Time beyond which we consider the user as being inactive
+        cutoff = get_current_utc() - timedelta(days=USER_INACTIVE_DAYS_LIMIT)
+        if user.last_login_at >= cutoff:
+            is_active = True
+
+    return is_active
 
 def is_user_email_alert_on(user):
     return user.email_alerts_on
