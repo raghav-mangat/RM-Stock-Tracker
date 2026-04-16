@@ -668,8 +668,8 @@ def populate_db(now, market_status):
     - We use threading to fetch the data from Massive API and data for indices
         to speed up the fetching process alot.
     - When we run this script on an empty database, we do not get the additional
-        stock data since the Stock Detail table is empty. Run it again to get all
-        the required data for the database.
+        stock data and the Stock Search data since the Stock Detail table is empty.
+        Run it again to get all the required data for the database.
     """
 
     print("Starting Database Population...\n")
@@ -732,8 +732,6 @@ def populate_db(now, market_status):
 
     update_index_holdings_data(index_holdings_temp, dataset_version_id)
 
-    update_stock_search(dataset_version_id)
-
     with app.app_context():
         update_stock_type_meta(stock_types)
 
@@ -744,6 +742,8 @@ def populate_db(now, market_status):
 
     with app.app_context():
         update_stock_detail(all_tickers_data, ticker_id_map, stock_type_id_map)
+
+    update_stock_search(dataset_version_id)
 
     with app.app_context():
         update_dataset_version(dataset_version_id)
